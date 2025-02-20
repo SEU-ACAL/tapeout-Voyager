@@ -1,6 +1,6 @@
-[submodule "rocket-chip"]
-	path = generators/rocket-chip
-	url = https://github.com/chipsalliance/rocket-chip.git
+# [submodule "rocket-chip"]
+# 	path = generators/rocket-chip
+# 	url = https://github.com/chipsalliance/rocket-chip.git
 [submodule "testchipip"]
 	path = generators/testchipip
 	url = https://github.com/ucb-bar/testchipip.git
@@ -10,9 +10,9 @@
 [submodule "tools/torture"]
 	path = tools/torture
 	url = https://github.com/ucb-bar/riscv-torture.git
-[submodule "generators/boom"]
-	path = generators/boom
-	url = https://github.com/riscv-boom/riscv-boom.git
+# [submodule "generators/boom"]
+# 	path = generators/boom
+# 	url = https://github.com/riscv-boom/riscv-boom.git
 [submodule "generators/sifive-blocks"]
 	path = generators/sifive-blocks
 	url = https://github.com/chipsalliance/rocket-chip-blocks.git
@@ -46,9 +46,9 @@
 [submodule "software/coremark"]
 	path = software/coremark
 	url = https://github.com/ucb-bar/coremark-workload.git
-[submodule "generators/gemmini"]
-	path = generators/gemmini
-	url = https://github.com/ucb-bar/gemmini
+# [submodule "generators/gemmini"]
+# 	path = generators/gemmini
+# 	url = https://github.com/ucb-bar/gemmini
 [submodule "software/firemarshal"]
 	path = software/firemarshal
 	url = https://github.com/firesim/FireMarshal.git
