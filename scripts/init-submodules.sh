@@ -142,6 +142,6 @@ cd "$RDIR"
 )
 
 # Configure firemarshal to know where our firesim installation is
-if [ ! -f ./software/firemarshal/marshal-config.yaml ]; then
-  echo "firesim-dir: '../../sims/firesim/'" > ./software/firemarshal/marshal-config.yaml
-fi
+# if [ ! -f ./software/firemarshal/marshal-config.yaml ]; then
+#   echo "firesim-dir: '../../sims/firesim/'" > ./software/firemarshal/marshal-config.yaml
+# fi
