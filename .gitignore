@@ -2,7 +2,7 @@ bootrom/*
 docs/warnings.txt
 /Makefrag.pkgs
 target
-*.jar
+# *.jar
 *.stamp
 *.vcd
 *.swp
