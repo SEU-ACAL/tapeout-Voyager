@@ -89,13 +89,13 @@ CC= CXX= module_all riscv-pk --prefix="${RISCV}" --host=riscv${XLEN}-unknown-elf
 echo '==>  Installing RISC-V tests'
 module_all riscv-tests --prefix="${RISCV}/riscv${XLEN}-unknown-elf" --with-xlen=${XLEN}
 
-echo '==> Installing espresso logic minimizer'
-(
-    cd $RDIR
-    git submodule update --init --checkout generators/constellation
-    cd generators/constellation
-    scripts/install-espresso.sh $RISCV
-)
+# echo '==> Installing espresso logic minimizer'
+# (
+#     cd $RDIR
+#     git submodule update --init --checkout generators/constellation
+#     cd generators/constellation
+#     scripts/install-espresso.sh $RISCV
+# )
 
 # Common tools (not in any particular toolchain dir)
 
@@ -103,13 +103,13 @@ echo '==>  Installing libgloss'
 CC= CXX= SRCDIR="$(pwd)/toolchains" module_all libgloss --prefix="${RISCV}/riscv${XLEN}-unknown-elf" --host=riscv${XLEN}-unknown-elf
 
 cd $RDIR
-if [ $TOOLCHAIN == "riscv-tools" ]; then
-    echo '==> Installing gemmini spike extensions'
-    git submodule update --init generators/gemmini
-    cd generators/gemmini
-    git submodule update --init software/libgemmini
-    make -C $RDIR/generators/gemmini/software/libgemmini install
-fi
+# if [ $TOOLCHAIN == "riscv-tools" ]; then
+#     echo '==> Installing gemmini spike extensions'
+#     git submodule update --init generators/gemmini
+#     cd generators/gemmini
+#     git submodule update --init software/libgemmini
+#     make -C $RDIR/generators/gemmini/software/libgemmini install
+# fi
 
 echo '==>  Installing DRAMSim2 Shared Library'
 cd $RDIR

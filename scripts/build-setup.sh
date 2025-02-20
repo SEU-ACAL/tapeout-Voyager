@@ -87,28 +87,6 @@ run_step() {
 
 {
 
-# esp-tools should ONLY be used for hwacha.
-# Check for this, since many users will be attempting to use this with gemmini
-if [ $TOOLCHAIN_TYPE == "esp-tools" ]; then
-    while true; do
-        printf '\033[2J'
-        read -p "WARNING: You are trying to install the esp-tools toolchain."$'\n'"This should ONLY be used for Hwacha development."$'\n'"Gemmini should be used with riscv-tools."$'\n'"Type \"y\" to continue if this is intended, or \"n\" if not: " validate
-        case "$validate" in
-            y | Y)
-                echo "Installing esp-tools."
-                break
-                ;;
-            n | N)
-                error "Rerun with riscv-tools"
-                exit 3
-                ;;
-            *)
-                error "Invalid response. Please type \"y\" or \"n\""
-                ;;
-        esac
-    done
-fi
-
 # setup and install conda environment
 if run_step "1"; then
     # note: lock file must end in .conda-lock.yml - see https://github.com/conda-incubator/conda-lock/issues/154
@@ -137,8 +115,10 @@ fi
 
 # initialize all submodules (without the toolchain submodules)
 if run_step "2"; then
-    $CYDIR/scripts/init-submodules-no-riscv-tools.sh $FORCE_FLAG
-    $CYDIR/scripts/init-fpga.sh $FORCE_FLAG
+    # $CYDIR/scripts/init-submodules-no-riscv-tools.sh $FORCE_FLAG
+    $CYDIR/scripts/init-submodules.sh $FORCE_FLAG
+    # $CYDIR/scripts/init-fpga.sh $FORCE_FLAG
+    # git submodule update --init --recursive
 fi
 
 # build extra toolchain collateral (i.e. spike, pk, riscv-tests, libgloss)
@@ -170,36 +150,40 @@ fi
 
 # setup firesim
 if run_step "6"; then
-    $CYDIR/scripts/firesim-setup.sh
-    $CYDIR/sims/firesim/gen-tags.sh
+    cd $CYDIR/sims/firesim/
+    git checkout 1.17.1
+    ./build-setup.sh
 
-    # precompile firesim scala sources
-    if run_step "7"; then
-        pushd $CYDIR/sims/firesim
-        (
-            echo $CYDIR
-            source sourceme-f1-manager.sh --skip-ssh-setup
-            pushd sim
-            make sbt SBT_COMMAND="project {file:$CYDIR}firechip; compile" TARGET_PROJECT=firesim
-            popd
-        )
-        popd
-    fi
+    # $CYDIR/scripts/firesim-setup.sh
+    # $CYDIR/sims/firesim/gen-tags.sh
+
+    # # precompile firesim scala sources
+    # if run_step "7"; then
+    #     pushd $CYDIR/sims/firesim
+    #     (
+    #         echo $CYDIR
+    #         source sourceme-f1-manager.sh --skip-ssh-setup
+    #         pushd sim
+    #         make sbt SBT_COMMAND="project {file:$CYDIR}firechip; compile" TARGET_PROJECT=firesim
+    #         popd
+    #     )
+    #     popd
+    # fi
 fi
 
-# setup firemarshal
-if run_step "8"; then
-    pushd $CYDIR/software/firemarshal
-    ./init-submodules.sh
+# # setup firemarshal
+# if run_step "8"; then
+#     pushd $CYDIR/software/firemarshal
+#     ./init-submodules.sh
 
-    # precompile firemarshal buildroot sources
-    if run_step "9"; then
-        source $CYDIR/scripts/fix-open-files.sh
-        ./marshal $VERBOSE_FLAG build br-base.json
-        ./marshal $VERBOSE_FLAG clean br-base.json
-    fi
-    popd
-fi
+#     # precompile firemarshal buildroot sources
+#     if run_step "9"; then
+#         source $CYDIR/scripts/fix-open-files.sh
+#         ./marshal $VERBOSE_FLAG build br-base.json
+#         ./marshal $VERBOSE_FLAG clean br-base.json
+#     fi
+#     popd
+# fi
 
 # do misc. cleanup for a "clean" git status
 if run_step "10"; then
