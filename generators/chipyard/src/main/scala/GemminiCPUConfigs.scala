@@ -1,4 +1,3 @@
-/*
 package chipyard
 
 import boom.common._
@@ -17,4 +16,3 @@ object CustomGemmminiCPUConfigs {
   // Specify which CPU configs you want to build here
   type CustomCPU = RocketBigCores
 }
-*/

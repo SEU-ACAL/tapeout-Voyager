@@ -1,4 +1,3 @@
-/*
 package chipyard
 
 import org.chipsalliance.cde.config.{Config}
@@ -21,4 +20,3 @@ class CustomGemminiSoCConfig extends Config(
 
   new chipyard.config.AbstractConfig
 )
-*/
