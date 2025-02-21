@@ -1,8 +1,10 @@
 #!/bin/bash
 
+CDIR=$(git rev-parse --show-toplevel)
 ROOT="$PWD/"
+WAVEFORM=""
 
-WAVEFORM="waveforms/waveform.vcd"
+TIMESTAMP=$(date +%Y-%m-%d-%H-%M)
 
 help () {
   echo "Run a RISCV Gemmini program on Verilator, a cycle-accurate simulator"
@@ -64,6 +66,8 @@ else
     PK=""
 fi
 
+WAVEFORM="waveforms/${TIMESTAMP}-${binary}-waveform.vcd"
+
 if [ $debug -eq 1 ]; then
     DEBUG="-debug -v ${ROOT}${WAVEFORM}"
 else
@@ -73,9 +77,9 @@ fi
 path=""
 suffix=""
 
-for dir in bareMetalC mlps imagenet transformers ; do
-    if [ -f "software/gemmini-rocc-tests/build/${dir}/${binary}$default_suffix" ]; then
-        path="${ROOT}/software/gemmini-rocc-tests/build/${dir}/"
+for dir in cpu npu; do
+    if [ -f "${CDIR}/software/bin/build/${dir}/${binary}$default_suffix" ]; then
+        path="${CDIR}/software/bin/build/${dir}/"
         suffix=$default_suffix
     fi
 done
@@ -87,6 +91,16 @@ if [ ! -f "${full_binary_path}" ]; then
     exit 1
 fi
 
-cd ../../sims/verilator/
-./simulator-chipyard-CustomGemminiSoCConfig${DEBUG} $PK ${full_binary_path}
+LOG_DIR="${ROOT}/log/${TIMESTAMP}-${binary}-verilator-run-log"
+mkdir -p "${LOG_DIR}"
 
+
+${CDIR}/software/scripts/smartelf2hex.sh ${full_binary_path} > ${full_binary_path}.loadmem_hex
+
+cd ${CDIR}/sims/verilator/
+
+./simulator-chipyard-CustomGemminiSoCConfig${DEBUG} +verbose $PK +permissive  \
+    +loadmem=${full_binary_path}.loadmem_hex +loadmem_addr=80000000 \
+    +permissive-off ${full_binary_path} \
+    &> >(tee ${LOG_DIR}/stdout.log) \
+    2> >(spike-dasm > ${LOG_DIR}/disasm.log)
