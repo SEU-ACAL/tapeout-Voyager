@@ -3,20 +3,21 @@ package gemmini
 import chisel3._
 import chisel3.util._
 
-import freechips.rocketchip.tile.RoCCCommand
+import freechips.rocketchip.tile._
+import freechips.rocketchip.npu._
 import org.chipsalliance.cde.config.Parameters
-
+import rocketchipnpu.common._
 import GemminiISA._
 import Util._
 
 class InstCompressor(implicit p: Parameters) extends Module {
   val io = IO(new Bundle {
-    val in = Flipped(Decoupled(new RoCCCommand))
-    val out = Decoupled(new RoCCCommand)
+    val in = Flipped(Decoupled(new RoCCNpuCommand))
+    val out = Decoupled(new RoCCNpuCommand)
     val busy = Output(Bool())
   })
 
-  val buf = Reg(Vec(2, UDValid(new RoCCCommand)))
+  val buf = Reg(Vec(2, UDValid(new RoCCNpuCommand)))
 
   val is_preload = buf(0).bits.inst.funct === PRELOAD_CMD
 
@@ -85,7 +86,7 @@ class InstDecompressor(rob_entries: Int)(implicit p: Parameters) extends Module 
 }
 
 object InstCompressor {
-  def apply(enq: ReadyValidIO[RoCCCommand])(implicit p: Parameters) = {
+  def apply(enq: ReadyValidIO[RoCCNpuCommand])(implicit p: Parameters) = {
     val ic = Module(new InstCompressor)
     ic.io.in <> enq
     (ic.io.out, ic.io.busy)

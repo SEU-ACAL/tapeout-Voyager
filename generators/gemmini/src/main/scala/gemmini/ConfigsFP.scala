@@ -4,8 +4,9 @@ import chisel3._
 import org.chipsalliance.cde.config.{Config, Parameters}
 import freechips.rocketchip.diplomacy.{LazyModule, ValName}
 import freechips.rocketchip.subsystem._
-import freechips.rocketchip.tile.{BuildRoCC, OpcodeSet}
-
+import freechips.rocketchip.npu._
+import freechips.rocketchip.tile._
+import rocketchipnpu.common._
 // -----------------------------
 // Floating Point Config Mixins
 // -----------------------------
@@ -114,7 +115,7 @@ object GemminiFPConfigs {
 
 //===========FP32 Default Config=========
 class GemminiFP32DefaultConfig extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]
@@ -126,7 +127,7 @@ class GemminiFP32DefaultConfig extends Config((site, here, up) => {
 
 //===========FP16 Default Config=========
 class GemminiFP16DefaultConfig extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]
@@ -137,7 +138,7 @@ class GemminiFP16DefaultConfig extends Config((site, here, up) => {
 
 //===========BFLOAT16 Default Config=========
 class GemminiBF16DefaultConfig extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]
@@ -147,7 +148,7 @@ class GemminiBF16DefaultConfig extends Config((site, here, up) => {
 })
 
 class GemminiBF16DefaultHighPerfConfig extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
     (p: Parameters) => {
       implicit val q = p
       implicit val v = implicitly[ValName]
@@ -162,7 +163,7 @@ class GemminiBF16DefaultHighPerfConfig extends Config((site, here, up) => {
 
 //===========BFLOAT16 Default Config 8x8=========
 class GemminiBF16Default8Config extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]

@@ -1,7 +1,7 @@
 // See LICENSE.SiFive for license details.
 // See LICENSE.Berkeley for license details.
 
-package freechips.rocketchip.tile
+package freechips.rocketchip.npu
 
 import Chisel._
 import org.chipsalliance.cde.config._
@@ -13,9 +13,10 @@ import freechips.rocketchip.rocket._
 import freechips.rocketchip.subsystem.TileCrossingParamsLike
 import freechips.rocketchip.util._
 import freechips.rocketchip.prci.{ClockSinkParameters}
+import freechips.rocketchip.tile._
 
 
-case class RocketTileParams(
+case class RocketTileNpuParams(
     core: RocketCoreParams = RocketCoreParams(),
     icache: Option[ICacheParams] = Some(ICacheParams()),
     dcache: Option[DCacheParams] = Some(DCacheParams()),
@@ -27,28 +28,28 @@ case class RocketTileParams(
     blockerCtrlAddr: Option[BigInt] = None,
     clockSinkParams: ClockSinkParameters = ClockSinkParameters(),
     boundaryBuffers: Boolean = false // if synthesized with hierarchical PnR, cut feed-throughs?
-    ) extends InstantiableTileParams[RocketTile] {
+    ) extends InstantiableTileParams[RocketTileNpu] {
   require(icache.isDefined)
   require(dcache.isDefined)
-  def instantiate(crossing: TileCrossingParamsLike, lookup: LookupByHartIdImpl)(implicit p: Parameters): RocketTile = {
-    new RocketTile(this, crossing, lookup)
+  def instantiate(crossing: TileCrossingParamsLike, lookup: LookupByHartIdImpl)(implicit p: Parameters): RocketTileNpu = {
+    new RocketTileNpu(this, crossing, lookup)
   }
 }
 
-class RocketTile private(
-      val rocketParams: RocketTileParams,
+class RocketTileNpu private(
+      val rocketnpuParams: RocketTileNpuParams,
       crossing: ClockCrossingType,
       lookup: LookupByHartIdImpl,
       q: Parameters)
-    extends BaseTile(rocketParams, crossing, lookup, q)
+    extends BaseTile(rocketnpuParams, crossing, lookup, q)
     with SinksExternalInterrupts
     with SourcesExternalNotifications
-    with HasLazyRoCC  // implies CanHaveSharedFPU with CanHavePTW with HasHellaCache
+    with HasLazyRoCCNpu  // implies CanHaveSharedFPU with CanHavePTW with HasHellaCache
     with HasHellaCache
     with HasICacheFrontend
 {
   // Private constructor ensures altered LazyModule.p is used implicitly
-  def this(params: RocketTileParams, crossing: TileCrossingParamsLike, lookup: LookupByHartIdImpl)(implicit p: Parameters) =
+  def this(params: RocketTileNpuParams, crossing: TileCrossingParamsLike, lookup: LookupByHartIdImpl)(implicit p: Parameters) =
     this(params, crossing.crossingType, lookup, p)
 
   val intOutwardNode = IntIdentityNode()
@@ -60,7 +61,7 @@ class RocketTile private(
   }}
   dtim_adapter.foreach(lm => connectTLSlave(lm.node, lm.node.portParams.head.beatBytes))
 
-  val bus_error_unit = rocketParams.beuAddr map { a =>
+  val bus_error_unit = rocketnpuParams.beuAddr map { a =>
     val beu = LazyModule(new BusErrorUnit(new L1BusErrors, BusErrorUnitParams(a)))
     intOutwardNode := beu.intNode
     connectTLSlave(beu.node, xBytes)
@@ -102,34 +103,34 @@ class RocketTile private(
     Resource(cpuDevice, "reg").bind(ResourceAddress(staticIdForMetadataUseOnly))
   }
 
-  override lazy val module = new RocketTileModuleImp(this)
+  override lazy val module = new RocketTileNpuModuleImp(this)
 
   override def makeMasterBoundaryBuffers(crossing: ClockCrossingType)(implicit p: Parameters) = crossing match {
     case _: RationalCrossing =>
-      if (!rocketParams.boundaryBuffers) TLBuffer(BufferParams.none)
+      if (!rocketnpuParams.boundaryBuffers) TLBuffer(BufferParams.none)
       else TLBuffer(BufferParams.none, BufferParams.flow, BufferParams.none, BufferParams.flow, BufferParams(1))
     case _ => TLBuffer(BufferParams.none)
   }
 
   override def makeSlaveBoundaryBuffers(crossing: ClockCrossingType)(implicit p: Parameters) = crossing match {
     case _: RationalCrossing =>
-      if (!rocketParams.boundaryBuffers) TLBuffer(BufferParams.none)
+      if (!rocketnpuParams.boundaryBuffers) TLBuffer(BufferParams.none)
       else TLBuffer(BufferParams.flow, BufferParams.none, BufferParams.none, BufferParams.none, BufferParams.none)
     case _ => TLBuffer(BufferParams.none)
   }
 }
 
-class RocketTileModuleImp(outer: RocketTile) extends BaseTileModuleImp(outer)
-    with HasFpuOpt
-    with HasLazyRoCCModule
+class RocketTileNpuModuleImp(outer: RocketTileNpu) extends BaseTileModuleImp(outer)
+    with HasFpuNpuOpt
+    with HasLazyRoCCNpuModule
     with HasICacheFrontendModule {
-  Annotated.params(this, outer.rocketParams)
+  Annotated.params(this, outer.rocketnpuParams)
 
   //val core = Module(if(outer.rocketParams.core_cpu) new Rocket(outer)(outer.p) else new RocketNpu(outer)(outer.p))
 
   // val core = if(outer.rocketParams.core_cpu) Module(new Rocket(outer)(outer.p))
   //             else Module (new RocketNpu(outer)(outer.p))
-  val core = Module(new Rocket(outer)(outer.p))
+  val core = Module(new RocketNpu(outer)(outer.p))
  
   
 
@@ -137,7 +138,7 @@ class RocketTileModuleImp(outer: RocketTile) extends BaseTileModuleImp(outer)
   outer.reportHalt(List(outer.dcache.module.io.errors))
 
   // Report when the tile has ceased to retire instructions; for now the only cause is clock gating
-  outer.reportCease(outer.rocketParams.core.clockGate.option(
+  outer.reportCease(outer.rocketnpuParams.core.clockGate.option(
     !outer.dcache.module.io.cpu.clock_enabled &&
     !outer.frontend.module.io.cpu.clock_enabled &&
     !ptw.io.dpath.clock_enabled &&
@@ -192,6 +193,6 @@ class RocketTileModuleImp(outer: RocketTile) extends BaseTileModuleImp(outer)
   ptw.io.requestor <> ptwPorts.toSeq
 }
 
-trait HasFpuOpt { this: RocketTileModuleImp =>
+trait HasFpuNpuOpt { this: RocketTileNpuModuleImp =>
   val fpuOpt = outer.tileParams.core.fpu.map(params => Module(new FPU(params)(outer.p)))
 }

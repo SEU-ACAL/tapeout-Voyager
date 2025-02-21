@@ -20,7 +20,6 @@ import boom.common._
 import boom.exu.BrUpdateInfo
 import boom.util.{IsKilledByBranch, GetNewBrMask, BranchKillableQueue, IsOlder, UpdateBrMask, AgePriorityEncoder, WrapInc, Transpose}
 
-
 class BoomWritebackUnit(implicit edge: TLEdgeOut, p: Parameters) extends L1HellaCacheModule()(p) {
   val io = IO(new Bundle {
     val req = Flipped(Decoupled(new WritebackReq(edge.bundle)))

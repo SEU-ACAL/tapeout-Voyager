@@ -1,7 +1,7 @@
 // See LICENSE.SiFive for license details.
 // See LICENSE.Berkeley for license details.
 
-package freechips.rocketchip.rocket
+package freechips.rocketchip.npu
 
 import chisel3._
 import chisel3.util.{BitPat, Cat, Fill, Mux1H, PopCount, PriorityMux, RegEnable, UIntToOH, Valid, log2Ceil, log2Up}
@@ -12,8 +12,9 @@ import freechips.rocketchip.util._
 import freechips.rocketchip.util.property
 
 import scala.collection.mutable.LinkedHashMap
-import Instructions._
-import CustomInstructions._
+import freechips.rocketchip.rocket._
+import freechips.rocketchip.rocket.Instructions._
+import freechips.rocketchip.rocket.CustomInstructions._
 
 class MStatus extends Bundle {
   // not truly part of mstatus, but convenient
@@ -257,6 +258,7 @@ class CSRFileIO(implicit p: Parameters) extends CoreBundle
   val eret = Output(Bool())
   val singleStep = Output(Bool())
 
+  val npu_custom = Output(UInt(64.W))
   val status = Output(new MStatus())
   val hstatus = Output(new HStatus())
   val gstatus = Output(new MStatus())
@@ -355,13 +357,13 @@ class VType(implicit p: Parameters) extends CoreBundle {
   }
 }
 
-class CSRFile(
+class CSRFileNpu(
   perfEventSets: EventSets = new EventSets(Seq()),
   customCSRs: Seq[CustomCSR] = Nil)(implicit p: Parameters)
     extends CoreModule()(p)
     with HasCoreParameters {
   val io = IO(new CSRFileIO {
-    val customCSRs = Output(Vec(CSRFile.this.customCSRs.size, new CustomCSRIO))
+    val customCSRs = Output(Vec(CSRFileNpu.this.customCSRs.size, new CustomCSRIO))
   })
 
   val reset_mstatus = WireDefault(0.U.asTypeOf(new MStatus()))
@@ -942,6 +944,7 @@ class CSRFile(
   dontTouch(read_mtvec)
   val tvec = Mux(trapToDebug, debugTVec, Mux(trapToNmi, nmiTVec, notDebugTVec))
   dontTouch(tvec)
+  io.npu_custom := notDebugTVec
   io.evec := tvec
   io.ptbr := reg_satp
   io.hgatp := reg_hgatp

@@ -4,8 +4,9 @@ import org.chipsalliance.cde.config.{Config, Parameters}
 import chisel3._
 import freechips.rocketchip.diplomacy.LazyModule
 import freechips.rocketchip.subsystem.SystemBusKey
-import freechips.rocketchip.tile.BuildRoCC
-
+import freechips.rocketchip.npu._
+import freechips.rocketchip.tile._
+import rocketchipnpu.common._
 
 object GemminiCustomConfigs {
   // Default configurations
@@ -57,7 +58,7 @@ object GemminiCustomConfigs {
 class GemminiCustomConfig[T <: Data : Arithmetic, U <: Data, V <: Data](
   gemminiConfig: GemminiArrayConfig[T,U,V] = GemminiCustomConfigs.customConfig
 ) extends Config((site, here, up) => {
-  case BuildRoCC => up(BuildRoCC) ++ Seq(
+  case BuildRoCCNpu => up(BuildRoCCNpu) ++ Seq(
     (p: Parameters) => {
       implicit val q = p
       val gemmini = LazyModule(new Gemmini(gemminiConfig))

@@ -5,6 +5,9 @@ import chisel3._
 import org.chipsalliance.cde.config.{Field, Parameters, Config}
 import freechips.rocketchip.tile._
 import freechips.rocketchip.diplomacy._
+import freechips.rocketchip.subsystem._
+import freechips.rocketchip.npu._
+import rocketchipnpu.common._
 
 import hwacha.{Hwacha}
 import gemmini._
@@ -15,12 +18,15 @@ import chipyard.{TestSuitesKey, TestSuiteHelper}
  * Map from a hartId to a particular RoCC accelerator
  */
 case object MultiRoCCKey extends Field[Map[Int, Seq[Parameters => LazyRoCC]]](Map.empty[Int, Seq[Parameters => LazyRoCC]])
-
+case object MultiRoCCNpuKey extends Field[Map[Int, Seq[Parameters => LazyRoCCNpu]]](Map.empty[Int, Seq[Parameters => LazyRoCCNpu]])
+case object MultiRoCCnpuKey extends Field[Map[Int, Seq[Parameters => LazyRoCCnpu]]](Map.empty[Int, Seq[Parameters => LazyRoCCnpu]])
 /**
  * Config fragment to enable different RoCCs based on the hartId
  */
 class WithMultiRoCC extends Config((site, here, up) => {
+  case BuildRoCCNpu => site(MultiRoCCNpuKey).getOrElse(site(TileKey).hartId, Nil)
   case BuildRoCC => site(MultiRoCCKey).getOrElse(site(TileKey).hartId, Nil)
+  case BuildRoCCnpu => site(MultiRoCCnpuKey).getOrElse(site(TileKey).hartId, Nil)
 })
 
 /**
@@ -59,6 +65,19 @@ class WithMultiRoCCHwacha(harts: Int*) extends Config(
   })
 )
 
+class WithMultiSingleRoCCExample(harts: Int*) extends Config(
+  new Config((site, here, up) => {
+    case MultiRoCCKey => {
+      up(MultiRoCCKey, site) ++ harts.distinct.map{ i =>
+        (i -> Seq((p: Parameters) => {
+          val accumulator = LazyModule(new AccumulatorExample(OpcodeSet.custom0, n = 4)(p))
+        accumulator
+        }))
+      }
+    }
+  })
+)
+
 class WithHwachaTest extends Config((site, here, up) => {
   case TestSuitesKey => (tileParams: Seq[TileParams], suiteHelper: TestSuiteHelper, p: Parameters) => {
     up(TestSuitesKey).apply(tileParams, suiteHelper, p)
@@ -77,7 +96,7 @@ class WithHwachaTest extends Config((site, here, up) => {
   */
 class WithMultiRoCCGemmini[T <: Data : Arithmetic, U <: Data, V <: Data](
   harts: Int*)(gemminiConfig: GemminiArrayConfig[T,U,V] = GemminiConfigs.defaultConfig) extends Config((site, here, up) => {
-  case MultiRoCCKey => up(MultiRoCCKey, site) ++ harts.distinct.map { i =>
+  case MultiRoCCNpuKey => up(MultiRoCCNpuKey, site) ++ harts.distinct.map { i =>
     (i -> Seq((p: Parameters) => {
       implicit val q = p
       val gemmini = LazyModule(new Gemmini(gemminiConfig))

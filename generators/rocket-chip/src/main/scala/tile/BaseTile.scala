@@ -13,6 +13,7 @@ import freechips.rocketchip.rocket._
 import freechips.rocketchip.tilelink._
 import freechips.rocketchip.util._
 import freechips.rocketchip.prci.{ClockSinkParameters}
+import freechips.rocketchip.npu.BuildRoCCNpu
 
 case object TileVisibilityNodeKey extends Field[TLEphemeralNode]
 case object TileKey extends Field[TileParams]
@@ -47,7 +48,7 @@ trait HasNonDiplomaticTileParameters {
   def usingSupervisor: Boolean = tileParams.core.hasSupervisorMode
   def usingHypervisor: Boolean = usingVM && tileParams.core.useHypervisor
   def usingDebug: Boolean = tileParams.core.useDebug
-  def usingRoCC: Boolean = !p(BuildRoCC).isEmpty
+  def usingRoCC: Boolean = !p(BuildRoCC).isEmpty || !p(BuildRoCCNpu).isEmpty
   def usingBTB: Boolean = tileParams.btb.isDefined && tileParams.btb.get.nEntries > 0
   def usingPTW: Boolean = usingVM
   def usingDataScratchpad: Boolean = tileParams.dcache.flatMap(_.scratch).isDefined
@@ -93,7 +94,7 @@ trait HasNonDiplomaticTileParameters {
 
   // TODO make HellaCacheIO diplomatic and remove this brittle collection of hacks
   //                  Core   PTW                DTIM                    coprocessors           
-  def dcacheArbPorts = 1 + usingVM.toInt + usingDataScratchpad.toInt + p(BuildRoCC).size + tileParams.core.useVector.toInt
+  def dcacheArbPorts = 1 + usingVM.toInt + usingDataScratchpad.toInt + p(BuildRoCC).size + p(BuildRoCCNpu).size + tileParams.core.useVector.toInt
 
   // TODO merge with isaString in CSR.scala
   def isaDTS: String = {

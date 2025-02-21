@@ -3,7 +3,9 @@ package gemmini
 
 import chisel3._
 import chisel3.util._
-import freechips.rocketchip.tile.RoCCCommand
+
+import freechips.rocketchip.npu._
+import freechips.rocketchip.tile._
 import freechips.rocketchip.util.PlusArg
 import GemminiISA._
 import Util._

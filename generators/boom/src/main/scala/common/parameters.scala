@@ -99,7 +99,7 @@ case class BoomCoreParams(
   trace: Boolean = false,
 
   /* debug stuff */
-  enableCommitLogPrintf: Boolean = false,
+  enableCommitLogPrintf: Boolean = true,
   enableBranchPrintf: Boolean = false,
   enableMemtracePrintf: Boolean = false
 
@@ -262,7 +262,7 @@ trait HasBoomCoreParameters extends freechips.rocketchip.tile.HasCoreParameters
 
   //************************************
   // Implicitly calculated constants
-  val numRobRows      = numRobEntries/coreWidth
+  val numRobRows      = numRobEntries/coreWidth //96/3=32
   val robAddrSz       = log2Ceil(numRobRows) + log2Ceil(coreWidth)
   // the f-registers are mapped into the space above the x-registers
   val logicalRegCount = if (usingFPU) 64 else 32

@@ -1281,6 +1281,21 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
   rob.io.lsu_clr_unsafe := io.lsu.clr_unsafe
   rob.io.lxcpt          <> io.lsu.lxcpt
 
+  //for debug
+  for (i <- 0 until coreWidth){
+    dontTouch(rob.io.commit.uops(i).inst)
+    dontTouch(rob.io.commit.uops(i).debug_inst)
+    dontTouch(rob.io.commit.uops(i).debug_pc)
+    dontTouch(rob.io.commit.uops(i).lrs1)
+    dontTouch(rob.io.commit.uops(i).lrs1_rtype)
+    dontTouch(rob.io.commit.uops(i).lrs2)
+    dontTouch(rob.io.commit.uops(i).lrs2_rtype)
+    dontTouch(rob.io.commit.uops(i).prs1)
+    dontTouch(rob.io.commit.uops(i).prs1_busy)
+    dontTouch(rob.io.commit.uops(i).prs2)
+    dontTouch(rob.io.commit.uops(i).prs2_busy)
+  }
+
   assert (!(csr.io.singleStep), "[core] single-step is unsupported.")
 
 
@@ -1343,7 +1358,8 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
       }
 
       when (rob.io.commit.arch_valids(w)) {
-        printf("%d 0x%x ",
+        printf("C%d: %d 0x%x ",
+          io.hartid,
           priv,
           Sext(rob.io.commit.uops(w).debug_pc(vaddrBits-1,0), xLen))
         printf_inst(rob.io.commit.uops(w))

@@ -5,8 +5,9 @@ import chisel3._
 import org.chipsalliance.cde.config.{Config, Parameters}
 import freechips.rocketchip.diplomacy.{LazyModule, ValName}
 import freechips.rocketchip.subsystem._
-import freechips.rocketchip.tile.{BuildRoCC, OpcodeSet}
-
+import freechips.rocketchip.npu._
+import freechips.rocketchip.tile._
+import rocketchipnpu.common._
 // -----------------------------
 // Design Space Exploration Mixins
 // -----------------------------
@@ -112,7 +113,7 @@ object DSEConfigs{
 
 //===========BASELINE=========
 class GemminiParamsDSE1 extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]
@@ -123,7 +124,7 @@ class GemminiParamsDSE1 extends Config((site, here, up) => {
 
 //===========DATAFLOW CHANGE: WS=========
 class GemminiParamsDSE2 extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]
@@ -134,7 +135,7 @@ class GemminiParamsDSE2 extends Config((site, here, up) => {
 
 //===========DATAFLOW CHANGE: BOTH=========
 class GemminiParamsDSE3 extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]
@@ -145,7 +146,7 @@ class GemminiParamsDSE3 extends Config((site, here, up) => {
 
 //===========BITWIDTH CHANGE: 32 BITS=========
 class GemminiParamsDSE4 extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]
@@ -156,7 +157,7 @@ class GemminiParamsDSE4 extends Config((site, here, up) => {
 
 //===========DIMENSIONS CHANGE: 32x32=========
 class GemminiParamsDSE5 extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]
@@ -167,7 +168,7 @@ class GemminiParamsDSE5 extends Config((site, here, up) => {
 
 //===========PIPELINE DEPTH CHANGE: Fully Combinational=========
 class GemminiParamsDSE6 extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]
@@ -178,7 +179,7 @@ class GemminiParamsDSE6 extends Config((site, here, up) => {
 
 //===========MEMORY CAPACITY CHANGE: 256 KB=========
 class GemminiParamsDSE7 extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]
@@ -189,7 +190,7 @@ class GemminiParamsDSE7 extends Config((site, here, up) => {
 
 //===========MEMORY BANKS CHANGE: 33 Banks=========
 class GemminiParamsDSE8 extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]
@@ -200,7 +201,7 @@ class GemminiParamsDSE8 extends Config((site, here, up) => {
 
 //===========BUS WIDTH CHANGE: 64 bits=========
 class GemminiParamsDSE10 extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
          implicit val q = p
         implicit val v = implicitly[ValName]
@@ -211,7 +212,7 @@ class GemminiParamsDSE10 extends Config((site, here, up) => {
 
 //===========PnR 16-by-16=========
 class GemminiParamsPnR16 extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
     (p: Parameters) => {
       implicit val q = p
       implicit val v = implicitly[ValName]
@@ -222,7 +223,7 @@ class GemminiParamsPnR16 extends Config((site, here, up) => {
 
 //===========PnR 32-by-32=========
 class GemminiParamsPnR32 extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
     (p: Parameters) => {
       implicit val q = p
       implicit val v = implicitly[ValName]
@@ -233,7 +234,7 @@ class GemminiParamsPnR32 extends Config((site, here, up) => {
 
 //===========Scalar Processor Change=========
 class GemminiParamsDSE11 extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]

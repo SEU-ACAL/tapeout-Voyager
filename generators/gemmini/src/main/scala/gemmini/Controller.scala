@@ -13,9 +13,11 @@ import freechips.rocketchip.util.ClockGate
 import freechips.rocketchip.tilelink.TLIdentityNode
 import GemminiISA._
 import Util._
+import freechips.rocketchip.npu._
+import rocketchipnpu.common._
 
 class GemminiCmd(rob_entries: Int)(implicit p: Parameters) extends Bundle {
-  val cmd = new RoCCCommand
+  val cmd = new RoCCNpuCommand
   val rob_id = UDValid(UInt(log2Up(rob_entries).W))
   val from_matmul_fsm = Bool()
   val from_conv_fsm = Bool()
@@ -23,7 +25,7 @@ class GemminiCmd(rob_entries: Int)(implicit p: Parameters) extends Bundle {
 
 class Gemmini[T <: Data : Arithmetic, U <: Data, V <: Data](val config: GemminiArrayConfig[T, U, V])
                                      (implicit p: Parameters)
-  extends LazyRoCC (
+  extends LazyRoCCNpu (
     opcodes = config.opcodes,
     nPTWPorts = if (config.use_shared_tlb) 1 else 2) {
 
@@ -44,7 +46,7 @@ class Gemmini[T <: Data : Arithmetic, U <: Data, V <: Data](val config: GemminiA
 
 class GemminiModule[T <: Data: Arithmetic, U <: Data, V <: Data]
     (outer: Gemmini[T, U, V])
-    extends LazyRoCCModuleImp(outer)
+    extends LazyRoCCNpuModuleImp(outer)
     with HasCoreParameters {
 
   import outer.config._

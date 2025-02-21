@@ -10,10 +10,12 @@ import freechips.rocketchip.devices.debug.{Debug, ExportDebug, DebugModuleKey, D
 import freechips.rocketchip.stage.phases.TargetDirKey
 import freechips.rocketchip.subsystem._
 import freechips.rocketchip.tile.{XLen}
+import freechips.rocketchip.diplomacy.{AsynchronousCrossing}
 
 import sifive.blocks.devices.gpio._
 import sifive.blocks.devices.uart._
 import sifive.blocks.devices.spi._
+import sifive.blocks.devices.i2c._
 
 import testchipip._
 
@@ -45,10 +47,31 @@ class WithUARTFIFOEntries(txEntries: Int, rxEntries: Int) extends Config((site, 
   case PeripheryUARTKey => up(PeripheryUARTKey).map(_.copy(nTxEntries = txEntries, nRxEntries = rxEntries))
 })
 
+/**
+  * Config fragment for adding a SPI peripheral device to the SoC
+  *
+  * @param address the address of the SPI controller
+  */
+class WithSPI(address: BigInt = 0x10031000) extends Config((site, here, up) => {
+  case PeripherySPIKey => up(PeripherySPIKey) ++ Seq(
+    SPIParams(rAddress = address))
+})
+
 class WithSPIFlash(size: BigInt = 0x10000000) extends Config((site, here, up) => {
   // Note: the default size matches freedom with the addresses below
   case PeripherySPIFlashKey => Seq(
     SPIFlashParams(rAddress = 0x10040000, fAddress = 0x20000000, fSize = size))
+})
+
+/**
+  * Config fragment for adding a I2C peripheral device to the SoC
+  *
+  * @param address the address of the I2C controller
+  */
+class WithI2C(address: BigInt = 0x10040000) extends Config((site, here, up) => {
+  case PeripheryI2CKey => up(PeripheryI2CKey) ++ Seq(
+    I2CParams(address = address, controlXType = AsynchronousCrossing(), intXType = AsynchronousCrossing())
+  )
 })
 
 class WithDMIDTM extends Config((site, here, up) => {

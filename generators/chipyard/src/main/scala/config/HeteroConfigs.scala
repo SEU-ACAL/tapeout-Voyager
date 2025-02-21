@@ -1,6 +1,7 @@
 package chipyard
 
 import org.chipsalliance.cde.config.{Config}
+import gemmini.GemminiConfigs
 
 // ---------------------
 // Heterogenous Configs
@@ -62,3 +63,31 @@ class LargeBoomAndRocketWithControlCoreConfig extends Config(
   new freechips.rocketchip.subsystem.WithNBigCores(1) ++   // add 1 rocket core
   new chipyard.config.WithSystemBusWidth(128) ++
   new chipyard.config.AbstractConfig)
+
+class OurHeterSoCConfig extends Config(
+  //new rocketchipnpu.common.WithNBigCores(1) ++
+  new freechips.rocketchip.subsystem.WithNBigNpuCores(1) ++
+  new freechips.rocketchip.subsystem.WithNBigCores(4) ++
+  new boom.common.WithNLargeBooms(1) ++
+  new chipyard.config.WithMultiRoCC ++
+  new chipyard.config.WithMultiSingleRoCCExample(0, 1, 2, 3, 4) ++
+  new chipyard.config.WithMultiRoCCGemmini(5)(GemminiConfigs.defaultConfig) ++
+  new freechips.rocketchip.subsystem.WithInclusiveCache(capacityKB = 256) ++
+  new chipyard.config.WithSystemBusWidth(128) ++
+  new chipyard.config.WithGPIO ++ 
+  new chipyard.config.WithI2C ++
+  new chipyard.config.WithSPI ++
+  new chipyard.config.AbstractConfig
+)
+
+class OurHeterSoCNoPerConfig extends Config(
+  new freechips.rocketchip.subsystem.WithNBigNpuCores(1) ++
+  new freechips.rocketchip.subsystem.WithNBigCores(4) ++
+  new boom.common.WithNLargeBooms(1) ++
+  new chipyard.config.WithMultiRoCC ++
+  new chipyard.config.WithMultiSingleRoCCExample(0, 1, 2, 3, 4) ++
+  new chipyard.config.WithMultiRoCCGemmini(5)(GemminiConfigs.defaultConfig) ++
+  new freechips.rocketchip.subsystem.WithInclusiveCache(capacityKB = 256) ++
+  new chipyard.config.WithSystemBusWidth(128) ++
+  new chipyard.config.AbstractConfig
+)

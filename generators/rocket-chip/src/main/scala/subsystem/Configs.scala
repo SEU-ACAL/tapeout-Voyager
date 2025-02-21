@@ -11,6 +11,7 @@ import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.rocket._
 import freechips.rocketchip.tile._
 import freechips.rocketchip.util._
+import freechips.rocketchip.npu._
 
 class BaseSubsystemConfig extends Config ((site, here, up) => {
   // Tile parameters
@@ -108,6 +109,33 @@ class WithNBigCores(
         rowBits = site(SystemBusKey).beatBits,
         blockBytes = site(CacheBlockBytes))))
     List.tabulate(n)(i => RocketTileAttachParams(
+      big.copy(hartId = i + idOffset),
+      crossing
+    )) ++ prev
+  }
+})
+
+class WithNBigNpuCores(
+  n: Int,
+  overrideIdOffset: Option[Int] = None,
+  crossing: RocketCrossingParams = RocketCrossingParams()
+) extends Config((site, here, up) => {
+  case TilesLocated(InSubsystem) => {
+    val prev = up(TilesLocated(InSubsystem), site)
+    val idOffset = overrideIdOffset.getOrElse(prev.size)
+    val big = RocketTileNpuParams(
+      core   = RocketCoreParams(mulDiv = Some(MulDivParams(
+        mulUnroll = 8,
+        mulEarlyOut = true,
+        divEarlyOut = true))),
+      dcache = Some(DCacheParams(
+        rowBits = site(SystemBusKey).beatBits,
+        nMSHRs = 0,
+        blockBytes = site(CacheBlockBytes))),
+      icache = Some(ICacheParams(
+        rowBits = site(SystemBusKey).beatBits,
+        blockBytes = site(CacheBlockBytes))))
+    List.tabulate(n)(i => RocketTileNpuAttachParams(
       big.copy(hartId = i + idOffset),
       crossing
     )) ++ prev

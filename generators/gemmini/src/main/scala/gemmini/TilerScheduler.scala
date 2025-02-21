@@ -7,8 +7,10 @@ import chisel3._
 import chisel3.util._
 import org.chipsalliance.cde.config._
 import freechips.rocketchip.tile._
+import freechips.rocketchip.npu._
 import GemminiISA._
 import Util._
+import rocketchipnpu.common._
 
 class TilerScheduler[T <: Data: Arithmetic, U <: Data, V <: Data]
   (config: GemminiArrayConfig[T,U,V])(implicit val p: Parameters)
@@ -19,7 +21,7 @@ class TilerScheduler[T <: Data: Arithmetic, U <: Data, V <: Data]
   // interface
   //=========================================================================
   val io = IO(new Bundle {
-    val cmd_in = Flipped(Decoupled(new RoCCCommand))
+    val cmd_in = Flipped(Decoupled(new RoCCNpuCommand))
     val issue = new Bundle {
       val exec  = Decoupled(new GemminiCmd(ROB_ENTRIES))
       val load  = Decoupled(new GemminiCmd(ROB_ENTRIES))
@@ -73,7 +75,7 @@ class TilerScheduler[T <: Data: Arithmetic, U <: Data, V <: Data]
 
     val complete_on_issue = Bool()
 
-    val cmd = new RoCCCommand
+    val cmd = new RoCCNpuCommand
 
     val deps = Vec(ROB_ENTRIES, Bool())
     def ready(dummy: Int = 0): Bool = !deps.reduce(_ || _)

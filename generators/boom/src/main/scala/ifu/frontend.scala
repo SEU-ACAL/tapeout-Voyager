@@ -138,14 +138,14 @@ trait HasBoomFrontendParameters extends HasL1ICacheParameters
   // How many bytes wide is a bank?
   val bankBytes = fetchBytes/nBanks
 
-  val bankWidth = fetchWidth/nBanks
+  val bankWidth = fetchWidth/nBanks //每次取值的个数
 
   require(nBanks == 1 || nBanks == 2)
 
 
 
   // How many "chunks"/interleavings make up a cache line?
-  val numChunks = cacheParams.blockBytes / bankBytes
+  val numChunks = cacheParams.blockBytes / bankBytes //每个block有多少bank
 
   // Which bank is the address pointing to?
   def bank(addr: UInt) = if (nBanks == 2) addr(log2Ceil(bankBytes)) else 0.U

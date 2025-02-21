@@ -8,8 +8,10 @@ import chisel3.util._
 import chisel3.experimental._
 import org.chipsalliance.cde.config._
 import freechips.rocketchip.tile._
+import freechips.rocketchip.npu._
 import GemminiISA._
 import Util.regwire
+import rocketchipnpu.common._
 
 class TilerFSM[T <: Data : Arithmetic, U <: Data, V <: Data]
   (config: GemminiArrayConfig[T,U,V])(implicit val p: Parameters)
@@ -21,11 +23,11 @@ class TilerFSM[T <: Data : Arithmetic, U <: Data, V <: Data]
   //=========================================================================
   val io = IO(new Bundle {
     val cmd_in    = Flipped(Decoupled(new TilerCmd(LOG2_ROB_ENTRIES)))
-    val sched_out = Decoupled(new RoCCCommand)
+    val sched_out = Decoupled(new RoCCNpuCommand)
     val busy      = Output(Bool())
   })
   // hardcode 8 entries with up to 2 pushes per cycle
-  val schedq = Module(new MultiTailedQueue(new RoCCCommand, 8, 2))
+  val schedq = Module(new MultiTailedQueue(new RoCCNpuCommand, 8, 2))
   io.sched_out <> schedq.io.deq
 
   val sched = schedq.io.enq

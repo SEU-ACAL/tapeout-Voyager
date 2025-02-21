@@ -4,9 +4,10 @@ import chisel3._
 import chisel3.util._
 import chisel3.experimental._
 
-import freechips.rocketchip.tile.RoCCCommand
+import freechips.rocketchip.npu._
+import freechips.rocketchip.tile._
 import org.chipsalliance.cde.config.Parameters
-
+import rocketchipnpu.common._
 import GemminiISA._
 import Util._
 
@@ -15,8 +16,8 @@ class LoopUnroller(block_size: Int)(implicit p: Parameters) extends Module {
   val GARBAGE_ADDR = ~0.U(32.W)
 
   val io = IO(new Bundle {
-    val in = Flipped(Decoupled(new RoCCCommand))
-    val out = Decoupled(new RoCCCommand)
+    val in = Flipped(Decoupled(new RoCCNpuCommand))
+    val out = Decoupled(new RoCCNpuCommand)
   })
 
   object State extends ChiselEnum {
@@ -56,13 +57,13 @@ class LoopUnroller(block_size: Int)(implicit p: Parameters) extends Module {
   val pre_addr = Mux(i === 0.U, b_addr, GARBAGE_ADDR)
   val out_addr = Mux(bias || k =/= 0.U, c_addr, d_addr)
 
-  val preload_cmd = Wire(new RoCCCommand)
+  val preload_cmd = Wire(new RoCCNpuCommand)
   preload_cmd := DontCare
   preload_cmd.inst.funct := PRELOAD_CMD
   preload_cmd.rs1 := pre_addr
   preload_cmd.rs2 := out_addr
 
-  val compute_cmd = Wire(new RoCCCommand())
+  val compute_cmd = Wire(new RoCCNpuCommand())
   compute_cmd := DontCare
   compute_cmd.inst.funct := Mux(i === 0.U, COMPUTE_AND_FLIP_CMD, COMPUTE_AND_STAY_CMD)
   compute_cmd.rs1 := a_addr
@@ -100,7 +101,7 @@ class LoopUnroller(block_size: Int)(implicit p: Parameters) extends Module {
 }
 
 object LoopUnroller {
-  def apply(enq: ReadyValidIO[RoCCCommand], block_size: Int)(implicit p: Parameters): DecoupledIO[RoCCCommand] = {
+  def apply(enq: ReadyValidIO[RoCCNpuCommand], block_size: Int)(implicit p: Parameters): DecoupledIO[RoCCNpuCommand] = {
     val lu = Module(new LoopUnroller(block_size))
     lu.io.in <> enq
     lu.io.out

@@ -4,11 +4,13 @@ package gemmini
 import chisel3._
 import chisel3.util._
 import chisel3.experimental._
-import freechips.rocketchip.tile.RoCCCommand
+import freechips.rocketchip.tile._
+import freechips.rocketchip.npu._
 import org.chipsalliance.cde.config.Parameters
 import GemminiISA._
 import LocalAddr._
 import Util._
+import rocketchipnpu.common._
 
 // LdA
 
@@ -29,7 +31,7 @@ class LoopMatmulLdA(block_size: Int, coreMaxAddrBits: Int, iterator_bitwidth: In
                    (implicit p: Parameters) extends Module {
   val io = IO(new Bundle {
     val req = Flipped(Decoupled(new LoopMatmulLdAReq(block_size, coreMaxAddrBits, iterator_bitwidth, max_addr, concurrent_loops)))
-    val cmd = Decoupled(Output(new RoCCCommand))
+    val cmd = Decoupled(Output(new RoCCNpuCommand))
     val i = Output(UInt(iterator_bitwidth.W))
     val k = Output(UInt(iterator_bitwidth.W))
     val idle = Output(Bool())
@@ -69,7 +71,7 @@ class LoopMatmulLdA(block_size: Int, coreMaxAddrBits: Int, iterator_bitwidth: In
   val cols = (blocks * block_size.U) - Mux(col_iterator + blocks >= max_col_iterator, col_pad, 0.U)
   val rows = block_size.U - Mux(row_iterator === max_row_iterator-1.U, row_pad, 0.U)
 
-  val mvin_cmd = Wire(new RoCCCommand)
+  val mvin_cmd = Wire(new RoCCNpuCommand)
   mvin_cmd := DontCare
   mvin_cmd.inst.funct := LOAD_CMD
   mvin_cmd.rs1 := dram_addr
@@ -134,7 +136,7 @@ class LoopMatmulLdB(block_size: Int, coreMaxAddrBits: Int, iterator_bitwidth: In
                    (implicit p: Parameters) extends Module {
   val io = IO(new Bundle {
     val req = Flipped(Decoupled(new LoopMatmulLdBReq(block_size, coreMaxAddrBits, iterator_bitwidth, max_addr, concurrent_loops)))
-    val cmd = Decoupled(Output(new RoCCCommand))
+    val cmd = Decoupled(Output(new RoCCNpuCommand))
 
     val k = Output(UInt(iterator_bitwidth.W))
     val j = Output(UInt(iterator_bitwidth.W))
@@ -177,7 +179,7 @@ class LoopMatmulLdB(block_size: Int, coreMaxAddrBits: Int, iterator_bitwidth: In
   val cols = (blocks * block_size.U) - Mux(col_iterator + blocks >= max_col_iterator, col_pad, 0.U)
   val rows = block_size.U - Mux(max_row_iterator === max_row_iterator-1.U, row_pad, 0.U)
 
-  val mvin_cmd = Wire(new RoCCCommand)
+  val mvin_cmd = Wire(new RoCCNpuCommand)
   mvin_cmd := DontCare
   mvin_cmd.inst.funct := LOAD2_CMD
   mvin_cmd.rs1 := dram_addr
@@ -242,7 +244,7 @@ class LoopMatmulLdD(block_size: Int, coreMaxAddrBits: Int, iterator_bitwidth: In
                    (implicit p: Parameters) extends Module {
   val io = IO(new Bundle {
     val req = Flipped(Decoupled(new LoopMatmulLdDReq(block_size, coreMaxAddrBits, iterator_bitwidth, max_acc_addr, concurrent_loops)))
-    val cmd = Decoupled(Output(new RoCCCommand))
+    val cmd = Decoupled(Output(new RoCCNpuCommand))
 
     val idle = Output(Bool())
     val rob_overloaded = Input(Bool())
@@ -274,7 +276,7 @@ class LoopMatmulLdD(block_size: Int, coreMaxAddrBits: Int, iterator_bitwidth: In
   val cols = (blocks * block_size.U) - Mux(j + blocks >= req.max_j, req.pad_j, 0.U)
   val rows = block_size.U - Mux(i === req.max_i-1.U, req.pad_i, 0.U)
 
-  val mvin_cmd = Wire(new RoCCCommand)
+  val mvin_cmd = Wire(new RoCCNpuCommand)
   mvin_cmd := DontCare
   mvin_cmd.inst.funct := LOAD3_CMD
   mvin_cmd.rs1 := dram_addr
@@ -341,7 +343,7 @@ class LoopMatmulExecute(block_size: Int, coreMaxAddrBits: Int, iterator_bitwidth
                        (implicit p: Parameters) extends Module {
   val io = IO(new Bundle {
     val req = Flipped(Decoupled(new LoopMatmulExecuteReq(block_size, coreMaxAddrBits, iterator_bitwidth, max_addr, max_acc_addr, concurrent_loops)))
-    val cmd = Decoupled(Output(new RoCCCommand))
+    val cmd = Decoupled(Output(new RoCCNpuCommand))
 
     val k = Output(UInt(iterator_bitwidth.W))
     val j = Output(UInt(iterator_bitwidth.W))
@@ -395,7 +397,7 @@ class LoopMatmulExecute(block_size: Int, coreMaxAddrBits: Int, iterator_bitwidth
   val c_cols = block_size.U - Mux(j === req.max_j - 1.U, req.pad_j, 0.U)
   val c_rows = block_size.U - Mux(i === req.max_i - 1.U, req.pad_i, 0.U)
 
-  val pre_cmd = Wire(new RoCCCommand)
+  val pre_cmd = Wire(new RoCCNpuCommand)
   pre_cmd := DontCare
   pre_cmd.inst.funct := PRELOAD_CMD
 
@@ -415,7 +417,7 @@ class LoopMatmulExecute(block_size: Int, coreMaxAddrBits: Int, iterator_bitwidth
   pre_cmd.rs1 := pre_cmd_rs1.asUInt
   pre_cmd.rs2 := pre_cmd_rs2.asUInt
 
-  val comp_cmd = Wire(new RoCCCommand())
+  val comp_cmd = Wire(new RoCCNpuCommand())
   comp_cmd := DontCare
   comp_cmd.inst.funct := Mux(i === 0.U, COMPUTE_AND_FLIP_CMD, COMPUTE_AND_STAY_CMD)
 
@@ -498,7 +500,7 @@ class LoopMatmulStC(block_size: Int, coreMaxAddrBits: Int, iterator_bitwidth: In
                    (implicit p: Parameters) extends Module {
   val io = IO(new Bundle {
     val req = Flipped(Decoupled(new LoopMatmulStCReq(block_size, coreMaxAddrBits, iterator_bitwidth, max_acc_addr, concurrent_loops)))
-    val cmd = Decoupled(Output(new RoCCCommand))
+    val cmd = Decoupled(Output(new RoCCNpuCommand))
 
     val ex_k = Input(UInt(iterator_bitwidth.W))
     val ex_j = Input(UInt(iterator_bitwidth.W))
@@ -538,7 +540,7 @@ class LoopMatmulStC(block_size: Int, coreMaxAddrBits: Int, iterator_bitwidth: In
   val cols = (blocks * block_size.U) - Mux(j + blocks >= req.max_j, req.pad_j, 0.U)
   val rows = block_size.U - Mux(i === req.max_i-1.U, req.pad_i, 0.U)
 
-  val mvout_cmd = Wire(new RoCCCommand)
+  val mvout_cmd = Wire(new RoCCNpuCommand)
   mvout_cmd := DontCare
   mvout_cmd.inst.funct := STORE_CMD
   mvout_cmd.rs1 := dram_addr
@@ -582,13 +584,13 @@ class LoopMatmulStC(block_size: Int, coreMaxAddrBits: Int, iterator_bitwidth: In
   ln_config_norm_rs1.cmd_type := CONFIG_NORM
   ln_config_norm_rs1.norm_stats_id := ln_stat_id
 
-  val ln_config_norm = Wire(new RoCCCommand)
+  val ln_config_norm = Wire(new RoCCNpuCommand)
   ln_config_norm := DontCare
   ln_config_norm.inst.funct := CONFIG_CMD
   ln_config_norm.rs1 := ln_config_norm_rs1.asUInt
   ln_config_norm.rs2 := DontCare
 
-  val ln_mvout_cmd = Wire(new RoCCCommand)
+  val ln_mvout_cmd = Wire(new RoCCNpuCommand)
   ln_mvout_cmd := DontCare
   ln_mvout_cmd.inst.funct := STORE_CMD
   ln_mvout_cmd.rs1 := ln_dram_addr
@@ -782,7 +784,7 @@ class LoopMatmul(block_size: Int, coreMaxAddrBits: Int, reservation_station_size
   io.busy := cmd.valid || loop_configured
 
   // Create ld arbiters
-  val ldab_arb = Module(new WeightedArbiter(new RoCCCommand(), maxWeightA=255, staticWeightAEnabled=true)) // TODO magic numbers
+  val ldab_arb = Module(new WeightedArbiter(new RoCCNpuCommand(), maxWeightA=255, staticWeightAEnabled=true)) // TODO magic numbers
   ldab_arb.io.inA <> ldA.io.cmd
   ldab_arb.io.inB <> ldB.io.cmd
   val ab_loads_on_same_loop = ldA.io.loop_id === ldB.io.loop_id
@@ -797,7 +799,7 @@ class LoopMatmul(block_size: Int, coreMaxAddrBits: Int, reservation_station_size
   ldab_arb.io.inB_j := ldB.io.j
 
   // Create global arbiter
-  val arb = Module(new Arbiter(new RoCCCommand(), 4))
+  val arb = Module(new Arbiter(new RoCCNpuCommand(), 4))
   arb.io.in(0) <> stC.io.cmd
   arb.io.in(1) <> ex.io.cmd
   arb.io.in(2) <> ldD.io.cmd

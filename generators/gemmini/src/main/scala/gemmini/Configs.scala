@@ -4,11 +4,12 @@ import chisel3._
 import org.chipsalliance.cde.config.{Config, Parameters}
 import freechips.rocketchip.diplomacy.LazyModule
 import freechips.rocketchip.subsystem._
-import freechips.rocketchip.tile.{BuildRoCC, OpcodeSet, XLen}
+import freechips.rocketchip.npu._
 import freechips.rocketchip.rocket._
 import freechips.rocketchip.tile._
 import freechips.rocketchip.system._
 import freechips.rocketchip.diplomacy._
+import rocketchipnpu.common._
 
 import gemmini.Arithmetic.SIntArithmetic
 import hardfloat._
@@ -249,7 +250,7 @@ object GemminiConfigs {
 class DefaultGemminiConfig[T <: Data : Arithmetic, U <: Data, V <: Data](
   gemminiConfig: GemminiArrayConfig[T,U,V] = GemminiConfigs.defaultConfig
 ) extends Config((site, here, up) => {
-  case BuildRoCC => up(BuildRoCC) ++ Seq(
+  case BuildRoCCNpu => up(BuildRoCCNpu) ++ Seq(
     (p: Parameters) => {
       implicit val q = p
       val gemmini = LazyModule(new Gemmini(gemminiConfig))
@@ -264,7 +265,7 @@ class DefaultGemminiConfig[T <: Data : Arithmetic, U <: Data, V <: Data](
 class LeanGemminiConfig[T <: Data : Arithmetic, U <: Data, V <: Data](
   gemminiConfig: GemminiArrayConfig[T,U,V] = GemminiConfigs.leanConfig
 ) extends Config((site, here, up) => {
-  case BuildRoCC => up(BuildRoCC) ++ Seq(
+  case BuildRoCCNpu => up(BuildRoCCNpu) ++ Seq(
     (p: Parameters) => {
       implicit val q = p
       val gemmini = LazyModule(new Gemmini(gemminiConfig))
@@ -276,7 +277,7 @@ class LeanGemminiConfig[T <: Data : Arithmetic, U <: Data, V <: Data](
 class LeanGemminiPrintfConfig[T <: Data : Arithmetic, U <: Data, V <: Data](
   gemminiConfig: GemminiArrayConfig[T,U,V] = GemminiConfigs.leanPrintfConfig
 ) extends Config((site, here, up) => {
-  case BuildRoCC => up(BuildRoCC) ++ Seq(
+  case BuildRoCCNpu => up(BuildRoCCNpu) ++ Seq(
     (p: Parameters) => {
       implicit val q = p
       val gemmini = LazyModule(new Gemmini(gemminiConfig))
@@ -288,7 +289,7 @@ class LeanGemminiPrintfConfig[T <: Data : Arithmetic, U <: Data, V <: Data](
 class DummyDefaultGemminiConfig[T <: Data : Arithmetic, U <: Data, V <: Data](
   gemminiConfig: GemminiArrayConfig[T,U,V] = GemminiConfigs.dummyConfig
 ) extends Config((site, here, up) => {
-  case BuildRoCC => up(BuildRoCC) ++ Seq(
+  case BuildRoCCNpu => up(BuildRoCCNpu) ++ Seq(
     (p: Parameters) => {
       implicit val q = p
       val gemmini = LazyModule(new Gemmini(gemminiConfig))
@@ -300,7 +301,7 @@ class DummyDefaultGemminiConfig[T <: Data : Arithmetic, U <: Data, V <: Data](
 // This Gemmini config has both an Int and an FP Gemmini side-by-side, sharing
 // the same scratchpad.
 class DualGemminiConfig extends Config((site, here, up) => {
-  case BuildRoCC => {
+  case BuildRoCCNpu => {
     var int_gemmini: Gemmini[_,_,_] = null
     var fp_gemmini: Gemmini[_,_,_] = null
     val int_fn = (p: Parameters) => {
@@ -365,6 +366,6 @@ class DualGemminiConfig extends Config((site, here, up) => {
       }
       fp_gemmini
     }
-    up(BuildRoCC) ++ Seq(int_fn, fp_fn)
+    up(BuildRoCCNpu) ++ Seq(int_fn, fp_fn)
   }
 })
