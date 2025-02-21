@@ -23,11 +23,11 @@ $(BUILD_DIR):
 all: template-bin
 
 template-bin: $(BUILD_DIR)
-	$(CC) -o $(BUILD_DIR)/$@ ${NPU_WORKLOAD_DIR}/buddy-test/template.c $(CFLAGS) $(LDFLAGS)
+	$(CC) -o $(BUILD_DIR)/$@ ${NPU_WORKLOAD_DIR}/buddy/template.c $(CFLAGS) $(LDFLAGS)
 
 native-bin: $(BUILD_DIR)
-	make -C ${NPU_WORKLOAD_DIR}/native-test/libgemmini install
-	cd ${NPU_WORKLOAD_DIR}/native-test && ./build.sh
+	make -C ${NPU_WORKLOAD_DIR}/native/libgemmini install
+	cd ${NPU_WORKLOAD_DIR}/native && ./build.sh
 
 clean:
 	rm -rf $(BUILD_DIR)

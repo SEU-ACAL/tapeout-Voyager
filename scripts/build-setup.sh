@@ -153,6 +153,7 @@ if run_step "6"; then
     cd $CYDIR/sims/firesim/
     git checkout 1.17.1
     ./build-setup.sh
+fi
 
     # $CYDIR/scripts/firesim-setup.sh
     # $CYDIR/sims/firesim/gen-tags.sh
@@ -169,7 +170,7 @@ if run_step "6"; then
     #     )
     #     popd
     # fi
-fi
+# fi
 
 # # setup firemarshal
 # if run_step "8"; then
