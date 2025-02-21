@@ -18,7 +18,7 @@ git clone https://github.com/SEU-ACAL/tapeout-Voyager.git .
 
 ### 可提交物：
 
-Voyager 仓库下只有 `generator`部分文件夹, `software` 和`doc`三个文件夹可提交，其余全部.gitignore
+Voyager 仓库下只有 `generator`部分文件夹, `software`, `scripts` 和 `doc` 四个文件夹可提交，其余全部.gitignore
 
 #### `generator` 文件夹下存放RTL design.
 `generator`下可修改的目录如下:

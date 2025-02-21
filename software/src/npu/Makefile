@@ -3,9 +3,9 @@ CC=gcc
 
 
 # CDIR为chipyard的路径
-# CDIR=$(git rev-parse --show-toplevel)
+CDIR=$(git rev-parse --show-toplevel)
 
-
+NPU_WORKLOAD_DIR=${CDIR}/software/src/npu
 BUILD_DIR=$(abspath ./build)
 # CSR_PATH=$(abspath ./)
 INC_PATH=$(abspath ./include)
@@ -23,7 +23,11 @@ $(BUILD_DIR):
 all: template-bin
 
 template-bin: $(BUILD_DIR)
-	$(CC) -o $(BUILD_DIR)/$@ ./native-test/template.c $(CFLAGS) $(LDFLAGS)
+	$(CC) -o $(BUILD_DIR)/$@ ${NPU_WORKLOAD_DIR}/buddy-test/template.c $(CFLAGS) $(LDFLAGS)
+
+native-bin: $(BUILD_DIR)
+	make -C ${NPU_WORKLOAD_DIR}/native-test/libgemmini install
+	cd ${NPU_WORKLOAD_DIR}/native-test && ./build.sh
 
 clean:
 	rm -rf $(BUILD_DIR)
