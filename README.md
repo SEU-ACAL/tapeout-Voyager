@@ -11,9 +11,8 @@ https://www.anaconda.com/download/
 ```
 mkdir Voyager && cd Voyager 
 git clone https://github.com/SEU-ACAL/tapeout-Voyager.git .
-# git checkout 1.0.0 # 等第一版六核版更新后启用该版本号
+# git checkout 0.0.1 # 等第一版六核版更新后启用该版本号
 
-cd chipyard  
 ./build-setup.sh
 ```
 
@@ -21,14 +20,28 @@ cd chipyard
 
 Voyager 仓库下只有 `chipyard/generator`部分文件夹, `chipyard/software`, `scripts`和`doc`四个文件夹可提交，其余全部.gitignore
 
-#### chipyard/generator 文件夹下存放RTL design。
+#### chipyard/generator 文件夹下存放RTL design.
 
-#### chipyard/software 文件夹用于存放各个方向的workload和执行的脚本
+#### chipyard/software 文件夹用于存放各个方向的workload和执行的脚本.
 现有workload：
-- hello
-- template
+- cpu
+    - hello
+    - spmm
+- npu 
+    - template
 
-### 测试用例
+
+一键编译workload
+```
+cd Voyager/software
+mkdir build && cd build 
+cmake ..
+
+# 编译所有workload
+make all-bin
+```
+
+### 步骤二测试用例
 
 
 
