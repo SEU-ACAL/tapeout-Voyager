@@ -85,4 +85,17 @@ pre-commit install
 ```
 
 ---
+
+## 四、其他工具
+
+理想情况下工作目录应该如下
+```
+- workspace
+    - Voyager
+    - firesim
+    - buddy-mlir (only npu need)
+```
+
+具体见`documents`下的文档。
+
 NPU相关事项（如一核gemmini调试配置，BuddyCompiler安装指南等）可见`documents/NPU-README.md`
