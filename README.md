@@ -58,6 +58,7 @@ Voyager 仓库下只有 `generator`部分文件夹, `software`, `scripts` 和 `d
 一键编译workload
 
 ```
+source env.sh
 cd Voyager/software
 mkdir build && cd build 
 cmake ..
