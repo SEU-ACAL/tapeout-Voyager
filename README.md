@@ -35,6 +35,7 @@ Voyager 仓库下只有 `generator`部分文件夹, `software`, `scripts` 和 `d
 #### `generator` 文件夹下存放RTL design.
 `generator`下可修改的目录如下:
 - chipyard/src: 存放顶层TopConfig
+- firechip/src: 存放firesim的调试config
 - boom/src
 - rocket-chip/src
 - gemmini/src

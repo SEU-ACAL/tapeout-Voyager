@@ -179,11 +179,11 @@ class WithFireSimHighPerfConfigTweaks extends Config(
 // Rocket configs, base off chipyard's RocketConfig
 //*****************************************************************
 // DOC include start: firesimconfig
-class FireSimRocketConfig extends Config(
-  new WithDefaultFireSimBridges ++
-  new WithDefaultMemModel ++
-  new WithFireSimConfigTweaks ++
-  new chipyard.RocketConfig)
+// class FireSimRocketConfig extends Config(
+//   new WithDefaultFireSimBridges ++
+//   new WithDefaultMemModel ++
+//   new WithFireSimConfigTweaks ++
+//   new chipyard.RocketConfig)
 // DOC include end: firesimconfig
 
 class FireSimQuadRocketConfig extends Config(
@@ -306,3 +306,23 @@ class FireSimLeanGemminiRocketMMIOOnlyConfig extends Config(
   new WithDefaultMemModel ++
   new WithFireSimConfigTweaks ++
   new chipyard.LeanGemminiRocketConfig)
+
+
+// ====== Our Firesim Config ========
+class FireSimRocketConfig extends Config(
+  new WithDefaultFireSimBridges ++
+  new WithDefaultMemModel ++
+  new WithFireSimConfigTweaks ++
+  new chipyard.RocketConfig)
+
+class FireSimGemminiRocketConfig extends Config(
+  new WithDefaultFireSimBridges ++
+  new WithDefaultMemModel ++
+  new WithFireSimConfigTweaks ++
+  new chipyard.CustomGemminiSoCConfig)
+
+class FireSimHeterSoCConfig extends Config(
+  new WithDefaultFireSimBridges ++
+  new WithDefaultMemModel ++
+  new WithFireSimConfigTweaks ++
+  new chipyard.OurHeterSoCConfig)

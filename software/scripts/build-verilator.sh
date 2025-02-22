@@ -15,8 +15,8 @@ show_help=0
 debug=""
 j="128"
 
-# CDIR表示chipyard的路径
-CDIR=$(git rev-parse --show-toplevel)
+# CYDIR表示chipyard的路径
+CYDIR=$(git rev-parse --show-toplevel)
 CONFIG=
 
 while [ $# -gt 0 ] ; do
@@ -64,8 +64,8 @@ if [ -z "$CONFIG" ]; then
   help
 fi
 
-cd ${CDIR}/sims/verilator/ || { echo "无法进入目录 ${CDIR}/sims/verilator/"; exit 1; }
-make -j$j ${debug} CONFIG=$CONFIG || { echo "[Build verilator Failed!]==============="; exit 1; }
+cd ${CYDIR}/sims/verilator/ || { echo "Cannot enter the directory: ${CYDIR}/sims/verilator/"; exit 1; }
+make -j$j ${debug} CONFIG=$CONFIG || { echo "[Build verilator Failed!]==================="; exit 1; }
 # 编译成功了才会搬过来
-mkdir -p ${CDIR}/software/build-rtl/
-cp ${CDIR}/sims/verilator/simulator-chipyard-${CONFIG}${debug} ${CDIR}/software/build-rtl/
+mkdir -p ${CYDIR}/software/build-results/verilator
+cp ${CYDIR}/sims/verilator/simulator-chipyard-${CONFIG}${debug} ${CYDIR}/software/build-results/verilator

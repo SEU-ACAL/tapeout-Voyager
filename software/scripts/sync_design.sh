@@ -23,7 +23,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-SOURCE_DIR="$CDIR/generator"
+SOURCE_DIR="$CDIR/generators/"
 DEST_DIR="$FIRESIM_PATH/target-design/chipyard"
 
 # 检查源文件夹是否存在
@@ -32,10 +32,11 @@ if [ ! -d "$SOURCE_DIR" ]; then
     exit 1
 fi
 
-# 创建目标文件夹（如果不存在）
-mkdir -p "$DEST_DIR"
+rm -rf ${DEST_DIR}/*
+# 创建目标文件夹
+mkdir -p "$DEST_DIR/generators"
 
 # 使用 rsync 命令拷贝 RTL design
-rsync -av --progress "$SOURCE_DIR/" "$DEST_DIR/"
+rsync -av --progress "$SOURCE_DIR/" "$DEST_DIR/generators"
 
 echo "Sync Complete!"
