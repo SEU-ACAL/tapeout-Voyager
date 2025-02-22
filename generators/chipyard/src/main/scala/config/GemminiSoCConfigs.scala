@@ -15,9 +15,10 @@ class CustomGemminiSoCConfig extends Config(
     outerLatencyCycles = 40,
     subBankingFactor = 4
   ) ++
+  new freechips.rocketchip.subsystem.WithNBigNpuCores(1) ++
 
   // Set the number of CPUs you want to create
-  new chipyard.CustomGemmminiCPUConfigs.CustomCPU(1) ++
+  // new chipyard.CustomGemmminiCPUConfigs.CustomCPU(1) ++
 
   new chipyard.config.WithSystemBusWidth(GemminiCustomConfigs.customConfig.dma_buswidth) ++
   new chipyard.config.AbstractConfig

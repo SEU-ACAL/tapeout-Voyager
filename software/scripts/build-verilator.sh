@@ -67,4 +67,5 @@ fi
 cd ${CDIR}/sims/verilator/ || { echo "无法进入目录 ${CDIR}/sims/verilator/"; exit 1; }
 make -j$j ${debug} CONFIG=$CONFIG || { echo "[Build verilator Failed!]==============="; exit 1; }
 # 编译成功了才会搬过来
-cp ${CDIR}/sims/verilator/simulator-chipyard-${CONFIG}${debug} ${CDIR}/software/pre-build/
+mkdir -p ${CDIR}/software/build-rtl/
+cp ${CDIR}/sims/verilator/simulator-chipyard-${CONFIG}${debug} ${CDIR}/software/build-rtl/
