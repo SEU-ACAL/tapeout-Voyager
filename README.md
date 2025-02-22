@@ -4,14 +4,18 @@
 
 https://www.anaconda.com/download/
 
-创建一个 conda 环境，并且需要其中安装 conda-lock==1.4.0。
+创建一个 conda 环境，并且需要其中安装 conda-lock==1.4.0，并检查：
+
+```
+conda-lock --version
+```
 
 ## 二、安装 开发仓库
 
 ```
 mkdir Voyager && cd Voyager 
 git clone https://github.com/SEU-ACAL/tapeout-Voyager.git .
-# git checkout 0.0.1 # 等第一版六核版更新后启用该版本号
+# git checkout 0.0.1 # 等第一版六核版更新后启用该版本
 
 ./build-setup.sh
 ```
