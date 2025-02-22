@@ -63,18 +63,23 @@ make all-bin
 ```
 
 ### 测试用例
-#### Build 六核版 Design
+#### RTL Build 测试
 ```
 cd Voyager
+# Build 六核版
 ./software/scripts/build-verilator.sh --config OurHeterSoCConfig
+# Build 单独Rocket
+./software/scripts/build-verilator.sh --config RocketConfig
+# Build 单独Gemmini
+./software/scripts/build-verilator.sh --config CustomGemminiSoCConfig
 ```
 
 #### 运行 workload  
 编译 barematal 的 workload
-```
+<!-- ```
 cd Voyager/software/build
 make baremetal
-```
+``` -->
 
 #### 运行 firesim
 
