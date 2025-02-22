@@ -1,6 +1,5 @@
-# CC=riscv64-unknown-elf-gcc
-CC=gcc
-
+CC=riscv64-unknown-elf-gcc
+# CC=gcc
 
 # CDIR为chipyard的路径
 CDIR=$(git rev-parse --show-toplevel)
@@ -10,7 +9,7 @@ BUILD_DIR=$(abspath ./build)
 # CSR_PATH=$(abspath ./)
 INC_PATH=$(abspath ./include)
 
-CFLAGS=-std=c11 -g -fno-common -O2 -static -fno-builtin-printf #-specs=htif_nano.specs
+CFLAGS=-std=c11 -g -fno-common -O2 -static -fno-builtin-printf -specs=htif_nano.specs
 LDFLAGS=
 
 INCFLAGS=$(addprefix -I, $(INC_PATH))

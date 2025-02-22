@@ -1,7 +1,7 @@
 # NPU 方向开发指南
 
 ## NPU调试配置
-一核gemmini调试配置为Config=
+一核gemmini调试配置为--config CustomGemminiSoCConfig
 
 ## BuddyCompiler 安装与使用
 

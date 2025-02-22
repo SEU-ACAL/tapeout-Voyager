@@ -15,9 +15,11 @@ git clone https://github.com/SEU-ACAL/tapeout-Voyager.git .
 
 ./build-setup.sh
 ```
-注：目前 `./build-setup.sh` 脚本自动安装firesim并不稳定，确定chipyard安装完成后，如果firesim部分安装失败可以手动安装，如下：
+注：`./build-setup.sh` 脚本自动安装firesim并不稳定，现已移除，直接手动安装吧
 ```
-cd sims/firesim/
+cd Voyager/../
+git clone https://github.com/firesim/firesim.git
+cd firesim
 git checkout 1.17.1
 ./build-setup.sh
 ```

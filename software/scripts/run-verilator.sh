@@ -9,15 +9,17 @@ TIMESTAMP=$(date +%Y-%m-%d-%H-%M)
 help () {
   echo "Run a RISCV Gemmini program on Verilator, a cycle-accurate simulator"
   echo
-  echo "Usage: $0 [--pk] [--debug] BINARY"
+  echo "Usage: $0 [--pk] [--config] [--debug] BINARY"
   echo
   echo "Options:"
   echo " pk      Run binaries on the proxy kernel, which enables virtual memory"
   echo "         and a few syscalls. If this option is not set, binaries will be"
   echo "         run in baremetal mode."
   echo
+  echo " config   --config/-c your scala Config"
+  echo
   echo " debug   Use the debug version of the Verilator simulator, which will"
-  echo "         output  a waveform to \`$WAVEFORM\`."
+  echo "         output a waveform to \`$WAVEFORM\`."
   echo
   echo " BINARY  The RISCV binary that you want to run. This can either be the"
   echo '         name of a program in `software/gemmini-rocc-tests`, or it can'
@@ -46,6 +48,16 @@ binary=""
 while [ $# -gt 0 ] ; do
   case $1 in
     --pk) pk=1 ;;
+    -c|--config)
+      if [[ -n $2 && $2 != -* ]]; then
+        CONFIG="$2"
+        shift
+      else
+        echo "Error: -c or --config need a parameter"
+        help
+      fi
+      ;;
+    *)
     --debug) debug=1 ;;
     -h | --help) show_help=1 ;;
     *) binary=$1
@@ -99,7 +111,7 @@ ${CDIR}/software/scripts/smartelf2hex.sh ${full_binary_path} > ${full_binary_pat
 
 cd ${CDIR}/sims/verilator/
 
-./simulator-chipyard-CustomGemminiSoCConfig${DEBUG} +verbose $PK +permissive  \
+./simulator-chipyard-${CONFIG}${DEBUG} +verbose $PK +permissive  \
     +loadmem=${full_binary_path}.loadmem_hex +loadmem_addr=80000000 \
     +permissive-off ${full_binary_path} \
     &> >(tee ${LOG_DIR}/stdout.log) \
