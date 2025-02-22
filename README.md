@@ -64,7 +64,7 @@ make all-bin
 #### Build 六核版 Design
 ```
 cd Voyager
-./software/scripts/build-verilator.sh CONFIG=OurHeterSoCConfig
+./software/scripts/build-verilator.sh --config OurHeterSoCConfig
 ```
 
 #### 运行 workload  

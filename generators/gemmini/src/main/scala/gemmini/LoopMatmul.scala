@@ -10,7 +10,6 @@ import org.chipsalliance.cde.config.Parameters
 import GemminiISA._
 import LocalAddr._
 import Util._
-import rocketchipnpu.common._
 
 // LdA
 

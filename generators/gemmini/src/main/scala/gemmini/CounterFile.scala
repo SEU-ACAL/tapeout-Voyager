@@ -9,7 +9,6 @@ import freechips.rocketchip.tilelink.{TLIdentityNode}
 import freechips.rocketchip.npu._
 import GemminiISA._
 import Util._
-import rocketchipnpu.common._
 // Counter Address list
 object CounterEvent {
   val DISABLE = 0

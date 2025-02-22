@@ -7,7 +7,6 @@ import chisel3.experimental._
 import freechips.rocketchip.npu._
 import freechips.rocketchip.tile._
 import org.chipsalliance.cde.config.Parameters
-import rocketchipnpu.common._
 import GemminiISA._
 import Util._
 

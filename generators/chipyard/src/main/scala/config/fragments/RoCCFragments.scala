@@ -7,7 +7,6 @@ import freechips.rocketchip.tile._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.subsystem._
 import freechips.rocketchip.npu._
-import rocketchipnpu.common._
 
 import hwacha.{Hwacha}
 import gemmini._
@@ -19,14 +18,12 @@ import chipyard.{TestSuitesKey, TestSuiteHelper}
  */
 case object MultiRoCCKey extends Field[Map[Int, Seq[Parameters => LazyRoCC]]](Map.empty[Int, Seq[Parameters => LazyRoCC]])
 case object MultiRoCCNpuKey extends Field[Map[Int, Seq[Parameters => LazyRoCCNpu]]](Map.empty[Int, Seq[Parameters => LazyRoCCNpu]])
-case object MultiRoCCnpuKey extends Field[Map[Int, Seq[Parameters => LazyRoCCnpu]]](Map.empty[Int, Seq[Parameters => LazyRoCCnpu]])
 /**
  * Config fragment to enable different RoCCs based on the hartId
  */
 class WithMultiRoCC extends Config((site, here, up) => {
   case BuildRoCCNpu => site(MultiRoCCNpuKey).getOrElse(site(TileKey).hartId, Nil)
   case BuildRoCC => site(MultiRoCCKey).getOrElse(site(TileKey).hartId, Nil)
-  case BuildRoCCnpu => site(MultiRoCCnpuKey).getOrElse(site(TileKey).hartId, Nil)
 })
 
 /**

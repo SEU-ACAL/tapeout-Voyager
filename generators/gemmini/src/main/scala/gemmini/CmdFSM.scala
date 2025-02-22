@@ -13,7 +13,6 @@ import org.chipsalliance.cde.config._
 import freechips.rocketchip.tile._
 import freechips.rocketchip.npu._
 import GemminiISA._
-import rocketchipnpu.common._
 
 class CmdFSM[T <: Data: Arithmetic, U <: Data, V <: Data]
   (config: GemminiArrayConfig[T,U,V])(implicit val p: Parameters)

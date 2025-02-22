@@ -6,7 +6,6 @@ import freechips.rocketchip.diplomacy.LazyModule
 import freechips.rocketchip.subsystem.SystemBusKey
 import freechips.rocketchip.npu._
 import freechips.rocketchip.tile._
-import rocketchipnpu.common._
 
 object GemminiCustomConfigs {
   // Default configurations

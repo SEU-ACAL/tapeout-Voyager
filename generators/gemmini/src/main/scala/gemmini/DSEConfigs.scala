@@ -7,7 +7,6 @@ import freechips.rocketchip.diplomacy.{LazyModule, ValName}
 import freechips.rocketchip.subsystem._
 import freechips.rocketchip.npu._
 import freechips.rocketchip.tile._
-import rocketchipnpu.common._
 // -----------------------------
 // Design Space Exploration Mixins
 // -----------------------------

@@ -14,7 +14,6 @@ import freechips.rocketchip.tilelink.TLIdentityNode
 import GemminiISA._
 import Util._
 import freechips.rocketchip.npu._
-import rocketchipnpu.common._
 
 class GemminiCmd(rob_entries: Int)(implicit p: Parameters) extends Bundle {
   val cmd = new RoCCNpuCommand

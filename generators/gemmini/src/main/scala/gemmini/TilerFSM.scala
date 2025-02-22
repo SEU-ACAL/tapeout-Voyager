@@ -11,7 +11,6 @@ import freechips.rocketchip.tile._
 import freechips.rocketchip.npu._
 import GemminiISA._
 import Util.regwire
-import rocketchipnpu.common._
 
 class TilerFSM[T <: Data : Arithmetic, U <: Data, V <: Data]
   (config: GemminiArrayConfig[T,U,V])(implicit val p: Parameters)

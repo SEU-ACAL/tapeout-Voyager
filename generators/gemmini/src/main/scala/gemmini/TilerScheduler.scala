@@ -10,7 +10,6 @@ import freechips.rocketchip.tile._
 import freechips.rocketchip.npu._
 import GemminiISA._
 import Util._
-import rocketchipnpu.common._
 
 class TilerScheduler[T <: Data: Arithmetic, U <: Data, V <: Data]
   (config: GemminiArrayConfig[T,U,V])(implicit val p: Parameters)
