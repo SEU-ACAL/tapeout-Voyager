@@ -149,11 +149,11 @@ if run_step "5"; then
 fi
 
 # setup firesim
-if run_step "6"; then
-    cd $CYDIR/sims/firesim/
-    git checkout 1.17.1
-    ./build-setup.sh
-fi
+# if run_step "6"; then
+#     cd $CYDIR/sims/firesim/
+#     git checkout 1.17.1
+#     ./build-setup.sh
+# fi
 
     # $CYDIR/scripts/firesim-setup.sh
     # $CYDIR/sims/firesim/gen-tags.sh
