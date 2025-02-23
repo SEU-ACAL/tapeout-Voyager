@@ -33,10 +33,22 @@ if [ ! -d "$SOURCE_DIR" ]; then
 fi
 
 rm -rf ${DEST_DIR}/*
-# 创建目标文件夹
 mkdir -p "$DEST_DIR/generators"
 
 # 使用 rsync 命令拷贝 RTL design
 rsync -av --progress "$SOURCE_DIR/" "$DEST_DIR/generators"
+
+
+SOURCE_DIR="$CDIR/project/"
+DEST_DIR="$FIRESIM_PATH/target-design/chipyard"
+
+# 使用 rsync 命令拷贝 RTL design
+rsync -av --progress "$SOURCE_DIR/" "$DEST_DIR/project"
+
+SOURCE_DIR="$CDIR/sims/firesim/sim/firesim-lib"
+DEST_DIR="$FIRESIM_PATH/sim/firesim-lib"
+
+rm -rf ${DEST_DIR}/*
+rsync -av --progress "$SOURCE_DIR/" "$DEST_DIR/"
 
 echo "Sync Complete!"

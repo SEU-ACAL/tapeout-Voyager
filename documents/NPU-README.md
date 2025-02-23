@@ -11,6 +11,9 @@ git clone https://github.com/buddy-compiler/buddy-mlir.git
 cd buddy-mlir
 git submodule update --init
 
+conda create BuddyMLIR python=3.10
+conda install numpy pybind11
+
 mkdir llvm/build && cd llvm/build
 cmake -G Ninja ../llvm \
     -DLLVM_ENABLE_PROJECTS="mlir;clang" \
@@ -21,6 +24,9 @@ cmake -G Ninja ../llvm \
     -DPython3_EXECUTABLE=$(which python3)
 
 
+cd buddy-mlir
+mkdir build
+cd build
 cmake -G Ninja .. \
     -DMLIR_DIR=$PWD/../llvm/build/lib/cmake/mlir \
     -DLLVM_DIR=$PWD/../llvm/build/lib/cmake/llvm \
