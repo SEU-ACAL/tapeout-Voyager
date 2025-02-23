@@ -6,6 +6,8 @@ endif
 
 PREFIX ?= $RISCV/
 
+# CYDIR=$(shell git rev-parse --show-toplevel)
+# -I $(CYDIR)/software/src/npu/native/gemmini-rocc-tests/
 default: libgemmini.so
 
 libgemmini.so: gemmini.cc

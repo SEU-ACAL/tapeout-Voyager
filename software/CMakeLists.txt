@@ -20,22 +20,25 @@ file(MAKE_DIRECTORY ${RTL_BUILD_DIR}/firesim)
 # set(ENV{LDFLAGS} "")
 # set(ENV{INC_PATH} "${CMAKE_SOURCE_DIR}/include")
 
-add_custom_target(all-bin
-    DEPENDS cpu-bin npu-bin
-    COMMENT "Building all workloads Complete."
-)
+# add_custom_target(all-bin
+#     DEPENDS cpu-bin npu-bin
+#     COMMENT "Building all workloads Complete."
+# )
 
-add_custom_target(cpu-bin
-    COMMAND cd ${SRC_DIR}/cpu && make clean && make all -j
-    COMMAND cp -r ${SRC_DIR}/cpu/build/* ${WORKLOAD_BIN_DIR}/cpu/
-    COMMENT "Building CPU workload."
-)
+# add_custom_target(cpu-bin
+#     COMMAND cd ${SRC_DIR}/cpu && make clean && make all -j
+#     COMMAND cp -r ${SRC_DIR}/cpu/build/* ${WORKLOAD_BIN_DIR}/cpu/
+#     COMMENT "Building CPU workload."
+# )
 
-add_custom_target(npu-bin
-    COMMAND cd ${SRC_DIR}/npu && make clean && make all -j 
-    COMMAND cp -r ${SRC_DIR}/npu/build/* ${WORKLOAD_BIN_DIR}/npu/
-    COMMENT "Building NPU workload."
-)
+# add_custom_target(npu-bin
+#     COMMAND cd ${SRC_DIR}/npu && make clean && make all -j 
+#     COMMAND cp -r ${SRC_DIR}/npu/build/* ${WORKLOAD_BIN_DIR}/npu/
+#     COMMENT "Building NPU workload."
+# )
+
+add_subdirectory(src)
+
 
 add_custom_target(clean_all
     COMMAND make -C ${WORKLOAD_BIN_DIR}/cpu clean
