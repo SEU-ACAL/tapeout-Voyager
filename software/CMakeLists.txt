@@ -39,8 +39,17 @@ file(MAKE_DIRECTORY ${RTL_BUILD_DIR}/firesim)
 
 add_subdirectory(src)
 
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WORKLOAD_BIN_DIR})
 
-add_custom_target(clean_all
-    COMMAND make -C ${WORKLOAD_BIN_DIR}/cpu clean
-    COMMAND make -C ${WORKLOAD_BIN_DIR}/npu clean
+add_custom_target(build-all ALL DEPENDS
+    cpu-build
+    gemmini-buddy 
+    gemmini-native
 )
+
+add_custom_target(clean-all
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target clean
+    COMMAND rm -rf ${CMAKE_SOURCE_DIR}/build
+    COMMENT "Cleaning all build artifacts"
+)
+

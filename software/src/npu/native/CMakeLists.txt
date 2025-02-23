@@ -8,6 +8,7 @@ set(NATIVE_DIR ${NPU_WORKLOAD_DIR}/native)
 #   ${GEMMINI_INCLUDE_DIR}/../../libgemmini
 #   ${GEMMINI_INCLUDE_DIR}/../rocc-software
 # )
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WORKLOAD_BIN_DIR}/npu/native)
 
 add_custom_target(gemmini-native
     COMMAND ${CMAKE_MAKE_PROGRAM} -C "${NATIVE_DIR}/libgemmini" install
@@ -17,5 +18,4 @@ add_custom_target(gemmini-native
     VERBATIM)
 # target_include_directories(native-bin PRIVATE ${INTERFACE_DIR} ${INCLUDE_DIR})
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build)
 

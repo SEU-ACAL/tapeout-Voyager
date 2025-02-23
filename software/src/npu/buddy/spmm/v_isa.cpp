@@ -120,18 +120,22 @@
 
 #include "include/v_isa.h"
 
-Vector::(BitWidth bw) : bit_width(bw) {
+Vector::Vector(BitWidth bw) : bit_width(bw) {
     count = (16 * 8) / static_cast<int>(bit_width);
     data = std::make_unique<uint8_t[]>(16);
     memset(data.get(), 0, 16);
 }
 
-void Vector::multiply(int scalar) {
+void Vector::mul(int scalar) {
     apply_operation([scalar](auto& val) { val *= scalar; });
 }
 
 void Vector::add(int scalar) {
     apply_operation([scalar](auto& val) { val += scalar; });
+}
+
+void Vector::rst() {
+    apply_operation([](auto& val) { val = 0; });
 }
 
 void Vector::add(const Vector& other) {
@@ -140,6 +144,16 @@ void Vector::add(const Vector& other) {
     }
     auto op = [](auto& a, auto b) { a += b; };
     apply_pair_operation(other, op);
+}
+
+void Vector::load(const void* addr) {
+    if (!addr) throw std::invalid_argument("Null pointer in load");
+    memcpy(data.get(), addr, 16); // 拷贝16字节
+}
+
+void Vector::store(void* addr) const {
+    if (!addr) throw std::invalid_argument("Null pointer in store");
+    memcpy(addr, data.get(), 16);
 }
 
 int Vector::sum() const {

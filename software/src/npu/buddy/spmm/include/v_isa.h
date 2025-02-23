@@ -15,9 +15,12 @@ public:
     };
 
     Vector(BitWidth bw);
-    void multiply(int scalar);
+    void mul(int scalar);
     void add(int scalar);
     void add(const Vector& other);
+    void rst();
+    void load(const void* addr);
+    void store(void* addr) const; 
     int sum() const;
     void print() const;
 

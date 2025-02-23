@@ -12,17 +12,3 @@ add_subdirectory(cpu)
 add_subdirectory(npu)
 
 
-
-
-add_custom_target(build-all ALL DEPENDS
-    cpu-build
-    gemmini-buddy 
-    gemmini-native
-)
-
-add_custom_target(clean-all
-    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target clean
-    COMMAND rm -rf ${CMAKE_SOURCE_DIR}/build
-    COMMENT "Cleaning all build artifacts"
-)
-
