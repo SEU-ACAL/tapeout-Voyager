@@ -1,8 +1,7 @@
 CC=riscv64-unknown-elf-gcc
 # CC=gcc
 
-# CYDIR为chipyard的路径
-# CYDIR=$(git rev-parse --show-toplevel)
+
 
 CYDIR=$(shell git rev-parse --show-toplevel)
 CPU_WORKLOAD_DIR=$(CYDIR)/software/src/npu

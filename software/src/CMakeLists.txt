@@ -15,6 +15,7 @@ add_subdirectory(npu)
 
 
 add_custom_target(build-all ALL DEPENDS
+    cpu-build
     template 
     gemmini-native
 )
