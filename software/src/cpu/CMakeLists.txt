@@ -13,13 +13,13 @@ add_compile_options(
     -specs=htif_nano.specs
 )
 
-add_executable(hello ${CPU_WORKLOAD_DIR}/hello/hello.c)
-add_executable(spmm ${CPU_WORKLOAD_DIR}/spmm/spmm.c)
+add_executable(cpu-hello ${CPU_WORKLOAD_DIR}/hello/hello.c)
+add_executable(cpu-spmm ${CPU_WORKLOAD_DIR}/spmm/spmm.c)
 
 
 add_custom_target(cpu-build ALL DEPENDS
-    hello
-    spmm
+    cpu-hello
+    cpu-spmm
     VERBATIM)
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build)
