@@ -1,15 +1,14 @@
 project(npu_buddy C)
 
-# 获取 Chipyard 根目录
-execute_process(
-    COMMAND git rev-parse --show-toplevel
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    OUTPUT_VARIABLE CYDIR
-    OUTPUT_STRIP_TRAILING_WHITESPACE
-)
+# execute_process(
+#     COMMAND git rev-parse --show-toplevel
+#     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+#     OUTPUT_VARIABLE CYDIR
+#     OUTPUT_STRIP_TRAILING_WHITESPACE
+# )
 
 set(CMAKE_C_COMPILER "riscv64-unknown-elf-gcc")  
-set(CMAKE_EXE_SUFFIX "-bin")  
+# set(CMAKE_EXE_SUFFIX "-bin")  
 
 add_compile_options(
     -std=c11
