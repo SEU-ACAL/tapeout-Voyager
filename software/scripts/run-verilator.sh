@@ -57,7 +57,6 @@ while [ $# -gt 0 ] ; do
         help
       fi
       ;;
-    *)
     --debug) debug=1 ;;
     -h | --help) show_help=1 ;;
     *) binary=$1
@@ -79,6 +78,7 @@ else
 fi
 
 WAVEFORM="waveforms/${TIMESTAMP}-${binary}-waveform.vcd"
+mkdir -p "$(dirname "$WAVEFORM")"
 
 if [ $debug -eq 1 ]; then
     DEBUG="-debug -v ${ROOT}${WAVEFORM}"
