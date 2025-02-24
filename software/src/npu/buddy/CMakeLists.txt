@@ -14,7 +14,7 @@ include_directories(
     include
 )
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WORKLOAD_BIN_DIR}/npu/buddy)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WORKLOAD_BIN_DIR}/npu/)
 
 # add_executable(gemmini-spmm 
 #     ${BUDDY_WORKLOAD_DIR}/spmm/spmm.cpp  

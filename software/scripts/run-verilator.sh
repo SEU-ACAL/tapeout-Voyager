@@ -1,6 +1,6 @@
 #!/bin/bash
 
-CDIR=$(git rev-parse --show-toplevel)
+CYDIR=$(git rev-parse --show-toplevel)
 ROOT="$PWD/"
 WAVEFORM=""
 
@@ -90,8 +90,8 @@ path=""
 suffix=""
 
 for dir in cpu npu; do
-    if [ -f "${CDIR}/software/bin/build/${dir}/${binary}$default_suffix" ]; then
-        path="${CDIR}/software/bin/build/${dir}/"
+    if [ -f "${CYDIR}/software/build-results/workloads/${dir}/${binary}$default_suffix" ]; then
+        path="${CYDIR}/software/build-results/workloads/${dir}/"
         suffix=$default_suffix
     fi
 done
@@ -107,9 +107,9 @@ LOG_DIR="${ROOT}/log/${TIMESTAMP}-${binary}-verilator-run-log"
 mkdir -p "${LOG_DIR}"
 
 
-${CDIR}/software/scripts/smartelf2hex.sh ${full_binary_path} > ${full_binary_path}.loadmem_hex
+${CYDIR}/software/scripts/smartelf2hex.sh ${full_binary_path} > ${full_binary_path}.loadmem_hex
 
-cd ${CDIR}/sims/verilator/
+cd ${CYDIR}/sims/verilator/
 
 ./simulator-chipyard-${CONFIG}${DEBUG} +verbose $PK +permissive  \
     +loadmem=${full_binary_path}.loadmem_hex +loadmem_addr=80000000 \

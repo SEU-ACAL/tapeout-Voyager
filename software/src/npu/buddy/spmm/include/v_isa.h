@@ -18,7 +18,7 @@ public:
     void mul(int scalar);
     void add(int scalar);
     void add(const Vector& other);
-    void rst();
+    void broadcast(int scalar);
     void load(const void* addr);
     void store(void* addr) const; 
     int sum() const;

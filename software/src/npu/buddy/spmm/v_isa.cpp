@@ -119,6 +119,9 @@
 // }
 
 #include "include/v_isa.h"
+// #include "gemmini.h"
+
+#define MODE_CPU 1
 
 Vector::Vector(BitWidth bw) : bit_width(bw) {
     count = (16 * 8) / static_cast<int>(bit_width);
@@ -127,33 +130,57 @@ Vector::Vector(BitWidth bw) : bit_width(bw) {
 }
 
 void Vector::mul(int scalar) {
+#if defined(MODE_CPU)
     apply_operation([scalar](auto& val) { val *= scalar; });
+#elif defined(MODE_CUSTOM)
+    gemmini_vec_mul_uint(val, scalar)
+#endif
 }
 
 void Vector::add(int scalar) {
+#if defined(MODE_CPU)
     apply_operation([scalar](auto& val) { val += scalar; });
+#elif defined(MODE_CUSTOM)
+    gemmini_vec_add_uint(val, scalar)
+#endif
 }
 
-void Vector::rst() {
-    apply_operation([](auto& val) { val = 0; });
+void Vector::broadcast(int scalar) {
+#if defined(MODE_CPU)
+    apply_operation([scalar](auto& val) { val = scalar; });
+#elif defined(MODE_CUSTOM)
+    gemmini_vec_broadcast(val, other);
+#endif
 }
 
 void Vector::add(const Vector& other) {
+#if defined(MODE_CPU)
     if (bit_width != other.bit_width) {
         throw std::invalid_argument("Vector bit width mismatch");
     }
     auto op = [](auto& a, auto b) { a += b; };
     apply_pair_operation(other, op);
+#elif defined(MODE_CUSTOM)
+    gemmini_vec_add_vec(val, other);
+#endif
 }
 
 void Vector::load(const void* addr) {
+#if defined(MODE_CPU)
     if (!addr) throw std::invalid_argument("Null pointer in load");
     memcpy(data.get(), addr, 16); // 拷贝16字节
+#elif defined(MODE_CUSTOM)
+    gemmini_vec_load(val, addr);
+#endif
 }
 
 void Vector::store(void* addr) const {
+#if defined(MODE_CPU)
     if (!addr) throw std::invalid_argument("Null pointer in store");
     memcpy(addr, data.get(), 16);
+#elif defined(MODE_CUSTOM)
+    gemmini_vec_broadcast(val, other);
+#endif
 }
 
 int Vector::sum() const {

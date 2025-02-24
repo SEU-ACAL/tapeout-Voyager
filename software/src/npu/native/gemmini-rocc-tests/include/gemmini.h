@@ -22,17 +22,6 @@
 // Counter Definition
 #include "include/gemmini_counter.h"
 
-// read cycle api
-static uint64_t read_cycles_tmp() {
-    uint64_t cycles;
-    asm volatile ("rdcycle %0" : "=r" (cycles));
-    return cycles;
-
-    // const uint32_t * mtime = (uint32_t *)(33554432 + 0xbff8);
-    // const uint32_t * mtime = (uint32_t *)(33554432 + 0xbffc);
-    // return *mtime;
-}
-
 #define k_CONFIG 0
 #define k_MVIN2 1
 #define k_MVIN 2
@@ -50,6 +39,12 @@ static uint64_t read_cycles_tmp() {
 #define k_LOOP_WS_CONFIG_STRIDES_DC 13
 
 #define k_MVIN3 14
+
+//vec
+#define k_CONFIG_TARGET_ADDR 23
+#define k_COMPUTE_VEC_ADD_VEC 24
+#define k_COMPUTE_VEC_ADD_UINT 25
+#define k_COMPUTE_VEC_MUL_UINT 26
 
 #define k_COUNTER 126
 
@@ -250,6 +245,33 @@ static acc_scale_t_bits acc_scale_t_to_acc_scale_t_bits(acc_scale_t x) {
 #define gemmini_preload_zeros(C) \
   gemmini_preload(GARBAGE_ADDR, C)
 
+
+//vec
+#define gemmini_extended_config_vec_target_addr(A, BD, A_cols, A_rows, BD_cols, BD_rows) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)(A_rows) << (ADDR_LEN + 16)) | ((uint64_t)(A_cols) << ADDR_LEN) | (uint64_t)(A), ((uint64_t)(BD_rows) << (ADDR_LEN + 16)) | ((uint64_t)(BD_cols) << ADDR_LEN) | (uint64_t)(BD), k_CONFIG_TARGET_ADDR)
+
+#define gemmini_config_vec_target_addr(A) \
+gemmini_extended_config_vec_target_addr(A, 0, DIM, DIM, DIM, DIM)
+
+
+#define gemmini_extended_vec_add_vec(A, BD, A_cols, A_rows, BD_cols, BD_rows) \
+ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)(A_rows) << (ADDR_LEN + 16)) | ((uint64_t)(A_cols) << ADDR_LEN) | (uint64_t)(A), ((uint64_t)(BD_rows) << (ADDR_LEN + 16)) | ((uint64_t)(BD_cols) << ADDR_LEN) | (uint64_t)(BD), k_COMPUTE_VEC_ADD_VEC)
+
+#define gemmini_vec_add_vec(A, BD) \
+  gemmini_extended_vec_add_vec(A, BD, DIM, DIM, DIM, DIM)
+
+#define gemmini_extended_vec_add_uint(A, U, A_cols, A_rows, BD_cols, BD_rows) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)(A_rows) << (ADDR_LEN + 16)) | ((uint64_t)(A_cols) << ADDR_LEN) | (uint64_t)(A), ((uint64_t)(BD_rows) << (ADDR_LEN + 16)) | ((uint64_t)(BD_cols) << ADDR_LEN) | (uint64_t)(U), k_COMPUTE_VEC_ADD_UINT)
+  
+#define gemmini_vec_add_uint(A, U) \
+    gemmini_extended_vec_add_uint(A, U, DIM, DIM, DIM, DIM)
+  
+#define gemmini_extended_vec_mul_uint(A, U, A_cols, A_rows, BD_cols, BD_rows) \
+    ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)(A_rows) << (ADDR_LEN + 16)) | ((uint64_t)(A_cols) << ADDR_LEN) | (uint64_t)(A), ((uint64_t)(BD_rows) << (ADDR_LEN + 16)) | ((uint64_t)(BD_cols) << ADDR_LEN) | (uint64_t)(U), k_COMPUTE_VEC_MUL_UINT)
+    
+#define gemmini_vec_mul_uint(A, U) \
+      gemmini_extended_vec_mul_uint(A, U, DIM, DIM, DIM, DIM)
+
 // config
 #define gemmini_extended3_config_ex(dataflow, sys_act, sys_shift, sys_acc_scale, C_stride, A_stride, A_transpose, B_transpose, set_only_strides) \
     ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)acc_scale_t_to_acc_scale_t_bits((acc_scale_t)sys_acc_scale) << 32) | ((uint64_t)(A_stride) << 16) | (B_transpose << 9) | (A_transpose << 8) | ((set_only_strides) << 7) | ((sys_act) << 3) | ((dataflow) << 2) | CONFIG_EX, ((uint64_t)(C_stride) << 48) | (sys_shift), k_CONFIG); \
@@ -403,12 +425,7 @@ static void sp_tiled_matmul_os(const elem_t * A, const elem_t * B, const void * 
   // Move-in D
   if (D != NULL && !no_bias) {
     const size_t D_stride = repeating_bias ? 0 : D_row_stride * sizeof(acc_t);
-        
-    printf("gemmini_extended_config_ld D\n");
-    // unsigned long start1 = read_cycles_tmp();
     gemmini_extended_config_ld(D_stride, D_scale_factor);
-    // unsigned long end1 = read_cycles_tmp();
-    // printf("Cycles taken: %u, %u, %u\n", end1-start1, start1, end1);
 
     for (size_t i = 0; i < I; i++) {
       for (size_t j = 0; j < J; j += D_blocks) {
@@ -421,22 +438,14 @@ static void sp_tiled_matmul_os(const elem_t * A, const elem_t * B, const void * 
 
         const size_t cols = blocks * DIM - (j + blocks >= J ? pad_J : 0);
         const size_t rows = DIM - (i == I-1 ? pad_I : 0);
-    
-    printf("gemmini_extended_ld D\n");
-    unsigned long start2 = read_cycles_tmp();
-        // gemmini_extended_mvin(D_dram_addr, D_sp_addr_acc, cols, rows);
-          // unsigned long end2 = read_cycles_tmp();
-    // printf("Cycles taken: %u, %u, %u\n", end2-start2, start2, end2);
+
+        gemmini_extended_mvin(D_dram_addr, D_sp_addr_acc, cols, rows);
       }
     }
   }
 
   // Move-in B
-      printf("gemmini_extended_config_ld B\n");
-    // unsigned long start3 = read_cycles_tmp();
   gemmini_extended_config_ld(B_row_stride * sizeof(elem_t), B_scale_factor);
-            // unsigned long end3 = read_cycles_tmp();
-    // printf("Cycles taken: %u, %u, %u\n", end3-start3, start3, end3);
   for (size_t j = 0; j < J; j += B_blocks) {
     for (size_t k = 0; k < K; k++) {
       const elem_t * const B_dram_addr = B + (k*B_row_stride + j)*DIM;
@@ -444,21 +453,12 @@ static void sp_tiled_matmul_os(const elem_t * A, const elem_t * B, const void * 
       const size_t blocks = j + B_blocks <= J ? B_blocks : J-j;
       const size_t cols = blocks * DIM - (j + blocks >= J ? pad_J : 0);
       const size_t rows = DIM - (k == K-1 ? pad_K : 0);
-      
-      printf("gemmini_extended_ld B\n");
-      // unsigned long start4 = read_cycles_tmp();
       gemmini_extended_mvin(B_dram_addr, B_sp_addr, cols, rows);
-          // unsigned long end4 = read_cycles_tmp();
-    // printf("Cycles taken: %u, %u, %u\n", end4-start4, start4, end4);
     }
   }
 
   // Move-in A
-      printf("gemmini_extended_config_ld A\n");
-    // unsigned long start5 = read_cycles_tmp();
   gemmini_extended_config_ld(A_row_stride * sizeof(elem_t), A_scale_factor);
-            // unsigned long end5 = read_cycles_tmp();
-    // printf("Cycles taken: %u, %u, %u\n", end5-start5, start5, end5);
   for (size_t i = 0; i < I; i++) {
     for (size_t k = 0; k < K; k += A_blocks) {
       const elem_t * const A_dram_addr = A + (i*A_row_stride + k)*DIM;
@@ -466,15 +466,9 @@ static void sp_tiled_matmul_os(const elem_t * A, const elem_t * B, const void * 
       const size_t blocks = k + A_blocks <= K ? A_blocks : K-k;
       const size_t cols = blocks * DIM - (k + blocks >= K ? pad_K : 0);
       const size_t rows = DIM - (i == I-1 ? pad_I : 0);
-    
-      printf("gemmini_extended_ld A\n");
-      // unsigned long start6 = read_cycles_tmp();
       gemmini_extended_mvin(A_dram_addr, A_sp_addr, cols, rows);
-                // unsigned long end6 = read_cycles_tmp();
-    // printf("Cycles taken: %u, %u, %u\n", end6-start6, start6, end6);
     }
   }
-
 
   for (size_t i = 0; i < I; i++) {
     for (size_t j = 0; j < J; j++) {
@@ -501,27 +495,12 @@ static void sp_tiled_matmul_os(const elem_t * A, const elem_t * B, const void * 
         const size_t C_cols = DIM - (j == J - 1 ? pad_J : 0);
         const size_t C_rows = DIM - (i == I - 1 ? pad_I : 0);
 
-    printf("gemmini_extended_preload\n");
-    // unsigned long start7 = read_cycles_tmp();
         gemmini_extended_preload(GARBAGE_ADDR, out_sp_addr, DIM, DIM, C_cols, C_rows);
-                  // unsigned long end7 = read_cycles_tmp();
-    // printf("Cycles taken: %u, %u, %u\n", end7-start7, start7, end7);
-    // printf("Cycles taken: %u\n", end7-start7);
 
         if (k == 0) { // First iteration
-            printf("gemmini_extended_compute_preloaded\n");
-    // unsigned long start8 = read_cycles_tmp();
           gemmini_extended_compute_preloaded(A_sp_addr, B_sp_addr, A_cols, A_rows, B_cols, B_rows);
-                    // unsigned long end8 = read_cycles_tmp();
-    // printf("Cycles taken: %u\n", end8-start8);
-    // printf("Cycles taken: %u, %u, %u\n", end8-start8, start8, end8);
         } else { // All other iterations
-            printf("gemmini_extended_compute_accumulated\n");
-    // unsigned long start9 = read_cycles_tmp();
           gemmini_extended_compute_accumulated(A_sp_addr, B_sp_addr, A_cols, A_rows, B_cols, B_rows);
-                    // unsigned long end9 = read_cycles_tmp();
-    // printf("Cycles taken: %u\n", end9-start9);
-    // printf("Cycles taken: %u, %u, %u\n", end9-start9, start9, end9);
         }
       }
     }
@@ -538,18 +517,12 @@ static void sp_tiled_matmul_os(const elem_t * A, const elem_t * B, const void * 
 
         const size_t C_cols = DIM - (j == J - 1 ? pad_J : 0);
         const size_t C_rows = DIM - (i == I - 1 ? pad_I : 0);
-    
-    printf("gemmini_extended_mvout C\n");
-    // unsigned long start10 = read_cycles_tmp();
+
         gemmini_extended_mvout(C_dram_addr, C_sp_addr, C_cols, C_rows);
-                  // unsigned long end10 = read_cycles_tmp();
-    // printf("Cycles taken: %u\n", end10-start10);
-    // printf("Cycles taken: %u, %u, %u\n", end10-start10, start10, end10);
       }
     }
   }
 }
-
 
 
 static void sp_tiled_matmul_ws(const elem_t * A, const elem_t * B,
@@ -1345,8 +1318,8 @@ static void tiled_matmul_auto(size_t dim_I, size_t dim_J, size_t dim_K,
         break;
     }
 
-// #ifdef PRINT_TILE
-// #if PRINT_TILE
+#ifdef PRINT_TILE
+#if PRINT_TILE
     const int spad_rows = tiled_matmul_total_spad_rows(tile_I, tile_J, tile_K);
     const int acc_rows = tiled_matmul_total_acc_rows(tile_I, tile_J);
 
@@ -1360,9 +1333,9 @@ static void tiled_matmul_auto(size_t dim_I, size_t dim_J, size_t dim_K,
     printf("spad_row utilization: %d%%\n", (spad_rows * 100) / max_spad_rows);
     printf("acc_row utilization: %d%%\n\n", (acc_rows * 100) / max_acc_rows);
 
-    // exit(EXIT_SUCCESS);
-// #endif
-// #endif
+    exit(EXIT_SUCCESS);
+#endif
+#endif
 
     tiled_matmul(dim_I, dim_J, dim_K,
         A, B, D, C,
