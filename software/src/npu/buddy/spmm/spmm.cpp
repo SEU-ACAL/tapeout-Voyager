@@ -76,40 +76,40 @@ void spmm_os(CSRMatrix* A, int8_t* B, int M, int N, int K, int32_t* C) {
 
 // int line_nnz[16] = {0};
 
-void spmm_vector(CSRMatrix* A, int8_t* B, int M, int N, int K, int8_t* C) {
-    // int aval_baddr = &A->values;
-    // int idx_baddr = &A->col_idx;
-    // int ptr_baddr = &A->row_ptr;
-    int b_val_baddr = &B;
-    int c_val_baddr = &C;
-    for (int i = 0; i < M; i+=16) { // A 行
-        // v[0].load(&val_baddr + i * 16);
-        // v[1].load(&val_baddr + i * 16 + 1);
-        // v[1].add(-v[0]);
-        // for (int sp = i+0; sp < i+16; sp++) { 
-        //     line_nnz[sp] = A->row_ptr[i+1] - A->row_ptr[i]; 
-        // }
-        if (__prefetcher_status() == 1) {
-            __prefetcher_track(a);
-        } 
-        for (int j = 0; j < N; j +=16) { // B 的行每次被取16个数
-            for (int sp = i; sp < i+16; sp++) { 
-                for (int tp = A->row_ptr[i]; tp < A->row_ptr[i+1]; tp++) {
-                    int32_t a_val = A->values[tp];                    
-                    // %vx = vector.load(vx, r1=())   // load B
-                    v[sp].load(b_val_baddr + A->col_idx[tp] * N + j); 
-                    // %vx = vector.mul(vx, r1=())   // B vmula A
-                    v[sp].mul(a_val); 
-                    // %vx = vector.add(vx, vx+16)   // B vmulv B
-                    v[sp+16].add(v[sp]); 
-                }
-                v[sp+16].store(c_val_baddr + i * N + j); // C的第i行，第 j~j+16个
-            }
-        }
-        // v16~v32 + v0~v15 -> v0~v15
-        // for(int i = 0; i < 15; i++) { v[i].add(v[i+16]); }
-    }
-}
+// void spmm_vector(CSRMatrix* A, int8_t* B, int M, int N, int K, int8_t* C) {
+//     // int aval_baddr = &A->values;
+//     // int idx_baddr = &A->col_idx;
+//     // int ptr_baddr = &A->row_ptr;
+//     int b_val_baddr = &B;
+//     int c_val_baddr = &C;
+//     for (int i = 0; i < M; i+=16) { // A 行
+//         // v[0].load(&val_baddr + i * 16);
+//         // v[1].load(&val_baddr + i * 16 + 1);
+//         // v[1].add(-v[0]);
+//         // for (int sp = i+0; sp < i+16; sp++) { 
+//         //     line_nnz[sp] = A->row_ptr[i+1] - A->row_ptr[i]; 
+//         // }
+//         if (__prefetcher_status() == 1) {
+//             __prefetcher_track(a);
+//         } 
+//         for (int j = 0; j < N; j +=16) { // B 的行每次被取16个数
+//             for (int sp = i; sp < i+16; sp++) { 
+//                 for (int tp = A->row_ptr[i]; tp < A->row_ptr[i+1]; tp++) {
+//                     int32_t a_val = A->values[tp];                    
+//                     // %vx = vector.load(vx, r1=())   // load B
+//                     v[sp].load(b_val_baddr + A->col_idx[tp] * N + j); 
+//                     // %vx = vector.mul(vx, r1=())   // B vmula A
+//                     v[sp].mul(a_val); 
+//                     // %vx = vector.add(vx, vx+16)   // B vmulv B
+//                     v[sp+16].add(v[sp]); 
+//                 }
+//                 v[sp+16].store(c_val_baddr + i * N + j); // C的第i行，第 j~j+16个
+//             }
+//         }
+//         // v16~v32 + v0~v15 -> v0~v15
+//         // for(int i = 0; i < 15; i++) { v[i].add(v[i+16]); }
+//     }
+// }
 
 void spmm_vector(CSRMatrix* A, int8_t* B, int M, int N, int K, int8_t* C) {
     int8_t* b_val_baddr = B;

@@ -1,4 +1,4 @@
-project(npu_buddy CXX)
+# project(npu_buddy CXX)
 
 set(BUDDY_WORKLOAD_DIR ${NPU_WORKLOAD_DIR}/buddy)
 

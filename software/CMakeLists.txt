@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
-project(Workload_Collection)
+# cmake_minimum_required(VERSION 3.25)
+project(Workload)
+
+# set(CMAKE_POLICY_DEFAULT_CMP0129 NEW)
 
 set(BUILD_ROOT "${CMAKE_BINARY_DIR}")
 set(SRC_DIR "${CMAKE_SOURCE_DIR}/src")
@@ -49,7 +52,10 @@ add_custom_target(build-all ALL DEPENDS
 
 add_custom_target(clean-all
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target clean
-    COMMAND rm -rf ${CMAKE_SOURCE_DIR}/build
+    COMMAND rm -rf ${WORKLOAD_BIN_DIR}
+    COMMAND mkdir -p ${WORKLOAD_BIN_DIR}/cpu
+    COMMAND mkdir -p ${WORKLOAD_BIN_DIR}/npu
+    # COMMAND rm -rf ${CMAKE_SOURCE_DIR}/build
     COMMENT "Cleaning all build artifacts"
 )
 
