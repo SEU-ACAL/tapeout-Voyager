@@ -1,5 +1,33 @@
 # 仓库开发手册
 
+## 零、安装 mosh ##
+针对网络波动问题（如在火车上写代码），建议使用MIT开发的mosh：https://mosh.org/
+
+服务器端已安装mosh-server并配置，请本地机器安装mosh（以ubuntu为例）
+
+```
+$ sudo apt update
+$ sudo apt install mosh
+```
+
+检查是否安装成功
+```
+$ mosh --version
+mosh 1.4.0 [build mosh 1.4.0]
+Copyright 2012 Keith Winstein <mosh-devel@mit.edu>
+License GPLv3+: GNU GPL version 3 or later <http://gnu.org/licenses/gpl.html>.
+This is free software: you are free to change and redistribute it.
+There is NO WARRANTY, to the extent permitted by law.
+```
+
+使用mosh连接服务器
+```
+mosh [UserName]@[ServerAddress]
+```
+
+效果：断线自动重连，重连后不会丢失任何正在运行的内容。
+
+
 ## 一、安装 anaconda
 
 https://www.anaconda.com/download/
