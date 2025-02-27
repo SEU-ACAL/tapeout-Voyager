@@ -141,14 +141,14 @@ if run_step "4"; then
 fi
 
 # precompile chipyard scala sources
-# if run_step "5"; then
-#     pushd $CYDIR/sims/verilator
-#     make launch-sbt SBT_COMMAND=";project chipyard; compile"
-#     make launch-sbt SBT_COMMAND=";project tapeout; compile"
-#     popd
-# fi
+if run_step "5"; then
+    pushd $CYDIR/sims/verilator
+    make launch-sbt SBT_COMMAND=";project chipyard; compile"
+    make launch-sbt SBT_COMMAND=";project tapeout; compile"
+    popd
+fi
 
-# # setup firesim
+# setup firesim
 # if run_step "6"; then
 #     $CYDIR/scripts/firesim-setup.sh
 #     $CYDIR/sims/firesim/gen-tags.sh

@@ -87,10 +87,34 @@ cd Voyager/software/build
 make baremetal
 ``` -->
 
-#### 运行 firesim
+## 安装 firesim
 
+强烈建议firesim按安装在Voyager目录旁边，否则路径可能会出问题(自定义路径需修改代码注释在 firesim 的 make 文件代码中)
 
-## 三、安装 pre-commit
+```
+git clone https://github.com/firesim/firesim.git
+cd firesim
+git checkout 1.17.1
+./build-setup.sh --library
+vim firesim/env.sh # 检查这里的conda环境是否为Voyager目录下的conda环境，默认需要手动修改
+```
+
+对接 chipyard
+
+```
+cd firesim
+
+rm -rf ./target-design/chipyard
+rm -rf ./sim
+
+ln -s ../Voyager/ ./target-design/chipyard
+ln -s ../Voyager/sims/firesim/sim ./sim
+# 注意check这里到Voyager目录路径的正确
+```
+
+之后操作与firesim文档完全一致
+
+## 四、安装 pre-commit
 ```
 cd Voyager 
 pip install pre-commit
@@ -99,7 +123,7 @@ pre-commit install
 
 ---
 
-## 四、其他工具
+## 五、其他工具
 
 理想情况下工作目录应该如下
 ```
