@@ -164,6 +164,7 @@ vim firesim/env.sh # 检查这里的conda环境是否为Voyager目录下的conda
 
 ```
 cd firesim
+./scripts/firesim_make_replace.sh
 rm -rf ./target-design/chipyard
 rm -rf ./sim
 ln -s ../Voyager/ ./target-design/chipyard
