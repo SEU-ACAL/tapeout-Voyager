@@ -116,11 +116,8 @@ make build-npu
 
 ```
 cd Voyager
-
 spike ./software/build-results/workloads/cpu/hello-barematal
-
 spike pk ./software/build-results/workloads/cpu/hello-linux
-
 spike --extension=gemmini ./software/build-results/workloads/npu/spmm-baremetal
 ```
 
@@ -133,11 +130,8 @@ spike --extension=gemmini ./software/build-results/workloads/npu/spmm-baremetal
 
 ```
 cd Voyager
-
 ./software/scripts/build-verilator.sh --config RocketConfig # Build 单独Rocket
-
 ./software/scripts/build-verilator.sh --config CustomGemminiSoCConfig # Build 单独Gemmini
-
 ./software/scripts/build-verilator.sh --config OurHeterSoCConfig # Build 六核版
 ```
 
@@ -152,9 +146,9 @@ Verilator编译出的可执行文件会被自动拷贝到 `software/build-result
 ```
 
 
-## 六、安装firesim
+## 六、firesim
 
-**6.1 library 模式安装**
+**6.1 使用library 模式安装**
 
 强烈建议firesim按安装在Voyager目录旁边，否则路径可能会出问题(自定义路径需修改代码注释在 firesim 的 make 文件代码中)
 
@@ -170,10 +164,8 @@ vim firesim/env.sh # 检查这里的conda环境是否为Voyager目录下的conda
 
 ```
 cd firesim
-
 rm -rf ./target-design/chipyard
 rm -rf ./sim
-
 ln -s ../Voyager/ ./target-design/chipyard
 ln -s ../Voyager/sims/firesim/sim ./sim
 ```

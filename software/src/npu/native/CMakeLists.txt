@@ -16,6 +16,3 @@ add_custom_target(gemmini-native
     WORKING_DIRECTORY ${NATIVE_DIR}
     COMMENT "Building Gemmini Native Components"
     VERBATIM)
-# target_include_directories(native-bin PRIVATE ${INTERFACE_DIR} ${INCLUDE_DIR})
-
-
