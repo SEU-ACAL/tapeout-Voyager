@@ -1,6 +1,6 @@
 # 仓库开发手册
 
-## 零、安装 mosh ##
+## 零、安装 mosh
 针对网络波动问题（如在火车上写代码），建议使用MIT开发的mosh：https://mosh.org/
 
 服务器端已安装mosh-server并配置，请本地机器安装mosh（以ubuntu为例）
@@ -38,29 +38,25 @@ https://www.anaconda.com/download/
 conda-lock --version
 ```
 
-## 二、安装 开发仓库
+## 二、安装开发仓库
+
+### 2.1 仓库初始化
 
 ```
 mkdir Voyager && cd Voyager 
 git clone https://github.com/SEU-ACAL/tapeout-Voyager.git .
-# git checkout 0.0.1 # 等第一版六核版更新后启用该版本
+git checkout dev
 
 ./build-setup.sh
 ```
-注：`./build-setup.sh` 脚本自动安装firesim并不稳定，现已移除，直接手动安装吧
-```
-cd Voyager/../
-git clone https://github.com/firesim/firesim.git
-cd firesim
-git checkout 1.17.1
-./build-setup.sh
-```
 
-### 可提交物：
+### 2.2 仓库介绍
+
+**2.2.1 可提交物**
 
 Voyager 仓库下只有 `generator`部分文件夹, `software`, `scripts` 和 `doc` 四个文件夹可提交，其余全部.gitignore
 
-#### `generator` 文件夹下存放RTL design.
+`generator` 文件夹下存放RTL design.
 `generator`下可修改的目录如下:
 - chipyard/src: 存放顶层TopConfig
 - firechip/src: 存放firesim的调试config
@@ -68,8 +64,8 @@ Voyager 仓库下只有 `generator`部分文件夹, `software`, `scripts` 和 `d
 - rocket-chip/src
 - gemmini/src
 
-#### `software` 文件夹用于存放各个方向的workload和执行的脚本.
-现有workload：
+`software` 文件夹用于存放各个方向的workload和执行的脚本.
+现有workload list 如下
 - cpu
     - hello
     - spmm
@@ -80,11 +76,14 @@ Voyager 仓库下只有 `generator`部分文件夹, `software`, `scripts` 和 `d
         - mlps
         - transformers
     - buddy
-        - BuddyLeNet (WIP)
-        - GemminiDialect (WIP)
+        - spmm
 
 
-一键编译workload
+## 三、Workload
+
+**3.1 编译workload**
+
+按照如下命令初始化workload
 
 ```
 cd Voyager
@@ -100,33 +99,62 @@ cmake ..
 make build-all
 ```
 
-单独编译部分workload为
+如果只需单独编译部分workload
 ```
 make build-cpu
 make build-npu
 ```
 
+**3.2 添加自定义workload**
 
-### 测试用例
-#### RTL Build 测试
+*TBC*
+
+
+## 四、Spike
+
+可以通过以下几个测试用例，测试Spike可以正常使用
+
 ```
 cd Voyager
-# Build 六核版
-./software/scripts/build-verilator.sh --config OurHeterSoCConfig
-# Build 单独Rocket
-./software/scripts/build-verilator.sh --config RocketConfig
-# Build 单独Gemmini
-./software/scripts/build-verilator.sh --config CustomGemminiSoCConfig
+
+spike ./software/build-results/workloads/cpu/hello-barematal
+
+spike pk ./software/build-results/workloads/cpu/hello-linux
+
+spike --extension=gemmini ./software/build-results/workloads/npu/spmm-baremetal
 ```
 
-#### 运行 workload  
-编译 barematal 的 workload
-<!-- ```
-cd Voyager/software/build
-make baremetal
-``` -->
 
-## 三、安装 firesim
+## 五、Verilator
+
+**5.1 Build RTL**
+
+可以通过以下几个测试用例，测试Verilator RTL的正确性
+
+```
+cd Voyager
+
+./software/scripts/build-verilator.sh --config RocketConfig # Build 单独Rocket
+
+./software/scripts/build-verilator.sh --config CustomGemminiSoCConfig # Build 单独Gemmini
+
+./software/scripts/build-verilator.sh --config OurHeterSoCConfig # Build 六核版
+```
+
+Verilator编译出的可执行文件会被自动拷贝到 `software/build-results/verilator` 路径下
+
+**5.2 测试运行workload**
+
+可以通过下面测试用例，测试Verilator build的正确性
+
+```
+./software/scripts/run-verilator.sh --config RocketConfig ./software/build-results/workloads/cpu/hello-barematal
+```
+
+
+## 六、安装firesim
+
+**6.1 library 模式安装**
 
 强烈建议firesim按安装在Voyager目录旁边，否则路径可能会出问题(自定义路径需修改代码注释在 firesim 的 make 文件代码中)
 
@@ -138,7 +166,7 @@ git checkout 1.17.1
 vim firesim/env.sh # 检查这里的conda环境是否为Voyager目录下的conda环境，默认需要手动修改
 ```
 
-对接 chipyard
+**6.2 firesim对接chipyard**
 
 ```
 cd firesim
@@ -148,30 +176,27 @@ rm -rf ./sim
 
 ln -s ../Voyager/ ./target-design/chipyard
 ln -s ../Voyager/sims/firesim/sim ./sim
-# 注意check这里到Voyager目录路径的正确
 ```
+注意check 正确软连接到 Voyager目录.
 
-之后操作与firesim文档完全一致
+之后操作与firesim文档完全一致.
 
-## 四、安装 pre-commit
+## 七、安装 pre-commit 
+
+安装 pre-commit 用于 CI 测试
+
 ```
-cd Voyager 
+cd Voyager
+source env.sh 
 pip install pre-commit
 pre-commit install
 ```
 
----
 
-## 五、其他工具
+## 八、文档目录
 
-理想情况下工作目录应该如下
-```
-- workspace
-    - Voyager
-    - firesim
-    - buddy-mlir (only npu need)
-```
+其余具体可见`documents`下的文档，欢迎大家多写文档，记录下用法和一些坑.
 
-具体见`documents`下的文档。
-
-NPU相关事项（如一核gemmini调试配置，BuddyCompiler安装指南等）可见`documents/NPU-README.md`
+[[Q&A List](documents/Q&A.md)] 仓库使用遇到问题可以在群里询问，问题解决后将解决方法记录在这里.    
+[[firesim](documents/firesim-README.md)] firesim 的简略文档，求补充.  
+[[NPU-README](documents/NPU-README.md)] 主要关于buddy-mlir的安装.
