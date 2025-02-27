@@ -150,26 +150,21 @@ fi
 
 # setup firesim
 # if run_step "6"; then
-#     cd $CYDIR/sims/firesim/
-#     git checkout 1.17.1
-#     ./build-setup.sh
-# fi
+#     $CYDIR/scripts/firesim-setup.sh
+#     $CYDIR/sims/firesim/gen-tags.sh
 
-    # $CYDIR/scripts/firesim-setup.sh
-    # $CYDIR/sims/firesim/gen-tags.sh
-
-    # # precompile firesim scala sources
-    # if run_step "7"; then
-    #     pushd $CYDIR/sims/firesim
-    #     (
-    #         echo $CYDIR
-    #         source sourceme-f1-manager.sh --skip-ssh-setup
-    #         pushd sim
-    #         make sbt SBT_COMMAND="project {file:$CYDIR}firechip; compile" TARGET_PROJECT=firesim
-    #         popd
-    #     )
-    #     popd
-    # fi
+#     # precompile firesim scala sources
+#     if run_step "7"; then
+#         pushd $CYDIR/sims/firesim
+#         (
+#             echo $CYDIR
+#             source sourceme-f1-manager.sh --skip-ssh-setup
+#             pushd sim
+#             make sbt SBT_COMMAND="project {file:$CYDIR}firechip; compile" TARGET_PROJECT=firesim
+#             popd
+#         )
+#         popd
+#     fi
 # fi
 
 # # setup firemarshal

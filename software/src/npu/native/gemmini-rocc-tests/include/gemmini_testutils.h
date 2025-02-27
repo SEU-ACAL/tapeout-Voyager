@@ -202,6 +202,19 @@ double rand_double() {
 }
 #endif
 
+static void printVec(elem_t m[DIM][DIM]) {
+  for (size_t i = 0; i < 1; ++i) {
+    for (size_t j = 0; j < DIM; ++j)
+#ifndef ELEM_T_IS_FLOAT
+      printf("%d ", m[i][j]);
+#else
+      printf("%x ", elem_t_to_elem_t_bits(m[i][j]));
+#endif
+    printf("\n");
+  }
+}
+
+
 static void printMatrix(elem_t m[DIM][DIM]) {
   for (size_t i = 0; i < DIM; ++i) {
     for (size_t j = 0; j < DIM; ++j)

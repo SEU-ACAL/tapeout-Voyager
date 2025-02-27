@@ -1,5 +1,8 @@
 cmake_minimum_required(VERSION 3.12)
-project(Workload_Collection)
+# cmake_minimum_required(VERSION 3.25)
+project(Workload)
+
+# set(CMAKE_POLICY_DEFAULT_CMP0129 NEW)
 
 set(BUILD_ROOT "${CMAKE_BINARY_DIR}")
 set(SRC_DIR "${CMAKE_SOURCE_DIR}/src")
@@ -20,24 +23,39 @@ file(MAKE_DIRECTORY ${RTL_BUILD_DIR}/firesim)
 # set(ENV{LDFLAGS} "")
 # set(ENV{INC_PATH} "${CMAKE_SOURCE_DIR}/include")
 
-add_custom_target(all-bin
-    DEPENDS cpu-bin npu-bin
-    COMMENT "Building all workloads Complete."
+# add_custom_target(all-bin
+#     DEPENDS cpu-bin npu-bin
+#     COMMENT "Building all workloads Complete."
+# )
+
+# add_custom_target(cpu-bin
+#     COMMAND cd ${SRC_DIR}/cpu && make clean && make all -j
+#     COMMAND cp -r ${SRC_DIR}/cpu/build/* ${WORKLOAD_BIN_DIR}/cpu/
+#     COMMENT "Building CPU workload."
+# )
+
+# add_custom_target(npu-bin
+#     COMMAND cd ${SRC_DIR}/npu && make clean && make all -j 
+#     COMMAND cp -r ${SRC_DIR}/npu/build/* ${WORKLOAD_BIN_DIR}/npu/
+#     COMMENT "Building NPU workload."
+# )
+
+add_subdirectory(src)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WORKLOAD_BIN_DIR})
+
+add_custom_target(build-all ALL DEPENDS
+    cpu-build
+    gemmini-buddy 
+    gemmini-native
 )
 
-add_custom_target(cpu-bin
-    COMMAND cd ${SRC_DIR}/cpu && make clean && make all -j
-    COMMAND cp -r ${SRC_DIR}/cpu/build/* ${WORKLOAD_BIN_DIR}/cpu/
-    COMMENT "Building CPU workload."
+add_custom_target(clean-all
+    COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target clean
+    COMMAND rm -rf ${WORKLOAD_BIN_DIR}
+    COMMAND mkdir -p ${WORKLOAD_BIN_DIR}/cpu
+    COMMAND mkdir -p ${WORKLOAD_BIN_DIR}/npu
+    # COMMAND rm -rf ${CMAKE_SOURCE_DIR}/build
+    COMMENT "Cleaning all build artifacts"
 )
 
-add_custom_target(npu-bin
-    COMMAND cd ${SRC_DIR}/npu && make clean && make all -j 
-    COMMAND cp -r ${SRC_DIR}/npu/build/* ${WORKLOAD_BIN_DIR}/npu/
-    COMMENT "Building NPU workload."
-)
-
-add_custom_target(clean_all
-    COMMAND make -C ${WORKLOAD_BIN_DIR}/cpu clean
-    COMMAND make -C ${WORKLOAD_BIN_DIR}/npu clean
-)
