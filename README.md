@@ -52,21 +52,32 @@ Voyager 仓库下只有 `generator`部分文件夹, `software`, `scripts` 和 `d
         - mlps
         - transformers
     - buddy
-        - BuddyLeNet
-        - GemminiDialect
+        - BuddyLeNet (WIP)
+        - GemminiDialect (WIP)
 
 
 一键编译workload
 
 ```
+cd Voyager
 source env.sh
+
 cd Voyager/software
 mkdir build && cd build 
 cmake ..
-
-# 编译所有workload
-make all-bin
 ```
+
+编译所有workload
+```
+make build-all
+```
+
+单独编译部分workload为
+```
+make build-cpu
+make build-npu
+```
+
 
 ### 测试用例
 #### RTL Build 测试
@@ -87,7 +98,7 @@ cd Voyager/software/build
 make baremetal
 ``` -->
 
-## 安装 firesim
+## 三、安装 firesim
 
 强烈建议firesim按安装在Voyager目录旁边，否则路径可能会出问题(自定义路径需修改代码注释在 firesim 的 make 文件代码中)
 
