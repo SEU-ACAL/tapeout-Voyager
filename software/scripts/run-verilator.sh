@@ -1,7 +1,7 @@
 #!/bin/bash
 
 CYDIR=$(git rev-parse --show-toplevel)
-ROOT="$PWD/"
+ROOT=${CYDIR}/software
 WAVEFORM=""
 
 TIMESTAMP=$(date +%Y-%m-%d-%H-%M)
