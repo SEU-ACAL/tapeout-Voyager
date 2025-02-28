@@ -146,4 +146,4 @@ pre-commit install
 
 具体见`documents`下的文档。
 
-NPU相关事项（如一核gemmini调试配置，BuddyCompiler安装指南等）可见`documents/NPU-README.md`
+NPU相关事项（如gemmini调试配置，BuddyCompiler安装指南等）可见`documents/NPU-README.md`
