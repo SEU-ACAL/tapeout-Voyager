@@ -1,0 +1,9 @@
+repos:
+  - repo: local
+    hooks:
+      - id: check-protected-dirs
+        name: Check Protected Directories
+        entry: scripts/permission_check.sh
+        language: script
+        pass_filenames: false  # 确保 hook 只运行一次
+        files: .*
