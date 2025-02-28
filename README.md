@@ -170,7 +170,7 @@ $ ./build-setup.sh --library
 
 ```
 $ cd Voyager
-$ ./scripts/firesim_make_replace.sh
+$ ./scripts/firesim_replacement.sh
 
 $ cd firesim
 $ rm -rf ./sim
