@@ -52,7 +52,6 @@ tests = \
 	global_average \
 	gemmini_counter \
 	template \
-	mytest \
 
 tests_baremetal = $(tests:=-baremetal)
 

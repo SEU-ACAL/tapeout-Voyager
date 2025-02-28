@@ -24,14 +24,28 @@ set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-g++")
 file(MAKE_DIRECTORY ${WORKLOAD_BIN_DIR})
 file(MAKE_DIRECTORY ${WORKLOAD_BIN_DIR}/cpu)
 file(MAKE_DIRECTORY ${WORKLOAD_BIN_DIR}/npu)
+file(MAKE_DIRECTORY ${WORKLOAD_BIN_DIR}/npu/buddy)
+file(MAKE_DIRECTORY ${WORKLOAD_BIN_DIR}/npu/native)
 file(MAKE_DIRECTORY ${RTL_BUILD_DIR}/verilator)
 file(MAKE_DIRECTORY ${RTL_BUILD_DIR}/firesim)
 
 #-------------------------------------------------------------------------------
-# set Compiler
+# set custom target
 #-------------------------------------------------------------------------------
 # set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WORKLOAD_BIN_DIR})
+add_custom_target(create-dirs
+    COMMAND mkdir -p ${WORKLOAD_BIN_DIR}
+    COMMAND mkdir -p ${WORKLOAD_BIN_DIR}/cpu
+    COMMAND mkdir -p ${WORKLOAD_BIN_DIR}/npu
+    COMMAND mkdir -p ${WORKLOAD_BIN_DIR}/npu/buddy
+    COMMAND mkdir -p ${WORKLOAD_BIN_DIR}/npu/native
+    COMMAND mkdir -p ${RTL_BUILD_DIR}/verilator
+    COMMAND mkdir -p ${RTL_BUILD_DIR}/firesim
+    COMMENT "Creating necessary directories"
+)
+
 add_custom_target(build-all ALL DEPENDS
+    create-dirs
     cpu-build
     gemmini-buddy 
     gemmini-native
@@ -40,8 +54,6 @@ add_custom_target(build-all ALL DEPENDS
 add_custom_target(clean-all
     COMMAND ${CMAKE_COMMAND} --build ${CMAKE_BINARY_DIR} --target clean
     COMMAND rm -rf ${WORKLOAD_BIN_DIR}
-    COMMAND mkdir -p ${WORKLOAD_BIN_DIR}/cpu
-    COMMAND mkdir -p ${WORKLOAD_BIN_DIR}/npu
     COMMENT "Cleaning all build artifacts"
 )
 
