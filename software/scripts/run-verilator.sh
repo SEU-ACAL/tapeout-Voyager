@@ -102,7 +102,7 @@ find_binary_in_dir() {
     local binary_name="$2"
     local suffix="$3"
     
-    # 首先检查当前目录
+    # 检查当前目录
     if [ -f "${search_dir}/${binary_name}${suffix}" ]; then
         echo "${search_dir}/"
         return 0
