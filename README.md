@@ -154,7 +154,7 @@ $ ./software/scripts/run-verilator.sh --config RocketConfig hello
 
 **6.1 使用library 模式安装**
 
-强烈建议firesim按安装在Voyager目录旁边，否则路径可能会出问题(自定义路径需修改代码注释在 firesim 的 make 文件代码中)
+强烈建议firesim安装在Voyager目录旁边，否则路径可能会出问题(自定义路径需修改代码注释在 firesim 的 make 文件代码中)
 
 ```
 $ git clone https://github.com/firesim/firesim.git
