@@ -89,10 +89,46 @@ fi
 path=""
 suffix=""
 
+# for dir in cpu npu; do
+#     if [ -f "${CYDIR}/software/build-results/workloads/${dir}/${binary}$default_suffix" ]; then
+#         path="${CYDIR}/software/build-results/workloads/${dir}/"
+#         suffix=$default_suffix
+#     fi
+# done
+
+# 递归查找函数
+find_binary_in_dir() {
+    local search_dir="$1"
+    local binary_name="$2"
+    local suffix="$3"
+    
+    # 首先检查当前目录
+    if [ -f "${search_dir}/${binary_name}${suffix}" ]; then
+        echo "${search_dir}/"
+        return 0
+    fi
+    
+    # 递归检查所有子目录
+    for subdir in $(find "${search_dir}" -type d); do
+        if [ -f "${subdir}/${binary_name}${suffix}" ]; then
+            echo "${subdir}/"
+            return 0
+        fi
+    done
+    
+    return 1
+}
+
+# 在cpu和npu目录中查找二进制文件
 for dir in cpu npu; do
-    if [ -f "${CYDIR}/software/build-results/workloads/${dir}/${binary}$default_suffix" ]; then
-        path="${CYDIR}/software/build-results/workloads/${dir}/"
-        suffix=$default_suffix
+    base_dir="${CYDIR}/software/build-results/workloads/${dir}"
+    if [ -d "${base_dir}" ]; then
+        found_path=$(find_binary_in_dir "${base_dir}" "${binary}" "${default_suffix}")
+        if [ $? -eq 0 ]; then
+            path="${found_path}"
+            suffix="${default_suffix}"
+            break
+        fi
     fi
 done
 
