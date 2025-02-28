@@ -169,11 +169,11 @@ $ ./build-setup.sh --library
 **6.2 firesim对接chipyard**
 
 ```
-$ cd firesim
+$ cd Voyager
 $ ./scripts/firesim_make_replace.sh
-<!-- $ rm -rf ./target-design/chipyard -->
+
+$ cd firesim
 $ rm -rf ./sim
-<!-- $ ln -s ../Voyager/ ./target-design/chipyard -->
 $ ln -s ../Voyager/sims/firesim/sim ./sim
 ```
 注意check 正确软连接到 Voyager目录.
