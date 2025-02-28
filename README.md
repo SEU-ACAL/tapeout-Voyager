@@ -191,6 +191,20 @@ $ pip install pre-commit
 $ pre-commit install
 ```
 
+安装完 pre-commit 后请打开 `scripts/permission_check.sh` 将你需要修改的文件夹路径取消注释。
+通过这种方式我们防止提交文件夹污染，只有位于这几个文件夹的文件修改允许提交。
+
+```
+allowed_dirs=( \
+    # "generators/boom/src" \  # # just enabled for cpu team
+    # "generators/gemmini/src" \ # just enabled for npu team
+    # "generators/rocket-chip/src/main/scala/npu" \  # just enabled for npu team
+    # "generators/rocket-chip/src/main/scala/rocket" \  # just enabled for cpu team
+    "generators/chipyard/src" \
+    "software" \
+    "documents" \
+    "scripts")
+```
 
 ## 八、文档目录
 
