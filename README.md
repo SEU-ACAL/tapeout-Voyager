@@ -168,16 +168,14 @@ $ ./build-setup.sh --library
 
 **6.2 firesim对接chipyard**
 
-~~./scripts/firesim_replacement.sh~~
 ```
-
 $ cd firesim
 $ rm -rf ./sim
 $ ln -s ../Voyager/sims/firesim/sim ./sim
 ```
-注意check 正确软连接到 Voyager目录.
+注意检查是否正确软连接到 Voyager目录，之后操作与firesim文档完全一致.
 
-之后操作与firesim文档完全一致.
+注：如果在执行firesim buildbitstream时，出现 "No rule to make target /lib/libdromajo_cosim.a" 的报错，请运行`./scripts/firesim_replacement.sh`，之后再执行firesim buildbitstream 就不会出现这个问题.
 
 ## 七、安装 pre-commit 
 
