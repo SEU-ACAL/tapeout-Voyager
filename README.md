@@ -168,9 +168,8 @@ $ ./build-setup.sh --library
 
 **6.2 firesim对接chipyard**
 
+~~./scripts/firesim_replacement.sh~~
 ```
-$ cd Voyager
-$ ./scripts/firesim_replacement.sh
 
 $ cd firesim
 $ rm -rf ./sim
