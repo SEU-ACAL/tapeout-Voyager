@@ -1,6 +1,7 @@
 project(cpu C)
 
 set(CPU_WORKLOAD_DIR ${WORKLOAD_DIR}/cpu)
+set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-g++")  
 
 #-------------------------------------------------------------------------------
 # build linux version workload
@@ -29,7 +30,7 @@ add_custom_target( cpu-baremetal-build ALL
     COMMAND ${ELF_CC} ${C_FLAGS}
             -o ${WORKLOAD_BIN_DIR}/cpu/hello-baremetal
             ${CPU_WORKLOAD_DIR}/hello/hello.c
-    COMMAND riscv64-unknown-elf-gcc ${C_FLAGS}
+    COMMAND ${ELF_CC} ${C_FLAGS}
             -o ${WORKLOAD_BIN_DIR}/cpu/spmm-baremetal
             ${CPU_WORKLOAD_DIR}/spmm/spmm.c
     DEPENDS ${CPU_WORKLOAD_DIR}/hello/hello.c

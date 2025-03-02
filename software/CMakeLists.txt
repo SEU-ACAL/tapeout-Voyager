@@ -47,8 +47,7 @@ add_custom_target(create-dirs
 add_custom_target(build-all ALL DEPENDS
     create-dirs
     cpu-build
-    gemmini-buddy 
-    gemmini-native
+    npu-build
 )
 
 add_custom_target(clean-all
