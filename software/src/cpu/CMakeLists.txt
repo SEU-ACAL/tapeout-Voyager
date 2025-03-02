@@ -34,11 +34,7 @@ add_custom_target( cpu-baremetal-build ALL
     COMMAND ${ELF_CC} ${C_FLAGS}
             -o ${WORKLOAD_BIN_DIR}/cpu/hello-baremetal
             ${CPU_WORKLOAD_DIR}/hello/hello.c
-    COMMAND ${ELF_CC} ${C_FLAGS}
-            -o ${WORKLOAD_BIN_DIR}/cpu/spmm-baremetal
-            ${CPU_WORKLOAD_DIR}/spmm/spmm.c
     DEPENDS ${CPU_WORKLOAD_DIR}/hello/hello.c
-            ${CPU_WORKLOAD_DIR}/spmm/spmm.c
     COMMENT "Building baremetal workloads for CPU"
     VERBATIM)
 

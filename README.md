@@ -120,7 +120,7 @@ $ make build-npu
 ```
 $ cd Voyager
 $ spike ./software/build-results/workloads/cpu/hello-baremetal
-$ spike pk ./software/build-results/workloads/cpu/hello-linux
+$ spike pk ./software/build-results/workloads/cpu/spmm-linux
 $ spike --extension=gemmini software/build-results/workloads/npu/native/bareMetalC/matmul_os-baremetal
 ```
 
