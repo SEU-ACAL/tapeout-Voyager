@@ -1,12 +1,16 @@
 project(cpu C)
 
 set(CPU_WORKLOAD_DIR ${WORKLOAD_DIR}/cpu)
-set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-g++")  
+set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-gcc")  
 
 #-------------------------------------------------------------------------------
 # build linux version workload
 #-------------------------------------------------------------------------------
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WORKLOAD_BIN_DIR}/cpu)
+
+set(LINK_FLAGS "-static -Wl,--no-dynamic-linker")
+set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINK_FLAGS}")
+# add_compile_options(-O2 -static)
 add_executable(hello-linux ${CPU_WORKLOAD_DIR}/hello/hello.c)
 add_executable(spmm-linux ${CPU_WORKLOAD_DIR}/spmm/spmm.c)
 
@@ -39,7 +43,7 @@ add_custom_target( cpu-baremetal-build ALL
     VERBATIM)
 
 #-------------------------------------------------------------------------------
-# build baremetal version workload
+# build all version workload
 #-------------------------------------------------------------------------------
 add_custom_target(cpu-build ALL DEPENDS
     cpu-linux-build
