@@ -1,5 +1,17 @@
 # 仓库开发手册
 
+- [零、安装 mosh](#-----mosh)
+- [一、安装 anaconda](#-----anaconda)
+- [二、安装开发仓库](#--------)
+- [三、Workload](#--workload)
+- [四、Spike](#--spike)
+- [五、Verilator](#--verilator)
+- [六、firesim](#--firesim)
+- [七、安装 pre-commit](#-----pre-commit)
+- [八、相关文档目录](#------)
+
+
+
 ## 零、安装 mosh
 针对网络波动问题（如在火车上写代码），建议使用MIT开发的mosh：https://mosh.org/
 
