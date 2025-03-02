@@ -325,4 +325,4 @@ class FireSimHeterSoCConfig extends Config(
   new WithDefaultFireSimBridges ++
   new WithDefaultMemModel ++
   new WithFireSimConfigTweaks ++
-  new chipyard.OurHeterSoCConfig)
+  new chipyard.OurHeterSoCNoPerConfig)//firesim do not support gpio
