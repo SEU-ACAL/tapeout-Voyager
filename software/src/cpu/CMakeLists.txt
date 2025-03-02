@@ -12,11 +12,11 @@ set(LINK_FLAGS "-static -Wl,--no-dynamic-linker")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINK_FLAGS}")
 # add_compile_options(-O2 -static)
 add_executable(hello-linux ${CPU_WORKLOAD_DIR}/hello/hello.c)
-add_executable(spmm-linux ${CPU_WORKLOAD_DIR}/spmm/spmm.c)
+add_executable(cpu-spmm-linux ${CPU_WORKLOAD_DIR}/spmm/spmm.c)
 
 add_custom_target(cpu-linux-build ALL DEPENDS
     hello-linux
-    spmm-linux
+    cpu-spmm-linux
     COMMENT "Building linux workloads for CPU"
     VERBATIM)
 

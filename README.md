@@ -119,9 +119,9 @@ $ make build-npu
 
 ```
 $ cd Voyager
-$ spike ./software/build-results/workloads/cpu/hello-baremetal
-$ spike pk ./software/build-results/workloads/cpu/spmm-linux
-$ spike --extension=gemmini software/build-results/workloads/npu/native/bareMetalC/matmul_os-baremetal
+$ ./software/scripts/run-spike.sh hello 
+$ ./software/scripts/run-spike.sh --pk cpu-spmm
+$ ./software/scripts/run-spike.sh matmul_os
 ```
 
 
@@ -147,6 +147,8 @@ Verilator编译出的可执行文件会被自动拷贝到 `software/build-result
 ```
 # 运行software/build-results/workloads/cpu/hello-baremetal
 $ ./software/scripts/run-verilator.sh --config RocketConfig hello 
+
+# 运行software/build-results/workloads/npu/native/vector-baremetal
 $ ./software/scripts/run-verilator.sh --config CustomGemminiSoCConfig vector 
 ```
 
