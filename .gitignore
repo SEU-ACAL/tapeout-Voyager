@@ -27,6 +27,5 @@ project/metals.sbt
 project/project/
 .ivy2
 .sbt
-
 generators/cva6/
 tools/cde
