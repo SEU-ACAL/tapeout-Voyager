@@ -167,19 +167,19 @@ fi
 #     fi
 # fi
 
-# # setup firemarshal
-# if run_step "8"; then
-#     pushd $CYDIR/software/firemarshal
-#     ./init-submodules.sh
+# setup firemarshal
+if run_step "8"; then
+    pushd $CYDIR/software/firemarshal
+    ./init-submodules.sh
 
-#     # precompile firemarshal buildroot sources
-#     if run_step "9"; then
-#         source $CYDIR/scripts/fix-open-files.sh
-#         ./marshal $VERBOSE_FLAG build br-base.json
-#         ./marshal $VERBOSE_FLAG clean br-base.json
-#     fi
-#     popd
-# fi
+    # precompile firemarshal buildroot sources
+    if run_step "9"; then
+        source $CYDIR/scripts/fix-open-files.sh
+        ./marshal $VERBOSE_FLAG build br-base.json
+        ./marshal $VERBOSE_FLAG clean br-base.json
+    fi
+    popd
+fi
 
 # do misc. cleanup for a "clean" git status
 if run_step "10"; then
