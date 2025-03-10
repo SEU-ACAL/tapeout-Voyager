@@ -104,8 +104,8 @@ $ make build-all
 
 如果只需单独编译部分workload
 ```
-$ make build-cpu
-$ make build-npu
+$ make cpu-build
+$ make npu-build
 ```
 
 **3.2 添加自定义workload**
