@@ -45,14 +45,10 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
     val busy = Output(Bool())
 
     val counter = new CounterEventIO()
-    val vecs = new Bundle{
-      val vecA = Output(Vec(16, UInt(8.W)))
-      val vecB = Output(Vec(16, UInt(8.W)))
-    }
   })
 
   val block_size = meshRows*tileRows
-
+  val Mode = RegInit(0.U(2.W))
   val mesh_tag = new Bundle with TagQueueTag {
     val rob_id = UDValid(UInt(log2Up(reservation_station_entries).W))
     val addr = local_addr_t.cloneType
@@ -83,16 +79,13 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
   val functs = cmd.bits.map(_.cmd.inst.funct)
   val rs1s = VecInit(cmd.bits.map(_.cmd.rs1))
   val rs2s = VecInit(cmd.bits.map(_.cmd.rs2))
- // val rds  = VecInit(cmd.bits.map(_.cmd.inst.rd))
 
   val DoConfig = functs(0) === CONFIG_CMD
   val DoComputes = functs.map(f => f === COMPUTE_AND_FLIP_CMD || f === COMPUTE_AND_STAY_CMD)
   val DoPreloads = functs.map(_ === PRELOAD_CMD)
-  //新增vec计算指令译码
-  val DoConfigTargetAddr = functs.map(_ === CONFIG_TARGET_ADDR_CMD)
-  val DoComputeVecAddVec = functs.map(_ === COMPUTE_VEC_ADD_VEC_CMD)
-  val DoComputeVecAddUint = functs.map(_ === COMPUTE_VEC_ADD_UINT_CMD)
-  val DoComputeVecMulUint = functs.map(_ === COMPUTE_VEC_MUL_UINT_CMD)
+
+  //新增EX模式配置指令
+  val DoConfigExMode = functs.map(_ === CONFIG_EX_MODE_CMD)
 
   val preload_cmd_place = Mux(DoPreloads(0), 0.U, 1.U)
   // val a_address_place = Mux(current_dataflow === Dataflow.WS.id.U, 0.U, Mux(preload_cmd_place === 0.U, 1.U, 2.U))
@@ -239,13 +232,7 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
 
   val matmul_in_progress = mesh.io.tags_in_progress.map(_.rob_id.valid).reduce(_ || _)
 
-  io.busy := cmd.valid(0)  //删掉了 || matmul_in_progress，防止脉动阵列的影响
-
-
-
-  
-
-  
+  io.busy := cmd.valid(0) || matmul_in_progress
 
   // SRAM scratchpad
   // Fire counters which resolve same-bank accesses
@@ -293,7 +280,7 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
   val perform_single_preload = RegInit(false.B)
   val perform_single_mul = RegInit(false.B)
   val perform_mul_pre = RegInit(false.B)
-
+  val perform_config_ex_mode = RegInit(false.B)
 
   val performing_single_preload = WireInit(perform_single_preload && control_state === compute)
   val performing_single_mul = WireInit(perform_single_mul && control_state === compute)
@@ -315,10 +302,9 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
        fully propagate through. Therefore, we raise the minimum floor for total_rows to 4.
        TODO: add a WAW check to the ROB so that we can lower the floor back to 2
      */
-    //total_rows := maxOf(maxOf(rows_a, rows_b), 4.U)
+    total_rows := maxOf(maxOf(rows_a, rows_b), 4.U)
   }
-  //改动：只读一行
-  total_rows := 1.U
+
   //added for mul_pre sync
   val mul_pre_counter_sub = RegInit(0.U(3.W))
   val mul_pre_counter_count = RegInit(0.U(3.W))
@@ -437,37 +423,11 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
     d_fire_counter_mulpre := d_fire_counter - mul_pre_counter_sub
   }.otherwise{d_fire_counter_mulpre := d_fire_counter}
 
-  //------------------------------------增加代码：读取并存储向量-------------------------------------
-  val RespData = io.srams.read(0).resp.bits.data
-  val RespValid = io.srams.read(0).resp.valid
-
-  val perform_vec_target_addr = RegInit(false.B)
-  val perform_vec_add_vec = RegInit(false.B)
-  val perform_vec_add_uint = RegInit(false.B)
-  val perform_vec_mul_uint = RegInit(false.B)
-
-  val VecReadA = WireInit(false.B)
-  val VecReadB = WireInit(false.B)
-  val VecWrite = WireInit(false.B)
-
-  // 创建一个与 RespData 相同长度的 Vec 寄存器，每个元素的类型为 UInt(8.W)
-  val VecA = RegInit(VecInit(Seq.fill(RespData.getWidth / 8)(0.U(8.W))))
-  val VecB = RegInit(VecInit(Seq.fill(RespData.getWidth / 8)(0.U(8.W))))
-  val VecD = WireInit(VecInit(Seq.fill(RespData.getWidth / 8)(0.U(8.W))))
-  io.vecs.vecA := VecA
-  io.vecs.vecB := VecB
-  val inputA :: inputB :: calculate :: writeback:: Nil = Enum(4)
-  val VecState = RegInit(inputA)
-  val VecTargetAddr = RegInit(0.U(32.W))
-  val v_mask = VecInit(Seq.fill(block_size)(true.B))
-
   // Scratchpad reads
   for (i <- 0 until sp_banks) {
-    val read_a = (a_valid && !a_read_from_acc && dataAbank === i.U && start_inputting_a && !multiply_garbage && a_row_is_not_all_zeros && !(im2col_wire&&im2col_en)) 
-    val read_b = (b_valid && !b_read_from_acc && dataBbank === i.U && start_inputting_b && !accumulate_zeros && b_row_is_not_all_zeros) //&& !im2col_wire
+    val read_a = a_valid && !a_read_from_acc && dataAbank === i.U && start_inputting_a && !multiply_garbage && a_row_is_not_all_zeros && !(im2col_wire&&im2col_en)
+    val read_b = b_valid && !b_read_from_acc && dataBbank === i.U && start_inputting_b && !accumulate_zeros && b_row_is_not_all_zeros //&& !im2col_wire
     val read_d = d_valid && !d_read_from_acc && dataDbank === i.U && start_inputting_d && !preload_zeros && d_row_is_not_all_zeros //&& !im2col_wire
-
-
 
     Seq((read_a, a_ready), (read_b, b_ready), (read_d, d_ready)).foreach { case (rd, r) =>
       when (rd && !io.srams.read(i).req.ready) {
@@ -476,22 +436,18 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
     }
 
     if (ex_read_from_spad) {
-      io.srams.read(i).req.valid := (read_a || read_b || read_d && cntl_ready) || VecReadA || VecReadB//|| ((VecState === inputA) && perform_vec_add_vec) || (VecState === inputB) //删掉了控制信号队列的cntl_ready
+      io.srams.read(i).req.valid := (read_a || read_b || read_d) && cntl_ready
       io.srams.read(i).req.bits.fromDMA := false.B
       io.srams.read(i).req.bits.addr := MuxCase(a_address_rs1.sp_row() + a_fire_counter,
         Seq(read_b -> (b_address_rs2.sp_row() + b_fire_counter),
-          read_d -> (d_address_rs1.sp_row() + block_size.U - 1.U - d_fire_counter_mulpre),
-          VecReadA -> rs1s(0).asTypeOf(local_addr_t).sp_row(),
-          VecReadB  -> rs2s(0).asTypeOf(local_addr_t).sp_row(),
-          ))
-      /*注释掉这段逻辑，防止对自定义指令的影响
+          read_d -> (d_address_rs1.sp_row() + block_size.U - 1.U - d_fire_counter_mulpre)))
+
       // TODO this just overrides the previous line. Should we erase the previous line?
       when(im2col_en === false.B) {
         io.srams.read(i).req.bits.addr := MuxCase(a_address.sp_row(),
           Seq(read_b -> b_address.sp_row(),
             read_d -> d_address.sp_row()))
       }
-            */
     } else {
       io.srams.read(i).req.valid := false.B
       io.srams.read(i).req.bits.fromDMA := false.B
@@ -500,7 +456,6 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
 
     io.srams.read(i).resp.ready := false.B
   }
-
 
   // Accumulator read
   for (i <- 0 until acc_banks) {
@@ -577,7 +532,6 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
     io.im2col.resp.ready := mesh.io.a.ready
   }
 
-
   // FSM logic
   switch (control_state) {
     is(waiting_for_cmd) {
@@ -585,11 +539,6 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
       perform_single_preload := false.B
       perform_mul_pre := false.B
       perform_single_mul := false.B
-      perform_vec_add_vec := false.B
-      perform_vec_add_uint := false.B
-      perform_vec_mul_uint := false.B
-      perform_vec_target_addr := false.B
-
 
       when(cmd.valid(0))
       {
@@ -635,23 +584,22 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
 
           cmd.pop := 1.U
         }
-        
+
         // Preload
         .elsewhen(DoPreloads(0) && cmd.valid(1) && (raw_hazards_are_impossible.B || !raw_hazard_pre)) {
           perform_single_preload := true.B
           performing_single_preload := true.B
-          //perform_vec_add_vec := true.B
+
           //start_inputting_a := current_dataflow === Dataflow.OS.id.U
           //start_inputting_d := true.B
-          
+
           start_inputting_a := a_should_be_fed_into_transposer
           start_inputting_b := b_should_be_fed_into_transposer
           start_inputting_d := true.B
-          
 
           control_state := compute
         }
-        
+
         // Overlap compute and preload
         .elsewhen(DoComputes(0) && cmd.valid(1) && DoPreloads(1) && (!third_instruction_needed || (cmd.valid(2) && !raw_hazard_mulpre)))
         {
@@ -675,29 +623,7 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
 
           control_state := compute
         }
-        .elsewhen(DoConfigTargetAddr(0)){
-          VecTargetAddr := rs1s(0).asTypeOf(local_addr_t).sp_row()  
-          perform_vec_target_addr := true.B
-          control_state := compute
-        }
-        .elsewhen(DoComputeVecAddVec(0)){
-          perform_vec_add_vec := true.B
 
-          VecReadA := true.B
-          control_state := compute
-        }
-        .elsewhen(DoComputeVecAddUint(0)){
-          perform_vec_add_uint := true.B
-
-          VecReadA := true.B
-          control_state := compute
-        }
-        .elsewhen(DoComputeVecMulUint(0)){
-          perform_vec_mul_uint := true.B
-
-          VecReadA := true.B
-          control_state := compute
-        }
         // Flush
         .elsewhen(matmul_in_progress && (current_dataflow === Dataflow.OS.id.U || DoConfig)) {
           control_state := flush
@@ -713,7 +639,7 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
         start_inputting_a := a_should_be_fed_into_transposer
         start_inputting_b := b_should_be_fed_into_transposer
         start_inputting_d := true.B
-          
+
         when(about_to_fire_all_rows) {
           cmd.pop := 1.U
           control_state := waiting_for_cmd
@@ -755,109 +681,6 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
           control_state := waiting_for_cmd
           pending_completed_rob_ids(0) := cmd.bits(0).rob_id
         }
-      }
-      .elsewhen(perform_vec_target_addr){
-          cmd.pop := 1.U
-          control_state := waiting_for_cmd
-          pending_completed_rob_ids(0) := cmd.bits(0).rob_id
-          pending_completed_rob_ids(0).valid := 1.U
-          pending_completed_rob_ids(0).bits := cmd.bits(0).rob_id.bits
-      }
-      .elsewhen(perform_vec_add_vec){
-        
-        switch(VecState){
-          is(inputA){
-            VecReadA := false.B
-            when(RespValid){
-              io.srams.read(0).resp.ready := true.B
-              VecA := RespData.asTypeOf(VecA)
-              VecState := inputB
-              VecReadB := true.B
-            }
-          }
-          is(inputB){
-            VecReadB := false.B
-            when(RespValid){
-              io.srams.read(0).resp.ready := true.B
-              VecB := RespData.asTypeOf(VecB)
-
-              VecState := calculate
-            }
-          }
-          is(calculate){
-            VecD := VecA.zip(VecB).map{case (a,b) => a + b}
-            VecState := writeback
-            VecWrite := true.B
-          }
-          is(writeback){
-            VecState := inputA
-            VecWrite := false.B
-            cmd.pop := 1.U
-            control_state := waiting_for_cmd
-            pending_completed_rob_ids(0) := cmd.bits(0).rob_id
-            pending_completed_rob_ids(0).valid := 1.U
-            pending_completed_rob_ids(0).bits := cmd.bits(0).rob_id.bits
-      
-          }
-        }
-      }
-       .elsewhen(perform_vec_add_uint){
-        
-        switch(VecState){
-          is(inputA){
-            VecReadA := false.B
-            when(RespValid){
-              io.srams.read(0).resp.ready := true.B
-              VecA := RespData.asTypeOf(VecA)
-              VecState := calculate
-            }
-          }
-          is(calculate){
-            VecD := VecA.map{case a => a + rs2s(0)(7,0).asTypeOf(VecA(0))}
-            VecState := writeback
-            VecWrite := true.B
-          }
-          is(writeback){
-            VecState := inputA
-            VecWrite := false.B
-            cmd.pop := 1.U
-            control_state := waiting_for_cmd
-            pending_completed_rob_ids(0) := cmd.bits(0).rob_id
-            pending_completed_rob_ids(0).valid := 1.U
-            pending_completed_rob_ids(0).bits := cmd.bits(0).rob_id.bits
-      
-          }
-        }
-
-      }
-      .elsewhen(perform_vec_mul_uint){
-        
-        switch(VecState){
-          is(inputA){
-            VecReadA := false.B
-            when(RespValid){
-              io.srams.read(0).resp.ready := true.B
-              VecA := RespData.asTypeOf(VecA)
-              VecState := calculate
-            }
-          }
-          is(calculate){
-            VecD := VecA.map{case a => a * rs2s(0)(7,0).asTypeOf(VecA(0))}
-            VecState := writeback
-            VecWrite := true.B
-          }
-          is(writeback){
-            VecState := inputA
-            VecWrite := false.B
-            cmd.pop := 1.U
-            control_state := waiting_for_cmd
-            pending_completed_rob_ids(0) := cmd.bits(0).rob_id
-            pending_completed_rob_ids(0).valid := 1.U
-            pending_completed_rob_ids(0).bits := cmd.bits(0).rob_id.bits
-      
-          }
-        }
-
       }
     }
     is(flush) {
@@ -1100,7 +923,7 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
   val write_this_row = Mux(current_dataflow === Dataflow.WS.id.U, output_counter < w_matrix_rows,
     w_total_output_rows - 1.U - output_counter < w_matrix_rows)
   val w_mask = (0 until block_size).map(_.U < w_matrix_cols) // This is an element-wise mask, rather than a byte-wise mask
-  
+
   // Write to normal scratchpad
   for(i <- 0 until sp_banks) {
     val activated_wdata = VecInit(mesh.io.resp.bits.data.map(v => VecInit(v.map { e =>
@@ -1112,10 +935,10 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
     })))
 
     if (ex_write_to_spad) {
-      io.srams.write(i).en := (start_array_outputting && w_bank === i.U && !write_to_acc && !is_garbage_addr && write_this_row) || VecWrite
-      io.srams.write(i).addr := Mux(VecWrite, VecTargetAddr.asTypeOf(a_address_rs1.sp_row()), w_row)
-      io.srams.write(i).data := Mux(VecWrite, VecD.asTypeOf(RespData), activated_wdata.asUInt)
-      io.srams.write(i).mask := v_mask//w_mask.flatMap(b => Seq.fill(inputType.getWidth / (aligned_to * 8))(b))
+      io.srams.write(i).en := start_array_outputting && w_bank === i.U && !write_to_acc && !is_garbage_addr && write_this_row
+      io.srams.write(i).addr := w_row
+      io.srams.write(i).data := activated_wdata.asUInt
+      io.srams.write(i).mask := w_mask.flatMap(b => Seq.fill(inputType.getWidth / (aligned_to * 8))(b))
     } else {
       io.srams.write(i).en := false.B
       io.srams.write(i).addr := DontCare
@@ -1214,5 +1037,28 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
     PerfCounter(ex_flush_cycle, "ex_flush_cycle", "cycles during which the ex controller is flushing the spatial array")
     PerfCounter(ex_preload_haz_cycle, "ex_preload_haz_cycle", "cycles during which the execute controller is stalling preloads due to hazards")
     PerfCounter(ex_mulpre_haz_cycle, "ex_mulpre_haz_cycle", "cycles during which the execute controller is stalling matmuls due to hazards")
+  }
+
+  //VecUnit 
+  val VecUnit = Module(new VecUnit(xLen, tagWidth, config, ex_queue_length, cmd_q_heads))
+    VecUnit.io.cmd.valid := cmd.valid
+    VecUnit.io.cmd.bits := cmd.bits
+    VecUnit.io.srams.read.req.ready := io.srams.read(0).req.ready
+    VecUnit.io.srams.read.resp.valid := io.srams.read(0).resp.valid
+    VecUnit.io.srams.read.resp.bits <> io.srams.read(0).resp.bits
+    when(Mode === 0.U){
+      io.srams.write(0) <>  VecUnit.io.srams.write  
+      cmd.pop := VecUnit.io.cmd.pop
+      io.completed <>  VecUnit.io.completed 
+      io.srams.read(0).req.valid := VecUnit.io.srams.read.req.valid
+      io.srams.read(0).req.bits <> VecUnit.io.srams.read.req.bits
+      io.srams.read(0).resp.ready := VecUnit.io.srams.read.resp.ready
+    }
+
+    when(DoConfigExMode(0) && cmd.valid(0)){
+      Mode := rs1s(0)
+      io.completed.valid := true.B
+      io.completed.bits := cmd.bits(0).rob_id.bits
+      cmd.pop := 1.U
   }
 }

@@ -52,7 +52,8 @@ tests = \
 	global_average \
 	gemmini_counter \
 	template \
-	vector
+	vector \
+	systolic_array_and_vec_unit
 
 tests_baremetal = $(tests:=-baremetal)
 

@@ -29,3 +29,4 @@ project/project/
 .sbt
 generators/cva6/
 tools/cde
+.qodo

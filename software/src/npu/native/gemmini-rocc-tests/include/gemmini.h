@@ -41,10 +41,12 @@
 #define k_MVIN3 14
 
 //vec
-#define k_CONFIG_TARGET_ADDR 23
-#define k_COMPUTE_VEC_ADD_VEC 24
-#define k_COMPUTE_VEC_ADD_UINT 25
-#define k_COMPUTE_VEC_MUL_UINT 26
+#define k_LOAD_MUL_ADD 23
+#define k_STORE_VEC 24
+#define k_BROADCAST_VEC 25
+#define k_PRELOAD_SCALAR 26
+#define k_CONFIG_EX_MODE 27
+
 
 #define k_COUNTER 126
 
@@ -71,6 +73,8 @@
 #define IGELU 3
 #define SOFTMAX 4
 
+#define VEC_UNIT 0
+#define SYSTOLIC_ARRAY 1
 #ifdef ELEM_T_IS_FLOAT
 elem_t elem_t_bits_to_elem_t(elem_t_bits x) {
     union {
@@ -245,33 +249,22 @@ static acc_scale_t_bits acc_scale_t_to_acc_scale_t_bits(acc_scale_t x) {
 #define gemmini_preload_zeros(C) \
   gemmini_preload(GARBAGE_ADDR, C)
 
+#define gemmini_config_ex_mode(mode) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, mode, 0, k_CONFIG_EX_MODE)
 
 //vec
-#define gemmini_extended_config_vec_target_addr(A, BD, A_cols, A_rows, BD_cols, BD_rows) \
-  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)(A_rows) << (ADDR_LEN + 16)) | ((uint64_t)(A_cols) << ADDR_LEN) | (uint64_t)(A), ((uint64_t)(BD_rows) << (ADDR_LEN + 16)) | ((uint64_t)(BD_cols) << ADDR_LEN) | (uint64_t)(BD), k_CONFIG_TARGET_ADDR)
+#define gemmini_load_mul_add(VecAddr, Len, ScalarAddr)\
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)Len << 32)| ((uint64_t)ScalarAddr << 16)|(uint64_t)VecAddr, 0, k_LOAD_MUL_ADD)
 
-#define gemmini_config_vec_target_addr(A) \
-gemmini_extended_config_vec_target_addr(A, 0, DIM, DIM, DIM, DIM)
+#define gemmini_store_vec(VecAddr, Len)\
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, (Len << 16)|(uint64_t)VecAddr, 0, k_STORE_VEC)
 
+#define gemmini_broadcast_vec()\
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, 0, 0, k_BROADCAST_VEC)
 
-#define gemmini_extended_vec_add_vec(A, BD, A_cols, A_rows, BD_cols, BD_rows) \
-ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)(A_rows) << (ADDR_LEN + 16)) | ((uint64_t)(A_cols) << ADDR_LEN) | (uint64_t)(A), ((uint64_t)(BD_rows) << (ADDR_LEN + 16)) | ((uint64_t)(BD_cols) << ADDR_LEN) | (uint64_t)(BD), k_COMPUTE_VEC_ADD_VEC)
-
-#define gemmini_vec_add_vec(A, BD) \
-  gemmini_extended_vec_add_vec(A, BD, DIM, DIM, DIM, DIM)
-
-#define gemmini_extended_vec_add_uint(A, U, A_cols, A_rows, BD_cols, BD_rows) \
-  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)(A_rows) << (ADDR_LEN + 16)) | ((uint64_t)(A_cols) << ADDR_LEN) | (uint64_t)(A), ((uint64_t)(BD_rows) << (ADDR_LEN + 16)) | ((uint64_t)(BD_cols) << ADDR_LEN) | (uint64_t)(U), k_COMPUTE_VEC_ADD_UINT)
+#define gemmini_preload_scalar(Addr)\
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, (uint64_t)Addr, 0, k_PRELOAD_SCALAR)
   
-#define gemmini_vec_add_uint(A, U) \
-    gemmini_extended_vec_add_uint(A, U, DIM, DIM, DIM, DIM)
-  
-#define gemmini_extended_vec_mul_uint(A, U, A_cols, A_rows, BD_cols, BD_rows) \
-    ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)(A_rows) << (ADDR_LEN + 16)) | ((uint64_t)(A_cols) << ADDR_LEN) | (uint64_t)(A), ((uint64_t)(BD_rows) << (ADDR_LEN + 16)) | ((uint64_t)(BD_cols) << ADDR_LEN) | (uint64_t)(U), k_COMPUTE_VEC_MUL_UINT)
-    
-#define gemmini_vec_mul_uint(A, U) \
-      gemmini_extended_vec_mul_uint(A, U, DIM, DIM, DIM, DIM)
-
 // config
 #define gemmini_extended3_config_ex(dataflow, sys_act, sys_shift, sys_acc_scale, C_stride, A_stride, A_transpose, B_transpose, set_only_strides) \
     ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)acc_scale_t_to_acc_scale_t_bits((acc_scale_t)sys_acc_scale) << 32) | ((uint64_t)(A_stride) << 16) | (B_transpose << 9) | (A_transpose << 8) | ((set_only_strides) << 7) | ((sys_act) << 3) | ((dataflow) << 2) | CONFIG_EX, ((uint64_t)(C_stride) << 48) | (sys_shift), k_CONFIG); \

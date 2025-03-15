@@ -10,6 +10,20 @@
 #endif
 #include "include/gemmini_testutils.h"
 
+void Transpose(elem_t matrix[DIM][DIM]){
+  elem_t temp[DIM][DIM];
+  for(size_t i = 0; i < DIM; i++){
+    for(size_t j = 0; j < DIM; j++){
+      temp[i][j] = matrix[j][i];
+      }
+    }
+      for(size_t i = 0; i < DIM; i++){
+        for(size_t j = 0; j < DIM; j++){
+          matrix[i][j] = temp[i][j];
+          }
+      }
+}
+
 int main() {
 #ifndef BAREMETAL
     if (mlockall(MCL_CURRENT | MCL_FUTURE) != 0) {
@@ -18,101 +32,78 @@ int main() {
     }
 #endif
 
-  printf("Flush Gemmini TLB of stale virtual addresses\n");
+ 
   gemmini_flush(0);
 
-  printf("Initialize our input and output matrices in main memory\n");
+
   elem_t In[DIM][DIM] = {0};
   elem_t Out[DIM][DIM] = {0};
 
   elem_t Identity[DIM][DIM] = {0};
-  for (size_t i = 0; i < 1; i++)
+  for (size_t i = 0; i < DIM; i++)
     for (size_t j = 0; j < DIM; j++){
-      Identity[i][j] = 2;
-      In[i][j] = 1;
+      In[i][j] = ( i == 0);
+      Identity[i][j] = (j == 0);
     }
 
-  printf("Calculate the scratchpad addresses of all our matrices\n");
-  printf("  Note: The scratchpad is \"row-addressed\", where each address contains one matrix row\n");
   size_t In_sp_addr = 0;
   size_t Out_sp_addr = DIM;
   size_t Identity_sp_addr = 2*DIM;
 
-  printf("Move \"In\" vec from main memory into Gemmini's scratchpad\n");
+  Transpose(In);
+
   gemmini_config_ld(DIM * sizeof(elem_t));
   gemmini_config_st(DIM * sizeof(elem_t));
-  gemmini_mvin(In, In_sp_addr);
 
-  printf("Move \"Identity\" vec from main memory into Gemmini's scratchpad\n");
+  printf("Move \"In\" and \"Identity\" matrix from main memory into Gemmini's scratchpad\n");
+  gemmini_mvin(In, In_sp_addr);
   gemmini_mvin(Identity, Identity_sp_addr);
 
- // printf("Multiply \"In\" matrix with \"Identity\" matrix with a bias of 0\n");
-  //gemmini_config_ex(OUTPUT_STATIONARY, 0, 0);
-  //gemmini_preload_zeros(Out_sp_addr);
-  //gemmini_compute_preloaded(In_sp_addr, Identity_sp_addr);
-
-  //VEC MUL UINT
-  printf("---------------Perform vector mul Uint--------------------\n");
-  gemmini_config_vec_target_addr(Out_sp_addr);
-  gemmini_vec_mul_uint(In_sp_addr, 5);
-
-  printf("Move \"Out\" vec from Gemmini's scratchpad into main memory\n");
-  gemmini_config_st(DIM * sizeof(elem_t));
-  gemmini_mvout(Out, Out_sp_addr);
-
-  printf("Fence till Gemmini completes all memory operations\n");
-  gemmini_fence();
-
-  printf("Result Display\n");
-
-  printf("\"In\" Vec:\n");
-  printVec(In);
-  printf("Uint Value:\n");
-  printf("5\n");
-  printf("\"Out\" Vec:\n");
-  printVec(Out);
-  printf("\n");
-
-  //VEC ADD UINT
-  printf("----------------Perform vector add Uint--------------------\n");
-  gemmini_config_vec_target_addr(Out_sp_addr);
-  gemmini_vec_add_uint(In_sp_addr, 5);
-
-  printf("Move \"Out\" vec from Gemmini's scratchpad into main memory\n");
-  gemmini_config_st(DIM * sizeof(elem_t));
-  gemmini_mvout(Out, Out_sp_addr);
-
-  printf("Fence till Gemmini completes all memory operations\n");
-  gemmini_fence();
-
-  printf("Result Display:\n");
-  printf("\"In\" Vec:\n");
-  printVec(In);
-  printf("Uint Value:\n");
-  printf("5\n");
-  printf("\"Out\" Vec:\n");
-  printVec(Out);
-  printf("\n");
+  printf("Perform matrix multiplication\n");
+  gemmini_config_ex_mode(VEC_UNIT)
+  gemmini_load_mul_add(In_sp_addr, 15, Identity_sp_addr);
+  gemmini_store_vec(Out_sp_addr, 15);
+  gemmini_broadcast_vec();
   
-  //VEC ADD VEC
-  printf("---------------Perform vector add vector--------------------\n");
-  gemmini_config_vec_target_addr(Out_sp_addr);
-  gemmini_vec_add_vec(In_sp_addr, Identity_sp_addr);
+  printf("Move \"In\" and \"Identity\" matrix from main memory into Gemmini's scratchpad\n");
+  gemmini_mvin(In, In_sp_addr);
+  gemmini_mvin(Identity, Identity_sp_addr);
 
-  printf("Move \"Out\" vec from Gemmini's scratchpad into main memory\n");
-  gemmini_config_st(DIM * sizeof(elem_t));
-  gemmini_mvout(Out, Out_sp_addr);
-
-  printf("Fence till Gemmini completes all memory operations\n");
+  printf("Perform matrix multiplication\n");
+  gemmini_config_ex_mode(VEC_UNIT)
+  gemmini_load_mul_add(In_sp_addr, 15, Identity_sp_addr);
+  gemmini_store_vec(Out_sp_addr, 15);
+  gemmini_broadcast_vec();
+ 
+/* 废案：没有考虑到访存延迟，导致gemmini_load_mul_add指令无法流水地执行
+  for (size_t i = 0; i < DIM; i++){
+      gemmini_load_mul_add(Identity_sp_addr , In[i][0]);
+      gemmini_load_mul_add(Identity_sp_addr + 1, In[i][1]);
+      gemmini_load_mul_add(Identity_sp_addr + 2, In[i][2]);
+      gemmini_load_mul_add(Identity_sp_addr + 3, In[i][3]);
+      gemmini_load_mul_add(Identity_sp_addr + 4, In[i][4]);
+      gemmini_load_mul_add(Identity_sp_addr + 5, In[i][5]);
+      gemmini_load_mul_add(Identity_sp_addr + 6, In[i][6]);
+      gemmini_load_mul_add(Identity_sp_addr + 7, In[i][7]);
+      gemmini_load_mul_add(Identity_sp_addr + 8, In[i][8]);
+      gemmini_load_mul_add(Identity_sp_addr + 9, In[i][9]);
+      gemmini_load_mul_add(Identity_sp_addr + 10, In[i][10]);
+      gemmini_load_mul_add(Identity_sp_addr + 11, In[i][11]);
+      gemmini_load_mul_add(Identity_sp_addr + 12, In[i][12]);
+      gemmini_load_mul_add(Identity_sp_addr + 13, In[i][13]);
+      gemmini_load_mul_add(Identity_sp_addr + 14, In[i][14]);
+      gemmini_load_mul_add(Identity_sp_addr + 15, In[i][15]);
+    gemmini_store_vec(Out_sp_addr + i);
+    gemmini_broadcast_vec();
+  }
+    */
+  printf("Move the output matrix from Gemmini's scratchpad to main memory\n");
   gemmini_fence();
-
-  printf("Result Display:\n");
-  printf("\"In\" Vec:\n");
-  printVec(In);
-  printf("\"Identity\" Vec:\n");
-  printVec(Identity);
-  printf("\"Out\" Vec:\n");
-  printVec(Out);
+  gemmini_mvout(Out, Out_sp_addr);
+  gemmini_fence();
+  //Transpose(Out);
+  printf("Print the output matrix\n");
+  printMatrix(Out);
 
     exit(0);
 }

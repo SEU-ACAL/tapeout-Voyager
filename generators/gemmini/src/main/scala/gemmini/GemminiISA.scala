@@ -34,10 +34,11 @@ object GemminiISA {
 
   val CLKGATE_EN = 22.U
 
-  val CONFIG_TARGET_ADDR_CMD = 23.U
-  val COMPUTE_VEC_ADD_VEC_CMD = 24.U
-  val COMPUTE_VEC_ADD_UINT_CMD = 25.U
-  val COMPUTE_VEC_MUL_UINT_CMD = 26.U
+  val LOAD_MUL_ADD_CMD = 23.U
+  val STORE_VEC_CMD = 24.U
+  val BROADCAST_CMD = 25.U
+  val PRELOAD_SCALAR_CMD = 26.U
+  val CONFIG_EX_MODE_CMD = 27.U
 
   // rs1[2:0] values
   val CONFIG_EX = 0.U

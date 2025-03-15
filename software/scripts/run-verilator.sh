@@ -77,11 +77,13 @@ else
     PK=""
 fi
 
-WAVEFORM="waveforms/${TIMESTAMP}-${binary}-waveform.vcd"
+WAVEFORM="waveforms/waveform.vcd"
 mkdir -p "$(dirname "$WAVEFORM")"
 
+
+
 if [ $debug -eq 1 ]; then
-    DEBUG="-debug -v ${ROOT}${WAVEFORM}"
+    DEBUG="-debug -v ${PWD}/${WAVEFORM}"
 else
     DEBUG=""
 fi
@@ -147,7 +149,7 @@ ${CYDIR}/software/scripts/smartelf2hex.sh ${full_binary_path} > ${full_binary_pa
 
 cd ${CYDIR}/sims/verilator/
 
-./simulator-chipyard-${CONFIG}${DEBUG} +verbose $PK +permissive  \
+./simulator-chipyard-${CONFIG}${DEBUG}  +verbose $PK +permissive  \
     +loadmem=${full_binary_path}.loadmem_hex +loadmem_addr=80000000 \
     +permissive-off ${full_binary_path} \
     &> >(tee ${LOG_DIR}/stdout.log) \
