@@ -1,12 +1,6 @@
 # firesim 
 
-1. 安装
-```
-git clone https://github.com/firesim/firesim.git
-cd firesim
-git checkout 1.17.1
-./build-setup.sh
-```
+1. 按照Voyager仓库的Readme安装好firesim
 
 2. 执行这个文档的``7. Set up SSH Keys``（其余步骤服务器上已统一安装完成）
 

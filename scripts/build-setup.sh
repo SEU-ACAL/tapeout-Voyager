@@ -167,7 +167,7 @@ fi
 #     fi
 # fi
 
-# # setup firemarshal
+# setup firemarshal
 # if run_step "8"; then
 #     pushd $CYDIR/software/firemarshal
 #     ./init-submodules.sh

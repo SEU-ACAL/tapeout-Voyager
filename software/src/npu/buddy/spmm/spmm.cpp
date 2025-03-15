@@ -114,6 +114,9 @@ void spmm_os(CSRMatrix* A, int8_t* B, int M, int N, int K, int32_t* C) {
 void spmm_vector(CSRMatrix* A, int8_t* B, int M, int N, int K, int8_t* C) {
     int8_t* b_val_baddr = B;
     int8_t* c_val_baddr = C;
+    
+    // v[sp].mvin(b_val_baddr + A->col_idx[tp] * N + j); 
+    
     for (int i = 0; i < M; i+=16) { // A 行
         for (int j = 0; j < N; j +=16) { // B 的行每次被取16个数
             for (int sp = 0; sp < 16; sp++) { 
@@ -128,6 +131,8 @@ void spmm_vector(CSRMatrix* A, int8_t* B, int M, int N, int K, int8_t* C) {
             }
         }
     }
+
+    // mvout
 }
 
 
