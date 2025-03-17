@@ -7,8 +7,8 @@ gemmini单独调试配置为--config CustomGemminiSoCConfig
 
 以 BuddyCompiler 安装在外部，workload写在software为例
 ```
-git clone https://github.com/buddy-compiler/buddy-mlir.git
-cd buddy-mlir
+mkdir buddy-mlir && cd buddy-mlir
+git clone https://github.com/SEU-ACAL/tapeout-Compiler.git .
 git submodule update --init
 
 conda create -n BuddyMLIR python=3.10
@@ -41,9 +41,6 @@ export BUDDY_MLIR_BUILD_DIR=$PWD
 export LLVM_MLIR_BUILD_DIR=$PWD/../llvm/build
 export PYTHONPATH=${LLVM_MLIR_BUILD_DIR}/tools/mlir/python_packages/mlir_core:${BUDDY_MLIR_BUILD_DIR}/python_packages:${PYTHONPATH}
 ```
-
-按照这个链接，安装交叉编译环境
-https://github.com/buddy-compiler/buddy-mlir/blob/main/docs/RVVEnvironment.md
 
 
 ## E2E buddy-mlir for gemmini

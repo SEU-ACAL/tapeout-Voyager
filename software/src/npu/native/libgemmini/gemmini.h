@@ -40,7 +40,7 @@
 
 #define k_MVIN3 14
 
-//vec
+// vec
 #define k_CONFIG_TARGET_ADDR 23
 #define k_COMPUTE_VEC_ADD_VEC 24
 #define k_COMPUTE_VEC_ADD_UINT 25
