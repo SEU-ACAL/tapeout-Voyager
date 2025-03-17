@@ -9,6 +9,7 @@ gemmini单独调试配置为--config CustomGemminiSoCConfig
 ```
 mkdir buddy-mlir && cd buddy-mlir
 git clone https://github.com/SEU-ACAL/tapeout-Compiler.git .
+git checkout voyager 
 git submodule update --init
 
 conda create -n BuddyMLIR python=3.10
