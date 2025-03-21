@@ -292,9 +292,21 @@ class ReservationStation[T <: Data : Arithmetic, U <: Data, V <: Data](config: G
       dst.bits.wraps_around := dst.bits.start.add_with_overflow(total_mvin_rows)._2
     }
 
-    val is_load = funct === LOAD_CMD || funct === LOAD2_CMD || funct === LOAD3_CMD || (funct === CONFIG_CMD && config_cmd_type === CONFIG_LOAD)
-    val is_ex = funct === PRELOAD_CMD || funct_is_compute || funct === CONFIG_EX_MODE_CMD || funct === LOAD_MUL_ADD_CMD || funct === STORE_VEC_CMD || funct === BROADCAST_CMD || funct === PRELOAD_SCALAR_CMD || (funct === CONFIG_CMD && config_cmd_type === CONFIG_EX)
-    val is_store = funct === STORE_CMD || (funct === CONFIG_CMD && (config_cmd_type === CONFIG_STORE || config_cmd_type === CONFIG_NORM))
+    val is_load = funct === LOAD_CMD || funct === LOAD2_CMD || funct === LOAD3_CMD || 
+                 (funct === CONFIG_CMD && config_cmd_type === CONFIG_LOAD)
+    val is_ex = funct === PRELOAD_CMD || 
+                funct_is_compute || 
+                funct === CONFIG_EX_MODE_CMD || 
+                funct === VEC_LOAD_CMD || 
+                funct === VEC_STORE_CMD || 
+                funct === VEC_ADD_CMD || 
+                funct === VEC_SCALAR_MUL_CMD || 
+                funct === VEC_MOVE_CMD || 
+                funct === INST_Vec_Reduce_CMD || 
+                funct === INST_Vec_LoopMul_CMD ||
+                (funct === CONFIG_CMD && config_cmd_type === CONFIG_EX)
+    val is_store = funct === STORE_CMD || (funct === CONFIG_CMD && (config_cmd_type === CONFIG_STORE || 
+                             config_cmd_type === CONFIG_NORM))
     val is_norm = funct === CONFIG_CMD && config_cmd_type === CONFIG_NORM // normalization commands are a subset of store commands, so they still go in the store queue
 
     new_entry.q := Mux1H(Seq(

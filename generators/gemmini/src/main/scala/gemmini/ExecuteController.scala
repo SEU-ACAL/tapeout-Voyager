@@ -1,4 +1,3 @@
-
 package gemmini
 
 import chisel3._
@@ -7,6 +6,8 @@ import GemminiISA._
 import Util._
 import org.chipsalliance.cde.config.Parameters
 import midas.targetutils.PerfCounter
+
+import gemmini.VecUnit.VecUnit
 
 // TODO do we still need to flush when the dataflow is weight stationary? Won't the result just keep travelling through on its own?
 class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: Int, config: GemminiArrayConfig[T, U, V])
@@ -84,7 +85,7 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
   val DoComputes = functs.map(f => f === COMPUTE_AND_FLIP_CMD || f === COMPUTE_AND_STAY_CMD)
   val DoPreloads = functs.map(_ === PRELOAD_CMD)
 
-  //新增EX模式配置指令
+  // 新增EX模式配置指: 配置使用Vector还是Mesh计算
   val DoConfigExMode = functs.map(_ === CONFIG_EX_MODE_CMD)
 
   val preload_cmd_place = Mux(DoPreloads(0), 0.U, 1.U)
@@ -1046,7 +1047,7 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
     VecUnit.io.srams.read.req.ready := io.srams.read(0).req.ready
     VecUnit.io.srams.read.resp.valid := io.srams.read(0).resp.valid
     VecUnit.io.srams.read.resp.bits <> io.srams.read(0).resp.bits
-    when(Mode === 0.U){
+    when (Mode === 0.U) {
       io.srams.write(0) <>  VecUnit.io.srams.write  
       cmd.pop := VecUnit.io.cmd.pop
       io.completed <>  VecUnit.io.completed 
@@ -1055,7 +1056,7 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
       io.srams.read(0).resp.ready := VecUnit.io.srams.read.resp.ready
     }
 
-    when(DoConfigExMode(0) && cmd.valid(0)){
+    when (DoConfigExMode(0) && cmd.valid(0)){
       Mode := rs1s(0)
       io.completed.valid := true.B
       io.completed.bits := cmd.bits(0).rob_id.bits

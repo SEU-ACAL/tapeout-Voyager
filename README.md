@@ -135,7 +135,7 @@ $ ./software/scripts/run-spike.sh matmul_os
 $ cd Voyager
 $ ./software/scripts/build-verilator.sh --config RocketConfig # Build 单独Rocket
 $ ./software/scripts/build-verilator.sh --config CustomGemminiSoCConfig # Build 单独Gemmini
-$ ./software/scripts/build-verilator.sh --config OurHeterSoCConfig # Build 六核版
+$ ./software/scripts/build-verilator.sh --config OurHeterSoCConfig --debug # Build 六核版, 并开启调试
 ```
 
 Verilator编译出的可执行文件会被自动拷贝到 `software/build-results/verilator` 路径下
@@ -150,6 +150,12 @@ $ ./software/scripts/run-verilator.sh --config RocketConfig hello
 
 # 运行software/build-results/workloads/npu/native/vector-baremetal
 $ ./software/scripts/run-verilator.sh --config CustomGemminiSoCConfig vector 
+
+# 对开启的调试的build文件可以同时输出波形
+$ ./software/scripts/run-verilator.sh --config RocketConfig hello --debug 
+
+# 使用--vcd2fst参数，可以生成压缩后的FST波形
+$ ./software/scripts/run-verilator.sh --config RocketConfig hello --debug --vcd2fst
 ```
 
 
