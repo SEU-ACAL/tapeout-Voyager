@@ -154,6 +154,7 @@ if [ $debug -eq 1 ] && [ $vcd2fst -eq 1 ]; then
   echo "Converting VCD waveform to FST format..."
   FST_WAVEFORM="${WAVEFORM%.vcd}.fst"
   vcd2fst -v "${WAVEFORM}" -f "${FST_WAVEFORM}"
+  rm -rf "${WAVEFORM}"
   if [ $? -eq 0 ]; then
     echo "Waveform conversion successful: ${FST_WAVEFORM}"
   else

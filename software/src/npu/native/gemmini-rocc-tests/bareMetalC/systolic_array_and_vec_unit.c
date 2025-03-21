@@ -57,7 +57,7 @@ int main() {
   gemmini_mvin(Identity, Identity_sp_addr);
 
   printf("Multiply \"In\" matrix with \"Identity\" matrix with a bias of 0\n");
-  gemmini_config_ex_mode(SYSTOLIC_ARRAY);
+  gemmini_config_ex_mode(SYSTOLIC_ARRAY_MODE);
   gemmini_config_ex(OUTPUT_STATIONARY, 0, 0);
   gemmini_preload_zeros(Out_sp_addr);
   gemmini_compute_preloaded(In_sp_addr, Identity_sp_addr);
@@ -85,9 +85,9 @@ int main() {
 
   printf("-------------------VEC UNIT TEST : MATRIX MUTIPLICATION-------------------------\n");
   for (size_t i = 0; i < DIM; i++)
-  for (size_t j = 0; j < DIM; j++){
-    In[i][j] = ( j == 0);
-    Identity[i][j] = (i == 0);
+    for (size_t j = 0; j < DIM; j++){
+      In[i][j] = ( j == 0);
+      Identity[i][j] = (i == 0);
   }
 
   Transpose(In);
@@ -99,7 +99,7 @@ int main() {
   gemmini_mvin(Identity, Identity_sp_addr);
 
   printf("Perform matrix multiplication\n");
-  gemmini_config_ex_mode(VEC_UNIT)
+  gemmini_config_ex_mode(VECUNIT_MODE)
   gemmini_load_mul_add(In_sp_addr, 15, Identity_sp_addr);
   gemmini_store_vec(Out_sp_addr, 15);
   gemmini_broadcast_vec();

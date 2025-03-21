@@ -60,7 +60,7 @@ int main() {
   gemmini_mvin(Identity, Identity_sp_addr);
 
   printf("Perform matrix multiplication\n");
-  gemmini_config_ex_mode(VEC_UNIT)
+  gemmini_config_ex_mode(VECUNIT_MODE)
   gemmini_load_mul_add(In_sp_addr, 15, Identity_sp_addr);
   gemmini_store_vec(Out_sp_addr, 15);
   gemmini_broadcast_vec();
@@ -70,7 +70,7 @@ int main() {
   gemmini_mvin(Identity, Identity_sp_addr);
 
   printf("Perform matrix multiplication\n");
-  gemmini_config_ex_mode(VEC_UNIT)
+  gemmini_config_ex_mode(VECUNIT_MODE)
   gemmini_load_mul_add(In_sp_addr, 15, Identity_sp_addr);
   gemmini_store_vec(Out_sp_addr, 15);
   gemmini_broadcast_vec();

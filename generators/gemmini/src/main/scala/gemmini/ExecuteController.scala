@@ -1040,7 +1040,7 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
     PerfCounter(ex_mulpre_haz_cycle, "ex_mulpre_haz_cycle", "cycles during which the execute controller is stalling matmuls due to hazards")
   }
 
-  //VecUnit 
+  // VecUnit 
   val VecUnit = Module(new VecUnit(xLen, tagWidth, config, ex_queue_length, cmd_q_heads))
   VecUnit.io.cmd.valid := cmd.valid
   VecUnit.io.cmd.bits := cmd.bits
@@ -1048,12 +1048,13 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
   VecUnit.io.srams.read.resp.valid := io.srams.read(0).resp.valid
   VecUnit.io.srams.read.resp.bits <> io.srams.read(0).resp.bits
   when (VectorEnable === 1.U) {
-    io.srams.write(0) <>  VecUnit.io.srams.write  
-    cmd.pop := VecUnit.io.cmd.pop
-    io.completed <>  VecUnit.io.completed 
+    io.srams.write(0) <> VecUnit.io.srams.write  
     io.srams.read(0).req.valid := VecUnit.io.srams.read.req.valid
     io.srams.read(0).req.bits <> VecUnit.io.srams.read.req.bits
     io.srams.read(0).resp.ready := VecUnit.io.srams.read.resp.ready
+
+    cmd.pop := VecUnit.io.cmd.pop
+    io.completed <> VecUnit.io.completed 
   }
 
   when (DoEnableVectorMode(0) && cmd.valid(0)) {

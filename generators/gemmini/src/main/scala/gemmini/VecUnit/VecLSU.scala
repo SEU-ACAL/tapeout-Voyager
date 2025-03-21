@@ -65,8 +65,8 @@ class VecLSU[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V
 		op2_rd_complete := !io.id_lsu_i.bits.op2_from_mem
 
 		current_req := Mux(io.id_lsu_i.bits.op1_from_mem && !op1_rd_complete, 0.U,
-							Mux(io.id_lsu_i.bits.op2_from_mem && !op2_rd_complete, 1.U,
-									current_req))
+                   Mux(io.id_lsu_i.bits.op2_from_mem && !op2_rd_complete, 1.U,
+                       current_req))
   }
   // 发 RA
   io.lsu_sram_read.resp.ready          := true.B
