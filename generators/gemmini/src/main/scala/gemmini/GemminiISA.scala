@@ -45,7 +45,7 @@ object GemminiISA {
   val INST_Vec_Reduce_CMD = 30.U     // vec_scatter 
   val INST_Vec_LoopMul_CMD = 31.U    // vec_misc_mul
   
-  val CONFIG_EX_MODE_CMD = 32.U // 切换是使用Vector Mode 还是Mesh Mode
+  val CONFIG_VECTOR_MODE_CMD = 32.U // 切换是使用Vector Mode 还是Mesh Mode
 
   //==========================================================================
   // BITPAT

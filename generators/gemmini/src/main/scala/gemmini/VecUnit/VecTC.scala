@@ -23,10 +23,10 @@ class VecTC extends Module {
       val out = Decoupled(new VecTC_output())
   })
 
-  val Vectors1_data = Seq.tabulate(8) {i => RegInit(VecInit(Seq.fill(16)(0.U(8.W))))} // 分散Vec数据，16元素
-  val Vectors1_valid = Seq.tabulate(8) {i => RegInit(false.B)} // 分散Vec有效位
-  val Vectors2_data = Seq.tabulate(8) {i => RegInit(VecInit(Seq.fill(16)(0.U(8.W))))} // 级联Vec数据，保持8元素
-  val Vectors2_valid = Seq.tabulate(8) {i => RegInit(false.B)} // 级联Vec有效位
+  val Vectors1_data = Seq.tabulate(8) {i => RegInit(VecInit(Seq.fill(16)(0.U(8.W))))} // 缓冲Vec
+  val Vectors1_valid = Seq.tabulate(8) {i => RegInit(false.B)} 
+  val Vectors2_data = Seq.tabulate(8) {i => RegInit(VecInit(Seq.fill(16)(0.U(8.W))))} // 级联Vec
+  val Vectors2_valid = Seq.tabulate(8) {i => RegInit(false.B)} 
   
 // -----------------------------------------------------------------------------
 // 缓冲寄存器

@@ -296,7 +296,7 @@ class ReservationStation[T <: Data : Arithmetic, U <: Data, V <: Data](config: G
                  (funct === CONFIG_CMD && config_cmd_type === CONFIG_LOAD)
     val is_ex = funct === PRELOAD_CMD || 
                 funct_is_compute || 
-                funct === CONFIG_EX_MODE_CMD || 
+                funct === CONFIG_VECTOR_MODE_CMD || 
                 funct === VEC_LOAD_CMD || 
                 funct === VEC_STORE_CMD || 
                 funct === VEC_ADD_CMD || 
