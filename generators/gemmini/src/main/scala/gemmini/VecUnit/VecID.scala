@@ -35,7 +35,8 @@ class VecIDReq[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U,
   val cmd   = Vec(heads, new GemminiCmd(reservation_station_entries))
 }
 
-class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V], heads: Int = 1)
+class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V], 
+                                             entries: Int, heads: Int, maxpop: Int = 2)
                                    (implicit p: Parameters, ev: Arithmetic[T]) extends Module {
   import config._
   import ev._
@@ -44,10 +45,17 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
   
   val io = IO(new Bundle {
     val id_i = Input(new VecIDReq(config, heads))
+    val id_o = new Bundle {
+      val pop   = Output(UInt(log2Ceil((entries min maxpop) + 1).W))
+    } // to top
     val id_iss_o = Decoupled(new IdIssReq())
     val id_lsu_o = Decoupled(new IdLsuReq())
+    val lsu_id_i = Input(new LsuIdResp())
   })
 
+  // val rob_id = dontTouch(RegInit(0.U(5.W)))
+  // rob_id := io.id_i.cmd(0).rob_id.bits
+  
   val functs = io.id_i.cmd.map(_.cmd.inst.funct)
   val rs1s = VecInit(io.id_i.cmd.map(_.cmd.rs1))
   val rs2s = VecInit(io.id_i.cmd.map(_.cmd.rs2))   
@@ -58,37 +66,39 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
   val func7 = functs(0)
   val rs1   = rs1s(0)
   val rs2   = rs2s(0)
-  
+  val rob_id = io.id_i.cmd(0).rob_id.bits
+
   val default_decode = 
-                          //  op1                 wr_op1 wr_op2                     v1_idx                                    
-                          //   |  op2                  | | op1_is_scalar             |  v2_idx                               
-                          //   |   | op1_from_mem      | | | op2_is_scalar           |   |      vd_idx  vd_wen                
-                          //   |   |   | op2_from_mem  | | | | mul                   |   |       |       | tc_type         
-                          //   |   |   | | op1_addr    | | | | | add                 |   |       |       | |        iteration
-                          //   |   |   | |   | op2_addr| | | | | | int32             |   |       |       | |        |        
-                          //   |   |   | |   |   |     | | | | | | | int16           |   |       |       | |        |        
-                          //   |   |   | |   |   |     | | | | | | | | tc_en         |   |       |       | |        |        
-                          //   |   |   | |   |   |     | | | | | | | | | reduce      |   |       |       | |        |        
-                          //   |   |   | |   |   |     | | | | | | | | | | op_en     |   |       |       | |        |        
-                          //   |   |   | |   |   |     | | | | | | | | | | | rd_acc  |   |       |       | |        |        
-                          //   |   |   | |   |   |     | | | | | | | | | | | | wr_acc|   |       |       | |        |        
-                          //   |   |   | |   |   |     | | | | | | | | | | | | |     |   |       |       | |        |        
-                          List(DOP,DOP,N,N,DADDR,DADDR,N,N,N,N,N,N,N,N,N,N,N,N,N,DVECIDX,DVECIDX,DVECIDX,N,DTC_TYPE,DITER)
+                          //  op1                          wr_op1 wr_op2                      v1_idx                                    
+                          //   |  op2                           | | op1_is_scalar              |  v2_idx                               
+                          //   |   | op1_from_mem               | | | op2_is_scalar            |   |       vd_idx  vd_wen                
+                          //   |   |   | op2_from_mem           | | | | mul                    |   |         |       | tc_type         
+                          //   |   |   | |    op1_addr          | | | | | add                  |   |         |       | |             iteration
+                          //   |   |   | |      |       op2_addr| | | | | | int32              |   |         |       | |             |        
+                          //   |   |   | |      |         |     | | | | | | | int16            |   |         |       | |             |        
+                          //   |   |   | |      |         |     | | | | | | | | tc_en          |   |         |       | |             |        
+                          //   |   |   | |      |         |     | | | | | | | | | reduce       |   |         |       | |             |        
+                          //   |   |   | |      |         |     | | | | | | | | | | op_en      |   |         |       | |             |        
+                          //   |   |   | |      |         |     | | | | | | | | | | | rd_a cc  |   |         |       | |             |        
+                          //   |   |   | |      |         |     | | | | | | | | | | | | wr _acc|   |         |       | |             |        
+                          //   |   |   | |      |         |     | | | | | | | | | | | | |      |   |         |       | |             |        
+                          List(DOP,DOP,N,N,    DADDR,     DADDR,N,N,N,N,N,N,N,N,N,N,N,N,N, DVECIDX,DVECIDX,  DVECIDX,N,DTC_TYPE     ,DITER)
   val decode_list = ListLookup(func7, default_decode, Array(
-    BitPat("b0011110") -> List(DOP,DOP,Y,Y,DADDR,DADDR,Y,Y,N,N,N,N,N,N,N,N,N,N,N,DVECIDX,DVECIDX,DVECIDX,N,DTC_TYPE,DITER), // INST_Vec_Reduce_CMD
-    BitPat("b0011111") -> List(DOP,DOP,N,N,DADDR,DADDR,Y,Y,N,N,N,N,N,N,N,N,N,N,N,DVECIDX,DVECIDX,DVECIDX,N,DTC_TYPE,DITER), // INST_Vec_LoopMul_CMD
+    BitPat("b0011101") -> List(DOP,DOP,N,N,    DADDR,     DADDR,Y,Y,N,N,N,N,N,N,N,N,N,N,N, DVECIDX,DVECIDX,  DVECIDX,N,DTC_TYPE,     DITER), // NST_Vec_Reduce_CMD
+    BitPat("b0011111") -> List(DOP,DOP,Y,Y,rs1(16,2),rs1(30,16),Y,Y,N,N,Y,N,N,N,N,N,N,N,N,rs2(5,0),DVECIDX,rs2(10,5),N,DTC_TYPE,rs2(14,10)), // INST_Vec_LoopMul_CMDI
   ))
 
 // -----------------------------------------------------------------------------
 // id<>iss
 // -----------------------------------------------------------------------------
   io.id_iss_o.valid              := io.id_i.valid(0)
+  io.id_iss_o.bits.rob_id        := rob_id
   io.id_iss_o.bits.op1           := decode_list(OP1.id)
   io.id_iss_o.bits.op2           := decode_list(OP2.id)
   io.id_iss_o.bits.op1_from_mem  := decode_list(OP1_from_MEM.id)
   io.id_iss_o.bits.op2_from_mem  := decode_list(OP2_from_MEM.id)
-  io.id_iss_o.bits.config        := 
-    (WR_OP1.id to WR_ACC.id).foldRight(0.U)((id, acc) => Cat(decode_list(id).asUInt, acc))
+  io.id_iss_o.bits.config        :=
+    (WR_OP1.id to WR_ACC.id).foldLeft(0.U)((acc, id) => Cat(decode_list(id).asUInt, acc))(13, 1)
   io.id_iss_o.bits.thread_id     := decode_list(V1_IDX.id)
   io.id_iss_o.bits.iteration     := decode_list(ITER.id)
 
@@ -98,10 +108,27 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
   val need_mem_access = 
     decode_list(OP1_from_MEM.id).asInstanceOf[Bool] || decode_list(OP2_from_MEM.id).asInstanceOf[Bool]
   
-  io.id_lsu_o.valid             := need_mem_access
+  val wait_lsu_resp = RegInit(false.B)
+  wait_lsu_resp := Mux(io.lsu_id_i.rd_complete, false.B,
+                   Mux(need_mem_access, true.B, wait_lsu_resp))
+
+  // id->lsu  
+  io.id_lsu_o.valid             := need_mem_access && io.id_i.valid(0) && !wait_lsu_resp
   io.id_lsu_o.bits.op1_from_mem := decode_list(OP1_from_MEM.id)
   io.id_lsu_o.bits.op2_from_mem := decode_list(OP2_from_MEM.id)
   io.id_lsu_o.bits.op1_addr     := Mux(need_mem_access, decode_list(OP1_ADDR.id), 0.U(14.W))
   io.id_lsu_o.bits.op2_addr     := Mux(need_mem_access, decode_list(OP2_ADDR.id), 0.U(14.W))
   io.id_lsu_o.bits.is_acc       := Mux(need_mem_access, decode_list(WR_ACC.id), false.B)
+
+  // lsu->id
+  val lsu_rd_complete = io.lsu_id_i.rd_complete
+
+// -----------------------------------------------------------------------------
+// id<>top
+// -----------------------------------------------------------------------------
+
+  io.id_o.pop                    := Mux(io.id_iss_o.valid && lsu_rd_complete, 0.U.bitSet(0.U, true.B), 0.U)
+
 }
+
+

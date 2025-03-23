@@ -75,8 +75,8 @@
 #define IGELU 3
 #define SOFTMAX 4
 
-#define VEC_UNIT 1
-#define SYSTOLIC_ARRAY 0
+#define VECUNIT_MODE 1
+#define SYSTOLIC_ARRAY_MODE 0
 
 #ifdef ELEM_T_IS_FLOAT
 elem_t elem_t_bits_to_elem_t(elem_t_bits x) {
@@ -257,11 +257,68 @@ static acc_scale_t_bits acc_scale_t_to_acc_scale_t_bits(acc_scale_t x) {
   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, mode, 0, k_CONFIG_EX_MODE)
 
 // vec unit
-#define gemmini_vec_reduce(VecAddr, Len, ScalarAddr)\
-  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)Len << 32)| ((uint64_t)ScalarAddr << 16)|(uint64_t)VecAddr, 0, k_INST_VEC_REDUCE)
+// #define gemmini_vec_loop_mul(op1_from_mem, op2_from_mem, op1_addr, op2_addr,\
+//                            iteration, vd_idx, vs_idx)\
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, \
+//     ((uint64_t)op2_addr << 16)| ((uint64_t)op1_addr << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, \
+//     ((uint64_t)iteration << 10)| ((uint64_t)vd_idx << 5)| (uint64_t)vs_idx, \
+//     k_INST_VEC_LOOP_MUL)
 
-#define gemmini_vec_loop_mul(VecAddr, Len, ScalarAddr)\
-  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)Len << 32)| ((uint64_t)ScalarAddr << 16)|(uint64_t)VecAddr, 0, k_INST_VEC_LOOP_MUL)
+// #define gemmini_vec_loop_mul(op1_from_mem, op2_from_mem, \
+//                              op1_addr1, op1_addr2, op1_addr3, op1_addr4, op1_addr5, op1_addr6, op1_addr7, op1_addr8, op1_addr9, op1_addr10, op1_addr11, op1_addr12, op1_addr13, op1_addr14, op1_addr15, op1_addr16, \
+//                              op2_addr1, op2_addr2, op2_addr3, op2_addr4, op2_addr5, op2_addr6, op2_addr7, op2_addr8, op2_addr9, op2_addr10, op2_addr11, op2_addr12, op2_addr13, op2_addr14, op2_addr15, op2_addr16, \
+//                              iteration, \
+//                              vd_idx1, vd_idx2, vd_idx3, vd_idx4, vd_idx5, vd_idx6, vd_idx7, vd_idx8, vd_idx9, vd_idx10, vd_idx11, vd_idx12, vd_idx13, vd_idx14, vd_idx15, vd_idx16, \
+//                              vs_idx1, vs_idx2, vs_idx3, vs_idx4, vs_idx5, vs_idx6, vs_idx7, vs_idx8, vs_idx9, vs_idx10, vs_idx11, vs_idx12, vs_idx13, vs_idx14, vs_idx15, vs_idx16  \
+//                            ) {\
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  ((uint64_t)op2_addr1 << 16)|  ((uint64_t)op1_addr1 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)|  ((uint64_t)vd_idx1 << 5)|  (uint64_t)vs_idx1, k_INST_VEC_LOOP_MUL) \
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  ((uint64_t)op2_addr2 << 16)|  ((uint64_t)op1_addr2 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)|  ((uint64_t)vd_idx2 << 5)|  (uint64_t)vs_idx2, k_INST_VEC_LOOP_MUL) \
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  ((uint64_t)op2_addr3 << 16)|  ((uint64_t)op1_addr3 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)|  ((uint64_t)vd_idx3 << 5)|  (uint64_t)vs_idx3, k_INST_VEC_LOOP_MUL) \
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  ((uint64_t)op2_addr4 << 16)|  ((uint64_t)op1_addr4 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)|  ((uint64_t)vd_idx4 << 5)|  (uint64_t)vs_idx4, k_INST_VEC_LOOP_MUL) \
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  ((uint64_t)op2_addr5 << 16)|  ((uint64_t)op1_addr5 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)|  ((uint64_t)vd_idx5 << 5)|  (uint64_t)vs_idx5, k_INST_VEC_LOOP_MUL) \
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  ((uint64_t)op2_addr6 << 16)|  ((uint64_t)op1_addr6 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)|  ((uint64_t)vd_idx6 << 5)|  (uint64_t)vs_idx6, k_INST_VEC_LOOP_MUL) \
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  ((uint64_t)op2_addr7 << 16)|  ((uint64_t)op1_addr7 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)|  ((uint64_t)vd_idx7 << 5)|  (uint64_t)vs_idx7, k_INST_VEC_LOOP_MUL) \
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  ((uint64_t)op2_addr8 << 16)|  ((uint64_t)op1_addr8 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)|  ((uint64_t)vd_idx8 << 5)|  (uint64_t)vs_idx8, k_INST_VEC_LOOP_MUL) \
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  ((uint64_t)op2_addr9 << 16)|  ((uint64_t)op1_addr9 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)|  ((uint64_t)vd_idx9 << 5)|  (uint64_t)vs_idx9, k_INST_VEC_LOOP_MUL) \
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)op2_addr10 << 16)| ((uint64_t)op1_addr10 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)| ((uint64_t)vd_idx10 << 5)| (uint64_t)vs_idx10, k_INST_VEC_LOOP_MUL) \
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)op2_addr11 << 16)| ((uint64_t)op1_addr11 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)| ((uint64_t)vd_idx11 << 5)| (uint64_t)vs_idx11, k_INST_VEC_LOOP_MUL) \
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)op2_addr12 << 16)| ((uint64_t)op1_addr12 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)| ((uint64_t)vd_idx12 << 5)| (uint64_t)vs_idx12, k_INST_VEC_LOOP_MUL) \
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)op2_addr13 << 16)| ((uint64_t)op1_addr13 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)| ((uint64_t)vd_idx13 << 5)| (uint64_t)vs_idx13, k_INST_VEC_LOOP_MUL) \
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)op2_addr14 << 16)| ((uint64_t)op1_addr14 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)| ((uint64_t)vd_idx14 << 5)| (uint64_t)vs_idx14, k_INST_VEC_LOOP_MUL) \
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)op2_addr15 << 16)| ((uint64_t)op1_addr15 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)| ((uint64_t)vd_idx15 << 5)| (uint64_t)vs_idx15, k_INST_VEC_LOOP_MUL) \
+//   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)op2_addr16 << 16)| ((uint64_t)op1_addr16 << 2) | ((uint64_t)op2_from_mem << 1) | (uint64_t)op1_from_mem, ((uint64_t)iteration << 10)| ((uint64_t)vd_idx16 << 5)| (uint64_t)vs_idx16, k_INST_VEC_LOOP_MUL) \
+// }
+
+#define gemmini_vec_loop_mul(\
+                             rs1_1, rs1_2, rs1_3, rs1_4, rs1_5, rs1_6, rs1_7, rs1_8, rs1_9, rs1_10, rs1_11, \
+                             rs2_1, rs2_2, rs2_3, rs2_4, rs2_5, rs2_6, rs2_7, rs2_8, rs2_9, rs2_10, rs2_11 \
+                           ) {\
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_1, (uint64_t)rs2_1, k_INST_VEC_LOOP_MUL) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_2, (uint64_t)rs2_2, k_INST_VEC_LOOP_MUL) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_3, (uint64_t)rs2_3, k_INST_VEC_LOOP_MUL) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_4, (uint64_t)rs2_4, k_INST_VEC_LOOP_MUL) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_5, (uint64_t)rs2_5, k_INST_VEC_LOOP_MUL) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_6, (uint64_t)rs2_6, k_INST_VEC_LOOP_MUL) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_7, (uint64_t)rs2_7, k_INST_VEC_LOOP_MUL) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_8, (uint64_t)rs2_8, k_INST_VEC_LOOP_MUL) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_9, (uint64_t)rs2_9, k_INST_VEC_LOOP_MUL) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, (uint64_t)rs1_10, (uint64_t)rs2_10, k_INST_VEC_LOOP_MUL) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, (uint64_t)rs1_11, (uint64_t)rs2_11, k_INST_VEC_LOOP_MUL)}
+  // ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, (uint64_t)rs1_12, (uint64_t)rs2_12, k_INST_VEC_LOOP_MUL) \
+  // ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, (uint64_t)rs1_13, (uint64_t)rs2_13, k_INST_VEC_LOOP_MUL) \
+  // ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, (uint64_t)rs1_14, (uint64_t)rs2_14, k_INST_VEC_LOOP_MUL) \
+  // ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, (uint64_t)rs1_15, (uint64_t)rs2_15, k_INST_VEC_LOOP_MUL) \
+  // ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, (uint64_t)rs1_16, (uint64_t)rs2_16, k_INST_VEC_LOOP_MUL) \
+} 
+                            //  rs1_1, rs1_2, rs1_3, rs1_4, rs1_5, rs1_6, rs1_7, rs1_8, rs1_9, rs1_10, rs1_11, rs1_12, rs1_13, rs1_14, rs1_15, rs1_16, \
+                            //  rs2_1, rs2_2, rs2_3, rs2_4, rs2_5, rs2_6, rs2_7, rs2_8, rs2_9, rs2_10, rs2_11, rs2_12, rs2_13, rs2_14, rs2_15, rs2_16 \
+
+
+#define gemmini_vec_reduce(Addr) \
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, \
+    (uint64_t)Addr, \
+    0, \
+    k_INST_VEC_REDUCE)
 
 // #define gemmini_load_mul_add(VecAddr, Len, ScalarAddr)\
 //   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, ((uint64_t)Len << 32)| ((uint64_t)ScalarAddr << 16)|(uint64_t)VecAddr, 0, k_LOAD_MUL_ADD)

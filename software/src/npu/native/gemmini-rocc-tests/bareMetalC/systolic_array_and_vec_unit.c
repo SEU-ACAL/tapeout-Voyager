@@ -98,11 +98,11 @@ int main() {
   gemmini_mvin(In, In_sp_addr);
   gemmini_mvin(Identity, Identity_sp_addr);
 
-  printf("Perform matrix multiplication\n");
-  gemmini_config_ex_mode(VECUNIT_MODE)
-  gemmini_load_mul_add(In_sp_addr, 15, Identity_sp_addr);
-  gemmini_store_vec(Out_sp_addr, 15);
-  gemmini_broadcast_vec();
+  // printf("Perform matrix multiplication\n");
+  // gemmini_config_ex_mode(VECUNIT_MODE)
+  // gemmini_load_mul_add(In_sp_addr, 15, Identity_sp_addr);
+  // gemmini_store_vec(Out_sp_addr, 15);
+  // gemmini_broadcast_vec();
 
   printf("Move the output matrix from Gemmini's scratchpad to main memory\n");
   gemmini_fence();
