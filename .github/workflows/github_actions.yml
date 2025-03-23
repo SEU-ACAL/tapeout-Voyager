@@ -1,0 +1,59 @@
+name: Voyager CI
+run-name: ${{ github.actor }} is running CI Test 🚀
+on: [push]
+jobs:
+  Code-Join:
+    name: Code Pull
+    runs-on: ubuntu-20.04
+    steps:
+      - name: Print information
+        run: | 
+          echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+          echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Set up SSH
+        run: |
+          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          source ~/.zshrc
+          chipyard_exec
+          git pull origin ${{ github.ref }}
+      - run: echo "🍏 This job is ${{ job.status }}."
+
+  Compile-lint:
+    name: Compile Lint
+    runs-on: ubuntu-20.04
+    needs: Code-Join
+    steps:
+      - name: Build Workloads
+        run: |
+          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          chipyard_exec
+          cd software
+          mkdir -p build && cd build 
+          cmake ..
+          make build-all
+      - run: echo "🍏 This test is ${{ job.status }}."
+      - name: Build Verilator
+        run: |
+          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          chipyard_exec
+          ./software/scripts/build-verilator.sh --config OurHeterSoCConfig
+      - run: echo "🍏 This test is ${{ job.status }}."
+
+  Test-Workloads:
+    name: Test Workloads
+    runs-on: ubuntu-20.04
+    needs: Compile-lint
+    steps:
+      - name: Run mini-test on runner machine
+        run: |
+          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          chipyard_exec
+          ./software/scripts/run-verilator.sh --config OurHeterSoCConfig hello 
+      - run: echo "🍏 This test is ${{ job.status }}."
+
+  Update-Repository:
+    name: Update Repository
+    runs-on: ubuntu-20.04
+    needs: Test-Workloads
+    steps:
+      - run: echo "🎉 Good Job! This ${{ github.event_name }} will be updated to ${{ github.ref }}."
