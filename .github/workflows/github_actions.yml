@@ -13,9 +13,8 @@ jobs:
       - name: Pull from the repository
         run: |
           ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << EOF
-          cd Voyager 
-          pwd 
-          source ./env.sh
+          source ~/.bashrc
+          chipyard_exec
           git pull origin ${{ github.ref }}
       - run: echo "🍏 This job is ${{ job.status }}."
 
@@ -26,7 +25,7 @@ jobs:
     steps:
       - name: Build Workloads
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << EOF
           source ~/.bashrc
           chipyard_exec
           cd software
@@ -36,7 +35,7 @@ jobs:
       - run: echo "🍏 This test is ${{ job.status }}."
       - name: Build Verilator
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << EOF
           source ~/.bashrc
           chipyard_exec
           ./software/scripts/build-verilator.sh --config OurHeterSoCConfig
@@ -49,7 +48,7 @@ jobs:
     steps:
       - name: Run mini-test on runner machine
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << EOF
           source ~/.bashrc
           chipyard_exec
           ./software/scripts/run-verilator.sh --config OurHeterSoCConfig hello 
