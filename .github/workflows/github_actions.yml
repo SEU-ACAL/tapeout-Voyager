@@ -19,6 +19,23 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "🍏 pull from repository ${{ job.status }}."
+      - name: Verify pre-commit proof
+        run: |
+          PROOF_FILE=".pre-commit-proof"
+          if [ ! -f "$PROOF_FILE" ]; then
+            echo "Error: pre-commit proof file not found!"
+            exit 1
+          fi
+          CURRENT_COMMIT_HASH=$(git rev-parse HEAD)
+          CURRENT_FILE_HASH=$(git diff HEAD^ HEAD | sha256sum | cut -d ' ' -f1)
+          STORED_HASH=$(cat $PROOF_FILE)
+          STORED_COMMIT_HASH=$(echo $STORED_HASH | cut -d ':' -f1)
+          STORED_FILE_HASH=$(echo $STORED_HASH | cut -d ':' -f2)
+          if [ "$CURRENT_COMMIT_HASH" != "$STORED_COMMIT_HASH" ] || [ "$CURRENT_FILE_HASH" != "$STORED_FILE_HASH" ]; then
+            echo "Error: pre-commit SHA-256 hash mismatch!"
+            exit 1
+          fi
+      - run: echo "🍏 pre-commit proof verification is ${{ job.status }}."
 
   Compile-lint:
     name: Compile Lint
