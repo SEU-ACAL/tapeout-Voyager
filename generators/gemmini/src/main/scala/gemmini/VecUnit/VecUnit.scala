@@ -77,8 +77,8 @@ class VecUnit[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: Int, config:
   io.completed.valid := VecCMT.io.cmt_o.completed.valid
   io.completed.bits := VecCMT.io.cmt_o.completed.bits
 
-  val completed_reg = dontTouch(RegInit(0.U(log2Up(reservation_station_entries).W)))
-  completed_reg := io.completed.bits
+  // val completed_reg = dontTouch(RegInit(0.U(log2Up(reservation_station_entries).W)))
+  // completed_reg := io.completed.bits
   
 // -----------------------------------------------------------------------------
 // 读写SRAM
