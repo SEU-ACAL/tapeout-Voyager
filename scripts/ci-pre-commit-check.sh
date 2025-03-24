@@ -20,7 +20,7 @@ if [ ! -f "$PROOF_FILE" ]; then
   exit 1
 fi
 
-current_sha=$(git rev-parse HEAD)
+current_sha=$(git rev-parse HEAD~1)
 stored_sha=$(cat $PROOF_FILE)
 
 if [ "$current_sha" != "$stored_sha" ]; then
