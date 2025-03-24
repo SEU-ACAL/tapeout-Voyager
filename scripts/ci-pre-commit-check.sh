@@ -22,11 +22,11 @@ fi
 CURRENT_COMMIT_HASH=$(git rev-parse HEAD)
 CURRENT_FILE_HASH=$(git diff HEAD^ HEAD | sha256sum | cut -d ' ' -f1)
 STORED_HASH=$(cat $PROOF_FILE)
+echo "ACTUAL_CONTENT_HASH: $CURRENT_FILE_HASH"
 STORED_COMMIT_HASH=$(echo $STORED_HASH | cut -d ':' -f1)
 STORED_FILE_HASH=$(echo $STORED_HASH | cut -d ':' -f2)
+echo "EXPECTED_CONTENT_HASH: $STORED_FILE_HASH"
 if [ "$CURRENT_COMMIT_HASH" != "$STORED_COMMIT_HASH" ] || [ "$CURRENT_FILE_HASH" != "$STORED_FILE_HASH" ]; then
-  echo "ACTUAL_CONTENT_HASH: $CURRENT_FILE_HASH"
-  echo "EXPECTED_CONTENT_HASH: $STORED_FILE_HASH"
   echo "Error: pre-commit SHA-256 hash mismatch!"
   exit 1
 fi
