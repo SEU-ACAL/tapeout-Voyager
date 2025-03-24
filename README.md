@@ -188,7 +188,7 @@ $ ln -s ../Voyager/sims/firesim/sim ./sim
 
 ## 七、安装 pre-commit 
 
-安装 pre-commit 用于 CI 测试
+安装 pre-commit 用于 CI 测试,这步是必须的，否则无法通过CI测试,会被强制退回.
 
 ```
 $ cd Voyager
