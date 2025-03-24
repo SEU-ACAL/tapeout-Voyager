@@ -50,10 +50,13 @@ done
 
 # 生成校验凭证（提交哈希为 $COMMIT_HASH）
 if [[ $has_error -eq 0 ]]; then
-  COMMIT_HASH=$(git rev-parse HEAD)
-  FILE_HASH=$(git diff --cached | sha256sum | cut -d ' ' -f1)
-  echo "$COMMIT_HASH:$FILE_HASH" > .pre-commit-proof
-  git add .pre-commit-proof  # 将凭证添加到提交中
+#   COMMIT_HASH=$(git rev-parse HEAD)
+#   FILE_HASH=$(git diff --cached | sha256sum | cut -d ' ' -f1)
+#   echo "$COMMIT_HASH:$FILE_HASH" > .pre-commit-proof
+#   git add .pre-commit-proof  # 将凭证添加到提交中
+    current_sha=$(git rev-parse --verify HEAD 2>/dev/null || echo "unstaged")
+    echo "$current_sha" > .pre-commit-proof
+    git add .pre-commit-proof
 fi
 
 # if [[ $has_error -eq 0 ]]; then
