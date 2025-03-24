@@ -12,7 +12,7 @@ jobs:
           echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Pull from the repository
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << EOF
+          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << `EOF'
           cd /home/CI_runner/Voyager
           eval "$(conda shell.bash hook)"
           conda activate /home/CI_runner/Voyager/.conda-env
@@ -26,7 +26,7 @@ jobs:
     steps:
       - name: Build Workloads
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << EOF
+          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << `EOF'
           cd /home/CI_runner/Voyager
           eval "$(conda shell.bash hook)"
           conda activate /home/CI_runner/Voyager/.conda-env
@@ -37,7 +37,7 @@ jobs:
       - run: echo "🍏 This test is ${{ job.status }}."
       - name: Build Verilator
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << EOF
+          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << `EOF'
           cd /home/CI_runner/Voyager
           eval "$(conda shell.bash hook)"
           conda activate /home/CI_runner/Voyager/.conda-env
@@ -51,7 +51,7 @@ jobs:
     steps:
       - name: Run mini-test on runner machine
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << EOF
+          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << `EOF'
           cd /home/CI_runner/Voyager
           eval "$(conda shell.bash hook)"
           conda activate /home/CI_runner/Voyager/.conda-env
