@@ -48,24 +48,12 @@ do
     fi
 done
 
-# 生成校验凭证（提交哈希为 $COMMIT_HASH）
+# 生成校验凭证
 if [[ $has_error -eq 0 ]]; then
-#   COMMIT_HASH=$(git rev-parse HEAD)
-#   FILE_HASH=$(git diff --cached | sha256sum | cut -d ' ' -f1)
-#   echo "$COMMIT_HASH:$FILE_HASH" > .pre-commit-proof
-#   git add .pre-commit-proof  # 将凭证添加到提交中
     current_sha=$(git rev-parse --verify HEAD 2>/dev/null || echo "unstaged")
     echo "$current_sha" > .pre-commit-proof
     git add .pre-commit-proof
 fi
-
-# if [[ $has_error -eq 0 ]]; then
-#   # 生成暂存区内容的哈希（排除校验文件自身）
-#   CONTENT_HASH=$(git diff --cached --no-ext-diff | sha256sum | cut -d ' ' -f1)
-#   echo "$CONTENT_HASH" > .pre-commit-proof
-#   git add .pre-commit-proof  # 将校验文件添加到暂存区
-# fi
-
 
 if [[ $has_error -ne 0 ]]; then
     exit 1
