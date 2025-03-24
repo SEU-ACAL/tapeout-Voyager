@@ -14,6 +14,7 @@ jobs:
         run: |
           ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << EOF
           source ~/.bashrc
+          which conda
           cd /home/CI_runner/Voyager
           source ./env.sh
           git pull origin ${{ github.ref }}
