@@ -33,6 +33,16 @@ jobs:
           cmake ..
           make build-all
       - run: echo "🍏 Workloads build test is ${{ job.status }}."
+        # 如果检查失败，强制回退分支
+      - name: Revert Bad Commit
+        if: failure()
+        run: |
+          git config --global user.name "shirohasuki"
+          git config --global user.email "shirohasuki@gmail.com"
+          git reset --hard HEAD~1
+          git push --force origin ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Verilator
         run: |
           ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
@@ -40,6 +50,16 @@ jobs:
           chipyard_exec
           ./software/scripts/build-verilator.sh --config OurHeterSoCConfig
       - run: echo "🍏 Verilator build test is ${{ job.status }}."
+        # 如果检查失败，强制回退分支
+      - name: Revert Bad Commit
+        if: failure()
+        run: |
+          git config --global user.name "shirohasuki"
+          git config --global user.email "shirohasuki@gmail.com"
+          git reset --hard HEAD~1
+          git push --force origin ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   Test-Workloads:
     name: Test Workloads
@@ -53,6 +73,16 @@ jobs:
           chipyard_exec
           ./software/scripts/run-verilator.sh --config OurHeterSoCConfig hello 
       - run: echo "🍏 mini-test on runner machine is ${{ job.status }}."
+        # 如果检查失败，强制回退分支
+      - name: Revert Bad Commit
+        if: failure()
+        run: |
+          git config --global user.name "shirohasuki"
+          git config --global user.email "shirohasuki@gmail.com"
+          git reset --hard HEAD~1
+          git push --force origin ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   Update-Repository:
     name: Update Repository
