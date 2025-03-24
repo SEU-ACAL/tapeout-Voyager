@@ -13,9 +13,10 @@ jobs:
       - name: Pull from the repository
         run: |
           ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << EOF
-          source ~/.bashrc
+          source ~/.bashrc && conda activate /home/CI_runner/Voyager/.conda-env
           cd /home/CI_runner/Voyager
-          export PATH="/home/CI_runner/anaconda3/bin:$PATH" && conda init && source ./env.sh
+          pwd
+          export PATH="/home/CI_runner/anaconda3/bin:$PATH" && source ./env.sh
       # git pull origin ${{ github.ref }}
       - run: echo "🍏 This job is ${{ job.status }}."
 
