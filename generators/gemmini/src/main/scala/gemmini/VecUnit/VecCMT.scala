@@ -25,10 +25,10 @@ class VecCMT[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V
   })
 
 
-  val tc_in_data = dontTouch(WireInit(VecInit(Seq.fill(16)(0.U(8.W)))))
-  val tc_in_rob_id = dontTouch(WireInit(0.U(5.W)))
-  tc_in_data := io.ex_cmt_i.bits.wb_data
-  tc_in_rob_id := io.ex_cmt_i.bits.rob_id
+  // val tc_in_data = dontTouch(WireInit(VecInit(Seq.fill(16)(0.U(8.W)))))
+  // val tc_in_rob_id = dontTouch(WireInit(0.U(5.W)))
+  // tc_in_data := io.ex_cmt_i.bits.wb_data
+  // tc_in_rob_id := io.ex_cmt_i.bits.rob_id
 
   io.ex_cmt_i.ready := true.B
 
