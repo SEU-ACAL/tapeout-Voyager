@@ -164,10 +164,10 @@ int main() {
   //   rs1_values1, rs1_values2, rs1_values3, rs1_values4, rs1_values5, rs1_values6, rs1_values7, rs1_values8, rs1_values9, rs1_values10, rs1_values11, rs1_values12, rs1_values13, rs1_values14, rs1_values15, rs1_values16,
   //   rs2_values1, rs2_values2, rs2_values3, rs2_values4, rs2_values5, rs2_values6, rs2_values7, rs2_values8, rs2_values9, rs2_values10, rs2_values11, rs2_values12, rs2_values13, rs2_values14, rs2_values15, rs2_values16
   // );
-  // for (size_t i = 0; i < DIM; i++){
-  //   gemmini_vec_loop_mul(1/*op1_from_mem*/, 1/*op2_from_mem*/, i/*op1_addr*/, i+DIM/*op2_addr*/, 
-  //                        15/*iteration*/, i+16/*vd_idx*/, i/*vs_idx*/);
-  // }
+  for (size_t i = 0; i < DIM; i++){
+    gemmini_vec_loop_mul(1/*op1_from_mem*/, 1/*op2_from_mem*/, i/*op1_addr*/, i+DIM/*op2_addr*/, 
+                         15/*iteration*/, i+16/*vd_idx*/, i/*vs_idx*/);
+  }
 
   // gemmini_config_ex_mode(SYSTOLIC_ARRAY_MODE)
   
