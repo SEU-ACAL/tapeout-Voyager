@@ -15,8 +15,25 @@ jobs:
           ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
           source ~/.zshrc
           chipyard_exec
+          git config --global user.name "shirohasuki"
+          git config --global user.email "shirohasuki@gmail.com"
           git pull origin ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "🍏 pull from repository ${{ job.status }}."
+        # 如果检查失败，强制回退分支
+      - name: Revert Bad Commit
+        if: failure()
+        run: |
+          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          source ~/.zshrc
+          chipyard_exec
+          git config --global user.name "shirohasuki"
+          git config --global user.email "shirohasuki@gmail.com"
+          git reset --hard HEAD~1
+          git push --force origin ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   Compile-lint:
     name: Compile Lint
@@ -37,6 +54,9 @@ jobs:
       - name: Revert Bad Commit
         if: failure()
         run: |
+          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          source ~/.zshrc
+          chipyard_exec
           git config --global user.name "shirohasuki"
           git config --global user.email "shirohasuki@gmail.com"
           git reset --hard HEAD~1
@@ -54,6 +74,9 @@ jobs:
       - name: Revert Bad Commit
         if: failure()
         run: |
+          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          source ~/.zshrc
+          chipyard_exec
           git config --global user.name "shirohasuki"
           git config --global user.email "shirohasuki@gmail.com"
           git reset --hard HEAD~1
@@ -77,6 +100,9 @@ jobs:
       - name: Revert Bad Commit
         if: failure()
         run: |
+          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          source ~/.zshrc
+          chipyard_exec
           git config --global user.name "shirohasuki"
           git config --global user.email "shirohasuki@gmail.com"
           git reset --hard HEAD~1
