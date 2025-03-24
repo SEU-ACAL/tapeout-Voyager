@@ -23,11 +23,11 @@ forbidden_file=( \
     "scripts/permission-check.sh" \ 
 )
 
-changed_files=$(git diff --cached --name-only)
 
+# 优先检查禁止模式
 for file in "${forbidden_file[@]}"; do
     if echo "$changed_files" | grep -q "^$file$"; then
-        echo "❌ Forbidden edit file: $file"
+        echo "[ERROR] Forbidden edit file: $file"
         exit 1
     fi
 done
@@ -37,17 +37,6 @@ has_error=0
 
 for file in $changed_files
 do
-
-    # 优先检查禁止模式
-    # for pattern in "${forbidden_file[@]}"
-    # do
-    #     if [[ "$file" == $pattern ]]; then
-    #         echo "[ERROR] Forbidden edit file matched: '$file' (matches forbidden files: '$pattern')"
-    #         has_error=1
-    #         continue 2
-    #     fi
-    # done
-
     # 检查允许列表
     allowed=0
     for dir in "${allowed_dirs[@]}"
