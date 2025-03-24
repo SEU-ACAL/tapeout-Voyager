@@ -43,7 +43,7 @@ jobs:
           setproxy
           git reset --hard HEAD~1
           git push --force origin ${{ github.ref }}
-      - run: echo "🍏 Please Do Pre-commit Before Commit!!!"
+          echo "🍏 Please Do Pre-commit Before Commit!!!"
 
   Compile-lint:
     name: Compile Lint
