@@ -1,7 +1,7 @@
 
 CYDIR=$(git rev-parse --show-toplevel)
 
-# PROOF_FILE="$CYDIR/.pre-commit-proof"
+PROOF_FILE="$CYDIR/.pre-commit-proof"
 # if [ ! -f "$PROOF_FILE" ]; then
 #   echo "Error: pre-commit proof file not found!"
 #   exit 1
