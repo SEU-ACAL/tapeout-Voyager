@@ -15,8 +15,8 @@ jobs:
           ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
           source ~/.zshrc
           chipyard_exec
-      # git pull origin ${{ github.ref }}
-      - run: echo "🍏 This job is ${{ job.status }}."
+          git pull origin ${{ github.ref }}
+      - run: echo "🍏 pull from repository ${{ job.status }}."
 
   Compile-lint:
     name: Compile Lint
@@ -32,14 +32,14 @@ jobs:
           mkdir -p build && cd build 
           cmake ..
           make build-all
-      - run: echo "🍏 This test is ${{ job.status }}."
+      - run: echo "🍏 Workloads build test is ${{ job.status }}."
       - name: Build Verilator
         run: |
           ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
           source ~/.zshrc
           chipyard_exec
           ./software/scripts/build-verilator.sh --config OurHeterSoCConfig
-      - run: echo "🍏 This test is ${{ job.status }}."
+      - run: echo "🍏 Verilator build test is ${{ job.status }}."
 
   Test-Workloads:
     name: Test Workloads
@@ -52,7 +52,7 @@ jobs:
           source ~/.zshrc
           chipyard_exec
           ./software/scripts/run-verilator.sh --config OurHeterSoCConfig hello 
-      - run: echo "🍏 This test is ${{ job.status }}."
+      - run: echo "🍏 mini-test on runner machine is ${{ job.status }}."
 
   Update-Repository:
     name: Update Repository
