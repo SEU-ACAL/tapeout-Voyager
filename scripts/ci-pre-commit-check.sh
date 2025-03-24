@@ -10,6 +10,8 @@ COMMIT_HASH=$(git rev-parse HEAD)
 ACTUAL_CONTENT_HASH=$(git show $COMMIT_HASH --pretty=format:%b | grep -v "diff --git a/.pre-commit-proof" | sha256sum | cut -d ' ' -f1)
 EXPECTED_CONTENT_HASH=$(cat $PROOF_FILE)
 if [ "$ACTUAL_CONTENT_HASH" != "$EXPECTED_CONTENT_HASH" ]; then
+  echo "ACTUAL_CONTENT_HASH: $ACTUAL_CONTENT_HASH"
+  echo "EXPECTED_CONTENT_HASH: $EXPECTED_CONTENT_HASH"
   echo "Error: file content hash mismatch, maybe local pre-commit not run or content modified!"
   exit 1
 fi
