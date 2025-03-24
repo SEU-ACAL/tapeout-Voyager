@@ -26,9 +26,8 @@ jobs:
       - name: Build Workloads
         run: |
           ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
-          cd /home/CI_runner/Voyager
-          eval "$(conda shell.bash hook)"
-          conda activate /home/CI_runner/Voyager/.conda-env
+          source ~/.zshrc
+          chipyard_exec
           cd software
           mkdir -p build && cd build 
           cmake ..
@@ -37,9 +36,8 @@ jobs:
       - name: Build Verilator
         run: |
           ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
-          cd /home/CI_runner/Voyager
-          eval "$(conda shell.bash hook)"
-          conda activate /home/CI_runner/Voyager/.conda-env
+          source ~/.zshrc
+          chipyard_exec
           ./software/scripts/build-verilator.sh --config OurHeterSoCConfig
       - run: echo "🍏 This test is ${{ job.status }}."
 
@@ -51,9 +49,8 @@ jobs:
       - name: Run mini-test on runner machine
         run: |
           ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
-          cd /home/CI_runner/Voyager
-          eval "$(conda shell.bash hook)"
-          conda activate /home/CI_runner/Voyager/.conda-env
+          source ~/.zshrc
+          chipyard_exec
           ./software/scripts/run-verilator.sh --config OurHeterSoCConfig hello 
       - run: echo "🍏 This test is ${{ job.status }}."
 
