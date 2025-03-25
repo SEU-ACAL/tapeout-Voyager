@@ -53,9 +53,6 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
     val lsu_id_i = Input(new LsuIdResp())
   })
 
-  // val rob_id = dontTouch(RegInit(0.U(5.W)))
-  // rob_id := io.id_i.cmd(0).rob_id.bits
-  
   val functs = io.id_i.cmd.map(_.cmd.inst.funct)
   val rs1s = VecInit(io.id_i.cmd.map(_.cmd.rs1))
   val rs2s = VecInit(io.id_i.cmd.map(_.cmd.rs2))   
@@ -79,13 +76,13 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
                           //   |   |   | |      |         |     | | | | | | | | tc_en          |   |         |       | |             |        
                           //   |   |   | |      |         |     | | | | | | | | | reduce       |   |         |       | |             |        
                           //   |   |   | |      |         |     | | | | | | | | | | op_en      |   |         |       | |             |        
-                          //   |   |   | |      |         |     | | | | | | | | | | | rd_a cc  |   |         |       | |             |        
-                          //   |   |   | |      |         |     | | | | | | | | | | | | wr _acc|   |         |       | |             |        
+                          //   |   |   | |      |         |     | | | | | | | | | | | rd_acc   |   |         |       | |             |        
+                          //   |   |   | |      |         |     | | | | | | | | | | | | wr_acc |   |         |       | |             |        
                           //   |   |   | |      |         |     | | | | | | | | | | | | |      |   |         |       | |             |        
                           List(DOP,DOP,N,N,    DADDR,     DADDR,N,N,N,N,N,N,N,N,N,N,N,N,N, DVECIDX,DVECIDX,  DVECIDX,N,DTC_TYPE     ,DITER)
   val decode_list = ListLookup(func7, default_decode, Array(
-    BitPat("b0011101") -> List(DOP,DOP,N,N,    DADDR,     DADDR,Y,Y,N,N,N,N,N,N,N,N,N,N,N, DVECIDX,DVECIDX,  DVECIDX,N,DTC_TYPE,     DITER), // NST_Vec_Reduce_CMD
-    BitPat("b0011111") -> List(DOP,DOP,Y,Y,rs1(16,2),rs1(30,16),Y,Y,N,N,Y,N,N,N,N,N,N,N,N,rs2(5,0),DVECIDX,rs2(10,5),N,DTC_TYPE,rs2(14,10)), // INST_Vec_LoopMul_CMDI
+    BitPat("b0011101") -> List(DOP,DOP,N,N,    DADDR,     DADDR,Y,Y,N,N,N,N,N,N,N,N,N,N,N, DVECIDX,DVECIDX,  DVECIDX,N,DTC_TYPE,     DITER), // INST_Vec_Reduce_CMD
+    BitPat("b0011111") -> List(DOP,DOP,Y,Y,rs1(16,2),rs1(30,16),Y,Y,N,N,Y,N,N,N,N,N,N,N,N,rs2(5,0),DVECIDX,rs2(10,5),N,DTC_TYPE,rs2(14,10)), // INST_Vec_LoopMul_CMD
   ))
 
 // -----------------------------------------------------------------------------
@@ -108,25 +105,21 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
   val need_mem_access = 
     decode_list(OP1_from_MEM.id).asInstanceOf[Bool] || decode_list(OP2_from_MEM.id).asInstanceOf[Bool]
   
-  val wait_lsu_resp = RegInit(false.B)
-  wait_lsu_resp := Mux(io.lsu_id_i.rd_complete, false.B,
-                   Mux(need_mem_access, true.B, wait_lsu_resp))
-
-  // id->lsu  
-  io.id_lsu_o.valid             := need_mem_access && io.id_i.valid(0) && !wait_lsu_resp
-  io.id_lsu_o.bits.op1_from_mem := decode_list(OP1_from_MEM.id)
-  io.id_lsu_o.bits.op2_from_mem := decode_list(OP2_from_MEM.id)
+  // id->lsu 发送 load op 的请求
+  io.id_lsu_o.valid             := need_mem_access // && io.id_i.valid(0) && !wait_lsu_resp
+  io.id_lsu_o.bits.op1_from_mem := Mux(need_mem_access, decode_list(OP1_from_MEM.id), false.B)
+  io.id_lsu_o.bits.op2_from_mem := Mux(need_mem_access, decode_list(OP2_from_MEM.id), false.B)
   io.id_lsu_o.bits.op1_addr     := Mux(need_mem_access, decode_list(OP1_ADDR.id), 0.U(14.W))
   io.id_lsu_o.bits.op2_addr     := Mux(need_mem_access, decode_list(OP2_ADDR.id), 0.U(14.W))
   io.id_lsu_o.bits.is_acc       := Mux(need_mem_access, decode_list(WR_ACC.id), false.B)
 
-  // lsu->id
+  // lsu->id 接收 load op 完成的响应
   val lsu_rd_complete = io.lsu_id_i.rd_complete
 
 // -----------------------------------------------------------------------------
 // id<>top
 // -----------------------------------------------------------------------------
-
+  // 当 load op 完成时，pop 一条指令
   io.id_o.pop                    := Mux(io.id_iss_o.valid && lsu_rd_complete, 0.U.bitSet(0.U, true.B), 0.U)
 
 }

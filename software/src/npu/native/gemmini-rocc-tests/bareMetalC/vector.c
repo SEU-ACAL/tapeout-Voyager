@@ -109,14 +109,14 @@ int main() {
   uint64_t rs1_values6 = rs1_values[5];
   uint64_t rs1_values7 = rs1_values[6];
   uint64_t rs1_values8 = rs1_values[7];
-  uint64_t rs1_values9 = rs1_values[8];
-  uint64_t rs1_values10 = rs1_values[9];
-  uint64_t rs1_values11 = rs1_values[10];
-  uint64_t rs1_values12 = rs1_values[11];
-  uint64_t rs1_values13 = rs1_values[12];
-  uint64_t rs1_values14 = rs1_values[13];
-  uint64_t rs1_values15 = rs1_values[14];
-  uint64_t rs1_values16 = rs1_values[15];
+  // uint64_t rs1_values9 = rs1_values[8];
+  // uint64_t rs1_values10 = rs1_values[9];
+  // uint64_t rs1_values11 = rs1_values[10];
+  // uint64_t rs1_values12 = rs1_values[11];
+  // uint64_t rs1_values13 = rs1_values[12];
+  // uint64_t rs1_values14 = rs1_values[13];
+  // uint64_t rs1_values15 = rs1_values[14];
+  // uint64_t rs1_values16 = rs1_values[15];
 
   uint64_t rs2_values1 = rs2_values[0];
   uint64_t rs2_values2 = rs2_values[1];
@@ -126,14 +126,14 @@ int main() {
   uint64_t rs2_values6 = rs2_values[5];
   uint64_t rs2_values7 = rs2_values[6];
   uint64_t rs2_values8 = rs2_values[7];
-  uint64_t rs2_values9 = rs2_values[8];
-  uint64_t rs2_values10 = rs2_values[9];
-  uint64_t rs2_values11 = rs2_values[10];
-  uint64_t rs2_values12 = rs2_values[11];
-  uint64_t rs2_values13 = rs2_values[12];
-  uint64_t rs2_values14 = rs2_values[13];
-  uint64_t rs2_values15 = rs2_values[14];
-  uint64_t rs2_values16 = rs2_values[15];
+  // uint64_t rs2_values9 = rs2_values[8];
+  // uint64_t rs2_values10 = rs2_values[9];
+  // uint64_t rs2_values11 = rs2_values[10];
+  // uint64_t rs2_values12 = rs2_values[11];
+  // uint64_t rs2_values13 = rs2_values[12];
+  // uint64_t rs2_values14 = rs2_values[13];
+  // uint64_t rs2_values15 = rs2_values[14];
+  // uint64_t rs2_values16 = rs2_values[15];
 
   
   // 指令提交阶段：集中发射指令
@@ -158,8 +158,8 @@ int main() {
   //                      params[0][3],params[1][3],params[2][3],params[3][3],params[4][3],params[5][3],params[6][3],params[7][3],params[8][3],params[9][3],params[10][3],params[11][3],params[12][3],params[13][3],params[14][3],params[15][3]/*vs_idx*/
   // );
   gemmini_vec_loop_mul(
-    rs1_values1, rs1_values2, rs1_values3, rs1_values4, rs1_values5, rs1_values6, rs1_values7, rs1_values8, rs1_values9, rs1_values10, rs1_values11,
-    rs2_values1, rs2_values2, rs2_values3, rs2_values4, rs2_values5, rs2_values6, rs2_values7, rs2_values8, rs2_values9, rs2_values10, rs2_values11);
+    rs1_values1, rs1_values2, rs1_values3, rs1_values4, rs1_values5, rs1_values6, rs1_values7, rs1_values8,
+    rs2_values1, rs2_values2, rs2_values3, rs2_values4, rs2_values5, rs2_values6, rs2_values7, rs2_values8);
   // gemmini_vec_loop_mul(
   //   rs1_values1, rs1_values2, rs1_values3, rs1_values4, rs1_values5, rs1_values6, rs1_values7, rs1_values8, rs1_values9, rs1_values10, rs1_values11, rs1_values12, rs1_values13, rs1_values14, rs1_values15, rs1_values16,
   //   rs2_values1, rs2_values2, rs2_values3, rs2_values4, rs2_values5, rs2_values6, rs2_values7, rs2_values8, rs2_values9, rs2_values10, rs2_values11, rs2_values12, rs2_values13, rs2_values14, rs2_values15, rs2_values16

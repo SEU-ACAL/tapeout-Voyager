@@ -37,7 +37,7 @@ class VecALUThread (val OpChainDepth: Int = 32) extends Module {
   iteration := Mux(io.in.valid, io.in.bits.iteration, iteration)
   thread_id := Mux(io.in.valid, io.in.bits.thread_id, thread_id)
   rob_id    := Mux(io.in.valid, io.in.bits.rob_id, rob_id)
-
+	
   val Array(wr_op1, wr_op2, op1_is_scalar, op2_is_scalar,
 						is_mul, is_add,	is_int32, is_int16,
 						tc_en, reduce, op_en, rd_acc, wr_acc) = 
@@ -88,15 +88,14 @@ class VecALUThread (val OpChainDepth: Int = 32) extends Module {
 // -----------------------------------------------------------------------------
 // Execute Micro Operation Chain
 // -----------------------------------------------------------------------------
-  // 出队
+	val thread_rst = WireInit(VecInit(Seq.fill(16)(0.	U(8.W))))
+	
+	// 出队
   io.out.valid 					 := false.B
-  io.out.bits.thread_id  := thread_id
-  io.out.bits.config 		 := config
-  io.out.bits.rob_id     := rob_id
-  io.out.bits.thread_rst := VecInit(Seq.fill(16)(0.U(8.W)))
-
-	val out_ready = dontTouch(WireInit(false.B))
-	out_ready := io.out.ready
+  io.out.bits.thread_id  := Mux(io.out.valid, thread_id, 0.U(3.W))
+  io.out.bits.config 		 := Mux(io.out.valid, config, 0.U(13.W))
+  io.out.bits.thread_rst := Mux(io.out.valid, thread_rst, VecInit(Seq.fill(16)(0.U(8.W))))
+  io.out.bits.rob_id 		 := Mux(io.out.valid, rob_id, 0.U(5.W))
 
   when (thread_busy || io.in.valid) {
 		// TODO:钻了空子
@@ -114,7 +113,7 @@ class VecALUThread (val OpChainDepth: Int = 32) extends Module {
 					vec1 := Vector1(opPtr)
 				for (i <- 0 until 16) {
 					// 将Vector1的一个元素乘以Vector2中的所有元素，结果存入thread_rst
-					io.out.bits.thread_rst(i) := vec1 * Vector2(i)
+					thread_rst(i):= vec1 * Vector2(i)
 					// io.out.bits.thread_rst(i) := Vector1(opPtr) * Vector2(i)
 				}
 			}

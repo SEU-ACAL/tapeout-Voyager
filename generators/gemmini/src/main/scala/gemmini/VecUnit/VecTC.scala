@@ -17,6 +17,7 @@ class VecTC_output extends Bundle {
   val wb_addr = UInt(14.W)
   val is_acc  = Bool()
   val rob_id  = Input(UInt(5.W))
+  val rob_id_valid = Bool()
 }
 
 class VecTC extends Module {
@@ -26,65 +27,55 @@ class VecTC extends Module {
   })
 
   val Vectors1_data = Seq.tabulate(8){i => RegInit(VecInit(Seq.fill(16)(0.U(8.W))))} // 缓冲Vec
-  val Vectors1_valid = Seq.tabulate(8){i => RegInit(false.B)} 
+  val Vectors1_valid = Seq.tabulate(8){i => RegInit(false.B)}  // Vec有效(不是握手)
+  // 若相邻寄存器没valid, 则这个寄存器不能ready,得等1个cycle
+
   val Vectors2_data = Seq.tabulate(8){i => RegInit(VecInit(Seq.fill(16)(0.U(8.W))))} // 级联Vec
-  val Vectors3_data = Seq.tabulate(8){i => RegInit(VecInit(Seq.fill(16)(0.U(8.W))))} // 级联Vec
   val Vectors2_valid = Seq.tabulate(8){i => RegInit(false.B)} 
   
-  val rob_id = Seq.tabulate(8){i => RegInit(0.U(5.W))}
-  val rob_id_reg = dontTouch(VecInit(Seq.fill(8)(RegInit(0.U(5.W)))))
-  for (i <- 0 until 8) { rob_id_reg(i) := rob_id(i) }
+  // val rob_id = Seq.tabulate(8){i => RegInit(0.U(5.W))}
   
-  // val Vectors1_0_reg = dontTouch(RegInit(VecInit(Seq.fill(16)(0.U(8.W)))))
-  // val Vectors1_0_valid = dontTouch(RegInit(false.B))
-  // Vectors1_0_reg := Vectors1_data(0)
-  // Vectors1_0_valid := Vectors1_valid(0)
+
+  // val sIdle :: sProfill :: sFull :: Nil = Enum(3)
+  // val state = RegInit(sIdle)
 // -----------------------------------------------------------------------------
 // 缓冲寄存器
 // -----------------------------------------------------------------------------
-  
-  (0 until 8).foreach { i =>
-    when (io.in(i).valid) {
-      Vectors1_data(i) := io.in(i).bits.thread_rst
-      Vectors1_valid(i) := true.B
-      
-      // 更新rob_id(0)
-      rob_id(0) := io.in(i).bits.rob_id
-      
-      // 依次更新其他rob_id
-      for (j <- 1 until 8) {
-        rob_id(j) := rob_id(j-1)
-      }
-    }
-      io.in(i).ready := true.B
+
+  // profill 阶段 只支持0~7顺序
+  val ptr = RegInit(0.U(5.W)) // 用来指引计算顺序
+  val valid_mask = RegInit(0.U(8.W)) // 记录哪些输入已经valid过
+
+  for (i <- 0 until 8) {
+    io.in(i).ready := (i.U === ptr) || ((i.U < ptr) && valid_mask(i))
   }
+
+  // 当当前ptr对应的输入有效时，记录并移动ptr
+  when (io.in(ptr).valid && io.in(ptr).ready && (ptr < 8.U)) { 
+      valid_mask := valid_mask | (1.U << ptr) // 设置有效标志
+    ptr := ptr + 1.U 
+  }
+  
+  for (i <- 0 until 8) {
+    when(io.in(i).valid && io.in(i).ready) {
+      Vectors1_valid(i) := valid_mask(i)
+      Vectors1_data(i) := io.in(i).bits.thread_rst
+    }
+  }
+
+  val rob_queue = Module(new Queue(UInt(5.W), 8))
+  rob_queue.io.enq.valid := io.in(ptr).valid && io.in(ptr).ready && (ptr < 8.U)
+  rob_queue.io.enq.bits  := io.in(ptr).bits.rob_id
+  rob_queue.io.deq.ready := true.B//Vectors2_valid(7) && io.out.ready
+  
+  // io.out.bits.rob_id := rob_queue.io.deq.bits
+  // TODO: 现在只是一次性玩具,后面改为真实提交的状态机
 
 // -----------------------------------------------------------------------------
 // Reduce
 // -----------------------------------------------------------------------------
-  // 第一个寄存器从Vector1获取输入
-  for (i <- 0 until 8) { 
-    Vectors1_valid(i) := io.in(i).valid
-    Vectors2_valid(i) := Vectors1_valid(i)
-  }
+  for (i <- 0 until 8) { Vectors2_valid(i) := Vectors1_valid(i)}
 
-  // val Vectors2_0_reg = dontTouch(RegInit(VecInit(Seq.fill(16)(0.U(8.W)))))
-  // val Vectors2_1_reg = dontTouch(RegInit(VecInit(Seq.fill(16)(0.U(8.W)))))
-  // val Vectors2_2_reg = dontTouch(RegInit(VecInit(Seq.fill(16)(0.U(8.W)))))
-  // val Vectors2_3_reg = dontTouch(RegInit(VecInit(Seq.fill(16)(0.U(8.W)))))
-  // val Vectors2_4_reg = dontTouch(RegInit(VecInit(Seq.fill(16)(0.U(8.W)))))
-  // val Vectors2_5_reg = dontTouch(RegInit(VecInit(Seq.fill(16)(0.U(8.W)))))
-  // val Vectors2_6_reg = dontTouch(RegInit(VecInit(Seq.fill(16)(0.U(8.W)))))
-  // val Vectors2_7_reg = dontTouch(RegInit(VecInit(Seq.fill(16)(0.U(8.W)))))
-  // Vectors2_0_reg := Vectors2_data(0)
-  // Vectors2_1_reg := Vectors2_data(1)
-  // Vectors2_2_reg := Vectors2_data(2)
-  // Vectors2_3_reg := Vectors2_data(3)
-  // Vectors2_4_reg := Vectors2_data(4)
-  // Vectors2_5_reg := Vectors2_data(5)
-  // Vectors2_6_reg := Vectors2_data(6)
-  // Vectors2_7_reg := Vectors2_data(7)
-  
   when (Vectors1_valid(0)) { Vectors2_data(0) := Vectors1_data(0)}
 
   // TODO: 这边要做成ping-pong
@@ -101,32 +92,23 @@ class VecTC extends Module {
     }   
   }
 
-  // for (i <- 0 until 7) {
-  //   when (Vectors1_valid(i)) {
-  //     when (i.U === 0.U) {
-  //       rob_id(0) := io.in(i).bits.rob_id
-  //     }.otherwise {
-  //       rob_id(i+1) := rob_id(i)
-  //     }
-  //   }
-  // }
-
 // -----------------------------------------------------------------------------
 // 弹出结果
 // -----------------------------------------------------------------------------
+  io.out.bits.rob_id_valid        := rob_queue.io.deq.valid
+  io.out.bits.rob_id  := rob_queue.io.deq.bits
+
   when (Vectors2_valid(7)) {
     io.out.valid        := true.B
     io.out.bits.wb_en   := true.B
     io.out.bits.wb_data := Vectors2_data(7)
     io.out.bits.wb_addr := 0.U
     io.out.bits.is_acc  := false.B
-    io.out.bits.rob_id  := rob_id(7)
   }.otherwise {
     io.out.valid        := false.B
     io.out.bits.wb_en   := false.B
     io.out.bits.wb_data := VecInit(Seq.fill(16)(0.U(8.W)))
     io.out.bits.wb_addr := 0.U
     io.out.bits.is_acc  := false.B
-    io.out.bits.rob_id  := 0.U
   }
 }

@@ -71,22 +71,28 @@ class IdLsuReq extends Bundle {
   val is_acc   = Bool()
 }
 
+class IdLsuResp extends Bundle {
+  val rd_complete = Bool()
+}
+
+// 注意: 为了实现brust的及时喂addr, 这个版本id<>lsu是组合逻辑
 class id_lsu extends Module {
   val io = IO(new Bundle {
     val id_lsu_i = Flipped(Decoupled(new IdLsuReq()))
     val id_lsu_o = Decoupled(new IdLsuReq())
   })
   
-  val id_lsu_hs = io.id_lsu_i.valid & io.id_lsu_o.ready
+  io.id_lsu_o <> io.id_lsu_i
+  // val id_lsu_hs = io.id_lsu_i.valid & io.id_lsu_o.ready
 
-  io.id_lsu_o.valid := bool_dff(true.B, false.B, io.id_lsu_i.valid)
-  io.id_lsu_i.ready := bool_dff(true.B, false.B, io.id_lsu_o.ready)
+  // io.id_lsu_o.valid := bool_dff(true.B, false.B, io.id_lsu_i.valid)
+  // io.id_lsu_i.ready := bool_dff(true.B, false.B, io.id_lsu_o.ready)
 
-  io.id_lsu_o.bits.op1_from_mem := bool_dff(id_lsu_hs,   false.B, io.id_lsu_i.bits.op1_from_mem)
-  io.id_lsu_o.bits.op2_from_mem := bool_dff(id_lsu_hs,   false.B, io.id_lsu_i.bits.op2_from_mem)
-  io.id_lsu_o.bits.op1_addr     := uint_dff(id_lsu_hs, 0.U(14.W), io.id_lsu_i.bits.op1_addr)
-  io.id_lsu_o.bits.op2_addr     := uint_dff(id_lsu_hs, 0.U(14.W), io.id_lsu_i.bits.op2_addr)
-  io.id_lsu_o.bits.is_acc       := bool_dff(id_lsu_hs,   false.B, io.id_lsu_i.bits.is_acc)
+  // io.id_lsu_o.bits.op1_from_mem := bool_dff(id_lsu_hs,   false.B, io.id_lsu_i.bits.op1_from_mem)
+  // io.id_lsu_o.bits.op2_from_mem := bool_dff(id_lsu_hs,   false.B, io.id_lsu_i.bits.op2_from_mem)
+  // io.id_lsu_o.bits.op1_addr     := uint_dff(id_lsu_hs, 0.U(14.W), io.id_lsu_i.bits.op1_addr)
+  // io.id_lsu_o.bits.op2_addr     := uint_dff(id_lsu_hs, 0.U(14.W), io.id_lsu_i.bits.op2_addr)
+  // io.id_lsu_o.bits.is_acc       := bool_dff(id_lsu_hs,   false.B, io.id_lsu_i.bits.is_acc)
 }
 
 // -----------------------------------------------------------------------------
@@ -129,12 +135,13 @@ class ExCmtReq extends Bundle {
   val wb_addr = UInt(14.W)
   val is_acc  = Bool()
   val rob_id  = UInt(5.W)
+  val rob_id_valid = Bool()
 }
 
 class ex_cmt extends Module {  
   val io = IO(new Bundle {
-  val ex_cmt_i = Flipped(Decoupled(new ExCmtReq()))
-  val ex_cmt_o = Decoupled(new ExCmtReq())
+    val ex_cmt_i = Flipped(Decoupled(new ExCmtReq()))
+    val ex_cmt_o = Decoupled(new ExCmtReq())
   })
   
   val ex_cmt_hs = io.ex_cmt_i.valid & io.ex_cmt_o.ready
@@ -147,4 +154,5 @@ class ex_cmt extends Module {
   io.ex_cmt_o.bits.wb_addr := uint_dff(ex_cmt_hs,                       0.U(14.W), io.ex_cmt_i.bits.wb_addr)
   io.ex_cmt_o.bits.is_acc  := bool_dff(ex_cmt_hs,                         false.B, io.ex_cmt_i.bits.is_acc)
   io.ex_cmt_o.bits.rob_id  := uint_dff(ex_cmt_hs,                        0.U(5.W), io.ex_cmt_i.bits.rob_id)
+  io.ex_cmt_o.bits.rob_id_valid := bool_dff(ex_cmt_hs,                         false.B, io.ex_cmt_i.bits.rob_id_valid)
 }

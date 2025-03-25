@@ -42,12 +42,6 @@ class VecUnit[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: Int, config:
 // -----------------------------------------------------------------------------
 // VecUnit 总输入
 // -----------------------------------------------------------------------------
-  // val vecIDReq = Wire(new VecIDReq(config, heads))
-  // vecIDReq.cmd := io.cmd.bits
-  // VecID.io.id_i.bits := vecIDReq
-  // for (i <- 0 until heads) {
-  //     VecID.io.id_i.valid(i) := io.cmd.valid(i)
-  // }
   for (i <- 0 until heads) { VecID.io.id_i.valid(i) := io.cmd.valid(i)}
   VecID.io.id_i.cmd := io.cmd.bits
 
@@ -77,9 +71,6 @@ class VecUnit[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: Int, config:
   io.completed.valid := VecCMT.io.cmt_o.completed.valid
   io.completed.bits := VecCMT.io.cmt_o.completed.bits
 
-  // val completed_reg = dontTouch(RegInit(0.U(log2Up(reservation_station_entries).W)))
-  // completed_reg := io.completed.bits
-  
 // -----------------------------------------------------------------------------
 // 读写SRAM
 // -----------------------------------------------------------------------------

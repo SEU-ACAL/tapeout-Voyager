@@ -10,15 +10,6 @@ class VecEX extends Module {
     val ex_cmt_o = Decoupled(new ExCmtReq())
   })
 
-  // val op1_data = dontTouch(RegInit(VecInit(Seq.fill(16)(0.U(8.W)))))
-  // val op2_data = dontTouch(RegInit(VecInit(Seq.fill(16)(0.U(8.W)))))
-
-  // when (io.iss_ex_i.valid) {
-  //   for (i <- 0 until 16) {
-  //     op1_data(i) := io.iss_ex_i.bits.op1(i)
-  //     op2_data(i) := io.iss_ex_i.bits.op2(i)
-  //   }
-  // }
   // 记录每个Thread的busy状态
   val scoreboard = VecInit(Seq.fill(8)(0.U(1.W)))
 
@@ -28,7 +19,6 @@ class VecEX extends Module {
   
   // 根据thread_id动态连接
   io.iss_ex_i.ready := true.B
-  // io.iss_ex_i.ready := threads.map(_.io.in.ready).reduce(_ || _)
   when (io.iss_ex_i.valid) {
     for (i <- 0 until 8) {
       when (io.iss_ex_i.bits.thread_id === i.U) {
