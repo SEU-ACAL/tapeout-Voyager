@@ -47,6 +47,7 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
     val id_i = Input(new VecIDReq(config, heads))
     val id_o = new Bundle {
       val pop   = Output(UInt(log2Ceil((entries min maxpop) + 1).W))
+      val completed = Valid(UInt(log2Up(reservation_station_entries).W))
     } // to top
     val id_iss_o = Decoupled(new IdIssReq())
     val id_lsu_o = Decoupled(new IdLsuReq())
@@ -64,6 +65,9 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
   val rs1   = rs1s(0)
   val rs2   = rs2s(0)
   val rob_id = io.id_i.cmd(0).rob_id.bits
+  // val rob_id = RegInit(0.U(log2Up(reservation_station_entries).W))
+  // when (io.id_i.valid(0)) { rob_id := io.id_i.cmd(0).rob_id.bits 
+  // }.otherwise { rob_id := 0.U }
 
   val default_decode = 
                           //  op1                          wr_op1 wr_op2                      v1_idx                                    
@@ -106,7 +110,7 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
     decode_list(OP1_from_MEM.id).asInstanceOf[Bool] || decode_list(OP2_from_MEM.id).asInstanceOf[Bool]
   
   // id->lsu 发送 load op 的请求
-  io.id_lsu_o.valid             := need_mem_access // && io.id_i.valid(0) && !wait_lsu_resp
+  io.id_lsu_o.valid             := need_mem_access && io.id_i.valid(0) //&& !wait_lsu_resp
   io.id_lsu_o.bits.op1_from_mem := Mux(need_mem_access, decode_list(OP1_from_MEM.id), false.B)
   io.id_lsu_o.bits.op2_from_mem := Mux(need_mem_access, decode_list(OP2_from_MEM.id), false.B)
   io.id_lsu_o.bits.op1_addr     := Mux(need_mem_access, decode_list(OP1_ADDR.id), 0.U(14.W))
@@ -120,8 +124,9 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
 // id<>top
 // -----------------------------------------------------------------------------
   // 当 load op 完成时，pop 一条指令
-  io.id_o.pop                    := Mux(io.id_iss_o.valid && lsu_rd_complete, 0.U.bitSet(0.U, true.B), 0.U)
-
+  io.id_o.pop                    := Mux(lsu_rd_complete, 0.U.bitSet(0.U, true.B), 0.U)
+  io.id_o.completed.bits         := Mux(lsu_rd_complete, rob_id, 0.U)
+  io.id_o.completed.valid        := lsu_rd_complete
 }
 
 

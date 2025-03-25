@@ -6,11 +6,11 @@ import chisel3.stage._
 import org.chipsalliance.cde.config.Parameters
 import gemmini.{GemminiArrayConfig}
 
-class VecCMT_output[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V])
-                                          (implicit p: Parameters) extends Bundle {
-  import config._
-  val completed = Valid(UInt(log2Up(reservation_station_entries).W))
-}
+// class VecCMT_output[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V])
+//                                           (implicit p: Parameters) extends Bundle {
+//   import config._
+//   val completed = Valid(UInt(log2Up(reservation_station_entries).W))
+// }
 
 class VecCMT[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V])
                                   (implicit p: Parameters) extends Module {
@@ -21,14 +21,12 @@ class VecCMT[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V
     val cmt_lsu_o = Decoupled(new CmtLsuReq())
     // val lsu_cmt_i = Flipped(Decoupled(new LsuCmtReq()))
     
-    val cmt_o     = new VecCMT_output(config) // to the top
+    // val cmt_o     = new VecCMT_output(config) // to the top
   })
 
 
-  val tc_data = dontTouch(io.ex_cmt_i.bits.wb_data)
 
   io.ex_cmt_i.ready := true.B
-
 // -----------------------------------------------------------------------------
 // Write Back to SRAM
 // -----------------------------------------------------------------------------
@@ -48,11 +46,11 @@ class VecCMT[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V
 // -----------------------------------------------------------------------------
 // Inst Commit
 // -----------------------------------------------------------------------------
-  when (io.ex_cmt_i.valid) {
-    io.cmt_o.completed.valid := io.ex_cmt_i.bits.rob_id_valid
-    io.cmt_o.completed.bits  := io.ex_cmt_i.bits.rob_id
-  }.otherwise {
-    io.cmt_o.completed.valid := false.B
-    io.cmt_o.completed.bits  := 0.U
-  }
+  // when (io.ex_cmt_i.valid) {
+  //   io.cmt_o.completed.valid := io.ex_cmt_i.bits.rob_id_valid
+  //   io.cmt_o.completed.bits  := io.ex_cmt_i.bits.rob_id
+  // }.otherwise {
+  //   io.cmt_o.completed.valid := false.B
+  //   io.cmt_o.completed.bits  := 0.U
+  // }
 }

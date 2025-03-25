@@ -68,8 +68,7 @@ class VecUnit[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: Int, config:
 // VecUnit 总输出
 // -----------------------------------------------------------------------------
   io.cmd.pop := VecID.io.id_o.pop
-  io.completed.valid := VecCMT.io.cmt_o.completed.valid
-  io.completed.bits := VecCMT.io.cmt_o.completed.bits
+  io.completed := VecID.io.id_o.completed
 
 // -----------------------------------------------------------------------------
 // 读写SRAM
