@@ -195,7 +195,7 @@ $ cd Voyager
 $ source env.sh 
 $ pip install pre-commit
 $ pre-commit install
-$ git update-index --assume-unchanged scripts/permission-check.sh
+$ git update-index --skip-worktree scripts/permission-check.sh
 ```
 
 安装完 pre-commit 后请打开 `scripts/permission-check.sh` 将你需要修改的文件夹路径取消注释。
