@@ -132,9 +132,12 @@ class VecLSU[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V
 // -----------------------------------------------------------------------------
   io.cmt_lsu_i.ready := true.B
 
-  io.lsu_sram_write.en := false.B
-  io.lsu_sram_write.addr := 0.U
-  io.lsu_sram_write.data := 0.U
-  io.lsu_sram_write.mask := VecInit(Seq.fill((sp_width / (aligned_to * 8)) max 1)(false.B))
+  io.lsu_sram_write.en := io.cmt_lsu_i.valid
+  io.lsu_sram_write.addr := io.cmt_lsu_i.bits.addr
+  
+  val wdata_uint = io.cmt_lsu_i.bits.data.zipWithIndex.map{ case (byte, i) => byte << (i * 8)}.reduce(_ | _)
+  
+  io.lsu_sram_write.data := wdata_uint
+  io.lsu_sram_write.mask := VecInit(Seq.fill((sp_width / (aligned_to * 8)) max 1)(true.B))
 
 }

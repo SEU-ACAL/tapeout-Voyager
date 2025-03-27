@@ -23,7 +23,7 @@ object DefaultConstants {
 object DecodeFields extends Enumeration {
   type Field = Value
   val OP1, OP2, OP1_from_MEM, OP2_from_MEM, OP1_ADDR, OP2_ADDR, 
-      WR_OP1, WR_OP2, OP1_IS_SCALAR, OP2_IS_SCALAR, MUL, ADD, 
+      WR_OP1, WR_OP2, OP1_IS_SCALAR, OP2_IS_SCALAR, MUL, ADD, MAX, DIV, LUT,
       INT32, INT16, TC_EN, REDUCE, OP_EN, RD_ACC, WR_ACC,
       V1_IDX, V2_IDX, VD_IDX, VD_WEN, TC_TYPE, ITER = Value
 }
@@ -65,28 +65,25 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
   val rs1   = rs1s(0)
   val rs2   = rs2s(0)
   val rob_id = io.id_i.cmd(0).rob_id.bits
-  // val rob_id = RegInit(0.U(log2Up(reservation_station_entries).W))
-  // when (io.id_i.valid(0)) { rob_id := io.id_i.cmd(0).rob_id.bits 
-  // }.otherwise { rob_id := 0.U }
 
   val default_decode = 
-                          //  op1                          wr_op1 wr_op2                      v1_idx                                    
-                          //   |  op2                           | | op1_is_scalar              |  v2_idx                               
-                          //   |   | op1_from_mem               | | | op2_is_scalar            |   |       vd_idx  vd_wen                
-                          //   |   |   | op2_from_mem           | | | | mul                    |   |         |       | tc_type         
-                          //   |   |   | |    op1_addr          | | | | | add                  |   |         |       | |             iteration
-                          //   |   |   | |      |       op2_addr| | | | | | int32              |   |         |       | |             |        
-                          //   |   |   | |      |         |     | | | | | | | int16            |   |         |       | |             |        
-                          //   |   |   | |      |         |     | | | | | | | | tc_en          |   |         |       | |             |        
-                          //   |   |   | |      |         |     | | | | | | | | | reduce       |   |         |       | |             |        
-                          //   |   |   | |      |         |     | | | | | | | | | | op_en      |   |         |       | |             |        
-                          //   |   |   | |      |         |     | | | | | | | | | | | rd_acc   |   |         |       | |             |        
-                          //   |   |   | |      |         |     | | | | | | | | | | | | wr_acc |   |         |       | |             |        
-                          //   |   |   | |      |         |     | | | | | | | | | | | | |      |   |         |       | |             |        
-                          List(DOP,DOP,N,N,    DADDR,     DADDR,N,N,N,N,N,N,N,N,N,N,N,N,N, DVECIDX,DVECIDX,  DVECIDX,N,DTC_TYPE     ,DITER)
+                          //  op1                          wr_op1 wr_op2                             v1_idx                                    
+                          //   |  op2                           | | op1_is_scalar                     |  v2_idx                               
+                          //   |   | op1_from_mem               | | | op2_is_scalar                   |   |       vd_idx  vd_wen                
+                          //   |   |   | op2_from_mem           | | | | mul   div                     |   |         |      | tc_type         
+                          //   |   |   | |    op1_addr          | | | | | add | lut                   |   |         |      | |             iteration
+                          //   |   |   | |      |       op2_addr| | | | | |max| | int32               |   |         |      | |             |        
+                          //   |   |   | |      |         |     | | | | | | | | | | int16             |   |         |      | |             |        
+                          //   |   |   | |      |         |     | | | | | | | | | | | tc_en           |   |         |      | |             |        
+                          //   |   |   | |      |         |     | | | | | | | | | | | | redece        |   |         |      | |             |        
+                          //   |   |   | |      |         |     | | | | | | | | | | | | | op_en       |   |         |      | |             |        
+                          //   |   |   | |      |         |     | | | | | | | | | | | | | | rd_acc    |   |         |      | |             |        
+                          //   |   |   | |      |         |     | | | | | | | | | | | | | | | wr_acc  |   |         |      | |             |        
+                          //   |   |   | |      |         |     | | | | | | | | | | | | | | | |       |   |         |      | |             |        
+                          List(DOP,DOP,N,N,    DADDR,     DADDR,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N, DVECIDX,DVECIDX,  DVECIDX,N,DTC_TYPE     ,DITER)
   val decode_list = ListLookup(func7, default_decode, Array(
-    BitPat("b0011101") -> List(DOP,DOP,N,N,    DADDR,     DADDR,Y,Y,N,N,N,N,N,N,N,N,N,N,N, DVECIDX,DVECIDX,  DVECIDX,N,DTC_TYPE,     DITER), // INST_Vec_Reduce_CMD
-    BitPat("b0011111") -> List(DOP,DOP,Y,Y,rs1(16,2),rs1(30,16),Y,Y,N,N,Y,N,N,N,N,N,N,N,N,rs2(5,0),DVECIDX,rs2(10,5),N,DTC_TYPE,rs2(14,10)), // INST_Vec_LoopMul_CMD
+    BitPat("b0011101") -> List(DOP,DOP,N,N,    DADDR,     DADDR,Y,Y,N,N,N,N,N,N,N,N,N,N,N,N,N,N, DVECIDX,DVECIDX,  DVECIDX,N,DTC_TYPE,     DITER), // INST_Vec_Reduce_CMD
+    BitPat("b0011111") -> List(DOP,DOP,Y,Y,rs1(16,2),rs1(30,16),Y,Y,N,N,Y,N,N,N,N,N,N,N,N,N,N,N,rs2(5,0),DVECIDX,rs2(10,5),N,DTC_TYPE,rs2(14,10)), // INST_Vec_LoopMul_CMD
   ))
 
 // -----------------------------------------------------------------------------
@@ -110,7 +107,7 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
     decode_list(OP1_from_MEM.id).asInstanceOf[Bool] || decode_list(OP2_from_MEM.id).asInstanceOf[Bool]
   
   // id->lsu 发送 load op 的请求
-  io.id_lsu_o.valid             := need_mem_access && io.id_i.valid(0) //&& !wait_lsu_resp
+  io.id_lsu_o.valid             := need_mem_access && io.id_i.valid(0) 
   io.id_lsu_o.bits.op1_from_mem := Mux(need_mem_access, decode_list(OP1_from_MEM.id), false.B)
   io.id_lsu_o.bits.op2_from_mem := Mux(need_mem_access, decode_list(OP2_from_MEM.id), false.B)
   io.id_lsu_o.bits.op1_addr     := Mux(need_mem_access, decode_list(OP1_ADDR.id), 0.U(14.W))

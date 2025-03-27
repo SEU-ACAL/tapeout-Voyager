@@ -9,6 +9,11 @@ import midas.targetutils.PerfCounter
 import freechips.rocketchip.npu.CSR.S
 import gemmini.{GemminiArrayConfig, Arithmetic, ScratchpadReadIO, ScratchpadWriteIO, GemminiCmd}
 
+object VecConfig {
+  val alu_threads = 8
+  val lut_threads = 8
+}
+
 class VecUnit[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: Int, config: GemminiArrayConfig[T, U, V], 
                                      entries: Int, heads: Int, maxpop: Int = 2)
                                     (implicit p: Parameters, ev: Arithmetic[T]) extends Module {

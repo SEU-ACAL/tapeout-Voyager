@@ -24,14 +24,10 @@ class VecCMT[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V
     // val cmt_o     = new VecCMT_output(config) // to the top
   })
 
-
-
   io.ex_cmt_i.ready := true.B
 // -----------------------------------------------------------------------------
 // Write Back to SRAM
 // -----------------------------------------------------------------------------
-  // io.cmt_lsu_o.valid := io.ex_cmt_i.valid
-  // io.cmt_lsu_o.bits  := io.ex_cmt_i.bits.wb_data
   when (io.ex_cmt_i.bits.wb_en) {
     io.cmt_lsu_o.valid       := true.B
     io.cmt_lsu_o.bits.data   := io.ex_cmt_i.bits.wb_data
