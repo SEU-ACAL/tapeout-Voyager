@@ -10,8 +10,10 @@ import freechips.rocketchip.npu.CSR.S
 import gemmini.{GemminiArrayConfig, Arithmetic, ScratchpadReadIO, ScratchpadWriteIO, GemminiCmd}
 
 object VecConfig {
-  val alu_threads = 8
-  val lut_threads = 8
+  val alu_thread_num = 8  // thread 数量
+  val lut_thread_num = 8
+  val spad_addr_w    = 14 // spad 地址宽度
+  
 }
 
 class VecUnit[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: Int, config: GemminiArrayConfig[T, U, V], 

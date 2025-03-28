@@ -4,7 +4,7 @@ on: [push]
 jobs:
   Code-Pull:
     name: Code Pull
-    runs-on: ubuntu-20.04
+    runs-on: fpga
     steps:
       - name: Print information
         run: | 
@@ -12,7 +12,7 @@ jobs:
           echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Pull from the repository
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          zsh
           source ~/.zshrc
           chipyard_exec
           setproxy
@@ -23,12 +23,12 @@ jobs:
 
   Pre-commit-check:
     name: Pre-commit Check
-    runs-on: ubuntu-20.04
+    runs-on: fpga
     needs: Code-Pull
     steps:
       - name: Verify pre-commit proof
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          zsh
           source ~/.zshrc
           chipyard_exec
           ./scripts/ci-pre-commit-check.sh
@@ -37,7 +37,7 @@ jobs:
       - name: Revert Bad Commit
         if: failure()
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          zsh
           source ~/.zshrc
           chipyard_exec
           setproxy
@@ -47,12 +47,12 @@ jobs:
 
   Compile-lint:
     name: Compile Lint
-    runs-on: ubuntu-20.04
+    runs-on: fpga
     needs: Pre-commit-check
     steps:
       - name: Build Workloads
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          zsh
           source ~/.zshrc
           chipyard_exec
           cd software
@@ -64,7 +64,7 @@ jobs:
       - name: Revert Bad Commit
         if: failure()
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          zsh
           source ~/.zshrc
           chipyard_exec
           setproxy
@@ -74,7 +74,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Verilator
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          zsh
           source ~/.zshrc
           chipyard_exec
           ./software/scripts/build-verilator.sh --config OurHeterSoCConfig
@@ -83,7 +83,7 @@ jobs:
       - name: Revert Bad Commit
         if: failure()
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          zsh
           source ~/.zshrc
           chipyard_exec
           setproxy
@@ -94,12 +94,12 @@ jobs:
 
   Test-Workloads:
     name: Test Workloads
-    runs-on: ubuntu-20.04
+    runs-on: fpga
     needs: Compile-lint
     steps:
       - name: Run mini-test on runner machine
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          zsh
           source ~/.zshrc
           chipyard_exec
           ./software/scripts/run-verilator.sh --config OurHeterSoCConfig hello 
@@ -108,7 +108,7 @@ jobs:
       - name: Revert Bad Commit
         if: failure()
         run: |
-          ssh -p 10000 CI_runner@43.153.184.168 -o StrictHostKeyChecking=no << 'EOF'
+          zsh
           source ~/.zshrc
           chipyard_exec
           setproxy
@@ -119,7 +119,7 @@ jobs:
 
   Update-Repository:
     name: Update Repository
-    runs-on: ubuntu-20.04
+    runs-on: fpga
     needs: Test-Workloads
     steps:
       - run: echo "🎉 Good Job! This ${{ github.event_name }} will be updated to ${{ github.ref }}."
