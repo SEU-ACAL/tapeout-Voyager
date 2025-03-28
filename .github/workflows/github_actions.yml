@@ -11,8 +11,8 @@ jobs:
           echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
           echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Pull from the repository
+        shell: zsh
         run: |
-          zsh
           source ~/.zshrc
           chipyard_exec
           setproxy
@@ -27,8 +27,8 @@ jobs:
     needs: Code-Pull
     steps:
       - name: Verify pre-commit proof
+        shell: zsh
         run: |
-          zsh
           source ~/.zshrc
           chipyard_exec
           ./scripts/ci-pre-commit-check.sh
@@ -36,8 +36,8 @@ jobs:
       # 如果检查失败，强制回退分支
       - name: Revert Bad Commit
         if: failure()
+        shell: zsh
         run: |
-          zsh
           source ~/.zshrc
           chipyard_exec
           setproxy
@@ -51,8 +51,8 @@ jobs:
     needs: Pre-commit-check
     steps:
       - name: Build Workloads
+        shell: zsh
         run: |
-          zsh
           source ~/.zshrc
           chipyard_exec
           cd software
@@ -63,8 +63,8 @@ jobs:
         # 如果检查失败，强制回退分支
       - name: Revert Bad Commit
         if: failure()
+        shell: zsh
         run: |
-          zsh
           source ~/.zshrc
           chipyard_exec
           setproxy
@@ -73,8 +73,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Verilator
+        shell: zsh
         run: |
-          zsh
           source ~/.zshrc
           chipyard_exec
           ./software/scripts/build-verilator.sh --config OurHeterSoCConfig
@@ -82,8 +82,8 @@ jobs:
         # 如果检查失败，强制回退分支
       - name: Revert Bad Commit
         if: failure()
+        shell: zsh
         run: |
-          zsh
           source ~/.zshrc
           chipyard_exec
           setproxy
@@ -98,8 +98,8 @@ jobs:
     needs: Compile-lint
     steps:
       - name: Run mini-test on runner machine
+        shell: zsh
         run: |
-          zsh
           source ~/.zshrc
           chipyard_exec
           ./software/scripts/run-verilator.sh --config OurHeterSoCConfig hello 
@@ -107,8 +107,8 @@ jobs:
         # 如果检查失败，强制回退分支
       - name: Revert Bad Commit
         if: failure()
+        shell: zsh
         run: |
-          zsh
           source ~/.zshrc
           chipyard_exec
           setproxy
