@@ -124,6 +124,7 @@ class VecLSU[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V
 // -----------------------------------------------------------------------------
   io.lsu_iss_o.valid := state === sIssue
   
+  // bypass 连接, 最后一个返回的Op data直接连到iss,不过寄存器
   io.lsu_iss_o.bits.op1 := op1_data
   io.lsu_iss_o.bits.op2 := Mux(!one_operand, data_wire, VecInit(Seq.fill(16)(0.U(8.W))))
 
