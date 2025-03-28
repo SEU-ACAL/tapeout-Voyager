@@ -32,15 +32,15 @@ class PE extends Module {
   val config_reg = RegInit(0.U(16.W))
 
   when (io.west.fire) {
-    for (i <- 0 until 16) { vector_reg(i) := io.west.bits.vector_rst(i)}
+    vector_reg := io.west.bits.vector_rst
     config_reg := io.west.bits.config
   }
 
   io.west.ready := io.east.ready
   io.north.ready := io.east.ready
 
-  io.east.valid           := io.north.valid
-  io.east.bits.config     := config_reg
+  io.east.valid       := io.north.valid
+  io.east.bits.config := config_reg
 
   for (i <- 0 until 16) {
     io.east.bits.vector_rst(i) := vector_reg(i) + io.north.bits.vector_rst(i)
