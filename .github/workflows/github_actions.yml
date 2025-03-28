@@ -7,7 +7,7 @@ jobs:
     runs-on: fpga
     steps:
       - name: Print information
-        run: | 
+        run: |
           echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
           echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
       - name: Pull from the repository
