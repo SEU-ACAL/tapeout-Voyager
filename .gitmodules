@@ -22,6 +22,7 @@
 [submodule "sims/firesim"]
 	path = sims/firesim
 	url = https://github.com/SEU-ACAL/tapeout-firesim
+	branch = voyager 
 [submodule "generators/icenet"]
 	path = generators/icenet
 	url = https://github.com/firesim/icenet.git

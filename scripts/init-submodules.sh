@@ -103,10 +103,7 @@ cd "$RDIR"
             generators/sha3 \
             generators/gemmini \
             sims/firesim \
-            software/nvdla-workload \
-            software/coremark \
-            software/firemarshal \
-            software/spec2017 \
+            software/src/firemarshal \
             vlsi/hammer-mentor-plugins \
             fpga/fpga-shells
         do
@@ -138,7 +135,7 @@ cd "$RDIR"
     git config --local submodule.sims/firesim.update none
 
     # Only shallow clone needed for basic SW tests
-    # git submodule update --init software/firemarshal
+    git submodule update --init software/src/firemarshal
 )
 
 # Configure firemarshal to know where our firesim installation is
