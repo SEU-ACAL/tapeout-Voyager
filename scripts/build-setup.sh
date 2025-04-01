@@ -149,37 +149,37 @@ if run_step "5"; then
 fi
 
 # setup firesim
-# if run_step "6"; then
-#     $CYDIR/scripts/firesim-setup.sh
-#     $CYDIR/sims/firesim/gen-tags.sh
+if run_step "6"; then
+    $CYDIR/scripts/firesim-setup.sh
+    $CYDIR/sims/firesim/gen-tags.sh
 
-#     # precompile firesim scala sources
-#     if run_step "7"; then
-#         pushd $CYDIR/sims/firesim
-#         (
-#             echo $CYDIR
-#             source sourceme-f1-manager.sh --skip-ssh-setup
-#             pushd sim
-#             make sbt SBT_COMMAND="project {file:$CYDIR}firechip; compile" TARGET_PROJECT=firesim
-#             popd
-#         )
-#         popd
-#     fi
-# fi
+    # precompile firesim scala sources
+    if run_step "7"; then
+        pushd $CYDIR/sims/firesim
+        (
+            echo $CYDIR
+            source sourceme-manager.sh --skip-ssh-setup
+            pushd sim
+            make sbt SBT_COMMAND="project {file:$CYDIR}firechip; compile" TARGET_PROJECT=firesim
+            popd
+        )
+        popd
+    fi
+fi
 
 # setup firemarshal
-# if run_step "8"; then
-#     pushd $CYDIR/software/firemarshal
-#     ./init-submodules.sh
+if run_step "8"; then
+    pushd $CYDIR/software/src/firemarshal
+    ./init-submodules.sh
 
-#     # precompile firemarshal buildroot sources
-#     if run_step "9"; then
-#         source $CYDIR/scripts/fix-open-files.sh
-#         ./marshal $VERBOSE_FLAG build br-base.json
-#         ./marshal $VERBOSE_FLAG clean br-base.json
-#     fi
-#     popd
-# fi
+    # precompile firemarshal buildroot sources
+    if run_step "9"; then
+        source $CYDIR/scripts/fix-open-files.sh
+        ./marshal $VERBOSE_FLAG build br-base.json
+        ./marshal $VERBOSE_FLAG clean br-base.json
+    fi
+    popd
+fi
 
 # do misc. cleanup for a "clean" git status
 if run_step "10"; then
