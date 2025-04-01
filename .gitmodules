@@ -121,3 +121,6 @@
 [submodule "tools/cde"]
 	path = tools/cde
 	url = https://github.com/chipsalliance/cde.git
+[submodule "software/src/firemarshal"]
+	path = software/src/firemarshal
+	url = https://github.com/firesim/FireMarshal.git
