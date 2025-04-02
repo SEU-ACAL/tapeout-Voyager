@@ -22,7 +22,7 @@
 [submodule "sims/firesim"]
 	path = sims/firesim
 	url = https://github.com/SEU-ACAL/tapeout-firesim
-	branch = voyager 
+	branch = voyager-dev 
 [submodule "generators/icenet"]
 	path = generators/icenet
 	url = https://github.com/firesim/icenet.git
@@ -71,9 +71,9 @@
 [submodule "generators/riscv-sodor"]
 	path = generators/riscv-sodor
 	url = https://github.com/ucb-bar/riscv-sodor.git
-[submodule "fpga/fpga-shells"]
-	path = fpga/fpga-shells
-	url = https://github.com/chipsalliance/rocket-chip-fpga-shells.git
+# [submodule "fpga/fpga-shells"]
+# 	path = fpga/fpga-shells
+# 	url = https://github.com/chipsalliance/rocket-chip-fpga-shells.git
 [submodule "tools/rocket-dsp-utils"]
 	path = tools/rocket-dsp-utils
 	url = https://github.com/ucb-bar/rocket-dsp-utils
@@ -125,3 +125,6 @@
 [submodule "software/src/firemarshal"]
 	path = software/src/firemarshal
 	url = https://github.com/firesim/FireMarshal.git
+[submodule "fpga/fpga-shells"]
+	path = fpga/fpga-shells
+	url = https://github.com/chipsalliance/rocket-chip-fpga-shells.git
