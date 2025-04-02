@@ -161,30 +161,8 @@ $ ./software/scripts/run-verilator.sh --config RocketConfig hello --debug --vcd2
 
 ## 六、firesim
 
-**6.1 使用library 模式安装**
+./build-setup.sh 脚本已一键安装firesim，如何使用请参考[firesim教程](documents/firesim-README.md)
 
-强烈建议firesim安装在Voyager目录旁边，否则路径可能会出问题(自定义路径需修改代码注释在 firesim 的 make 文件代码中)
-
-```
-$ git clone https://github.com/firesim/firesim.git
-$ cd firesim
-$ git checkout 1.17.1
-$ source Voyager/env.sh
-$ ./build-setup.sh --library
-```
-
-执行完请检查`firesim/env.sh`这里的conda环境是否为Voyager目录下的conda环境，默认需要手动修改.
-
-**6.2 firesim对接chipyard**
-
-```
-$ cd firesim
-$ rm -rf ./sim
-$ ln -s ../Voyager/sims/firesim/sim ./sim
-```
-注意检查是否正确软连接到 Voyager目录，之后操作与firesim文档完全一致.
-
-注：如果在执行firesim buildbitstream时，出现 "No rule to make target /lib/libdromajo_cosim.a" 的报错，请运行`./scripts/firesim_replacement.sh`，之后再执行firesim buildbitstream 就不会出现这个问题.
 
 ## 七、安装 pre-commit 
 
