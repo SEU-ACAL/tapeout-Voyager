@@ -117,7 +117,7 @@ fi
 if run_step "2"; then
     # $CYDIR/scripts/init-submodules-no-riscv-tools.sh $FORCE_FLAG
     $CYDIR/scripts/init-submodules.sh $FORCE_FLAG
-    # $CYDIR/scripts/init-fpga.sh $FORCE_FLAG
+    $CYDIR/scripts/init-fpga.sh $FORCE_FLAG
     # git submodule update --init --recursive
 fi
 
