@@ -128,3 +128,4 @@
 [submodule "fpga/fpga-shells"]
 	path = fpga/fpga-shells
 	url = https://github.com/chipsalliance/rocket-chip-fpga-shells.git
+	branch = main
