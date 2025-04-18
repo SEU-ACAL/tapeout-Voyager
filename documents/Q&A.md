@@ -95,3 +95,6 @@ alias verdi="verdi -full64 &"
 ```
 export TERM=xterm-16color
 ```
+
+每次服务器重启之后需要重新开启VCS和Veridi的端口方法可以参考以下文章（仅执行第5/6步即可） 相关地址可以看上面的环境变量：
+https://blog.csdn.net/qq_41717683/article/details/122267191
