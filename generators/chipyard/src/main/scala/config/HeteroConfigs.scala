@@ -37,7 +37,7 @@ class LargeBoomAndRocketWithControlCoreConfig extends Config(
  * Voyager Config
  */
 class OurHeterSoCConfig extends Config(
-  new boom.v3.common.WithNLargeBooms(1) ++             
+  // new boom.v3.common.WithNLargeBooms(1) ++             
   new freechips.rocketchip.rocket.WithNBigCores(3) ++
   new gemmini.DefaultGemminiConfig ++                  
   new freechips.rocketchip.rocket.WithNBigNpuCores(1) ++
