@@ -4,9 +4,9 @@
 [submodule "generators/bar-fetchers"]
 	path = generators/bar-fetchers
 	url = https://github.com/ucb-bar/bar-fetchers.git
-[submodule "generators/boom"]
-	path = generators/boom
-	url = https://github.com/riscv-boom/riscv-boom.git
+# [submodule "generators/boom"]
+# 	path = generators/boom
+# 	url = https://github.com/riscv-boom/riscv-boom.git
 [submodule "generators/caliptra-aes-acc"]
 	path = generators/caliptra-aes-acc
 	url = https://github.com/ucb-bar/caliptra-aes-acc.git
@@ -22,9 +22,9 @@
 [submodule "generators/fft-generator"]
 	path = generators/fft-generator
 	url = https://github.com/ucb-bar/FFTGenerator.git
-[submodule "generators/gemmini"]
-	path = generators/gemmini
-	url = https://github.com/ucb-bar/gemmini.git
+# [submodule "generators/gemmini"]
+# 	path = generators/gemmini
+# 	url = https://github.com/ucb-bar/gemmini.git
 [submodule "generators/hardfloat"]
 	path = generators/hardfloat
 	url = https://github.com/ucb-bar/berkeley-hardfloat.git
@@ -46,9 +46,9 @@
 [submodule "generators/rocc-acc-utils"]
 	path = generators/rocc-acc-utils
 	url = https://github.com/ucb-bar/rocc-acc-utils.git
-[submodule "generators/rocket-chip"]
-	path = generators/rocket-chip
-	url = https://github.com/chipsalliance/rocket-chip.git
+# [submodule "generators/rocket-chip"]
+# 	path = generators/rocket-chip
+# 	url = https://github.com/chipsalliance/rocket-chip.git
 [submodule "generators/rocket-chip-blocks"]
 	path = generators/rocket-chip-blocks
 	url = https://github.com/chipsalliance/rocket-chip-blocks.git
@@ -154,3 +154,8 @@
 [submodule "generators/vexiiriscv"]
 	path = generators/vexiiriscv
 	url = https://github.com/ucb-bar/vexiiriscv-tile.git
+[submodule "tools/buddy-mlir"]
+	path = tools/buddy-mlir
+	url = https://github.com/SEU-ACAL/tapeout-Compiler.git
+	branch = voyager
+	
