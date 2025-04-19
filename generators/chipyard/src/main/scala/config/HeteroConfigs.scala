@@ -36,14 +36,14 @@ class LargeBoomAndRocketWithControlCoreConfig extends Config(
 /*
  * Voyager Config
  */
-// class OurHeterSoCConfig extends Config(
-//   new boom.v3.common.WithNLargeBooms(1) ++             
-//   new freechips.rocketchip.rocket.WithNBigCores(3) ++
-//   new gemmini.DefaultGemminiConfig ++                  
-//   new freechips.rocketchip.rocket.WithNBigNpuCores(1) ++
-//   new freechips.rocketchip.subsystem.WithInclusiveCache(capacityKB = 256) ++
-//   new chipyard.config.WithSystemBusWidth(128) ++
-//   // new chipyard.config.WithGPIO ++ 
-//   // new chipyard.config.WithI2C ++
-//   // new chipyard.config.WithSPI ++
-//   new chipyard.config.AbstractConfig)
+class OurHeterSoCConfig extends Config(
+  new boom.v3.common.WithNLargeBooms(1) ++             
+  new freechips.rocketchip.rocket.WithNBigCores(3) ++
+  new gemmini.DefaultGemminiConfig ++                  
+  new freechips.rocketchip.rocket.WithNBigNpuCores(1) ++
+  new freechips.rocketchip.subsystem.WithInclusiveCache(capacityKB = 256) ++
+  new chipyard.config.WithSystemBusWidth(128) ++
+  // new chipyard.config.WithGPIO ++ 
+  // new chipyard.config.WithI2C ++
+  // new chipyard.config.WithSPI ++
+  new chipyard.config.AbstractConfig)
