@@ -32,42 +32,18 @@ $ mosh [UserName]@[ServerAddress]
 
 https://www.anaconda.com/download/
 
-创建一个 conda 环境，并且需要其中安装 conda-lock==1.4.0，并检查：
-
-```
-conda-lock --version
-```
-
 ## 二、安装开发仓库
 
-### 2.1 仓库初始化
-
-```
-$ mkdir Voyager && cd Voyager 
-$ git clone https://github.com/SEU-ACAL/tapeout-Voyager.git .
+```shell
+$ git clone https://github.com/SEU-ACAL/tapeout-Voyager.git
 $ git checkout dev
 
 $ ./build-setup.sh
 ```
 
-### 2.2 仓库介绍
+## 三、Voyager Test
 
-**2.2.1 可提交物**
-
-Voyager 仓库下只有 `generator`部分文件夹, `software`, `scripts` 和 `doc` 四个文件夹可提交，其余全部.gitignore
-
-`generator` 文件夹下存放RTL design.
-`generator`下可修改的目录如下:
-- chipyard/src: 存放顶层TopConfig
-- boom/src
-- rocket-chip/src
-- gemmini/src
-
-其余maintain的代码文件(已经修改完成，默认不允许提交代码到此处):
-- firechip/src: 存放firesim的调试config
-- testchipip: 存放firesim的调试接口连接
-
-`software` 文件夹用于存放各个方向的workload和执行的脚本.
+`voyager-test` 文件夹用于存放workload和执行的测试框架.
 现有workload list 如下
 - cpu
     - hello
@@ -80,32 +56,31 @@ Voyager 仓库下只有 `generator`部分文件夹, `software`, `scripts` 和 `d
         - transformers
     - buddy
         - spmm
-
-
-## 三、Workload
+- template (workload tutorial)
 
 **3.1 编译workload**
 
 编译所有workload
-```
+```shell
 $ cd Voyager/voyager-test/build
 $ make build-all
 ```
 
 如果只需单独编译部分workload
-```
+```shell
+$ cd Voyager/voyager-test/build
 $ make cpu-build
 $ make npu-build
 ```
 
-[如何添加自定义workload](./voyager-test/README.md)
+添加自定义workload请参考教程:[voyager-test tutorial](./voyager-test/README.md)
 
 
 ## 四、Spike
 
 可以通过以下几个测试用例，测试Spike可以正常使用
 
-```
+```shell
 $ cd Voyager
 $ ./voyager-test/scripts/run-spike.sh hello 
 $ ./voyager-test/scripts/run-spike.sh --pk cpu-spmm
@@ -119,24 +94,24 @@ $ ./voyager-test/scripts/run-spike.sh matmul_os
 
 可以通过以下几个测试用例，测试Verilator RTL的正确性
 
-```
+```shell
 $ cd Voyager
 $ ./voyager-test/scripts/build-verilator.sh --config RocketConfig # Build 单独Rocket
 $ ./voyager-test/scripts/build-verilator.sh --config CustomGemminiSoCConfig # Build 单独Gemmini
 $ ./voyager-test/scripts/build-verilator.sh --config OurHeterSoCConfig --debug # Build 六核版, 并开启调试
 ```
 
-Verilator编译出的可执行文件会被自动拷贝到 `software/build-results/verilator` 路径下
+Verilator编译出的可执行文件会被自动拷贝到 `voyager-test/build-results/verilator` 路径下
 
 **5.2 测试运行workload**
 
 可以通过下面测试用例，测试Verilator build的正确性
 
-```
-# 运行software/build-results/workloads/cpu/hello-baremetal
+```shell
+# 运行voyager-test/build-results/workloads/cpu/hello-baremetal
 $ ./voyager-test/scripts/run-verilator.sh --config RocketConfig hello 
 
-# 运行software/build-results/workloads/npu/native/vector-baremetal
+# 运行voyager-test/build-results/workloads/npu/native/vector-baremetal
 $ ./voyager-test/scripts/run-verilator.sh --config CustomGemminiSoCConfig vector 
 
 # 对开启的调试的build文件可以同时输出波形
@@ -149,34 +124,25 @@ $ ./voyager-test/scripts/run-verilator.sh --config RocketConfig hello --debug --
 
 ## 六、firesim
 
-由`./build-setup.sh`已经安装好, 参考[教程](docs/firesim-README.md)运行(求补充)
+firesim 由`./build-setup.sh`已经安装好, 参考[教程](docs/firesim-README.md)运行(求补充)
 
-## 七、安装 pre-commit 
+## 七、pre-commit 
 
-安装 pre-commit 用于 CI 测试,这步是必须的，否则无法通过CI测试,会被强制退回.
+pre-commit 由`./build-setup.sh`已经安装好，无需单独安装。
 
-```
-$ cd Voyager
-$ source env.sh 
-$ pip install pre-commit
-$ pre-commit install
-$ git update-index --skip-worktree scripts/permission-check.sh
-```
-
-安装完 pre-commit 后请打开 `scripts/permission-check.sh` 将你需要修改的文件夹路径取消注释。
+Commit代码前，请打开 `scripts/permission-check.sh` 找到`allowed_dirs`，将你需要修改的文件夹路径取消注释。
 通过这种方式我们防止提交文件夹污染，只有位于这几个文件夹的文件修改允许提交。
 
-```
-allowed_dirs=( \
-    # "generators/boom/src" \  # # just enabled for cpu team
-    # "generators/gemmini/src" \ # just enabled for npu team
-    # "generators/rocket-chip/src/main/scala/npu" \  # just enabled for npu team
-    # "generators/rocket-chip/src/main/scala/rocket" \  # just enabled for cpu team
-    "generators/chipyard/src" \
-    "software" \
-    "documents" \
-    "scripts")
-```
+### 可提交物介绍
+
+Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `scripts` 四个文件夹可提交，其余全部.gitignore
+
+`generator` 文件夹下存放RTL design.
+`generator`下可修改的目录如下:
+- chipyard/src: 存放顶层TopConfig
+- boom/src
+- rocket-chip/src
+- gemmini/src
 
 ## 八、文档目录
 

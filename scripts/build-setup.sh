@@ -31,7 +31,8 @@ usage() {
     echo "  10. Install CIRCT"
     echo "  11. Install Buddy MLIR"
     echo "  12. Initialize Voyager Test"
-    echo "  13. Runs repository clean-up"
+    echo "  13. Install pre-commit hooks"
+    echo "  14. Runs repository clean-up"
     echo ""
     echo "**See below for options to skip parts of the setup. Skipping parts of the setup is not guaranteed to be tested/working.**"
     echo ""
@@ -55,7 +56,8 @@ usage() {
     echo "  --skip-circt            : Skip CIRCT install (step 10)"
     echo "  --skip-buddy-mlir       : Skip Buddy MLIR install (step 11)"
     echo "  --skip-voyager-test     : Skip Voyager Test initialization (step 12)"
-    echo "  --skip-clean            : Skip repository clean-up (step 13)"
+    echo "  --skip-pre-commit       : Skip pre-commit hook installation (step 13)"
+    echo "  --skip-clean            : Skip repository clean-up (step 14)"
 
     exit "$1"
 }
@@ -117,8 +119,10 @@ do
             SKIP_LIST+=(11) ;;
         --skip-voyager-test)
             SKIP_LIST+=(12) ;;
-        --skip-clean)
+        --skip-pre-commit)
             SKIP_LIST+=(13) ;;
+        --skip-clean)
+            SKIP_LIST+=(14) ;;
         * )
             error "invalid option $1"
             usage 1 ;;
@@ -363,9 +367,21 @@ if run_step "12"; then
     exit_if_last_command_failed
 fi
 
-# do misc. cleanup for a "clean" git status
+# Install pre-commit hooks
 if run_step "13"; then
-    begin_step "13" "Cleaning up repository"
+    begin_step "13" "Installing pre-commit hooks"
+    # Assuming the script exists in the scripts directory
+    if [ -f "$CYDIR/scripts/install-pre-commit.sh" ]; then
+        $CYDIR/scripts/install-pre-commit.sh
+    else
+        echo "Warning: $CYDIR/scripts/install-pre-commit.sh not found, skipping step 13."
+    fi
+    exit_if_last_command_failed
+fi
+
+# do misc. cleanup for a "clean" git status
+if run_step "14"; then
+    begin_step "14" "Cleaning up repository"
     $CYDIR/scripts/repo-clean.sh
     exit_if_last_command_failed
 fi
