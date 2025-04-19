@@ -86,19 +86,9 @@ Voyager 仓库下只有 `generator`部分文件夹, `software`, `scripts` 和 `d
 
 **3.1 编译workload**
 
-<!-- 按照如下命令初始化workload
-
-```
-$ cd Voyager
-$ source env.sh
-
-$ cd Voyager/software
-$ mkdir build && cd build 
-$ cmake ..
-```
-
 编译所有workload
 ```
+$ cd Voyager/voyager-test/build
 $ make build-all
 ```
 
@@ -106,7 +96,7 @@ $ make build-all
 ```
 $ make cpu-build
 $ make npu-build
-``` -->
+```
 
 [如何添加自定义workload](./voyager-test/README.md)
 
@@ -117,9 +107,9 @@ $ make npu-build
 
 ```
 $ cd Voyager
-$ ./software/scripts/run-spike.sh hello 
-$ ./software/scripts/run-spike.sh --pk cpu-spmm
-$ ./software/scripts/run-spike.sh matmul_os
+$ ./voyager-test/scripts/run-spike.sh hello 
+$ ./voyager-test/scripts/run-spike.sh --pk cpu-spmm
+$ ./voyager-test/scripts/run-spike.sh matmul_os
 ```
 
 
@@ -131,9 +121,9 @@ $ ./software/scripts/run-spike.sh matmul_os
 
 ```
 $ cd Voyager
-$ ./software/scripts/build-verilator.sh --config RocketConfig # Build 单独Rocket
-$ ./software/scripts/build-verilator.sh --config CustomGemminiSoCConfig # Build 单独Gemmini
-$ ./software/scripts/build-verilator.sh --config OurHeterSoCConfig --debug # Build 六核版, 并开启调试
+$ ./voyager-test/scripts/build-verilator.sh --config RocketConfig # Build 单独Rocket
+$ ./voyager-test/scripts/build-verilator.sh --config CustomGemminiSoCConfig # Build 单独Gemmini
+$ ./voyager-test/scripts/build-verilator.sh --config OurHeterSoCConfig --debug # Build 六核版, 并开启调试
 ```
 
 Verilator编译出的可执行文件会被自动拷贝到 `software/build-results/verilator` 路径下
@@ -144,45 +134,22 @@ Verilator编译出的可执行文件会被自动拷贝到 `software/build-result
 
 ```
 # 运行software/build-results/workloads/cpu/hello-baremetal
-$ ./software/scripts/run-verilator.sh --config RocketConfig hello 
+$ ./voyager-test/scripts/run-verilator.sh --config RocketConfig hello 
 
 # 运行software/build-results/workloads/npu/native/vector-baremetal
-$ ./software/scripts/run-verilator.sh --config CustomGemminiSoCConfig vector 
+$ ./voyager-test/scripts/run-verilator.sh --config CustomGemminiSoCConfig vector 
 
 # 对开启的调试的build文件可以同时输出波形
-$ ./software/scripts/run-verilator.sh --config RocketConfig hello --debug 
+$ ./voyager-test/scripts/run-verilator.sh --config RocketConfig hello --debug 
 
 # 使用--vcd2fst参数，可以生成压缩后的FST波形
-$ ./software/scripts/run-verilator.sh --config RocketConfig hello --debug --vcd2fst
+$ ./voyager-test/scripts/run-verilator.sh --config RocketConfig hello --debug --vcd2fst
 ```
 
 
 ## 六、firesim
 
-**6.1 使用library 模式安装**
-
-强烈建议firesim安装在Voyager目录旁边，否则路径可能会出问题(自定义路径需修改代码注释在 firesim 的 make 文件代码中)
-
-```
-$ git clone https://github.com/firesim/firesim.git
-$ cd firesim
-$ git checkout 1.17.1
-$ source Voyager/env.sh
-$ ./build-setup.sh --library
-```
-
-执行完请检查`firesim/env.sh`这里的conda环境是否为Voyager目录下的conda环境，默认需要手动修改.
-
-**6.2 firesim对接chipyard**
-
-```
-$ cd firesim
-$ rm -rf ./sim
-$ ln -s ../Voyager/sims/firesim/sim ./sim
-```
-注意检查是否正确软连接到 Voyager目录，之后操作与firesim文档完全一致.
-
-注：如果在执行firesim buildbitstream时，出现 "No rule to make target /lib/libdromajo_cosim.a" 的报错，请运行`./scripts/firesim_replacement.sh`，之后再执行firesim buildbitstream 就不会出现这个问题.
+由`./build-setup.sh`已经安装好, 参考[教程](docs/firesim-README.md)运行(求补充)
 
 ## 七、安装 pre-commit 
 
@@ -215,6 +182,6 @@ allowed_dirs=( \
 
 其余具体可见`documents`下的文档，欢迎大家多写文档，记录下用法和一些坑.
 
-[[Q&A List](documents/Q&A.md)] 仓库使用遇到问题可以在群里询问，问题解决后将解决方法记录在这里.    
-[[firesim](documents/firesim-README.md)] firesim 的简略文档，求补充.  
-[[NPU-README](documents/NPU-README.md)] 主要关于buddy-mlir的安装.
+[[Q&A List](docs/Q&A.md)] 仓库使用遇到问题可以在群里询问，问题解决后将解决方法记录在这里.    
+[[firesim](docs/firesim-README.md)] firesim 的简略文档，求补充.  
+[[NPU-README](docs/NPU-README.md)] 主要关于buddy-mlir的安装.

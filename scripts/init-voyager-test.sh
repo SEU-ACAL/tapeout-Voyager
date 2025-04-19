@@ -9,6 +9,6 @@ CYDIR=$(git rev-parse --show-toplevel)
 source ${CYDIR}/env.sh
 
 cd ${CYDIR}/voyager-test
-mkdir build && cd build 
+mkdir -p build && cd build 
 cmake ..
 make
