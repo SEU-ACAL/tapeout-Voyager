@@ -17,7 +17,7 @@ add_custom_command(
 
 add_custom_command(
   OUTPUT  forward.o
-  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_LENET_DIR}/forward.mlir 
+  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt forward.mlir 
             -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
             ${BUDDY_BINARY_DIR}/buddy-opt
             -buffer-deallocation-simplification
@@ -40,10 +40,10 @@ add_custom_command(
 
 add_custom_command(
   OUTPUT  subgraph0.o
-  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_LENET_DIR}/subgraph0.mlir 
+  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt subgraph0.mlir 
             -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" 
             > subgraph0_linalg.mlir
-  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_LENET_DIR}/subgraph0.mlir 
+  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt subgraph0.mlir 
             -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
           ${BUDDY_BINARY_DIR}/buddy-opt
             -eliminate-empty-tensors
@@ -52,7 +52,7 @@ add_custom_command(
             -convert-linalg-to-gemmini
             -batchmatmul-optimize
             > subgraph0_loops.mlir
-  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_LENET_DIR}/subgraph0.mlir 
+  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt subgraph0.mlir 
             -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
           ${BUDDY_BINARY_DIR}/buddy-opt
             -eliminate-empty-tensors
@@ -61,7 +61,7 @@ add_custom_command(
             -convert-linalg-to-gemmini
             # -lower-gemmini 
             > subgraph0_gemmini.mlir
-  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_LENET_DIR}/subgraph0.mlir 
+  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt subgraph0.mlir 
             -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
           ${BUDDY_BINARY_DIR}/buddy-opt
             -eliminate-empty-tensors
@@ -83,7 +83,7 @@ add_custom_command(
             -reconcile-unrealized-casts | 
           ${BUDDY_BINARY_DIR}/buddy-translate --buddy-to-llvmir
           > subgraph0.ll
-    COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_LENET_DIR}/subgraph0.mlir 
+    COMMAND ${BUDDY_BINARY_DIR}/buddy-opt subgraph0.mlir 
           -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
         ${BUDDY_BINARY_DIR}/buddy-opt
           -eliminate-empty-tensors
