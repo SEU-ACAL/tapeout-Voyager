@@ -11,8 +11,7 @@ source $CYDIR/scripts/utils.sh
 
 
 source ${CYDIR}/env.sh
-# pip install python==3.10 
-pip install numpy pybind11 
+pip install -r ${CYDIR}/tools/buddy-mlir/requirements.txt
 
 cd ${CYDIR}/tools/buddy-mlir
 git submodule update --init
