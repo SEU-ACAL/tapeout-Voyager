@@ -106,8 +106,8 @@ if [ $TOOLCHAIN == "riscv-tools" ]; then
     echo '==> Installing gemmini spike extensions'
     git submodule update --init generators/gemmini
     cd generators/gemmini
-    git submodule update --init software/libgemmini
-    make -C $RDIR/generators/gemmini/software/libgemmini install
+    # git submodule update --init software/libgemmini
+    # make -C $RDIR/generators/gemmini/software/libgemmini install
 fi
 
 echo '==>  Installing DRAMSim2 Shared Library'
