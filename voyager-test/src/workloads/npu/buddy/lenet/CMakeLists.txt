@@ -1,24 +1,23 @@
-set(BUDDY_EXAMPLES_DIR ${BUDDY_MLIR_DIR}/examples/)
 set(BUDDY_BINARY_DIR ${BUDDY_MLIR_DIR}/build/bin/)
-set(RISCV_GNU_TOOLCHAIN ${BUDDY_MLIR_DIR}/build/thirdparty/riscv-gnu-toolchain)
+set(RISCV_GNU_TOOLCHAIN ${CYDIR}/.conda-env/riscv-tools/)
 set(CMAKE_CXX_COMPILER  ${RISCV_GNU_TOOLCHAIN}/bin/riscv64-unknown-linux-gnu-g++)
 
-set(BUDDY_GEMMINI_DIR ${BUDDY_EXAMPLES_DIR}/BuddyGemmini)
+set(BUDDY_LENET_DIR ${BUDDY_WORKLOAD_DIR}/lenet)
 set(INTERFACE_DIR ${BUDDY_MLIR_DIR}/frontend/Interfaces/)
-set(INCLUDE_DIR ${BUDDY_GEMMINI_DIR}/include/)
+set(INCLUDE_DIR ${BUDDY_LENET_DIR}/include/)
 
 
 add_custom_command(
   OUTPUT  forward.mlir subgraph0.mlir arg0.data
-  COMMAND export BUDDYGEMMINI_EXAMPLE_PATH=${BUDDY_GEMMINI_DIR} &&
-          python3 ${BUDDY_GEMMINI_DIR}/buddy-lenet-import.py
+  COMMAND export BUDDYGEMMINI_EXAMPLE_PATH=${BUDDY_LENET_DIR} &&
+          python3 ${BUDDY_LENET_DIR}/buddy-lenet-import.py
   DEPENDS buddy-lenet-import.py
   COMMENT "Generating forward.mlir, subgraph0.mlir and parameter files"
 )
 
 add_custom_command(
   OUTPUT  forward.o
-  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_GEMMINI_DIR}/forward.mlir 
+  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_LENET_DIR}/forward.mlir 
             -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
             ${BUDDY_BINARY_DIR}/buddy-opt
             -buffer-deallocation-simplification
@@ -41,10 +40,10 @@ add_custom_command(
 
 add_custom_command(
   OUTPUT  subgraph0.o
-  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_GEMMINI_DIR}/subgraph0.mlir 
+  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_LENET_DIR}/subgraph0.mlir 
             -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" 
             > subgraph0_linalg.mlir
-  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_GEMMINI_DIR}/subgraph0.mlir 
+  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_LENET_DIR}/subgraph0.mlir 
             -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
           ${BUDDY_BINARY_DIR}/buddy-opt
             -eliminate-empty-tensors
@@ -53,7 +52,7 @@ add_custom_command(
             -convert-linalg-to-gemmini
             -batchmatmul-optimize
             > subgraph0_loops.mlir
-  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_GEMMINI_DIR}/subgraph0.mlir 
+  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_LENET_DIR}/subgraph0.mlir 
             -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
           ${BUDDY_BINARY_DIR}/buddy-opt
             -eliminate-empty-tensors
@@ -62,7 +61,7 @@ add_custom_command(
             -convert-linalg-to-gemmini
             # -lower-gemmini 
             > subgraph0_gemmini.mlir
-  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_GEMMINI_DIR}/subgraph0.mlir 
+  COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_LENET_DIR}/subgraph0.mlir 
             -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
           ${BUDDY_BINARY_DIR}/buddy-opt
             -eliminate-empty-tensors
@@ -84,7 +83,7 @@ add_custom_command(
             -reconcile-unrealized-casts | 
           ${BUDDY_BINARY_DIR}/buddy-translate --buddy-to-llvmir
           > subgraph0.ll
-    COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_GEMMINI_DIR}/subgraph0.mlir 
+    COMMAND ${BUDDY_BINARY_DIR}/buddy-opt ${BUDDY_LENET_DIR}/subgraph0.mlir 
           -pass-pipeline "builtin.module(func.func(tosa-to-linalg-named, tosa-to-linalg, tosa-to-tensor, tosa-to-arith))" |
         ${BUDDY_BINARY_DIR}/buddy-opt
           -eliminate-empty-tensors
@@ -125,9 +124,9 @@ set(BUDDY_LENET_FIRESIM_DIR ${RTL_BUILD_DIR}/firesim/overlay/root/)
 
 add_custom_target(buddy-gemmini-lenet-firesim-deploy
     COMMAND mkdir -p ${BUDDY_LENET_OUTPUT_DIR}
-    COMMAND cp ${BUDDY_GEMMINI_DIR}/buddy-gemmini-lenet-run ${BUDDY_LENET_OUTPUT_DIR}
-    COMMAND cp ${BUDDY_GEMMINI_DIR}/arg0.data ${BUDDY_LENET_OUTPUT_DIR}
-    COMMAND cp ${BUDDY_GEMMINI_DIR}/images/ ${BUDDY_LENET_OUTPUT_DIR}
+    COMMAND cp ${BUDDY_LENET_DIR}/buddy-gemmini-lenet-run ${BUDDY_LENET_OUTPUT_DIR}
+    COMMAND cp ${BUDDY_LENET_DIR}/arg0.data ${BUDDY_LENET_OUTPUT_DIR}
+    COMMAND cp ${BUDDY_LENET_DIR}/images/ ${BUDDY_LENET_OUTPUT_DIR}
     COMMAND ${MARSHAL} -v build ${BUDDY_LENET_FIRESIM_DIR}/gemmini-tests-interactive.json
     COMMAND ${MARSHAL} -v install ${BUDDY_LENET_FIRESIM_DIR}/gemmini-tests-interactive.json
     DEPENDS buddy-gemmini-lenet-run
