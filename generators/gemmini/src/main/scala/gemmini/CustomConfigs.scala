@@ -49,8 +49,13 @@ object GemminiCustomConfigs {
     acc_capacity = CapacityInKilobytes(128),
   )
 
+  val VecInferenceConfig = defaultConfig.copy(
+    has_training_convs = false,
+    spad_read_delay = 0,
+  )
+
   // Specify which of your custom configs you want to build here
-  val customConfig = baselineInferenceConfig
+  val customConfig = VecInferenceConfig
 }
 
 

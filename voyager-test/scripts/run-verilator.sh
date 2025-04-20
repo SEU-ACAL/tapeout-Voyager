@@ -139,10 +139,10 @@ fi
 LOG_DIR="${ROOT}/log/${TIMESTAMP}-${binary}-verilator-run-log"
 mkdir -p "${LOG_DIR}"
 
-cd ${CYDIR}/sims/verilator/
 
-./simulator-chipyard-${CONFIG}${DEBUG} +verbose $PK +permissive \
-  +loadmem=${full_binary_path} +loadmem_addr=80000000 \
+cd ${CYDIR}/voyager-test/build-results/verilator/
+./simulator-chipyard.harness-${CONFIG}${DEBUG} $PK +permissive \
+  +verbose +loadmem=${full_binary_path} +loadmem_addr=80000000 \
   +permissive-off ${full_binary_path} \
   &> >(tee ${LOG_DIR}/stdout.log) \
   2> >(spike-dasm > ${LOG_DIR}/disasm.log)

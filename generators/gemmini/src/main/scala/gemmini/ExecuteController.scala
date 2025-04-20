@@ -1,4 +1,3 @@
-
 package gemmini
 
 import chisel3._
@@ -7,6 +6,8 @@ import GemminiISA._
 import Util._
 import org.chipsalliance.cde.config.Parameters
 import midas.targetutils.PerfCounter
+
+import gemmini.VecUnit.VecUnit
 
 // TODO do we still need to flush when the dataflow is weight stationary? Won't the result just keep travelling through on its own?
 class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: Int, config: GemminiArrayConfig[T, U, V])
@@ -48,7 +49,7 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
   })
 
   val block_size = meshRows*tileRows
-
+  val VectorEnable = RegInit(0.U(2.W))
   val mesh_tag = new Bundle with TagQueueTag {
     val rob_id = UDValid(UInt(log2Up(reservation_station_entries).W))
     val addr = local_addr_t.cloneType
@@ -83,6 +84,9 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
   val DoConfig = functs(0) === CONFIG_CMD
   val DoComputes = functs.map(f => f === COMPUTE_AND_FLIP_CMD || f === COMPUTE_AND_STAY_CMD)
   val DoPreloads = functs.map(_ === PRELOAD_CMD)
+
+  // 新增EX模式配置指: 配置使用Vector还是Mesh计算
+  val DoEnableVectorMode = functs.map(_ === CONFIG_VECTOR_MODE_CMD)
 
   val preload_cmd_place = Mux(DoPreloads(0), 0.U, 1.U)
   // val a_address_place = Mux(current_dataflow === Dataflow.WS.id.U, 0.U, Mux(preload_cmd_place === 0.U, 1.U, 2.U))
@@ -277,6 +281,7 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
   val perform_single_preload = RegInit(false.B)
   val perform_single_mul = RegInit(false.B)
   val perform_mul_pre = RegInit(false.B)
+  val perform_config_ex_mode = RegInit(false.B)
 
   val performing_single_preload = WireInit(perform_single_preload && control_state === compute)
   val performing_single_mul = WireInit(perform_single_mul && control_state === compute)
@@ -1033,5 +1038,29 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
     PerfCounter(ex_flush_cycle, "ex_flush_cycle", "cycles during which the ex controller is flushing the spatial array")
     PerfCounter(ex_preload_haz_cycle, "ex_preload_haz_cycle", "cycles during which the execute controller is stalling preloads due to hazards")
     PerfCounter(ex_mulpre_haz_cycle, "ex_mulpre_haz_cycle", "cycles during which the execute controller is stalling matmuls due to hazards")
+  }
+
+  // VecUnit 
+  val VecUnit = Module(new VecUnit(xLen, tagWidth, config, ex_queue_length, cmd_q_heads))
+  VecUnit.io.cmd.valid := cmd.valid
+  VecUnit.io.cmd.bits := cmd.bits
+  VecUnit.io.srams.read.req.ready := io.srams.read(0).req.ready
+  VecUnit.io.srams.read.resp.valid := io.srams.read(0).resp.valid
+  VecUnit.io.srams.read.resp.bits <> io.srams.read(0).resp.bits
+  when (VectorEnable === 1.U) {
+    io.srams.write(0) <> VecUnit.io.srams.write  
+    io.srams.read(0).req.valid := VecUnit.io.srams.read.req.valid
+    io.srams.read(0).req.bits <> VecUnit.io.srams.read.req.bits
+    io.srams.read(0).resp.ready := VecUnit.io.srams.read.resp.ready
+
+    cmd.pop := VecUnit.io.cmd.pop
+    io.completed <> VecUnit.io.completed 
+  }
+
+  when (DoEnableVectorMode(0) && cmd.valid(0)) {
+    VectorEnable       := rs1s(0)
+    io.completed.valid := true.B
+    io.completed.bits  := cmd.bits(0).rob_id.bits
+    cmd.pop            := 1.U
   }
 }

@@ -56,7 +56,7 @@ $ ./build-setup.sh
         - transformers
     - buddy
         - spmm
-- template (workload tutorial)
+- tutorial (voyager-test tutorial)
 
 **3.1 编译workload**
 
@@ -97,7 +97,7 @@ $ ./voyager-test/scripts/run-spike.sh matmul_os
 ```shell
 $ cd Voyager
 $ ./voyager-test/scripts/build-verilator.sh --config RocketConfig # Build 单独Rocket
-$ ./voyager-test/scripts/build-verilator.sh --config CustomGemminiSoCConfig # Build 单独Gemmini
+$ ./voyager-test/scripts/build-verilator.sh --config GemminiRocketConfig # Build 单独Gemmini
 $ ./voyager-test/scripts/build-verilator.sh --config OurHeterSoCConfig --debug # Build 六核版, 并开启调试
 ```
 
@@ -112,7 +112,7 @@ Verilator编译出的可执行文件会被自动拷贝到 `voyager-test/build-re
 $ ./voyager-test/scripts/run-verilator.sh --config RocketConfig hello 
 
 # 运行voyager-test/build-results/workloads/npu/native/vector-baremetal
-$ ./voyager-test/scripts/run-verilator.sh --config CustomGemminiSoCConfig vector 
+$ ./voyager-test/scripts/run-verilator.sh --config GemminiRocketConfig vector 
 
 # 对开启的调试的build文件可以同时输出波形
 $ ./voyager-test/scripts/run-verilator.sh --config RocketConfig hello --debug 

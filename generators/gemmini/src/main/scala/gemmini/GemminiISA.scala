@@ -34,6 +34,25 @@ object GemminiISA {
 
   val CLKGATE_EN = 22.U
 
+
+  val VEC_LOAD_CMD = 23.U        // vec_load
+  val VEC_STORE_CMD = 24.U       // vec_store
+  val VEC_ADD_CMD = 25.U         // vec_add (not used)
+  val VEC_SCALAR_MUL_CMD = 26.U  // vec_scalar_mul
+  val VEC_BROADCAST_CMD = 27.U   // vec_broadcast (not used)
+  val VEC_MOVE_CMD = 28.U        // vec_move (not used)
+  val SCALAR_DISPATCH_CMD = 29.U // scalar_dispatch 
+  val INST_Vec_Reduce_CMD = 30.U     // vec_scatter 
+  val INST_Vec_LoopMul_CMD = 31.U    // vec_misc_mul
+  
+  val CONFIG_VECTOR_MODE_CMD = 32.U // 切换是使用Vector Mode 还是Mesh Mode
+
+  //==========================================================================
+  // BITPAT
+  //==========================================================================
+  // val INST_Vec_Reduce_CMD_BITPAT  = BitPat("b0011110") 
+  // val INST_Vec_LoopMul_CMD_BITPAT = BitPat("b0011111")
+
   // rs1[2:0] values
   val CONFIG_EX = 0.U
   val CONFIG_LOAD = 1.U
