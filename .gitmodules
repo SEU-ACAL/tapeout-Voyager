@@ -154,3 +154,6 @@
 [submodule "generators/vexiiriscv"]
 	path = generators/vexiiriscv
 	url = https://github.com/ucb-bar/vexiiriscv-tile.git
+[submodule "tools/buddy-mlir"]
+	path = tools/buddy-mlir
+	url = https://github.com/SEU-ACAL/tapeout-Compiler.git
