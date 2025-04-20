@@ -29,7 +29,10 @@ usage() {
     echo "   8. FireMarshal"
     echo "   9. FireMarshal pre-compile default buildroot Linux sources"
     echo "  10. Install CIRCT"
-    echo "  11. Runs repository clean-up"
+    echo "  11. Install Buddy MLIR"
+    echo "  12. Initialize Voyager Test"
+    echo "  13. Install pre-commit hooks"
+    echo "  14. Runs repository clean-up"
     echo ""
     echo "**See below for options to skip parts of the setup. Skipping parts of the setup is not guaranteed to be tested/working.**"
     echo ""
@@ -51,7 +54,10 @@ usage() {
     echo "  --skip-firesim          : Skip Firesim initialization (steps 6/7)"
     echo "  --skip-marshal          : Skip firemarshal initialization (steps 8/9)"
     echo "  --skip-circt            : Skip CIRCT install (step 10)"
-    echo "  --skip-clean            : Skip repository clean-up (step 11)"
+    echo "  --skip-buddy-mlir       : Skip Buddy MLIR install (step 11)"
+    echo "  --skip-voyager-test     : Skip Voyager Test initialization (step 12)"
+    echo "  --skip-pre-commit       : Skip pre-commit hook installation (step 13)"
+    echo "  --skip-clean            : Skip repository clean-up (step 14)"
 
     exit "$1"
 }
@@ -102,15 +108,21 @@ do
         --skip-ctags)
             SKIP_LIST+=(4) ;;
         --skip-precompile)
-            SKIP_LIST+=(5 6) ;;
+            SKIP_LIST+=(5 7) ;;
         --skip-firesim)
             SKIP_LIST+=(6 7) ;;
         --skip-marshal)
             SKIP_LIST+=(8 9) ;;
         --skip-circt)
             SKIP_LIST+=(10) ;;
-        --skip-clean)
+        --skip-buddy-mlir)
             SKIP_LIST+=(11) ;;
+        --skip-voyager-test)
+            SKIP_LIST+=(12) ;;
+        --skip-pre-commit)
+            SKIP_LIST+=(13) ;;
+        --skip-clean)
+            SKIP_LIST+=(14) ;;
         * )
             error "invalid option $1"
             usage 1 ;;
@@ -331,10 +343,45 @@ if run_step "10"; then
     exit_if_last_command_failed
 fi
 
+# Install Buddy MLIR
+if run_step "11"; then
+    begin_step "11" "Installing Buddy MLIR"
+    # Assuming the script exists in the scripts directory
+    if [ -f "$CYDIR/scripts/install-buddy-mlir.sh" ]; then
+        $CYDIR/scripts/install-buddy-mlir.sh
+    else
+        echo "Warning: $CYDIR/scripts/install-buddy-mlir.sh not found, skipping step 11."
+    fi
+    exit_if_last_command_failed
+fi
+
+# Initialize Voyager Test
+if run_step "12"; then
+    begin_step "12" "Initializing Voyager Test"
+    # Assuming the script exists in the scripts directory
+    if [ -f "$CYDIR/scripts/init-voyager-test.sh" ]; then
+        $CYDIR/scripts/init-voyager-test.sh
+    else
+        echo "Warning: $CYDIR/scripts/init-voyager-test.sh not found, skipping step 12."
+    fi
+    exit_if_last_command_failed
+fi
+
+# Install pre-commit hooks
+if run_step "13"; then
+    begin_step "13" "Installing pre-commit hooks"
+    # Assuming the script exists in the scripts directory
+    if [ -f "$CYDIR/scripts/install-pre-commit.sh" ]; then
+        $CYDIR/scripts/install-pre-commit.sh
+    else
+        echo "Warning: $CYDIR/scripts/install-pre-commit.sh not found, skipping step 13."
+    fi
+    exit_if_last_command_failed
+fi
 
 # do misc. cleanup for a "clean" git status
-if run_step "11"; then
-    begin_step "11" "Cleaning up repository"
+if run_step "14"; then
+    begin_step "14" "Cleaning up repository"
     $CYDIR/scripts/repo-clean.sh
     exit_if_last_command_failed
 fi

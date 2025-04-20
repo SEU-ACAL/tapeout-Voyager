@@ -1,0 +1,14 @@
+#!/usr/bin/env bash
+
+# exit script if any command fails
+set -e
+set -o pipefail
+
+CYDIR=$(git rev-parse --show-toplevel)
+
+source ${CYDIR}/env.sh
+
+cd ${CYDIR}/voyager-test
+mkdir -p build && cd build 
+cmake ..
+make
