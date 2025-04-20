@@ -73,7 +73,7 @@ $ make cpu-build
 $ make npu-build
 ```
 
-添加自定义workload请参考教程:[voyager-test tutorial](./voyager-test/README.md)
+添加自定义workload请参考教程: [voyager-test tutorial](./voyager-test/README.md)
 
 
 ## 四、Spike
@@ -133,7 +133,7 @@ pre-commit 由`./build-setup.sh`已经安装好，无需单独安装。
 Commit代码前，请打开 `scripts/permission-check.sh` 找到`allowed_dirs`，将你需要修改的文件夹路径取消注释。
 通过这种方式我们防止提交文件夹污染，只有位于这几个文件夹的文件修改允许提交。
 
-### 可提交物介绍
+### 可提交物说明
 
 Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `scripts` 四个文件夹可提交，其余全部.gitignore
 
@@ -146,8 +146,8 @@ Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `
 
 ## 八、文档目录
 
-其余具体可见`documents`下的文档，欢迎大家多写文档，记录下用法和一些坑.
+其余具体可见`docs`下的文档，欢迎大家多写文档，记录下用法和一些坑.
 
 [[Q&A List](docs/Q&A.md)] 仓库使用遇到问题可以在群里询问，问题解决后将解决方法记录在这里.    
 [[firesim](docs/firesim-README.md)] firesim 的简略文档，求补充.  
-[[NPU-README](docs/NPU-README.md)] 主要关于buddy-mlir的安装.
+[[NPU-README](docs/NPU-README.md)] 主要关于buddy-mlir的使用.
