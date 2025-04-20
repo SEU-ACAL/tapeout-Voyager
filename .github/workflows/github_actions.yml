@@ -1,0 +1,128 @@
+name: Voyager CI
+run-name: ${{ github.actor }} is running CI Test 🚀
+on:
+  push:
+    branches:
+      - dev
+jobs:
+  Code-Pull:
+    name: Code Pull
+    runs-on: fpga
+    steps:
+      - name: Print information
+        run: |
+          echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
+          echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+      - name: Pull from the repository
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          setproxy
+          git pull origin ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - run: echo "🍏 pull from repository ${{ job.status }}."
+
+  Pre-commit-check:
+    name: Pre-commit Check
+    runs-on: fpga
+    needs: Code-Pull
+    steps:
+      - name: Verify pre-commit proof
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          ./.github/scripts/ci-pre-commit-check.sh
+      - run: echo "🍏 pre-commit proof verification is ${{ job.status }}."
+      # 如果检查失败，强制回退分支
+      - name: Revert Bad Commit
+        if: failure()
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          setproxy
+          git reset --hard HEAD~1
+          git push --force origin ${{ github.ref }}
+          echo "🍏 Please Do Pre-commit Before Commit!!!"
+
+  Compile-lint:
+    name: Compile Lint
+    runs-on: fpga
+    needs: Pre-commit-check
+    steps:
+      - name: Build Workloads
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          cd voyager-test
+          mkdir -p build && cd build 
+          cmake ..
+          make build-all
+      - run: echo "🍏 Workloads build test is ${{ job.status }}."
+        # 如果检查失败，强制回退分支
+      - name: Revert Bad Commit
+        if: failure()
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          setproxy
+          git reset --hard HEAD~1
+          git push --force origin ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build Verilator
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          ./voyager-test/scripts/build-verilator.sh --config OurHeterSoCConfig
+      - run: echo "🍏 Verilator build test is ${{ job.status }}."
+        # 如果检查失败，强制回退分支
+      - name: Revert Bad Commit
+        if: failure()
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          setproxy
+          git reset --hard HEAD~1
+          git push --force origin ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  Test-Workloads:
+    name: Test Workloads
+    runs-on: fpga
+    needs: Compile-lint
+    steps:
+      - name: Run mini-test on runner machine
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          ./voyager-test/scripts/run-verilator.sh --config OurHeterSoCConfig hello 
+      - run: echo "🍏 mini-test on runner machine is ${{ job.status }}."
+        # 如果检查失败，强制回退分支
+      - name: Revert Bad Commit
+        if: failure()
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          setproxy
+          git reset --hard HEAD~1
+          git push --force origin ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  Update-Repository:
+    name: Update Repository
+    runs-on: fpga
+    needs: Test-Workloads
+    steps:
+      - run: echo "🎉 Good Job! This ${{ github.event_name }} will be updated to ${{ github.ref }}."
