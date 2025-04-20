@@ -123,7 +123,7 @@ cd "$RDIR"
 
     # Non-recursive clone to exclude gemmini-software
     git submodule update --init generators/gemmini
-    git -C generators/gemmini/ submodule update --init --recursive software/gemmini-rocc-tests
+    # git -C generators/gemmini/ submodule update --init --recursive software/gemmini-rocc-tests
 
     # Non-recursive clone
     git submodule update --init generators/rocket-chip
