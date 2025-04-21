@@ -15,3 +15,5 @@ docs-target/
 rocketchip.jar
 *#
 .#*
+
+!src/main/resources/vsrc/*.v
