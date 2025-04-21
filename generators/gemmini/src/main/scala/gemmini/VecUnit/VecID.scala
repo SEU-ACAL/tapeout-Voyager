@@ -58,6 +58,9 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
   val rs1s = VecInit(io.id_i.cmd.map(_.cmd.rs1))
   val rs2s = VecInit(io.id_i.cmd.map(_.cmd.rs2))   
 
+  // Define the zero vector constant locally to avoid visibility issues with ListLookup
+  val ZERO_VEC = VecInit(Seq.fill(16)(0.U(8.W)))
+
 // -----------------------------------------------------------------------------
 // Decode instructions
 // -----------------------------------------------------------------------------
@@ -80,10 +83,10 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
                           //   |   |   | |      |         |     | | | | | | | | | | | | | | rd_acc    |   |         |      | |             |        
                           //   |   |   | |      |         |     | | | | | | | | | | | | | | | wr_acc  |   |         |      | |             |        
                           //   |   |   | |      |         |     | | | | | | | | | | | | | | | |       |   |         |      | |             |        
-                          List(DOP,DOP,N,N,    DADDR,     DADDR,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N, DVECIDX,DVECIDX,  DVECIDX,N,DTC_TYPE     ,DITER)
+                          List(ZERO_VEC,ZERO_VEC,N,N,    DADDR,     DADDR,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N,N, DVECIDX,DVECIDX,  DVECIDX,N,DTC_TYPE     ,DITER)
   val decode_list = ListLookup(func7, default_decode, Array(
-    BitPat("b0011101") -> List(DOP,DOP,N,N,    DADDR,     DADDR,Y,Y,N,N,N,N,N,N,N,N,N,N,N,N,N,N, DVECIDX,DVECIDX,  DVECIDX,N,DTC_TYPE,     DITER), // INST_Vec_Reduce_CMD
-    BitPat("b0011111") -> List(DOP,DOP,Y,Y,rs1(16,2),rs1(30,16),Y,Y,N,N,Y,N,N,N,N,N,N,N,N,N,N,N,rs2(5,0),DVECIDX,rs2(10,5),N,DTC_TYPE,rs2(14,10)), // INST_Vec_LoopMul_CMD
+    BitPat("b0011101") -> List(ZERO_VEC,ZERO_VEC,N,N,    DADDR,     DADDR,Y,Y,N,N,N,N,N,N,N,N,N,N,N,N,N,N, DVECIDX,DVECIDX,  DVECIDX,N,DTC_TYPE,     DITER), // INST_Vec_Reduce_CMD
+    BitPat("b0011111") -> List(ZERO_VEC,ZERO_VEC,Y,Y,rs1(16,2),rs1(30,16),Y,Y,N,N,Y,N,N,N,N,N,N,N,N,N,N,N,rs2(5,0),DVECIDX,rs2(10,5),N,DTC_TYPE,rs2(14,10)), // INST_Vec_LoopMul_CMD
   ))
 
 // -----------------------------------------------------------------------------
