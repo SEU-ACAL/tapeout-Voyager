@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} is running CI Test 🚀
 on:
   push:
     branches:
-      - dev-test
+      - dev
 jobs:
   Code-Pull:
     name: Code Pull
