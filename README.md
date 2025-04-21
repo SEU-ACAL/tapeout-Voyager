@@ -126,7 +126,7 @@ $ ./voyager-test/scripts/run-verilator.sh --config RocketConfig hello --debug --
 
 firesim 由`./build-setup.sh`已经安装好, 参考[教程](docs/firesim-README.md)运行(求补充)
 
-## 七、pre-commit 
+## 七、pre-commit (提交前检查)
 
 pre-commit 由`./build-setup.sh`已经安装好，无需单独安装。
 
@@ -148,7 +148,7 @@ Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `
 
 其余具体可见`docs`下的文档，欢迎大家多写文档，记录下用法和一些坑.
 
-[[Q&A List](docs/Q&A.md)] 仓库使用遇到问题可以在群里询问，问题解决后将解决方法记录在这里.    
-[[firesim](docs/firesim-README.md)] firesim 的简略文档，求补充.  
-[[NPU-README](docs/NPU-README.md)] 主要关于buddy-mlir的使用.
-[[sram-README](docs/sram-README.md)] 主要关于sram替换的文档. 
+- [[Q&A List](docs/Q&A.md)] 仓库使用遇到问题可以在群里询问，问题解决后将解决方法记录在这里.    
+- [[firesim](docs/firesim-README.md)] firesim 的简略文档，求补充.  
+- [[NPU-README](docs/NPU-README.md)] 主要关于buddy-mlir的使用.
+- [[sram-README](docs/sram-README.md)] 主要关于sram替换的文档. 

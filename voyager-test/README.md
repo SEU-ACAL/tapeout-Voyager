@@ -106,6 +106,4 @@ add_custom_target(build-all ALL DEPENDS
 
 #### 使用 buddy-compiler 编译 pytorch workload (LeNet 案例分析)
 
-子项目为[lenet](src/workload/npu/buddy/lenet)
-
-
+子项目为[lenet](./src/workloads/npu/buddy/lenet/README.md)
