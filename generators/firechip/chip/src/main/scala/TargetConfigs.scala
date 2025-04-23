@@ -215,6 +215,11 @@ class FireSimRocketConfig extends Config(
   new chipyard.RocketConfig)
 // DOC include end: firesimconfig
 
+class FireSimHeterConfig extends Config(
+  new WithDefaultFireSimBridges ++
+  new WithFireSimConfigTweaks ++
+  new chipyard.OurHeterSoCConfig)
+
 class FireSimRocket1GiBDRAMConfig extends Config(
   new freechips.rocketchip.subsystem.WithExtMemSize((1 << 30) * 1L) ++
   new FireSimRocketConfig)
