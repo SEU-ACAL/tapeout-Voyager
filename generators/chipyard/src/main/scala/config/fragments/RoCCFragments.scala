@@ -5,6 +5,7 @@ import chisel3._
 import org.chipsalliance.cde.config.{Field, Parameters, Config}
 import freechips.rocketchip.tile._
 import freechips.rocketchip.diplomacy._
+import freechips.rocketchip.npu._
 
 import gemmini._
 
@@ -14,12 +15,16 @@ import chipyard.{TestSuitesKey, TestSuiteHelper}
  * Map from a tileId to a particular RoCC accelerator
  */
 case object MultiRoCCKey extends Field[Map[Int, Seq[Parameters => LazyRoCC]]](Map.empty[Int, Seq[Parameters => LazyRoCC]])
-
+case object MultiRoCCNpuKey extends Field[Map[Int, Seq[Parameters => LazyRoCCNpu]]](Map.empty[Int, Seq[Parameters => LazyRoCCNpu]])
 /**
  * Config fragment to enable different RoCCs based on the tileId
  */
 class WithMultiRoCC extends Config((site, here, up) => {
   case BuildRoCC => site(MultiRoCCKey).getOrElse(site(TileKey).tileId, Nil)
+})
+
+class WithMultiRoCCNpu extends Config((site, here, up) => {
+  case BuildRoCCNpu => site(MultiRoCCNpuKey).getOrElse(site(TileKey).tileId, Nil)
 })
 
 /**
@@ -35,7 +40,7 @@ class WithMultiRoCCFromBuildRoCC(harts: Int*) extends Config((site, here, up) =>
 
 class WithMultiRoCCGemmini[T <: Data : Arithmetic, U <: Data, V <: Data](
   harts: Int*)(gemminiConfig: GemminiArrayConfig[T,U,V] = GemminiConfigs.defaultConfig) extends Config((site, here, up) => {
-  case MultiRoCCKey => up(MultiRoCCKey, site) ++ harts.distinct.map { i =>
+  case MultiRoCCNpuKey => up(MultiRoCCNpuKey, site) ++ harts.distinct.map { i =>
     (i -> Seq((p: Parameters) => {
       implicit val q = p
       val gemmini = LazyModule(new Gemmini(gemminiConfig))
@@ -57,3 +62,17 @@ class WithCharacterCountRoCC(op: OpcodeSet = OpcodeSet.custom2) extends Config((
     counter
   })
 })
+
+ //以官方给的accumulator为例子，后面可以换成我们自己的RoCC模块
+class WithMultiSingleRoCCExample(harts: Int*) extends Config(
+  new Config((site, here, up) => {
+    case MultiRoCCKey => {
+      up(MultiRoCCKey, site) ++ harts.distinct.map{ i =>
+        (i -> Seq((p: Parameters) => {
+          val accumulator = LazyModule(new AccumulatorExample(OpcodeSet.custom0, n = 4)(p))
+        accumulator
+        }))
+      }
+    }
+  })
+)
