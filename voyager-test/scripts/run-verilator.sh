@@ -87,7 +87,7 @@ WAVEFORM="${WAVEFORM_DIR}/${TIMESTAMP}-${binary}-waveform.vcd"
 # WAVEFORM="${WAVEFORM_DIR}/waveform.vcd"
 
 if [ $debug -eq 1 ]; then
-  DEBUG="-debug -v ${WAVEFORM}"
+  DEBUG="-debug"
 else
   DEBUG=""
 fi
@@ -142,6 +142,7 @@ mkdir -p "${LOG_DIR}"
 
 cd ${CYDIR}/voyager-test/build-results/verilator/
 ./simulator-chipyard.harness-${CONFIG}${DEBUG} $PK +permissive \
+  $([ $debug -eq 1 ] && echo "+vcdfile=${WAVEFORM}") \
   +verbose +loadmem=${full_binary_path} +loadmem_addr=80000000 \
   +permissive-off ${full_binary_path} \
   &> >(tee ${LOG_DIR}/stdout.log) \
