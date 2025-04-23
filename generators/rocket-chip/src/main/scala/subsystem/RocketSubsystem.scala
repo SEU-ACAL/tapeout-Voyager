@@ -9,6 +9,7 @@ import freechips.rocketchip.devices.tilelink.{CanHavePeripheryCLINT, CanHavePeri
 import freechips.rocketchip.prci.{ResetCrossingType, NoResetCrossing, SynchronousCrossing, ClockCrossingType}
 import freechips.rocketchip.tile.{RocketTile, RocketTileParams}
 import freechips.rocketchip.util.HasCoreMonitorBundles
+import freechips.rocketchip.npu._
 
 case class RocketCrossingParams(
   crossingType: ClockCrossingType = SynchronousCrossing(),
@@ -23,6 +24,11 @@ case class RocketTileAttachParams(
   tileParams: RocketTileParams,
   crossingParams: RocketCrossingParams
 ) extends CanAttachTile { type TileType = RocketTile }
+
+case class RocketTileNpuAttachParams(
+  tileParams: RocketTileNpuParams,
+  crossingParams: RocketCrossingParams
+) extends CanAttachTile { type TileType = RocketTileNpu }
 
 trait HasRocketTiles {
   this: BaseSubsystem with InstantiatesHierarchicalElements =>
