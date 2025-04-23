@@ -4,8 +4,8 @@ package gemmini
 import chisel3._
 import chisel3.util._
 import chisel3.experimental._
-import freechips.rocketchip.tile.RoCCCommand
 import org.chipsalliance.cde.config.Parameters
+import freechips.rocketchip.npu._
 import GemminiISA._
 import LocalAddr._
 import Util._
@@ -87,7 +87,7 @@ class LoopConvLdBias(block_size: Int, coreMaxAddrBits: Int, large_iterator_bitwi
   val MVIN_SCALE_IDENTITY = 0x3f800000.U // TODO get this from configs somehow
   val io = IO(new Bundle {
     val req = Flipped(Decoupled(new LoopConvLdBiasReq(coreMaxAddrBits, large_iterator_bitwidth, small_iterator_bitwidth, tiny_iterator_bitwidth: Int, max_acc_addr, concurrent_loops)))
-    val cmd = Decoupled(Output(new RoCCCommand))
+    val cmd = Decoupled(Output(new RoCCNpuCommand))
 
     val idle = Output(Bool())
     val rob_overloaded = Input(Bool())
@@ -129,7 +129,7 @@ class LoopConvLdBias(block_size: Int, coreMaxAddrBits: Int, large_iterator_bitwi
   val J = Mux(ochs - och > max_ochs_per_mvin, max_ochs_per_mvin, ochs - och)
 
   class RoCCCommandWithAddr extends Bundle {
-    val cmd = new RoCCCommand
+    val cmd = new RoCCNpuCommand
     val dram_addr = UInt()
     val spad_addr = UInt()
     val I = UInt()
@@ -138,7 +138,7 @@ class LoopConvLdBias(block_size: Int, coreMaxAddrBits: Int, large_iterator_bitwi
   val command_p = Module(new Pipeline[RoCCCommandWithAddr](new RoCCCommandWithAddr, latency)())
 
   // Commands
-  val config_cmd = Wire(new RoCCCommand)
+  val config_cmd = Wire(new RoCCNpuCommand)
   config_cmd := DontCare
   config_cmd.inst.funct := CONFIG_CMD
 
@@ -154,7 +154,7 @@ class LoopConvLdBias(block_size: Int, coreMaxAddrBits: Int, large_iterator_bitwi
 
   config_cmd.rs2 := 0.U
 
-  val mvin_cmd = Wire(new RoCCCommand)
+  val mvin_cmd = Wire(new RoCCNpuCommand)
   mvin_cmd := DontCare
   mvin_cmd.inst.funct := LOAD3_CMD
   mvin_cmd.rs1 := 0.U
@@ -240,7 +240,7 @@ class LoopConvLdInput(block_size: Int, coreMaxAddrBits: Int, large_iterator_bitw
 
   val io = IO(new Bundle {
     val req = Flipped(Decoupled(new LoopConvLdInputReq(coreMaxAddrBits, large_iterator_bitwidth, small_iterator_bitwidth, tiny_iterator_bitwidth, max_addr, concurrent_loops)))
-    val cmd = Decoupled(Output(new RoCCCommand))
+    val cmd = Decoupled(Output(new RoCCNpuCommand))
 
     val idle = Output(Bool())
     val rob_overloaded = Input(Bool())
@@ -304,7 +304,7 @@ class LoopConvLdInput(block_size: Int, coreMaxAddrBits: Int, large_iterator_bitw
     Mux(ichs.zext -& ich > max_chs_per_mvin, max_chs_per_mvin, ichs.zext -& ich))
 
   class RoCCCommandWithAddr extends Bundle {
-    val cmd = new RoCCCommand
+    val cmd = new RoCCNpuCommand
     val dram_addr = UInt()
     val spad_addr = SInt()
     val I = SInt()
@@ -312,7 +312,7 @@ class LoopConvLdInput(block_size: Int, coreMaxAddrBits: Int, large_iterator_bitw
   }
   val command_p = Module(new Pipeline[RoCCCommandWithAddr](new RoCCCommandWithAddr, latency)())
   // Commands
-  val config_cmd = Wire(new RoCCCommand)
+  val config_cmd = Wire(new RoCCNpuCommand)
   config_cmd := DontCare
   config_cmd.inst.funct := CONFIG_CMD
 
@@ -328,7 +328,7 @@ class LoopConvLdInput(block_size: Int, coreMaxAddrBits: Int, large_iterator_bitw
 
   config_cmd.rs2 := dram_stride << req.downsample
 
-  val mvin_cmd = Wire(new RoCCCommand)
+  val mvin_cmd = Wire(new RoCCNpuCommand)
   mvin_cmd := DontCare
   mvin_cmd.inst.funct := LOAD_CMD
   mvin_cmd.rs1 := 0.U // dram_addr
@@ -419,7 +419,7 @@ class LoopConvLdWeight(block_size: Int, coreMaxAddrBits: Int, large_iterator_bit
 
   val io = IO(new Bundle {
     val req = Flipped(Decoupled(new LoopConvLdWeightReq(coreMaxAddrBits, large_iterator_bitwidth, small_iterator_bitwidth, tiny_iterator_bitwidth, max_addr, concurrent_loops)))
-    val cmd = Decoupled(Output(new RoCCCommand))
+    val cmd = Decoupled(Output(new RoCCNpuCommand))
 
     val idle = Output(Bool())
     val rob_overloaded = Input(Bool())
@@ -484,7 +484,7 @@ class LoopConvLdWeight(block_size: Int, coreMaxAddrBits: Int, large_iterator_bit
     Mux(kchs - kch > block_size.U, block_size.U, kchs - kch))
 
   class RoCCCommandWithAddr extends Bundle {
-    val cmd = new RoCCCommand
+    val cmd = new RoCCNpuCommand
     val dram_addr = UInt()
     val spad_addr = UInt()
     val K = UInt()
@@ -493,7 +493,7 @@ class LoopConvLdWeight(block_size: Int, coreMaxAddrBits: Int, large_iterator_bit
   val command_p = Module(new Pipeline[RoCCCommandWithAddr](new RoCCCommandWithAddr, latency)())
 
   // Commands
-  val config_cmd = Wire(new RoCCCommand)
+  val config_cmd = Wire(new RoCCNpuCommand)
   config_cmd := DontCare
   config_cmd.inst.funct := CONFIG_CMD
 
@@ -509,7 +509,7 @@ class LoopConvLdWeight(block_size: Int, coreMaxAddrBits: Int, large_iterator_bit
 
   config_cmd.rs2 := dram_stride
 
-  val mvin_cmd = Wire(new RoCCCommand)
+  val mvin_cmd = Wire(new RoCCNpuCommand)
   mvin_cmd := DontCare
   mvin_cmd.inst.funct := LOAD2_CMD
   mvin_cmd.rs1 := 0.U // dram_addr
@@ -599,7 +599,7 @@ class LoopConvExecute(block_size: Int, large_iterator_bitwidth: Int, small_itera
                       compute_rs1_t: ComputeRs, compute_rs2_t: ComputeRs)(implicit p: Parameters) extends Module {
   val io = IO(new Bundle {
     val req = Flipped(Decoupled(new LoopConvExecuteReq(large_iterator_bitwidth, small_iterator_bitwidth, tiny_iterator_bitwidth, max_addr, max_acc_addr, concurrent_loops)))
-    val cmd = Decoupled(Output(new RoCCCommand))
+    val cmd = Decoupled(Output(new RoCCNpuCommand))
 
     val lda_completed = Input(Bool())
     val ldb_completed = Input(Bool())
@@ -679,7 +679,7 @@ class LoopConvExecute(block_size: Int, large_iterator_bitwidth: Int, small_itera
     b_addr_start +& (och / block_size.U(och.getWidth.W)) * krows * kcols * kchs +& krow_rot * kcols * kchs +& kcol_rot * kchs +& kch)
 
   class RoCCCommandWithAddr extends Bundle {
-    val cmd = new RoCCCommand
+    val cmd = new RoCCNpuCommand
     val a_addr = UInt()
     val b_addr = UInt()
     val c_addr = UInt()
@@ -691,7 +691,7 @@ class LoopConvExecute(block_size: Int, large_iterator_bitwidth: Int, small_itera
   val command_p = Module(new Pipeline[RoCCCommandWithAddr](new RoCCCommandWithAddr, latency)())
 
   // Commands
-  val config_cmd = Wire(new RoCCCommand)
+  val config_cmd = Wire(new RoCCNpuCommand)
   config_cmd := DontCare
   config_cmd.inst.funct := CONFIG_CMD
 
@@ -708,13 +708,13 @@ class LoopConvExecute(block_size: Int, large_iterator_bitwidth: Int, small_itera
   config_cmd.rs1 := config_cmd_rs1.asUInt
   config_cmd.rs2 := config_cmd_rs2.asUInt
 
-  val pre_cmd = Wire(new RoCCCommand) // preload
+  val pre_cmd = Wire(new RoCCNpuCommand) // preload
   pre_cmd := DontCare
   pre_cmd.inst.funct := PRELOAD_CMD
   pre_cmd.rs1 := 0.U//(K << 48) | (J << 32) | pre_addr
   pre_cmd.rs2 := 0.U//(I << 48) | (J << 32) | c_addr
 
-  val comp_cmd = Wire(new RoCCCommand()) // compute.preloaded
+  val comp_cmd = Wire(new RoCCNpuCommand()) // compute.preloaded
   comp_cmd := DontCare
   comp_cmd.inst.funct := Mux(new_weights, COMPUTE_AND_FLIP_CMD, COMPUTE_AND_STAY_CMD)
   comp_cmd.rs1 := 0.U//(I << 48) | (K << 32) | a_addr
@@ -855,7 +855,7 @@ class LoopConvSt(block_size: Int, coreMaxAddrBits: Int, large_iterator_bitwidth:
 
   val io = IO(new Bundle {
     val req = Flipped(Decoupled(new LoopConvStReq(coreMaxAddrBits, large_iterator_bitwidth, small_iterator_bitwidth, tiny_iterator_bitwidth: Int, max_acc_addr, concurrent_loops)))
-    val cmd = Decoupled(Output(new RoCCCommand))
+    val cmd = Decoupled(Output(new RoCCNpuCommand))
 
     val ex_completed = Input(Bool())
 
@@ -904,7 +904,7 @@ class LoopConvSt(block_size: Int, coreMaxAddrBits: Int, large_iterator_bitwidth:
   val channels = J
 
   class RoCCCommandWithAddr extends Bundle {
-    val cmd = new RoCCCommand
+    val cmd = new RoCCNpuCommand
     val dram_addr = UInt()
     val spad_addr = UInt()
     val pool_dram_addr = UInt()
@@ -916,13 +916,13 @@ class LoopConvSt(block_size: Int, coreMaxAddrBits: Int, large_iterator_bitwidth:
   }
   val command_p = Module(new Pipeline[RoCCCommandWithAddr](new RoCCCommandWithAddr, latency)())
   // Commands
-  val mvout_cmd = Wire(new RoCCCommand)
+  val mvout_cmd = Wire(new RoCCNpuCommand)
   mvout_cmd := DontCare
   mvout_cmd.inst.funct := STORE_CMD
   mvout_cmd.rs1 := 0.U // dram_addr
   mvout_cmd.rs2 := 0.U // mvout_cmd_rs2
 
-  val pre_pool_config_cmd = Wire(new RoCCCommand)
+  val pre_pool_config_cmd = Wire(new RoCCNpuCommand)
   pre_pool_config_cmd := DontCare
   pre_pool_config_cmd.inst.funct := CONFIG_CMD
   val pre_pool_config_cmd_rs1 = Wire(new ConfigMvoutRs1)
@@ -946,7 +946,7 @@ class LoopConvSt(block_size: Int, coreMaxAddrBits: Int, large_iterator_bitwidth:
   pre_pool_config_cmd_rs2.stride := out_stride * (input_w / 8).U
   pre_pool_config_cmd.rs2 := pre_pool_config_cmd_rs2.asUInt
 
-  val post_pool_config_cmd = Wire(new RoCCCommand)
+  val post_pool_config_cmd = Wire(new RoCCNpuCommand)
   post_pool_config_cmd := DontCare
   post_pool_config_cmd.inst.funct := CONFIG_CMD
 
@@ -962,7 +962,7 @@ class LoopConvSt(block_size: Int, coreMaxAddrBits: Int, large_iterator_bitwidth:
   post_pool_config_cmd_rs2.stride := out_stride * (input_w / 8).U
   post_pool_config_cmd.rs2 := post_pool_config_cmd_rs2.asUInt
 
-  val pool_cmd = Wire(new RoCCCommand)
+  val pool_cmd = Wire(new RoCCNpuCommand)
   pool_cmd := DontCare
   pool_cmd.inst.funct := STORE_CMD
   pool_cmd.rs1 := 0.U//pool_dram_addr
@@ -1217,7 +1217,7 @@ class LoopConv (block_size: Int, coreMaxAddrBits: Int, reservation_station_size:
   io.busy := cmd.valid || loop_configured
 
   // Create arbiter
-  val arb = Module(new Arbiter(new RoCCCommand, 5))
+  val arb = Module(new Arbiter(new RoCCNpuCommand, 5))
   arb.io.in(0) <> st.io.cmd
   arb.io.in(1) <> ex.io.cmd
   arb.io.in(2) <> ld_bias.io.cmd

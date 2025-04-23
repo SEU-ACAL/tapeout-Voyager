@@ -5,6 +5,7 @@ import org.chipsalliance.cde.config.{Config, Parameters}
 import freechips.rocketchip.diplomacy.{LazyModule, ValName}
 import freechips.rocketchip.subsystem._
 import freechips.rocketchip.tile.{BuildRoCC, OpcodeSet}
+import freechips.rocketchip.npu._
 
 // -----------------------------
 // Floating Point Config Mixins
@@ -136,7 +137,7 @@ object GemminiFPConfigs {
 
 //===========FP32 Default Config=========
 class GemminiFP32DefaultConfig extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]
@@ -148,7 +149,7 @@ class GemminiFP32DefaultConfig extends Config((site, here, up) => {
 class ChipFP32GemminiConfig[T <: Data : Arithmetic, U <: Data, V <: Data](
   gemminiConfig: GemminiArrayConfig[T,U,V] = GemminiFPConfigs.chipFP32Config
 ) extends Config((site, here, up) => {
-  case BuildRoCC => up(BuildRoCC) ++ Seq(
+  case BuildRoCCNpu => up(BuildRoCCNpu) ++ Seq(
     (p: Parameters) => {
       implicit val q = p
       val gemmini = LazyModule(new Gemmini(gemminiConfig))
@@ -160,7 +161,7 @@ class ChipFP32GemminiConfig[T <: Data : Arithmetic, U <: Data, V <: Data](
 
 //===========FP16 Default Config=========
 class GemminiFP16DefaultConfig extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]
@@ -171,7 +172,7 @@ class GemminiFP16DefaultConfig extends Config((site, here, up) => {
 
 //===========BFLOAT16 Default Config=========
 class GemminiBF16DefaultConfig extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]
@@ -181,7 +182,7 @@ class GemminiBF16DefaultConfig extends Config((site, here, up) => {
 })
 
 class GemminiBF16DefaultHighPerfConfig extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
     (p: Parameters) => {
       implicit val q = p
       implicit val v = implicitly[ValName]
@@ -196,7 +197,7 @@ class GemminiBF16DefaultHighPerfConfig extends Config((site, here, up) => {
 
 //===========BFLOAT16 Default Config 8x8=========
 class GemminiBF16Default8Config extends Config((site, here, up) => {
-  case BuildRoCC => Seq(
+  case BuildRoCCNpu => Seq(
       (p: Parameters) => {
         implicit val q = p
         implicit val v = implicitly[ValName]

@@ -9,6 +9,8 @@ import freechips.rocketchip.tilelink.{TLIdentityNode}
 import GemminiISA._
 import Util._
 
+import freechips.rocketchip.npu._
+
 // Counter Address list
 object CounterEvent {
   val DISABLE = 0
@@ -217,8 +219,8 @@ class CounterFile(nPerfCounter: Int, counterWidth: Int) extends Module
 
 class CounterController(nPerfCounter: Int, counterWidth: Int)(implicit p: Parameters) extends Module {
   val io = IO(new Bundle() {
-    val in = Flipped(Decoupled(new RoCCCommand))
-    val out = Decoupled(new RoCCResponse)
+    val in = Flipped(Decoupled(new RoCCNpuCommand))
+    val out = Decoupled(new RoCCNpuResponse)
     val event_io = Flipped(new CounterEventIO)
   })
 

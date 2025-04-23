@@ -12,6 +12,7 @@ import chisel3.experimental._
 import org.chipsalliance.cde.config._
 import freechips.rocketchip.rocket._
 import freechips.rocketchip.tile._
+import freechips.rocketchip.npu._
 import GemminiISA._
 
 class CmdFSM[T <: Data: Arithmetic, U <: Data, V <: Data]
@@ -22,7 +23,7 @@ class CmdFSM[T <: Data: Arithmetic, U <: Data, V <: Data]
   // module ports
   //==========================================================================
   val io = IO(new Bundle {
-    val cmd         = Flipped(Decoupled(new RoCCCommand))
+    val cmd         = Flipped(Decoupled(new RoCCNpuCommand))
     val tiler       = Decoupled(new TilerCmd(LOG2_OTYPE_BITS))
     val flush_retry = Output(Bool())
     val flush_skip  = Output(Bool())
