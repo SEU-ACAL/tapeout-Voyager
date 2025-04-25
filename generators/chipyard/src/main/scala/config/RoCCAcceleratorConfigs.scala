@@ -9,26 +9,27 @@ import org.chipsalliance.cde.config.{Config}
 // DOC include start: GemminiRocketConfig
 class GemminiRocketConfig extends Config(
   new gemmini.DefaultGemminiConfig ++                            // use Gemmini systolic array GEMM accelerator
-  new freechips.rocketchip.rocket.WithNHugeCores(1) ++
+  // new freechips.rocketchip.rocket.WithNHugeCores(1) ++
+  new freechips.rocketchip.rocket.WithNHugeNpuCores(1) ++
   new chipyard.config.WithSystemBusWidth(128) ++
   new chipyard.config.AbstractConfig)
 // DOC include end: GemminiRocketConfig
 
 class FPGemminiRocketConfig extends Config(
   new gemmini.GemminiFP32DefaultConfig ++                         // use FP32Gemmini systolic array GEMM accelerator
-  new freechips.rocketchip.rocket.WithNHugeCores(1) ++
+  new freechips.rocketchip.rocket.WithNHugeNpuCores(1) ++
   new chipyard.config.WithSystemBusWidth(128) ++
   new chipyard.config.AbstractConfig)
 
 class LeanGemminiRocketConfig extends Config(
   new gemmini.LeanGemminiConfig ++                                 // use Lean Gemmini systolic array GEMM accelerator
-  new freechips.rocketchip.rocket.WithNHugeCores(1) ++
+  new freechips.rocketchip.rocket.WithNHugeNpuCores(1) ++
   new chipyard.config.WithSystemBusWidth(128) ++
   new chipyard.config.AbstractConfig)
 
 class LeanGemminiPrintfRocketConfig extends Config(
   new gemmini.LeanGemminiPrintfConfig ++                                 // use Lean Gemmini systolic array GEMM accelerator
-  new freechips.rocketchip.rocket.WithNHugeCores(1) ++
+  new freechips.rocketchip.rocket.WithNHugeNpuCores(1) ++
   new chipyard.config.WithSystemBusWidth(128) ++
   new chipyard.config.AbstractConfig)
 
