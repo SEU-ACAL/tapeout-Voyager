@@ -1040,18 +1040,24 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
     PerfCounter(ex_mulpre_haz_cycle, "ex_mulpre_haz_cycle", "cycles during which the execute controller is stalling matmuls due to hazards")
   }
 
-  // VecUnit 
+// VecUnit 
   val VecUnit = Module(new VecUnit(xLen, tagWidth, config, ex_queue_length, cmd_q_heads))
   VecUnit.io.cmd.valid := cmd.valid
   VecUnit.io.cmd.bits := cmd.bits
-  VecUnit.io.srams.read.req.ready := io.srams.read(0).req.ready
-  VecUnit.io.srams.read.resp.valid := io.srams.read(0).resp.valid
-  VecUnit.io.srams.read.resp.bits <> io.srams.read(0).resp.bits
+  VecUnit.io.sram0.read.req.ready := io.srams.read(0).req.ready
+  VecUnit.io.sram0.read.resp.valid := io.srams.read(0).resp.valid
+  VecUnit.io.sram0.read.resp.bits <> io.srams.read(0).resp.bits
+  VecUnit.io.sram1.read.req.ready := io.srams.read(1).req.ready
+  VecUnit.io.sram1.read.resp.valid := io.srams.read(1).resp.valid
+  VecUnit.io.sram1.read.resp.bits <> io.srams.read(1).resp.bits
   when (VectorEnable === 1.U) {
-    io.srams.write(0) <> VecUnit.io.srams.write  
-    io.srams.read(0).req.valid := VecUnit.io.srams.read.req.valid
-    io.srams.read(0).req.bits <> VecUnit.io.srams.read.req.bits
-    io.srams.read(0).resp.ready := VecUnit.io.srams.read.resp.ready
+    io.srams.write(0) <> VecUnit.io.sram0.write  
+    io.srams.read(0).req.valid := VecUnit.io.sram0.read.req.valid
+    io.srams.read(0).req.bits <> VecUnit.io.sram0.read.req.bits
+    io.srams.read(0).resp.ready := VecUnit.io.sram0.read.resp.ready
+    io.srams.read(1).req.valid := VecUnit.io.sram1.read.req.valid
+    io.srams.read(1).req.bits <> VecUnit.io.sram1.read.req.bits
+    io.srams.read(1).resp.ready := VecUnit.io.sram1.read.resp.ready
 
     cmd.pop := VecUnit.io.cmd.pop
     io.completed <> VecUnit.io.completed 

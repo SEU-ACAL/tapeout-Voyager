@@ -39,7 +39,7 @@ case class GemminiArrayConfig[T <: Data : Arithmetic, U <: Data, V <: Data](
                                                                              sp_banks: Int = 4, // TODO support one-bank designs
                                                                              sp_singleported: Boolean = false,
                                                                              sp_capacity: GemminiMemCapacity = CapacityInKilobytes(256),
-                                                                             spad_read_delay: Int = 4,
+                                                                             spad_read_delay: Int = 0,
 
                                                                              acc_banks: Int = 2,
                                                                              acc_singleported: Boolean = false,

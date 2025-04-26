@@ -88,7 +88,11 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
     BitPat("b0011101") -> List(ZERO_VEC,ZERO_VEC,N,N,    DADDR,     DADDR,Y,Y,N,N,N,N,N,N,N,N,N,N,N,N,N,N, DVECIDX,DVECIDX,  DVECIDX,N,DTC_TYPE,     DITER), // INST_Vec_Reduce_CMD
     BitPat("b0011111") -> List(ZERO_VEC,ZERO_VEC,Y,Y,rs1(16,2),rs1(30,16),Y,Y,N,N,Y,N,N,N,N,N,N,N,N,N,N,N,rs2(5,0),DVECIDX,rs2(10,5),N,DTC_TYPE,rs2(14,10)), // INST_Vec_LoopMul_CMD
   ))
-
+  val counter = RegInit(0.U(5.W))
+  val iteration = decode_list(ITER.id)
+  when (io.id_i.valid(0) && functs(0) === INST_Vec_LoopMul_CMD) {
+    counter := Mux(counter === 15.U, 0.U(5.W), counter + 1.U )
+  }
 // -----------------------------------------------------------------------------
 // id<>iss
 // -----------------------------------------------------------------------------
@@ -100,7 +104,7 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
   io.id_iss_o.bits.op2_from_mem  := decode_list(OP2_from_MEM.id)
   io.id_iss_o.bits.config        :=
     (WR_OP1.id to WR_ACC.id).foldLeft(0.U)((acc, id) => Cat(decode_list(id).asUInt, acc))(13, 1)
-  io.id_iss_o.bits.thread_id     := decode_list(V1_IDX.id)
+  io.id_iss_o.bits.thread_id     := counter
   io.id_iss_o.bits.iteration     := decode_list(ITER.id)
 
 // -----------------------------------------------------------------------------
@@ -113,20 +117,20 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
   io.id_lsu_o.valid             := need_mem_access && io.id_i.valid(0) 
   io.id_lsu_o.bits.op1_from_mem := Mux(need_mem_access, decode_list(OP1_from_MEM.id), false.B)
   io.id_lsu_o.bits.op2_from_mem := Mux(need_mem_access, decode_list(OP2_from_MEM.id), false.B)
-  io.id_lsu_o.bits.op1_addr     := Mux(need_mem_access, decode_list(OP1_ADDR.id), 0.U(14.W))
-  io.id_lsu_o.bits.op2_addr     := Mux(need_mem_access, decode_list(OP2_ADDR.id), 0.U(14.W))
+  io.id_lsu_o.bits.op1_addr     := Mux(need_mem_access, (decode_list(OP1_ADDR.id).asUInt + counter), 0.U(14.W))
+  io.id_lsu_o.bits.op2_addr     := Mux(need_mem_access, (decode_list(OP2_ADDR.id).asUInt + counter), 0.U(14.W))
   io.id_lsu_o.bits.is_acc       := Mux(need_mem_access, decode_list(WR_ACC.id), false.B)
 
   // lsu->id 接收 load op 完成的响应
-  val lsu_rd_complete = io.lsu_id_i.rd_complete
+  val complete = counter === 15.U
 
 // -----------------------------------------------------------------------------
 // id<>top
 // -----------------------------------------------------------------------------
   // 当 load op 完成时，pop 一条指令
-  io.id_o.pop                    := Mux(lsu_rd_complete, 0.U.bitSet(0.U, true.B), 0.U)
-  io.id_o.completed.bits         := Mux(lsu_rd_complete, rob_id, 0.U)
-  io.id_o.completed.valid        := lsu_rd_complete
+  io.id_o.pop                    := Mux(complete, 0.U.bitSet(0.U, true.B), 0.U)
+  io.id_o.completed.bits         := Mux(complete, rob_id, 0.U)
+  io.id_o.completed.valid        := complete
 }
 
 

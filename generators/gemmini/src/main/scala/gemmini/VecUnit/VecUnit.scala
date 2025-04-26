@@ -26,9 +26,12 @@ class VecUnit[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: Int, config:
       val bits = Input(Vec(heads, new GemminiCmd(reservation_station_entries)))
       val pop = Output(UInt(log2Ceil((entries min maxpop) + 1).W))
     }
-    val srams = new Bundle {
+    val sram0 = new Bundle {
       val read = new ScratchpadReadIO(sp_bank_entries, sp_width)
       val write = new ScratchpadWriteIO(sp_bank_entries, sp_width, (sp_width / (aligned_to * 8)) max 1)
+    }
+    val sram1 = new Bundle {
+      val read = new ScratchpadReadIO(sp_bank_entries, sp_width)
     }
     val completed = Valid(UInt(log2Up(reservation_station_entries).W))
   })
@@ -73,12 +76,18 @@ class VecUnit[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: Int, config:
 // -----------------------------------------------------------------------------
 // VecUnit 总输出
 // -----------------------------------------------------------------------------
-  io.cmd.pop := VecID.io.id_o.pop
-  io.completed := VecID.io.id_o.completed
+  //io.cmd.pop := VecID.io.id_o.pop
+  //io.completed := VecID.io.id_o.completed
 
 // -----------------------------------------------------------------------------
 // 读写SRAM
 // -----------------------------------------------------------------------------
-  io.srams.read <> VecLSU.io.lsu_sram_read
-  io.srams.write <> VecLSU.io.lsu_sram_write
+  io.sram0.read <> VecLSU.io.lsu_sram0_read
+  io.sram0.write <> VecLSU.io.lsu_sram0_write
+
+  io.sram1.read <> VecLSU.io.lsu_sram1_read
+
+  io.cmd.pop := VecID.io.id_o.pop
+  io.completed := VecID.io.id_o.completed
+
 }

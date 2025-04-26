@@ -49,11 +49,11 @@ class PE extends Module {
 
 class VecReduce extends Module {
   val io = IO(new Bundle {
-      val in  = Vec(8, Flipped(Decoupled(new north())))
+      val in  = Vec(16, Flipped(Decoupled(new north())))
       val out = Decoupled(new ExCmtReq())
   })
 
-  val VecQueue = Seq.fill(8)(Module(new PE()))
+  val VecQueue = Seq.fill(16)(Module(new PE()))
   val in_fire = io.in.map(_.fire)
 
 // -----------------------------------------------------------------------------
@@ -63,19 +63,19 @@ class VecReduce extends Module {
   VecQueue(0).io.west.bits.config     := io.in(0).bits.config
   VecQueue(0).io.west.bits.vector_rst := VecInit(Seq.fill(16)(0.U(8.W)))
   VecQueue(0).io.north <> io.in(0)
-  for (i <- 1 until 8) {
+  for (i <- 1 until 16) {
     VecQueue(i).io.north <> io.in(i)
     VecQueue(i).io.west <> VecQueue(i - 1).io.east
   }
-  VecQueue(7).io.east.ready := io.out.ready
+  VecQueue(15).io.east.ready := io.out.ready
 
 // -----------------------------------------------------------------------------
 // 输出
 // -----------------------------------------------------------------------------
-  io.out.valid := VecQueue(7).io.east.valid
+  io.out.valid := VecQueue(15).io.east.valid
   io.out.bits.wb_en   := true.B
-  io.out.bits.wb_data := VecQueue(7).io.east.bits.vector_rst
+  io.out.bits.wb_data := VecQueue(15).io.east.bits.vector_rst
   io.out.bits.wb_addr := 32.U(14.W) // TODO: 
-  io.out.bits.is_acc  := VecQueue(7).io.east.bits.config(15)
+  io.out.bits.is_acc  := VecQueue(15).io.east.bits.config(15)
   io.out.bits.rob_id  := 0.U(5.W) // TODO: 
 }
