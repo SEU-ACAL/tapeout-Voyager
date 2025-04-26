@@ -366,3 +366,11 @@ class FireSimLargeBoomSV39CospikeConfig extends Config(
   new WithFireSimConfigTweaks++
   new freechips.rocketchip.rocket.WithSV39 ++
   new chipyard.LargeBoomV3Config)
+
+//-------------------------------------------------------------------------------
+// Our Heterogeneous Configurations
+//-------------------------------------------------------------------------------
+class FireSimOurHeterSoCConfig extends Config(
+  new WithDefaultFireSimBridges ++
+  new WithFireSimConfigTweaks ++
+  new chipyard.OurHeterSoCConfig)
