@@ -293,14 +293,7 @@ static acc_scale_t_bits acc_scale_t_to_acc_scale_t_bits(acc_scale_t x) {
                              rs1_1, rs1_2, rs1_3, rs1_4, rs1_5, rs1_6, rs1_7, rs1_8, \
                              rs2_1, rs2_2, rs2_3, rs2_4, rs2_5, rs2_6, rs2_7, rs2_8 \
                            ) {\
-  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_1, (uint64_t)rs2_1, k_INST_VEC_LOOP_MUL) \
-  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_2, (uint64_t)rs2_2, k_INST_VEC_LOOP_MUL) \
-  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_3, (uint64_t)rs2_3, k_INST_VEC_LOOP_MUL) \
-  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_4, (uint64_t)rs2_4, k_INST_VEC_LOOP_MUL) \
-  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_5, (uint64_t)rs2_5, k_INST_VEC_LOOP_MUL) \
-  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_6, (uint64_t)rs2_6, k_INST_VEC_LOOP_MUL) \
-  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_7, (uint64_t)rs2_7, k_INST_VEC_LOOP_MUL) \
-  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_8, (uint64_t)rs2_8, k_INST_VEC_LOOP_MUL) }
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_1, (uint64_t)rs2_1, k_INST_VEC_LOOP_MUL)  }
   // ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_9, (uint64_t)rs2_9, k_INST_VEC_LOOP_MUL) \
   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, (uint64_t)rs1_10, (uint64_t)rs2_10, k_INST_VEC_LOOP_MUL) \
   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, (uint64_t)rs1_11, (uint64_t)rs2_11, k_INST_VEC_LOOP_MUL)}

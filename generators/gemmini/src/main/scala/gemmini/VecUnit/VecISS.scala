@@ -18,10 +18,7 @@ class VecISS extends Module {
                    !io.id_iss_i.bits.op2_from_mem
   val ops_ready = bypass_lsu || io.lsu_iss_i.valid
 
-  val waiting_op = RegInit(false.B)
-  waiting_op := Mux(io.id_iss_i.valid && io.id_iss_i.ready && !bypass_lsu, true.B, 
-                Mux(io.lsu_iss_i.valid, false.B, waiting_op))
-  io.id_iss_i.ready  := !waiting_op
+  io.id_iss_i.ready  := true.B
 
 // -----------------------------------------------------------------------------
 // lsu->iss

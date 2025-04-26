@@ -48,15 +48,15 @@ int main() {
 
   for (size_t i = 0; i < DIM; i++)
     for (size_t j = 0; j < DIM; j++){
-      A[i][j] = 1;
-      B[i][j] = 2;
+      A[i][j] = (i == j);
+      B[i][j] = (i == j);
     }
 
   // size_t In_sp_addr = 0;
   // size_t Out_sp_addr = DIM;
   // size_t Identity_sp_addr = 2*DIM;
   size_t A_sp_addr = 0;
-  size_t B_sp_addr = DIM;
+  size_t B_sp_addr = DIM + 4096;
   size_t C_sp_addr = 2*DIM;
 
   Transpose(A);
@@ -93,22 +93,9 @@ int main() {
   }
 
   uint64_t rs1_values1 = rs1_values[0];
-  uint64_t rs1_values2 = rs1_values[1];
-  uint64_t rs1_values3 = rs1_values[2];
-  uint64_t rs1_values4 = rs1_values[3];
-  uint64_t rs1_values5 = rs1_values[4];
-  uint64_t rs1_values6 = rs1_values[5];
-  uint64_t rs1_values7 = rs1_values[6];
-  uint64_t rs1_values8 = rs1_values[7];
 
   uint64_t rs2_values1 = rs2_values[0];
-  uint64_t rs2_values2 = rs2_values[1];
-  uint64_t rs2_values3 = rs2_values[2];
-  uint64_t rs2_values4 = rs2_values[3];
-  uint64_t rs2_values5 = rs2_values[4];
-  uint64_t rs2_values6 = rs2_values[5];
-  uint64_t rs2_values7 = rs2_values[6];
-  uint64_t rs2_values8 = rs2_values[7];
+
   
   gemmini_vec_loop_mul(
     rs1_values1, rs1_values2, rs1_values3, rs1_values4, rs1_values5, rs1_values6, rs1_values7, rs1_values8,

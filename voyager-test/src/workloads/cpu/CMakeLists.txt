@@ -1,7 +1,5 @@
 project(cpu C)
 
-set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-gcc")  
-
 #-------------------------------------------------------------------------------
 # build linux version workload
 #-------------------------------------------------------------------------------
@@ -22,12 +20,9 @@ add_custom_target(cpu-linux-build ALL DEPENDS
 #-------------------------------------------------------------------------------
 # build baremetal version workload
 #-------------------------------------------------------------------------------
+set(C_FLAGS -std=c11 -g -fno-common -O2 -static 
+    -fno-builtin-printf -specs=htif_nano.specs)
 set(ELF_CC "riscv64-unknown-elf-gcc")  
-
-set(C_FLAGS 
-    -std=c11 -g -fno-common -O2 -static 
-    -fno-builtin-printf -specs=htif_nano.specs
-)
 
 add_custom_target( cpu-baremetal-build ALL
     COMMAND ${ELF_CC} ${C_FLAGS}

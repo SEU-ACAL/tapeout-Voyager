@@ -41,25 +41,29 @@ class VecALUThread (val OpChainDepth: Int = 32) extends Module {
   (0 until 16).map(i => Mux(io.in.valid, io.in.bits.config(i), config(i))).toArray
 
   val thread_busy = RegInit(false.B)
+  val thread_iteration = RegInit(0.U(5.W))
   io.in.ready := !thread_busy
 
 // -----------------------------------------------------------------------------
 // Load Operands
 // -----------------------------------------------------------------------------
+	when (iteration === thread_iteration) {
+		iteration := 0.U
+		thread_busy := false.B
+	}	
 	when (io.in.fire) {
 		Vector1 	:= Mux(wr_op1, io.in.bits.op1, Vector1)
 		Vector2 	:= Mux(wr_op2, io.in.bits.op2, Vector2)
 		config		:= io.in.bits.config
-		iteration := io.in.bits.iteration + 1.U
+		iteration := 0.U
 		thread_id := io.in.bits.thread_id
 		rob_id		:= io.in.bits.rob_id
 		thread_busy := true.B
+		thread_iteration := io.in.bits.iteration
 	}
 
 	// shit
-	when (iteration === 1.U) {
-		thread_busy := false.B
-	}
+
 
 // -----------------------------------------------------------------------------
 // Execute Micro Operation
@@ -82,7 +86,7 @@ class VecALUThread (val OpChainDepth: Int = 32) extends Module {
 		when (is_div) {
 			vector_rst := VecInit(Vector2.map(_ / Vector1(0)))
 		}
-		iteration := iteration - 1.U
+		iteration := iteration + 1.U
 		io.out.valid := true.B
 	}.otherwise {
 		io.out.valid := false.B

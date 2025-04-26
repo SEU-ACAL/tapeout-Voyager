@@ -83,8 +83,8 @@ else
   PK=""
 fi
 
-WAVEFORM="${WAVEFORM_DIR}/${TIMESTAMP}-${binary}-waveform.vcd"
-# WAVEFORM="${WAVEFORM_DIR}/waveform.vcd"
+#WAVEFORM="${WAVEFORM_DIR}/${TIMESTAMP}-${binary}-waveform.vcd"
+ WAVEFORM="${WAVEFORM_DIR}/waveform.vcd"
 
 if [ $debug -eq 1 ]; then
   DEBUG="-debug"

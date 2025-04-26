@@ -35,7 +35,7 @@ class IdIssReq extends Bundle {
   val op2_from_mem = Bool()
   val config = UInt(16.W)
   val iteration = UInt(4.W) // 从0开始，循环1~16次
-  val thread_id = UInt(3.W)
+  val thread_id = UInt(4.W)
   val rob_id = UInt(5.W)
 }
 
@@ -54,7 +54,7 @@ class id_iss extends Module {
   io.id_iss_o.bits.op2_from_mem := bool_dff(id_iss_hs,                         false.B, io.id_iss_i.bits.op2_from_mem)
   io.id_iss_o.bits.config       := uint_dff(id_iss_hs,                       0.U(16.W), io.id_iss_i.bits.config)
   io.id_iss_o.bits.iteration    := uint_dff(id_iss_hs,                        0.U(4.W), io.id_iss_i.bits.iteration)
-  io.id_iss_o.bits.thread_id    := uint_dff(id_iss_hs,                        0.U(3.W), io.id_iss_i.bits.thread_id)
+  io.id_iss_o.bits.thread_id    := uint_dff(id_iss_hs,                        0.U(4.W), io.id_iss_i.bits.thread_id)
   io.id_iss_o.bits.op1          := uvec_dff(id_iss_hs, VecInit(Seq.fill(16)(0.U(8.W))), io.id_iss_i.bits.op1)
   io.id_iss_o.bits.op2          := uvec_dff(id_iss_hs, VecInit(Seq.fill(16)(0.U(8.W))), io.id_iss_i.bits.op2)
   io.id_iss_o.bits.rob_id       := uint_dff(id_iss_hs,                        0.U(5.W), io.id_iss_i.bits.rob_id)
@@ -103,7 +103,7 @@ class IssExReq extends Bundle {
   val op2 = Vec(16, UInt(8.W))
   val config = UInt(16.W)
   val iteration = UInt(4.W) // 从0开始，循环1~16次
-  val thread_id = UInt(3.W)
+  val thread_id = UInt(4.W)
   val rob_id = UInt(5.W)
 }
 
@@ -122,7 +122,7 @@ class iss_ex extends Module {
   io.iss_ex_o.bits.op2       := uvec_dff(iss_ex_hs, VecInit(Seq.fill(16)(0.U(8.W))), io.iss_ex_i.bits.op2)
   io.iss_ex_o.bits.config    := uint_dff(iss_ex_hs,                       0.U(16.W), io.iss_ex_i.bits.config)
   io.iss_ex_o.bits.iteration := uint_dff(iss_ex_hs,                        0.U(4.W), io.iss_ex_i.bits.iteration)
-  io.iss_ex_o.bits.thread_id := uint_dff(iss_ex_hs,                        0.U(3.W), io.iss_ex_i.bits.thread_id)    
+  io.iss_ex_o.bits.thread_id := uint_dff(iss_ex_hs,                        0.U(4.W), io.iss_ex_i.bits.thread_id)    
   io.iss_ex_o.bits.rob_id    := uint_dff(iss_ex_hs,                        0.U(5.W), io.iss_ex_i.bits.rob_id)
 }
 
