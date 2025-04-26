@@ -85,6 +85,7 @@ cd "$RDIR"
             tools/dsptools \
             tools/rocket-dsp-utils \
             tools/circt \
+            tools/buddy-mlir \
             vlsi/hammer-mentor-plugins
         do
             "$1" "${name%/}"

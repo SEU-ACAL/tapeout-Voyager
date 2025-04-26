@@ -95,3 +95,17 @@ alias verdi="verdi -full64 &"
 ```
 export TERM=xterm-16color
 ```
+
+## Metal 用不了怎么办？
+删除`~/.cache/coursier` 和`~/.cache/bloop` 目录，然后重新import metal.
+
+## Firesim board_part 问题
+```
+ERROR: [Board 49-71] The board_part definition was not found for xilinx.com:au280:part0:1.2. The project's board_part property was not set, but the project's part property was set to xcu280-fsvh2892-2L-e. Valid board_part values can be retrieved with the 'get_board_parts' Tcl command. Check if board.repoPaths parameter is set and the board_part is installed from the tcl app store.
+```
+
+解决办法：
+将所有下面的0:1.2 改为 0:1.0或0:1.1 (注意别把这个文档也一键改了)
+```
+set_property board_part xilinx.com:au280:part0:1.2
+```
