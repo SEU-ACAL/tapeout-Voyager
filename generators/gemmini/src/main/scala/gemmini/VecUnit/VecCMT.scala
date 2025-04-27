@@ -13,7 +13,7 @@ import gemmini.{GemminiArrayConfig}
 // }
 
 class VecCMT[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V])
-                                  (implicit p: Parameters) extends Module {
+                                  (implicit p: Parameters, vc: VecConfig) extends Module {
   import config._
   val io = IO(new Bundle {
     val ex_cmt_i  = Flipped(Decoupled(new ExCmtReq()))

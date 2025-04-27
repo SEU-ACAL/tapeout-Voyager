@@ -6,7 +6,6 @@ import chisel3.stage._
 
 import function._  
 
-
 object function {
   def bool_dff(handshake: Bool, bool_default: Bool, data_i: Bool): Bool = {
     val data_o = RegInit(bool_default)
@@ -28,21 +27,21 @@ object function {
 // -----------------------------------------------------------------------------
 // id_iss pipeline
 // -----------------------------------------------------------------------------
-class IdIssReq extends Bundle {
-  val op1 = Vec(16, UInt(8.W))
-  val op2 = Vec(16, UInt(8.W))
+class IdIssReq (implicit vc: VecConfig) extends Bundle {
+  val op1          = Vec(16, UInt(8.W))
+  val op2          = Vec(16, UInt(8.W))
   val op1_from_mem = Bool()
   val op2_from_mem = Bool()
-  val config = UInt(16.W)
-  val iteration = UInt(4.W) // 从0开始，循环1~16次
-  val thread_id = UInt(4.W)
-  val rob_id = UInt(5.W)
+  val config       = UInt(vc.config_w.W)
+  val iteration    = UInt(vc.iter_w.W) // 从0开始，循环1~16次
+  val thread_id    = UInt(vc.thread_w.W)
+  val rob_id       = UInt(vc.rob_w.W)
 }
 
-class id_iss extends Module {  
+class id_iss (implicit vc: VecConfig) extends Module {  
   val io = IO(new Bundle {
-  val id_iss_i = Flipped(Decoupled(new IdIssReq()))
-  val id_iss_o = Decoupled(new IdIssReq())
+    val id_iss_i = Flipped(Decoupled(new IdIssReq()))
+    val id_iss_o = Decoupled(new IdIssReq())
   })
   
   val id_iss_hs = io.id_iss_i.fire
@@ -63,20 +62,20 @@ class id_iss extends Module {
 // -----------------------------------------------------------------------------
 // id_lsu pipeline
 // -----------------------------------------------------------------------------
-class IdLsuReq extends Bundle {
+class IdLsuReq (implicit vc: VecConfig) extends Bundle {
   val op1_from_mem = Bool()
   val op2_from_mem = Bool()
-  val op1_addr = UInt(14.W)
-  val op2_addr = UInt(14.W)
-  val is_acc   = Bool()
+  val op1_addr     = UInt(vc.sp_addr_w.W)
+  val op2_addr     = UInt(vc.sp_addr_w.W)
+  val is_acc       = Bool()
 }
 
-class IdLsuResp extends Bundle {
+class IdLsuResp (implicit vc: VecConfig) extends Bundle {
   val rd_complete = Bool()
 }
 
 // 注意: 为了实现brust的及时喂addr, 这个版本id<>lsu是组合逻辑
-class id_lsu extends Module {
+class id_lsu (implicit vc: VecConfig) extends Module {
   val io = IO(new Bundle {
     val id_lsu_i = Flipped(Decoupled(new IdLsuReq()))
     val id_lsu_o = Decoupled(new IdLsuReq())
@@ -98,16 +97,16 @@ class id_lsu extends Module {
 // -----------------------------------------------------------------------------
 // iss_ex pipeline
 // -----------------------------------------------------------------------------
-class IssExReq extends Bundle {
-  val op1 = Vec(16, UInt(8.W))
-  val op2 = Vec(16, UInt(8.W))
-  val config = UInt(16.W)
-  val iteration = UInt(4.W) // 从0开始，循环1~16次
-  val thread_id = UInt(4.W)
-  val rob_id = UInt(5.W)
+class IssExReq (implicit vc: VecConfig) extends Bundle {
+  val op1       = Vec(16, UInt(8.W))
+  val op2       = Vec(16, UInt(8.W))
+  val config    = UInt(vc.config_w.W)
+  val iteration = UInt(vc.iter_w.W) // 从0开始，循环1~16次
+  val thread_id = UInt(vc.thread_w.W)
+  val rob_id    = UInt(vc.rob_w.W)
 }
 
-class iss_ex extends Module {
+class iss_ex (implicit vc: VecConfig) extends Module {
   val io = IO(new Bundle {
   val iss_ex_i = Flipped(Decoupled(new IssExReq()))
   val iss_ex_o = Decoupled(new IssExReq())
@@ -129,15 +128,15 @@ class iss_ex extends Module {
 // -----------------------------------------------------------------------------
 // ex_cmt pipeline
 // -----------------------------------------------------------------------------
-class ExCmtReq extends Bundle {
+class ExCmtReq (implicit vc: VecConfig) extends Bundle {
   val wb_en   = Bool()
-  val wb_data = Vec(16, UInt(8.W))
-  val wb_addr = UInt(14.W)
+  val wb_data = Vec(vc.thread_n, UInt(8.W))
+  val wb_addr = UInt(vc.sp_addr_w.W)
   val is_acc  = Bool()
-  val rob_id  = UInt(5.W)
+  val rob_id  = UInt(vc.rob_w.W)
 }
 
-class ex_cmt extends Module {  
+class ex_cmt (implicit vc: VecConfig) extends Module {  
   val io = IO(new Bundle {
     val ex_cmt_i = Flipped(Decoupled(new ExCmtReq()))
     val ex_cmt_o = Decoupled(new ExCmtReq())

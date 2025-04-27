@@ -9,17 +9,17 @@ import gemmini.VecUnit.ex.VecReduce
 // import gemmini.VecUnit.ex.VecLUTThread
 // import gemmini.VecUnit.ex.VecTC
 
-class VecEX extends Module {
+class VecEX (implicit vc: VecConfig) extends Module {
   val io = IO(new Bundle {
     val iss_ex_i = Flipped(Decoupled(new IssExReq()))
     val ex_cmt_o = Decoupled(new ExCmtReq())
   })
 
   // 记录每个Thread的busy状态
-  val scoreboard = RegInit(VecInit(Seq.fill(16)(0.U(1.W))))
+  val scoreboard = RegInit(VecInit(Seq.fill(vc.thread_n)(0.U(1.W))))
 
   // 实例化8个Thread(16个Vector)和1个TC(16个Vector)和1个Reduce(16个Vector)
-  val alu_threads = Seq.fill(16)(Module(new VecALUThread()))
+  val alu_threads = Seq.fill(vc.thread_n)(Module(new VecALUThread()))
   // val lut_threads = Seq.fill(8)(Module(new VecLUTThread()))
   // val tc = Module(new VecTC())
   val reduce = Module(new VecReduce())

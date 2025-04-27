@@ -5,23 +5,24 @@ import chisel3.util._
 import chisel3.stage._
 
 import gemmini.VecUnit.ExCmtReq
+import gemmini.VecUnit.VecConfig
 
-class north extends Bundle {
-  val rob_id     = UInt(5.W) // 用不上
-  val thread_id  = UInt(3.W) // 用不上
+class north (implicit vc: VecConfig) extends Bundle {
+  val rob_id     = UInt(vc.rob_w.W) // 用不上
+  val thread_id  = UInt(vc.thread_w.W) // 用不上
   val scalar_rst = UInt(8.W) // 用不上
-  val config     = UInt(16.W) 
-  val vector_rst = Vec(16, UInt(8.W))
+  val config     = UInt(vc.config_w.W) 
+  val vector_rst = Vec(vc.thread_n, UInt(8.W))
 }
 
-class east extends Bundle {
+class east (implicit vc: VecConfig) extends Bundle {
   // val rob_id     = UInt(5.W)
   // val thread_id  = UInt(3.W)
   val config     = UInt(16.W)
   val vector_rst = Vec(16, UInt(8.W))
 }
 
-class PE extends Module {
+class PE (implicit vc: VecConfig) extends Module {
   val io = IO(new Bundle {
     val north = Flipped(Decoupled(new north()))
     val west = Flipped(Decoupled(new east()))
@@ -47,7 +48,7 @@ class PE extends Module {
   }
 }
 
-class VecReduce extends Module {
+class VecReduce (implicit vc: VecConfig) extends Module {
   val io = IO(new Bundle {
       val in  = Vec(16, Flipped(Decoupled(new north())))
       val out = Decoupled(new ExCmtReq())
