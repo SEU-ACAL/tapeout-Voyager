@@ -9,6 +9,8 @@ CYDIR=$(git rev-parse --show-toplevel)
 # get helpful utilities
 source $CYDIR/scripts/utils.sh
 
+cd ${CYDIR}
+git submodule update --init tools/buddy-mlir
 
 source ${CYDIR}/env.sh
 pip install -r ${CYDIR}/tools/buddy-mlir/requirements.txt
