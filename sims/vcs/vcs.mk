@@ -1,8 +1,8 @@
-HELP_COMPILATION_VARIABLES += \
-"   USE_VPD                = set to '1' to build VCS simulator to emit VPD instead of FSDB."
+# HELP_COMPILATION_VARIABLES += \
+# "   USE_VPD                = set to '1' to build VCS simulator to emit VPD instead of FSDB."
 
-HELP_SIMULATION_VARIABLES += \
-"   USE_VPD                = set to '1' to run VCS simulator emitting VPD instead of FSDB."
+# HELP_SIMULATION_VARIABLES += \
+# "   USE_VPD                = set to '1' to run VCS simulator emitting VPD instead of FSDB."
 
 ifndef USE_VPD
 get_waveform_flag=+fsdbfile=$(1).fsdb
@@ -19,7 +19,7 @@ SEED_FLAG=+ntb_random_seed_automatic
 endif
 
 CLOCK_PERIOD ?= 1.0
-RESET_DELAY ?= 777.7
+RESET_DELAY ?= 77.7
 
 #----------------------------------------------------------------------------------------
 # gcc configuration/optimization
@@ -50,7 +50,7 @@ VCS_NONCC_OPTS = \
 	-f $(sim_common_files) \
 	-sverilog +systemverilogext+.sv+.svi+.svh+.svt -assert svaext +libext+.sv \
 	+v2k +verilog2001ext+.v95+.vt+.vp +libext+.v \
-	-debug_pp \
+	-debug_all \
 	-top $(TB) \
 	+incdir+$(GEN_COLLATERAL_DIR) \
 	$(addprefix +incdir+,$(EXT_INCDIRS))
