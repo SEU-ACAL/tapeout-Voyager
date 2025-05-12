@@ -494,7 +494,7 @@ class Scratchpad[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, 
         ex_read_resp.bits := bio.read.resp.bits
 
         val dma_read_pipe = Pipeline(dma_read_resp, spad_read_delay)
-        val ex_read_pipe = Pipeline(ex_read_resp, spad_read_delay)
+        val ex_read_pipe = Pipeline(ex_read_resp, 0)
 
         bio.read.resp.ready := Mux(bio.read.resp.bits.fromDMA, dma_read_resp.ready, ex_read_resp.ready)
 
