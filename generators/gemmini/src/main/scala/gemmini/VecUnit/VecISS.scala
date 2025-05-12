@@ -39,4 +39,6 @@ class VecISS extends Module {
   io.iss_ex_o.bits.iteration := io.id_iss_i.bits.iteration
   io.iss_ex_o.bits.thread_id := io.id_iss_i.bits.thread_id
   io.iss_ex_o.bits.rob_id    := io.id_iss_i.bits.rob_id
+  io.iss_ex_o.bits.funct     := io.id_iss_i.bits.funct
+  io.iss_ex_o.bits.waddr     := io.id_iss_i.bits.waddr
 }

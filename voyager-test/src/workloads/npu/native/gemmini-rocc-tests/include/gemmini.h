@@ -46,9 +46,10 @@
 // #define k_BROADCAST_VEC 25
 // #define k_PRELOAD_SCALAR 26
 #define k_INST_VEC_REDUCE 30
-#define k_INST_VEC_LOOP_MUL 31
+#define k_INST_VEC_LOOP_MUL_16 31
 #define k_CONFIG_EX_MODE 32
-
+#define k_INST_VEC_LOOP_MUL_4 33
+#define k_INST_VEC_LOOP_MUL_8 34
 
 #define k_COUNTER 126
 
@@ -293,7 +294,7 @@ static acc_scale_t_bits acc_scale_t_to_acc_scale_t_bits(acc_scale_t x) {
                              rs1_1, rs1_2, rs1_3, rs1_4, rs1_5, rs1_6, rs1_7, rs1_8, \
                              rs2_1, rs2_2, rs2_3, rs2_4, rs2_5, rs2_6, rs2_7, rs2_8 \
                            ) {\
-  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_1, (uint64_t)rs2_1, k_INST_VEC_LOOP_MUL)  }
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_1, (uint64_t)rs2_1, k_INST_VEC_LOOP_MUL_16)  }
   // ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_9, (uint64_t)rs2_9, k_INST_VEC_LOOP_MUL) \
   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, (uint64_t)rs1_10, (uint64_t)rs2_10, k_INST_VEC_LOOP_MUL) \
   ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC, (uint64_t)rs1_11, (uint64_t)rs2_11, k_INST_VEC_LOOP_MUL)}

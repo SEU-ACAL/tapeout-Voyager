@@ -1042,23 +1042,44 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
 
 // VecUnit 
   val VecUnit = Module(new VecUnit(xLen, tagWidth, config, ex_queue_length, cmd_q_heads))
+  //cmd
   VecUnit.io.cmd.valid := cmd.valid
   VecUnit.io.cmd.bits := cmd.bits
+  //sram0
   VecUnit.io.sram0.read.req.ready := io.srams.read(0).req.ready
   VecUnit.io.sram0.read.resp.valid := io.srams.read(0).resp.valid
   VecUnit.io.sram0.read.resp.bits <> io.srams.read(0).resp.bits
+  //sram1
   VecUnit.io.sram1.read.req.ready := io.srams.read(1).req.ready
   VecUnit.io.sram1.read.resp.valid := io.srams.read(1).resp.valid
   VecUnit.io.sram1.read.resp.bits <> io.srams.read(1).resp.bits
+  //acc
+  for(i <-0 until acc_banks){
+      VecUnit.io.acc.read_req(i).ready := io.acc.read_req(i).ready
+      VecUnit.io.acc.read_resp(i).valid := io.acc.read_resp(i).valid
+      VecUnit.io.acc.read_resp(i).bits <> io.acc.read_resp(i).bits
+      VecUnit.io.acc.write(i).ready := io.acc.write(i).ready
+  }
+
   when (VectorEnable === 1.U) {
+
     io.srams.write(0) <> VecUnit.io.sram0.write  
+
     io.srams.read(0).req.valid := VecUnit.io.sram0.read.req.valid
     io.srams.read(0).req.bits <> VecUnit.io.sram0.read.req.bits
     io.srams.read(0).resp.ready := VecUnit.io.sram0.read.resp.ready
+
     io.srams.read(1).req.valid := VecUnit.io.sram1.read.req.valid
     io.srams.read(1).req.bits <> VecUnit.io.sram1.read.req.bits
     io.srams.read(1).resp.ready := VecUnit.io.sram1.read.resp.ready
 
+    for(i <-0 until acc_banks){
+      io.acc.write(i).valid := VecUnit.io.acc.write(i).valid
+      io.acc.write(i).bits <> VecUnit.io.acc.write(i).bits
+      io.acc.read_req(i).valid := VecUnit.io.acc.read_req(i).valid
+      io.acc.read_req(i).bits <> VecUnit.io.acc.read_req(i).bits
+      io.acc.read_resp(i).ready := VecUnit.io.acc.read_resp(i).ready
+    }
     cmd.pop := VecUnit.io.cmd.pop
     io.completed <> VecUnit.io.completed 
   }

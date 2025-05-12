@@ -37,6 +37,8 @@ class IdIssReq extends Bundle {
   val iteration = UInt(4.W) // 从0开始，循环1~16次
   val thread_id = UInt(4.W)
   val rob_id = UInt(5.W)
+  val funct = UInt(8.W)
+  val waddr = UInt(14.W)
 }
 
 class id_iss extends Module {  
@@ -58,6 +60,8 @@ class id_iss extends Module {
   io.id_iss_o.bits.op1          := uvec_dff(id_iss_hs, VecInit(Seq.fill(16)(0.U(8.W))), io.id_iss_i.bits.op1)
   io.id_iss_o.bits.op2          := uvec_dff(id_iss_hs, VecInit(Seq.fill(16)(0.U(8.W))), io.id_iss_i.bits.op2)
   io.id_iss_o.bits.rob_id       := uint_dff(id_iss_hs,                        0.U(5.W), io.id_iss_i.bits.rob_id)
+  io.id_iss_o.bits.funct        := uint_dff(id_iss_hs,                        0.U(8.W), io.id_iss_i.bits.funct)
+  io.id_iss_o.bits.waddr       := uint_dff(id_iss_hs,                       0.U(14.W), io.id_iss_i.bits.waddr)
 }   
 
 // -----------------------------------------------------------------------------
@@ -105,6 +109,8 @@ class IssExReq extends Bundle {
   val iteration = UInt(4.W) // 从0开始，循环1~16次
   val thread_id = UInt(4.W)
   val rob_id = UInt(5.W)
+  val funct = UInt(8.W)
+  val waddr = UInt(14.W)
 }
 
 class iss_ex extends Module {
@@ -124,6 +130,8 @@ class iss_ex extends Module {
   io.iss_ex_o.bits.iteration := uint_dff(iss_ex_hs,                        0.U(4.W), io.iss_ex_i.bits.iteration)
   io.iss_ex_o.bits.thread_id := uint_dff(iss_ex_hs,                        0.U(4.W), io.iss_ex_i.bits.thread_id)    
   io.iss_ex_o.bits.rob_id    := uint_dff(iss_ex_hs,                        0.U(5.W), io.iss_ex_i.bits.rob_id)
+  io.iss_ex_o.bits.funct     := uint_dff(iss_ex_hs,                        0.U(8.W), io.iss_ex_i.bits.funct)
+  io.iss_ex_o.bits.waddr     := uint_dff(iss_ex_hs,                       0.U(14.W), io.iss_ex_i.bits.waddr)
 }
 
 // -----------------------------------------------------------------------------
@@ -135,6 +143,7 @@ class ExCmtReq extends Bundle {
   val wb_addr = UInt(14.W)
   val is_acc  = Bool()
   val rob_id  = UInt(5.W)
+  val funct   = UInt(8.W)
 }
 
 class ex_cmt extends Module {  
@@ -148,9 +157,10 @@ class ex_cmt extends Module {
   io.ex_cmt_o.valid        := bool_dff(true.B, false.B, io.ex_cmt_i.valid)
   io.ex_cmt_i.ready        := bool_dff(true.B, false.B, io.ex_cmt_o.ready)
 
-  io.ex_cmt_o.bits.wb_en   := bool_dff(ex_cmt_hs,                         false.B, io.ex_cmt_i.bits.wb_en)
-  io.ex_cmt_o.bits.wb_data := uvec_dff(ex_cmt_hs, VecInit(Seq.fill(16)(0.U(8.W))), io.ex_cmt_i.bits.wb_data)
-  io.ex_cmt_o.bits.wb_addr := uint_dff(ex_cmt_hs,                       0.U(14.W), io.ex_cmt_i.bits.wb_addr)
-  io.ex_cmt_o.bits.is_acc  := bool_dff(ex_cmt_hs,                         false.B, io.ex_cmt_i.bits.is_acc)
-  io.ex_cmt_o.bits.rob_id  := uint_dff(ex_cmt_hs,                        0.U(5.W), io.ex_cmt_i.bits.rob_id)
+  io.ex_cmt_o.bits.wb_en   := bool_dff(true.B,                         false.B, io.ex_cmt_i.bits.wb_en)
+  io.ex_cmt_o.bits.wb_data := uvec_dff(true.B, VecInit(Seq.fill(16)(0.U(8.W))), io.ex_cmt_i.bits.wb_data)
+  io.ex_cmt_o.bits.wb_addr := uint_dff(true.B,                       0.U(14.W), io.ex_cmt_i.bits.wb_addr)
+  io.ex_cmt_o.bits.is_acc  := bool_dff(true.B,                         false.B, io.ex_cmt_i.bits.is_acc)
+  io.ex_cmt_o.bits.rob_id  := uint_dff(true.B,                        0.U(5.W), io.ex_cmt_i.bits.rob_id)
+  io.ex_cmt_o.bits.funct   := uint_dff(true.B,                        0.U(8.W), io.ex_cmt_i.bits.funct)
 }

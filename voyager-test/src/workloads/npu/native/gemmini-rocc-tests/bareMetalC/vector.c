@@ -48,8 +48,8 @@ int main() {
 
   for (size_t i = 0; i < DIM; i++)
     for (size_t j = 0; j < DIM; j++){
-      A[i][j] = (i == j);
-      B[i][j] = (i == j);
+      A[i][j] = (j == 0);
+      B[i][j] = (j == 0);
     }
 
   // size_t In_sp_addr = 0;
@@ -57,9 +57,8 @@ int main() {
   // size_t Identity_sp_addr = 2*DIM;
   size_t A_sp_addr = 0;
   size_t B_sp_addr = DIM + 4096;
-  size_t C_sp_addr = 2*DIM;
+  size_t C_sp_addr = 10*DIM;
 
-  Transpose(A);
 
   gemmini_config_ld(DIM * sizeof(elem_t));
   gemmini_config_st(DIM * sizeof(elem_t));
@@ -76,7 +75,11 @@ int main() {
   
   printf("Move \"In\" and \"Identity\" matrix from main memory into Gemmini's scratchpad\n");
   gemmini_mvin(A, A_sp_addr);
+  gemmini_mvin(A, A_sp_addr + DIM);
+  gemmini_mvin(A, A_sp_addr + 2*DIM);
   gemmini_mvin(B, B_sp_addr);
+  gemmini_mvin(B, B_sp_addr + DIM);
+  gemmini_mvin(B, B_sp_addr + 2*DIM);
 
   printf("Perform matrix multiplication\n");
   gemmini_config_ex_mode(VECUNIT_MODE)
@@ -85,10 +88,12 @@ int main() {
 
   
   volatile uint64_t rs1_values[16], rs2_values[16];
+  uint64_t waddr = DIM * 10;
+  uint64_t opnum = 2; //进行 16 x opnum * opnum x 16 的矩阵乘法
   for (size_t i = 0; i < DIM; i++) {
     uint64_t op1 = i;
     uint64_t op2 = i + DIM;
-    rs1_values[i] = (op2 << 16) | (op1 << 2) | 0x3; // 0x3 = (op2_from_mem=1, op1_from_mem=1)
+    rs1_values[i] = (opnum << 44)|(waddr << 30)|(op2 << 16) | (op1 << 2) | 0x3; // 0x3 = (op2_from_mem=1, op1_from_mem=1)
     rs2_values[i] = (15 << 10) | ((i+16) << 5) | i;
   }
 
@@ -97,9 +102,14 @@ int main() {
   uint64_t rs2_values1 = rs2_values[0];
 
   
-  gemmini_vec_loop_mul(
-    rs1_values1, rs1_values2, rs1_values3, rs1_values4, rs1_values5, rs1_values6, rs1_values7, rs1_values8,
-    rs2_values1, rs2_values2, rs2_values3, rs2_values4, rs2_values5, rs2_values6, rs2_values7, rs2_values8);
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_values1, (uint64_t)rs2_values1, k_INST_VEC_LOOP_MUL_16);
+  printf("Pass\n");
+  /*
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_values1, (uint64_t)rs2_values1, k_INST_VEC_LOOP_MUL_4);
+  printf("Pass\n");
+  ROCC_INSTRUCTION_RS1_RS2(XCUSTOM_ACC,  (uint64_t)rs1_values1, (uint64_t)rs2_values1, k_INST_VEC_LOOP_MUL_16);
+  printf("Pass\n");
+  */
   // gemmini_fence();
 
   // gemmini_config_ex_mode(SYSTOLIC_ARRAY_MODE)
@@ -113,7 +123,6 @@ int main() {
   // //Transpose(Out);
   // printf("Print the output matrix\n");
   // printMatrix(C);
-  printf("Pass\n");
 
   //   exit(0);
 }

@@ -7,6 +7,7 @@ import gemmini.Util._
 import org.chipsalliance.cde.config.Parameters
 import midas.targetutils.PerfCounter
 import gemmini.{GemminiArrayConfig, Arithmetic, ScratchpadReadIO, ScratchpadWriteIO, GemminiCmd}
+import gemmini.{AccumulatorReadReq, AccumulatorWriteReq, AccumulatorScaleResp}
 
 object VecConfig {
   val alu_thread_num = 8  // thread 数量
@@ -33,12 +34,24 @@ class VecUnit[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: Int, config:
     val sram1 = new Bundle {
       val read = new ScratchpadReadIO(sp_bank_entries, sp_width)
     }
+    val acc = new Bundle {
+      val read_req = Vec(acc_banks, Decoupled(new AccumulatorReadReq(
+          acc_bank_entries, accType, acc_scale_t
+      )))
+
+      val read_resp = Flipped(Vec(acc_banks, Decoupled(new AccumulatorScaleResp(
+        Vec(meshColumns, Vec(tileColumns, inputType)),
+        Vec(meshColumns, Vec(tileColumns, accType))
+      ))))
+
+      val write = Vec(acc_banks, Decoupled(new AccumulatorWriteReq(acc_bank_entries, Vec(meshColumns, Vec(tileColumns, accType)))))
+    }
     val completed = Valid(UInt(log2Up(reservation_station_entries).W))
   })
 
   val VecID  = Module(new VecID(config, entries, heads, maxpop))
   val VecISS = Module(new VecISS())
-  val VecEX  = Module(new VecEX())
+  val VecEX  = Module(new VecEX(config))
   val VecCMT = Module(new VecCMT(config))
   val VecLSU = Module(new VecLSU(config))
 
@@ -89,5 +102,16 @@ class VecUnit[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: Int, config:
 
   io.cmd.pop := VecID.io.id_o.pop
   io.completed := VecID.io.id_o.completed
+
+//---------------------------------------------------------------------------
+// 读写ACC
+//---------------------------------------------------------------------------
+
+  for (i <- 0 until acc_banks) {
+    io.acc.read_req(i) <> VecEX.io.acc.read_req(i)
+    io.acc.read_resp(i) <> VecEX.io.acc.read_resp(i)
+    io.acc.write(i) <> VecEX.io.acc.write(i)
+  }
+
 
 }

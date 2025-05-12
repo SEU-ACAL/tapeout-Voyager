@@ -40,7 +40,7 @@ object GemminiConfigs {
     acc_capacity = CapacityInKilobytes(64),
 
     sp_banks = 4,
-    acc_banks = 2,
+    acc_banks = 16,
 
     sp_singleported = true,
     acc_singleported = false,

@@ -11,6 +11,8 @@ class thread_input extends Bundle {
   val iteration = UInt(4.W) // 从0开始，循环1~16次
   val thread_id = UInt(3.W)
   val rob_id    = UInt(5.W)
+  val funct     = UInt(8.W)
+  val waddr     = UInt(14.W)
 }
 
 class thread_output extends Bundle {
@@ -51,7 +53,7 @@ class VecALUThread (val OpChainDepth: Int = 32) extends Module {
 		iteration := 0.U
 		thread_busy := false.B
 	}	
-	when (io.in.fire) {
+	when (io.in.valid) {
 		Vector1 	:= Mux(wr_op1, io.in.bits.op1, Vector1)
 		Vector2 	:= Mux(wr_op2, io.in.bits.op2, Vector2)
 		config		:= io.in.bits.config

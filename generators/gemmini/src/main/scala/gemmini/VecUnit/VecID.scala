@@ -87,12 +87,22 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
   val decode_list = ListLookup(func7, default_decode, Array(
     BitPat("b0011101") -> List(ZERO_VEC,ZERO_VEC,N,N,    DADDR,     DADDR,Y,Y,N,N,N,N,N,N,N,N,N,N,N,N,N,N, DVECIDX,DVECIDX,  DVECIDX,N,DTC_TYPE,     DITER), // INST_Vec_Reduce_CMD
     BitPat("b0011111") -> List(ZERO_VEC,ZERO_VEC,Y,Y,rs1(16,2),rs1(30,16),Y,Y,N,N,Y,N,N,N,N,N,N,N,N,N,N,N,rs2(5,0),DVECIDX,rs2(10,5),N,DTC_TYPE,rs2(14,10)), // INST_Vec_LoopMul_CMD
-  ))
-  val counter = RegInit(0.U(5.W))
-  val iteration = decode_list(ITER.id)
-  when (io.id_i.valid(0) && functs(0) === INST_Vec_LoopMul_CMD) {
-    counter := Mux(counter === 15.U, 0.U(5.W), counter + 1.U )
+    BitPat("b0100001") -> List(ZERO_VEC,ZERO_VEC,Y,Y,rs1(16,2),rs1(30,16),Y,Y,N,N,Y,N,N,N,N,N,N,N,N,N,N,N,rs2(5,0),DVECIDX,rs2(10,5),N,DTC_TYPE,rs2(14,10)), 
+    BitPat("b0100010") -> List(ZERO_VEC,ZERO_VEC,Y,Y,rs1(16,2),rs1(30,16),Y,Y,N,N,Y,N,N,N,N,N,N,N,N,N,N,N,rs2(5,0),DVECIDX,rs2(10,5),N,DTC_TYPE,rs2(14,10)),
+    ))
+  val counter = RegInit(0.U(12.W))
+  when(io.id_i.valid(0)){
+    when (functs(0) === INST_Vec_LoopMul_CMD_16) {
+      counter := Mux(counter ===  (rs1(58,44) << 4) - 1.U, 0.U(5.W), counter + 1.U )
+    }.elsewhen(functs(0) === INST_Vec_LoopMul_CMD_4){
+      counter := Mux(counter === 3.U, 0.U(5.W), counter + 1.U )
+    }.elsewhen(functs(0) === INST_Vec_LoopMul_CMD_8){
+      counter := Mux(counter === 7.U, 0.U(5.W), counter + 1.U )
+    }
   }
+  val complete = (functs(0) === INST_Vec_LoopMul_CMD_16 && counter === (rs1(58,44) << 4) - 1.U ) ||
+            (functs(0) === INST_Vec_LoopMul_CMD_4 && counter === 3.U) ||
+            (functs(0) === INST_Vec_LoopMul_CMD_8 && counter === 7.U)
 // -----------------------------------------------------------------------------
 // id<>iss
 // -----------------------------------------------------------------------------
@@ -104,8 +114,10 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
   io.id_iss_o.bits.op2_from_mem  := decode_list(OP2_from_MEM.id)
   io.id_iss_o.bits.config        :=
     (WR_OP1.id to WR_ACC.id).foldLeft(0.U)((acc, id) => Cat(decode_list(id).asUInt, acc))(13, 1)
-  io.id_iss_o.bits.thread_id     := counter
+  io.id_iss_o.bits.thread_id     := counter(3,0)
   io.id_iss_o.bits.iteration     := decode_list(ITER.id)
+  io.id_iss_o.bits.funct         := functs(0)
+  io.id_iss_o.bits.waddr         := rs1(44,30)
 
 // -----------------------------------------------------------------------------
 // id<>mem
@@ -122,7 +134,7 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
   io.id_lsu_o.bits.is_acc       := Mux(need_mem_access, decode_list(WR_ACC.id), false.B)
 
   // lsu->id 接收 load op 完成的响应
-  val complete = counter === 15.U
+
 
 // -----------------------------------------------------------------------------
 // id<>top

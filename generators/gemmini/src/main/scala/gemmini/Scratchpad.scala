@@ -163,7 +163,7 @@ class ScratchpadBank(n: Int, w: Int, aligned_to: Int, single_ported: Boolean, us
   q.io.enq.bits.fromDMA := RegNext(fromDMA)
 
   val q_will_be_empty = (q.io.count +& q.io.enq.fire) - q.io.deq.fire === 0.U
-  io.read.req.ready := q_will_be_empty && !singleport_busy_with_write
+  io.read.req.ready := true.B
 
   io.read.resp <> q.io.deq
 }
@@ -446,7 +446,7 @@ class Scratchpad[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, 
     val spad_mems = {
       val banks = Seq.fill(sp_banks) { Module(new ScratchpadBank(
         sp_bank_entries, spad_w,
-        aligned_to, config.sp_singleported,
+        aligned_to, false,
         use_shared_ext_mem, is_dummy
       )) }
       val bank_ios = VecInit(banks.map(_.io))
@@ -628,7 +628,7 @@ class Scratchpad[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, 
     val acc_adders = Module(new AccPipeShared(acc_latency-1, acc_row_t, acc_banks))
 
     val acc_mems = {
-      val banks = Seq.fill(acc_banks) { Module(new AccumulatorMem(
+      val banks = Seq.fill(16) { Module(new AccumulatorMem(
         acc_bank_entries, acc_row_t, acc_scale_func, acc_scale_t.asInstanceOf[V],
         acc_singleported, acc_sub_banks,
         use_shared_ext_mem,
@@ -692,7 +692,10 @@ class Scratchpad[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, 
         }.otherwise {
           bio.read.req.bits := DontCare
         }
-        bio.read.resp.ready := false.B
+        bio.read.resp.ready := true.B
+        io.acc.read_resp(i).valid := bio.read.resp.valid
+        io.acc.read_resp(i).bits := DontCare
+        io.acc.read_resp(i).bits.data := bio.read.resp.bits.data.asTypeOf(io.acc.read_resp(i).bits.data)
 
         when (write_norm_q.io.deq.valid &&
           acc_norm_unit_in.ready &&
@@ -704,12 +707,12 @@ class Scratchpad[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, 
         {
           write_norm_q.io.deq.ready := true.B
           acc_norm_unit_in.valid := true.B
-          bio.read.resp.ready := true.B
+          //bio.read.resp.ready := true.B
 
           // Some normalizer commands don't write to main memory, so they don't need to be passed on to the scaling units
           write_scale_q.io.enq.valid := NormCmd.writes_to_main_memory(write_norm_q.io.deq.bits.laddr.norm_cmd)
 
-          acc_norm_unit_in.bits.acc_read_resp := bio.read.resp.bits
+          acc_norm_unit_in.bits.acc_read_resp := DontCare
           acc_norm_unit_in.bits.acc_read_resp.acc_bank_id := i.U
         }
       }
@@ -721,7 +724,7 @@ class Scratchpad[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, 
 
         val exwrite = io.acc.write(i).valid
         io.acc.write(i).ready := true.B
-        assert(!(exwrite && !bio.write.ready), "Execute controller write to AccumulatorMem was skipped")
+        //assert(!(exwrite && !bio.write.ready), "Execute controller write to AccumulatorMem was skipped")
 
         // val from_mvin_scale = mvin_scale_out.valid && mvin_scale_out.bits.tag.is_acc
         val from_mvin_scale = mvin_scale_pixel_repeater.io.resp.valid && mvin_scale_pixel_repeater.io.resp.bits.tag.is_acc

@@ -9,10 +9,6 @@ import org.chipsalliance.cde.config.{Config}
 // DOC include start: GemminiRocketConfig
 class GemminiRocketConfig extends Config(
   new gemmini.DefaultGemminiConfig ++                            // use Gemmini systolic array GEMM accelerator
-<<<<<<< HEAD
-=======
-  // new freechips.rocketchip.rocket.WithNHugeCores(1) ++
->>>>>>> ded1dfd52e46a23149bbad85f658e01145bb2bde
   new freechips.rocketchip.rocket.WithNHugeNpuCores(1) ++
   new chipyard.config.WithSystemBusWidth(128) ++
   new chipyard.config.AbstractConfig)

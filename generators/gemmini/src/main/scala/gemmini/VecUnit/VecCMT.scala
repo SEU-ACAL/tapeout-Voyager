@@ -28,10 +28,16 @@ class VecCMT[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V
 // -----------------------------------------------------------------------------
 // Write Back to SRAM
 // -----------------------------------------------------------------------------
-  when (io.ex_cmt_i.bits.wb_en) {
+  val counter = RegInit(0.U(4.W))
+  when (io.ex_cmt_i.valid) {
+    counter := counter + 1.U
+  }.otherwise {
+    counter := 0.U
+  }
+  when (io.ex_cmt_i.bits.wb_en && io.ex_cmt_i.valid) {
     io.cmt_lsu_o.valid       := true.B
     io.cmt_lsu_o.bits.data   := io.ex_cmt_i.bits.wb_data
-    io.cmt_lsu_o.bits.addr   := io.ex_cmt_i.bits.wb_addr
+    io.cmt_lsu_o.bits.addr   := io.ex_cmt_i.bits.wb_addr + counter
     io.cmt_lsu_o.bits.is_acc := io.ex_cmt_i.bits.is_acc
   }.otherwise {
     io.cmt_lsu_o.valid       := false.B
