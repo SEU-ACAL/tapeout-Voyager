@@ -121,12 +121,54 @@ $ ./voyager-test/scripts/run-verilator.sh --config RocketConfig hello --debug
 $ ./voyager-test/scripts/run-verilator.sh --config RocketConfig hello --debug --vcd2fst
 ```
 
+## 六、VCS
 
-## 六、firesim
+**6.1 Build RTL**
+
+可以通过以下几个测试用例，测试Verilator RTL的正确性
+
+```shell
+$ cd Voyager
+$ ./voyager-test/scripts/build-vcs.sh --config RocketConfig 
+$ ./voyager-test/scripts/build-vcs.sh --config GemminiRocketConfig 
+$ ./voyager-test/scripts/build-vcs.sh --config OurHeterSoCConfig --debug 
+```
+
+VCS编译出的可执行文件会被自动拷贝到 `voyager-test/build-results/vcs` 路径下
+
+**6.2 测试运行workload**
+
+可以通过下面测试用例，测试VCS build的正确性，操作与Verilator基本类似
+
+```shell
+$ ./voyager-test/scripts/run-vcs.sh --config RocketConfig hello 
+$ ./voyager-test/scripts/run-vcs.sh --config GemminiRocketConfig vector 
+$ ./voyager-test/scripts/run-vcs.sh --config RocketConfig hello --debug 
+```
+**6.3 Verdi**
+
+服务器上看波形很卡，建议本地装个verdi看
+
+```shell
+source ./voyager-test/scripts/env-source.sh vcs
+verdi
+```
+
+## 七、firesim
 
 firesim 由`./build-setup.sh`已经安装好, 参考[教程](docs/firesim-README.md)运行(求补充)
 
-## 七、pre-commit (提交前检查)
+## 八、后端 (DC)
+
+咕咕咕
+
+注：vcs和dc版本不同，所以环境变量也不同，单独使用需要使用脚本切换。如果直接使用 `build-vcs.sh`, `run-vcs.sh` 和 `run-dc.sh` 会自动切换，无需手动切换。
+```
+source ./voyager-test/scripts/env-source.sh vcs
+source ./voyager-test/scripts/env-source.sh dc
+```
+
+## 九、pre-commit (提交前检查)
 
 pre-commit 由`./build-setup.sh`已经安装好，无需单独安装。
 

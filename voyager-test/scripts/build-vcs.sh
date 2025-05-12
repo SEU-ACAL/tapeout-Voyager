@@ -68,9 +68,12 @@ if [ "$debug" == "debug" ]; then
 fi
 
 CYDIR=$(git rev-parse --show-toplevel)
-cd ${CYDIR}/sims/vcs/ || { echo "Cannot enter the directory: ${CYDIR}/sims/verilator/"; exit 1; }
-make -j$j ${debug} CONFIG=GemminiRocketConfig USE_VPD=1
-echo "Success"
-cp ${CYDIR}/sims/vcs/simv-chipyard.harness-${CONFIG}${DEBUG_POSTFIX} ${CYDIR}/voyager-test/build-results/vcs
-cp ${CYDIR}/sims/vcs/simv-chipyard.harness-${CONFIG}${DEBUG_POSTFIX}.daidir ${CYDIR}/voyager-test/build-results/vcs -r
+# 切换环境变量
+source ${CYDIR}/voyager-test/scripts/env-source.sh vcs
+
+cd ${CYDIR}/sims/vcs/ || { echo "Cannot enter the directory: ${CYDIR}/sims/vcs/"; exit 1; }
+make -j$j ${debug} CONFIG=${CONFIG} || { echo "[Build vcs Failed!]==================="; exit 1; }
+mkdir -p ${CYDIR}/voyager-test/build-results/vcs
+cp ${CYDIR}/sims/vcs/simv-chipyard.harness-${CONFIG}${DEBUG_POSTFIX} ${CYDIR}/voyager-test/build-results/vcs/
+cp ${CYDIR}/sims/vcs/simv-chipyard.harness-${CONFIG}${DEBUG_POSTFIX}.daidir/ ${CYDIR}/voyager-test/build-results/vcs/ -r
 # make print_vars

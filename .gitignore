@@ -30,3 +30,6 @@ project/project/
 .classpath_cache/
 .vscode/
 tests/build/
+novas.rc
+novas.conf
+verdiLog/
