@@ -3,13 +3,14 @@ package gemmini.VecUnit.ex
 import chisel3._
 import chisel3.util._
 import chisel3.stage._
+import gemmini.VecUnit.VecConfig
 
 class thread_input extends Bundle {
   val op1       = Vec(16, UInt(8.W))
   val op2       = Vec(16, UInt(8.W))
   val config    = UInt(16.W)
   val iteration = UInt(4.W) // 从0开始，循环1~16次
-  val thread_id = UInt(3.W)
+  val thread_id = UInt(4.W)
   val rob_id    = UInt(5.W)
   val funct     = UInt(8.W)
   val waddr     = UInt(14.W)
@@ -18,12 +19,12 @@ class thread_input extends Bundle {
 class thread_output extends Bundle {
   val vector_rst = Vec(16, UInt(8.W))
   val scalar_rst = UInt(8.W)
-  val thread_id  = UInt(3.W)
+  val thread_id  = UInt(4.W)
   val config     = UInt(16.W)
   val rob_id     = UInt(5.W)
 }
 
-class VecALUThread (val OpChainDepth: Int = 32) extends Module {
+class VecALUThread  extends Module {
 	val io = IO(new Bundle {
 		val in  = Flipped(Decoupled(new thread_input()))
 		val out = Decoupled(new thread_output())
@@ -33,7 +34,7 @@ class VecALUThread (val OpChainDepth: Int = 32) extends Module {
   val Vector2   = RegInit(VecInit(Seq.fill(16)(0.U(8.W))))
   val config    = RegInit(0.U(16.W))
   val iteration = RegInit(0.U(4.W))
-  val thread_id = RegInit(0.U(3.W))
+  val thread_id = RegInit(0.U(4.W))
   val rob_id    = RegInit(0.U(5.W))
 
   val Array(wr_op1, wr_op2, op1_is_scalar, op2_is_scalar,
@@ -43,7 +44,7 @@ class VecALUThread (val OpChainDepth: Int = 32) extends Module {
   (0 until 16).map(i => Mux(io.in.valid, io.in.bits.config(i), config(i))).toArray
 
   val thread_busy = RegInit(false.B)
-  val thread_iteration = RegInit(0.U(5.W))
+  val thread_iteration = RegInit(0.U(4.W))
   io.in.ready := !thread_busy
 
 // -----------------------------------------------------------------------------

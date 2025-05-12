@@ -10,24 +10,24 @@ import org.chipsalliance.cde.config.Parameters
 import dataclass.data
 
 // read sram
-class LsuIssReq extends Bundle {
+class LsuIssReq (implicit vc: VecConfig) extends Bundle {
   val op1 = Vec(16, UInt(8.W))
   val op2 = Vec(16, UInt(8.W))
 }
 
-class LsuIdResp extends Bundle {
+class LsuIdResp (implicit vc: VecConfig) extends Bundle {
   val rd_complete = Bool()
 }
 
 // write sram
-class CmtLsuReq extends Bundle {
-  val data = Vec(16, UInt(8.W))
-  val addr = UInt(14.W)
+class CmtLsuReq (implicit vc: VecConfig) extends Bundle {
+  val data = Vec(vc.thread_n, UInt(8.W))
+  val addr = UInt(vc.sp_addr_w.W)
   val is_acc = Bool()
 }
 
 class VecLSU[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V])
-                                   (implicit p: Parameters, ev: Arithmetic[T]) extends Module {
+                                   (implicit p: Parameters, ev: Arithmetic[T], vc: VecConfig) extends Module {
   import config._
   import ev._
   val io = IO(new Bundle {

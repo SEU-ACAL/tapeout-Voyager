@@ -9,18 +9,31 @@ import midas.targetutils.PerfCounter
 import gemmini.{GemminiArrayConfig, Arithmetic, ScratchpadReadIO, ScratchpadWriteIO, GemminiCmd}
 import gemmini.{AccumulatorReadReq, AccumulatorWriteReq, AccumulatorScaleResp}
 
-object VecConfig {
-  val alu_thread_num = 8  // thread 数量
-  val lut_thread_num = 8
-  val spad_addr_w    = 14 // spad 地址宽度
-  
+case class VecConfig(
+  thread_n: Int = 16,  // thread 数量
+  cluster_n: Int = 3,  
+  sp_addr_w: Int = 14, // spad 地址宽度
+  acc_addr_w: Int = 12,  // acc 地址宽度
+  iter_w: Int = 8,
+  config_w: Int = 16,
+  rob_w: Int = 5,
+  bfp_exp_w: Int = 5,
+  bfp_mant_w: Int = 8,
+  tc_type: Int = 4, // layernorm/rmsnorm, silu/gelu, softmax, transpose
+) {
+  def thread_w: Int = log2Up(thread_n)
+  def tc_type_w: Int = log2Up(tc_type)
 }
+
 
 class VecUnit[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: Int, config: GemminiArrayConfig[T, U, V], 
                                      entries: Int, heads: Int, maxpop: Int = 2)
                                     (implicit p: Parameters, ev: Arithmetic[T]) extends Module {
   import config._
   import ev._
+  // VecUnit顶层向下继承该参数
+  implicit val vc: gemmini.VecUnit.VecConfig = VecConfig() 
+  
   val io = IO(new Bundle {
     val cmd = new Bundle {
       val valid = Input(Vec(heads, Bool()))

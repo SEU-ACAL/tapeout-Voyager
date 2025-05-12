@@ -37,7 +37,7 @@ class VecIDReq[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U,
 
 class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V], 
                                              entries: Int, heads: Int, maxpop: Int = 2)
-                                   (implicit p: Parameters, ev: Arithmetic[T]) extends Module {
+      (implicit p: Parameters, ev: Arithmetic[T], vc: VecConfig) extends Module {
   import config._
   import ev._
   import DefaultConstants._

@@ -151,4 +151,4 @@ Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `
 - [[Q&A List](docs/Q&A.md)] 仓库使用遇到问题可以在群里询问，问题解决后将解决方法记录在这里.    
 - [[firesim](docs/firesim-README.md)] firesim 的简略文档，求补充.  
 - [[NPU-README](docs/NPU-README.md)] 主要关于buddy-mlir的使用.
-- [[sram-README](docs/sram-README.md)] 主要关于sram替换的文档. 
+- [[sram_README](docs/sram_readme.md)] 主要关于sram替换的文档. 

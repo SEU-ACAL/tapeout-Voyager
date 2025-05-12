@@ -109,3 +109,8 @@ ERROR: [Board 49-71] The board_part definition was not found for xilinx.com:au28
 ```
 set_property board_part xilinx.com:au280:part0:1.2
 ```
+
+服务器重启之后vcs和verdi用不了按照以下教程第五步开始即可：
+https://blog.csdn.net/qq_41717683/article/details/122267191
+
+新增加build-vcs和run-vcs脚本 目前只在npu上验证。

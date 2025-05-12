@@ -6,7 +6,6 @@ import chisel3.stage._
 
 import function._  
 
-
 object function {
   def bool_dff(handshake: Bool, bool_default: Bool, data_i: Bool): Bool = {
     val data_o = RegInit(bool_default)
@@ -29,8 +28,8 @@ object function {
 // id_iss pipeline
 // -----------------------------------------------------------------------------
 class IdIssReq extends Bundle {
-  val op1 = Vec(16, UInt(8.W))
-  val op2 = Vec(16, UInt(8.W))
+  val op1          = Vec(16, UInt(8.W))
+  val op2          = Vec(16, UInt(8.W))
   val op1_from_mem = Bool()
   val op2_from_mem = Bool()
   val config = UInt(16.W)
@@ -43,8 +42,8 @@ class IdIssReq extends Bundle {
 
 class id_iss extends Module {  
   val io = IO(new Bundle {
-  val id_iss_i = Flipped(Decoupled(new IdIssReq()))
-  val id_iss_o = Decoupled(new IdIssReq())
+    val id_iss_i = Flipped(Decoupled(new IdIssReq()))
+    val id_iss_o = Decoupled(new IdIssReq())
   })
   
   val id_iss_hs = io.id_iss_i.fire
@@ -70,9 +69,9 @@ class id_iss extends Module {
 class IdLsuReq extends Bundle {
   val op1_from_mem = Bool()
   val op2_from_mem = Bool()
-  val op1_addr = UInt(14.W)
-  val op2_addr = UInt(14.W)
-  val is_acc   = Bool()
+  val op1_addr     = UInt(14.W)
+  val op2_addr     = UInt(14.W)
+  val is_acc       = Bool()
 }
 
 class IdLsuResp extends Bundle {

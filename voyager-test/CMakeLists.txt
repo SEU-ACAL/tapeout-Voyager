@@ -62,7 +62,7 @@ add_custom_target(build-all ALL DEPENDS
     create-dirs
     cpu-build
     npu-build
-    #tutorial-build
+    tutorial-build
 )
 
 add_custom_target(clean-all

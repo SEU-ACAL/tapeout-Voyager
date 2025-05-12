@@ -5,7 +5,7 @@ import chisel3.util._
 import chisel3.stage._
 
 
-class VecISS extends Module {
+class VecISS (implicit vc: VecConfig) extends Module {
   val io = IO(new Bundle {
     val id_iss_i  = Flipped(Decoupled(new IdIssReq()))
     val lsu_iss_i = Flipped(Decoupled(new LsuIssReq()))

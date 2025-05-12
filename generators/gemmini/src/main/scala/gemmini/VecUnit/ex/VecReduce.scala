@@ -7,15 +7,15 @@ import chisel3.stage._
 import gemmini.VecUnit.ExCmtReq
 import gemmini.VecUnit.IssExReq
 
-class north extends Bundle {
+class north  extends Bundle {
   val rob_id     = UInt(5.W) // 用不上
-  val thread_id  = UInt(3.W) // 用不上
+  val thread_id  = UInt(4.W) // 用不上
   val scalar_rst = UInt(8.W) // 用不上
   val config     = UInt(16.W) 
   val vector_rst = Vec(16, UInt(8.W))
 }
 
-class east extends Bundle {
+class east  extends Bundle {
   // val rob_id     = UInt(5.W)
   // val thread_id  = UInt(3.W)
   val funct     = UInt(8.W)

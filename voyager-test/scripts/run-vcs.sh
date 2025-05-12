@@ -83,7 +83,8 @@ else
   PK=""
 fi
 
-WAVEFORM="${WAVEFORM_DIR}/${TIMESTAMP}-${binary}-waveform.vcd"
+WAVEFORM="\home\hxm123\waveform4.vcd"
+echo $WAVEFORM
 #  WAVEFORM="${WAVEFORM_DIR}/waveform.vcd"
 
 if [ $debug -eq 1 ]; then
@@ -136,27 +137,33 @@ if [ ! -f "${full_binary_path}" ]; then
   exit 1
 fi
 
-LOG_DIR="${ROOT}/log/${TIMESTAMP}-${binary}-verilator-run-log"
+LOG_DIR="${ROOT}/log/${TIMESTAMP}-${binary}-vcs-run-log"
 mkdir -p "${LOG_DIR}"
 
+cd ${CYDIR}/voyager-test/build-results/vcs/
+./simv-chipyard.harness-${CONFIG}${DEBUG_POSTFIX} $PK $full_binary_path 
+# +verbose +loadmem=${full_binary_path} +loadmem_addr=80000000 \
+#   +permissive-off ${full_binary_path} \
+#   &> >(tee ${LOG_DIR}/stdout.log) \
+#   2> >(spike-dasm > ${LOG_DIR}/disasm.log)
 
-cd ${CYDIR}/voyager-test/build-results/verilator/
-./simulator-chipyard.harness-${CONFIG}${DEBUG} $PK +permissive \
-  $([ $debug -eq 1 ] && echo "+vcdfile=${WAVEFORM}") \
-  +verbose +loadmem=${full_binary_path} +loadmem_addr=80000000 \
-  +permissive-off ${full_binary_path} \
-  &> >(tee ${LOG_DIR}/stdout.log) \
-  2> >(spike-dasm > ${LOG_DIR}/disasm.log)
+# cd ${CYDIR}/voyager-test/build-results/verilator/
+# ./simulator-chipyard.harness-${CONFIG}${DEBUG} $PK +permissive \
+#   $([ $debug -eq 1 ] && echo "+vcdfile=${WAVEFORM}") \
+#   +verbose +loadmem=${full_binary_path} +loadmem_addr=80000000 \
+#   +permissive-off ${full_binary_path} \
+#   &> >(tee ${LOG_DIR}/stdout.log) \
+#   2> >(spike-dasm > ${LOG_DIR}/disasm.log)
 
-# 如果启用了调试模式并且需要转换波形文件
-if [ $debug -eq 1 ] && [ $vcd2fst -eq 1 ]; then
-  echo "Converting VCD waveform to FST format..."
-  FST_WAVEFORM="${WAVEFORM%.vcd}.fst"
-  vcd2fst -v "${WAVEFORM}" -f "${FST_WAVEFORM}"
-  rm -rf "${WAVEFORM}"
-  if [ $? -eq 0 ]; then
-    echo "Waveform conversion successful: ${FST_WAVEFORM}"
-  else
-    echo "Warning: Waveform conversion failed."
-  fi
-fi
+# # 如果启用了调试模式并且需要转换波形文件
+# if [ $debug -eq 1 ] && [ $vcd2fst -eq 1 ]; then
+#   echo "Converting VCD waveform to FST format..."
+#   FST_WAVEFORM="${WAVEFORM%.vcd}.fst"
+#   vcd2fst -v "${WAVEFORM}" -f "${FST_WAVEFORM}"
+#   rm -rf "${WAVEFORM}"
+#   if [ $? -eq 0 ]; then
+#     echo "Waveform conversion successful: ${FST_WAVEFORM}"
+#   else
+#     echo "Warning: Waveform conversion failed."
+#   fi
+# fi
