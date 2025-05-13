@@ -59,6 +59,7 @@ setup_dc() {
     export SCL_HOME=/usr/Synopsys/scl/2021.03
     export PATH=$PATH:$SCL_HOME/linux64/bin
     export VCS_ARCH_OVERRIDE=linux
+    export TERM=xterm-16color
     
     echo "DC environment setup completed"
 }

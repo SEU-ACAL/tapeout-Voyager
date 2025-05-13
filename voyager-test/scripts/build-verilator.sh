@@ -72,5 +72,5 @@ fi
 cd ${CYDIR}/sims/verilator/ || { echo "Cannot enter the directory: ${CYDIR}/sims/verilator/"; exit 1; }
 make -j$j ${debug} CONFIG=$CONFIG || { echo "[Build verilator Failed!]==================="; exit 1; }
 # 编译成功了才会搬过来
-mkdir -p ${CYDIR}/voyager-test/build-results/verilator
-cp ${CYDIR}/sims/verilator/simulator-chipyard.harness-${CONFIG}${DEBUG_POSTFIX} ${CYDIR}/voyager-test/build-results/verilator
+mkdir -p ${CYDIR}/voyager-test/output/verilator
+cp ${CYDIR}/sims/verilator/simulator-chipyard.harness-${CONFIG}${DEBUG_POSTFIX} ${CYDIR}/voyager-test/output/verilator

@@ -101,17 +101,17 @@ $ ./voyager-test/scripts/build-verilator.sh --config GemminiRocketConfig # Build
 $ ./voyager-test/scripts/build-verilator.sh --config OurHeterSoCConfig --debug # Build 六核版, 并开启调试
 ```
 
-Verilator编译出的可执行文件会被自动拷贝到 `voyager-test/build-results/verilator` 路径下
+Verilator编译出的可执行文件会被自动拷贝到 `voyager-test/output/verilator` 路径下
 
 **5.2 测试运行workload**
 
 可以通过下面测试用例，测试Verilator build的正确性
 
 ```shell
-# 运行voyager-test/build-results/workloads/cpu/hello-baremetal
+# 运行voyager-test/output/workloads/cpu/hello-baremetal
 $ ./voyager-test/scripts/run-verilator.sh --config RocketConfig hello 
 
-# 运行voyager-test/build-results/workloads/npu/native/vector-baremetal
+# 运行voyager-test/output/workloads/npu/native/vector-baremetal
 $ ./voyager-test/scripts/run-verilator.sh --config GemminiRocketConfig vector 
 
 # 对开启的调试的build文件可以同时输出波形
@@ -134,7 +134,7 @@ $ ./voyager-test/scripts/build-vcs.sh --config GemminiRocketConfig
 $ ./voyager-test/scripts/build-vcs.sh --config OurHeterSoCConfig --debug 
 ```
 
-VCS编译出的可执行文件会被自动拷贝到 `voyager-test/build-results/vcs` 路径下
+VCS编译出的可执行文件会被自动拷贝到 `voyager-test/output/vcs` 路径下
 
 **6.2 测试运行workload**
 
@@ -160,13 +160,21 @@ firesim 由`./build-setup.sh`已经安装好, 参考[教程](docs/firesim-README
 
 ## 八、后端 (DC)
 
-咕咕咕
-
-注：vcs和dc版本不同，所以环境变量也不同，单独使用需要使用脚本切换。如果直接使用 `build-vcs.sh`, `run-vcs.sh` 和 `run-dc.sh` 会自动切换，无需手动切换。
+使用`run-dc.sh`脚本运行综合，会使用verilator自动生成对应版本的Config，生成完成后进行DC综合，报告和网表文件将生成在 `./voyager-test/output/dc/reports` 路径下
+```shell
+# 不指定--top会使用默认的ChipTop综合所有模块
+$ ./voyager-test/scripts/run-dc.sh --config RocketConfig
+# 使用指定top综合局部模块
+$ ./voyager-test/scripts/run-dc.sh --config GemminiRocketConfig --top RocketTile
 ```
+
+注：vcs和dc版本不同，所以环境变量也不同，单独使用需要使用脚本切换。
+```shell
 source ./voyager-test/scripts/env-source.sh vcs
 source ./voyager-test/scripts/env-source.sh dc
 ```
+如果由于 license 问题导致脚本切换失败，可使用`lmdown`和 `lmli` 手动切换
+如果直接使用 `build-vcs.sh`, `run-vcs.sh` 和 `run-dc.sh` 会自动切换，无需手动切换。
 
 ## 九、pre-commit (提交前检查)
 

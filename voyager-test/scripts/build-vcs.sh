@@ -73,7 +73,7 @@ source ${CYDIR}/voyager-test/scripts/env-source.sh vcs
 
 cd ${CYDIR}/sims/vcs/ || { echo "Cannot enter the directory: ${CYDIR}/sims/vcs/"; exit 1; }
 make -j$j ${debug} CONFIG=${CONFIG} || { echo "[Build vcs Failed!]==================="; exit 1; }
-mkdir -p ${CYDIR}/voyager-test/build-results/vcs
-cp ${CYDIR}/sims/vcs/simv-chipyard.harness-${CONFIG}${DEBUG_POSTFIX} ${CYDIR}/voyager-test/build-results/vcs/
-cp ${CYDIR}/sims/vcs/simv-chipyard.harness-${CONFIG}${DEBUG_POSTFIX}.daidir/ ${CYDIR}/voyager-test/build-results/vcs/ -r
+mkdir -p ${CYDIR}/voyager-test/output/vcs
+cp ${CYDIR}/sims/vcs/simv-chipyard.harness-${CONFIG}${DEBUG_POSTFIX} ${CYDIR}/voyager-test/output/vcs/
+cp ${CYDIR}/sims/vcs/simv-chipyard.harness-${CONFIG}${DEBUG_POSTFIX}.daidir/ ${CYDIR}/voyager-test/output/vcs/ -r
 # make print_vars

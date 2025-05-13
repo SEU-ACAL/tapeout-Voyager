@@ -80,7 +80,7 @@ find_binary_in_dir() {
 }
 
 for dir in cpu npu template; do
-    base_dir="${CYDIR}/voyager-test/build-results/workloads/${dir}"
+    base_dir="${CYDIR}/voyager-test/output/workloads/${dir}"
     if [ -d "${base_dir}" ]; then
         found_path=$(find_binary_in_dir "${base_dir}" "${binary}" "${default_suffix}")
         if [ $? -eq 0 ]; then

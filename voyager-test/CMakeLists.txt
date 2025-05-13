@@ -3,8 +3,8 @@ project(VoyagerTest)
 
 set(BUILD_ROOT "${CMAKE_BINARY_DIR}")
 set(SRC_DIR "${CMAKE_SOURCE_DIR}/src")
-set(WORKLOAD_BIN_DIR "${CMAKE_SOURCE_DIR}/build-results/workloads")
-set(RTL_BUILD_DIR "${CMAKE_SOURCE_DIR}/build-results")
+set(WORKLOAD_BIN_DIR "${CMAKE_SOURCE_DIR}/output/workloads")
+set(RTL_BUILD_DIR "${CMAKE_SOURCE_DIR}/output")
 
 # get the root directory of the project
 execute_process(
