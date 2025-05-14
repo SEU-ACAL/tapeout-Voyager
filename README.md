@@ -160,7 +160,8 @@ firesim 由`./build-setup.sh`已经安装好, 参考[教程](docs/firesim-README
 
 ## 八、后端 (DC)
 
-使用`run-dc.sh`脚本运行综合，会使用verilator自动生成对应版本的Config，生成完成后进行DC综合，报告和网表文件将生成在 `./voyager-test/output/dc/reports` 路径下
+使用`run-dc.sh`脚本会先使用verilator自动生成对应版本的Config，之后进行DC综合. 报告和网表文件将生成在 `./voyager-test/output/dc/reports` 路径下.
+DC所用到的db_file存放在`/opt/dc/lib/TSMCHOME`路径下.
 ```shell
 # 不指定--top会使用默认的ChipTop综合所有模块
 $ ./voyager-test/scripts/run-dc.sh --config RocketConfig
@@ -193,6 +194,7 @@ Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `
 - boom/src
 - rocket-chip/src
 - gemmini/src
+- bar-fetchers/src: 存放预取器代码
 
 ## 八、文档目录
 
