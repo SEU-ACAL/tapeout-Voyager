@@ -1,9 +1,6 @@
 [submodule "fpga/fpga-shells"]
 	path = fpga/fpga-shells
 	url = https://github.com/chipsalliance/rocket-chip-fpga-shells.git
-[submodule "generators/bar-fetchers"]
-	path = generators/bar-fetchers
-	url = https://github.com/ucb-bar/bar-fetchers.git
 # [submodule "generators/boom"]
 # 	path = generators/boom
 # 	url = https://github.com/riscv-boom/riscv-boom.git
