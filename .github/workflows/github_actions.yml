@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} is running CI Test 🚀
 on:
   push:
     branches:
-      - dev
+      - dev-oldmain
 jobs:
   Code-Pull:
     name: Code Pull
@@ -19,6 +19,7 @@ jobs:
           source ~/.zshrc
           chipyard_exec
           setproxy
+          git reset --hard origin/${{ github.ref }}
           git pull origin ${{ github.ref }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
