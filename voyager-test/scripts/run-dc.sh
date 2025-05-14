@@ -1,5 +1,9 @@
 #!/bin/bash
 
+# exit script if any command fails
+set -e
+set -o pipefail
+
 TOP_MODULE="ChipTop"
 # DigitalTop
 while [[ $# -gt 0 ]]; do
@@ -39,7 +43,7 @@ TCL_FILE="${CYDIR}/voyager-test/output/dc/dc_script.tcl"
 mkdir -p $WORK_DIR
 mkdir -p $DESIGN_DIR
 mkdir -p $REPORT_DIR
-mkdir -p $LOG_DIR
+mkdir -p $TMP_DIR
 
 source ${CYDIR}/voyager-test/scripts/env-source.sh dc
 #-------------------------------------------------------------------
