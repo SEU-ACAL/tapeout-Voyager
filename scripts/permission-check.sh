@@ -7,6 +7,7 @@ allowed_dirs=( \
     # "generators/gemmini/src" \
     # "generators/rocket-chip/src/main/scala/npu" \ 
     # "generators/rocket-chip/src/main/scala/rocket" \ 
+    # "generators/bar-fetchers/src" \
     "generators/chipyard/src" \
     "voyager-test" \
     "docs" \
