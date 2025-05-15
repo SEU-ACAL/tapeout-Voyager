@@ -147,44 +147,8 @@ class WithNBigCores(
 class WithNBigNpuCores(
   n: Int,
   location: HierarchicalLocation,
-  crossing: RocketCrossingParams
-) extends Config((site, here, up) => {
-  case TilesLocated(`location`) => {
-    val prev = up(TilesLocated(`location`), site)
-    val idOffset = up(NumTiles)
-    val big = RocketTileParams(
-      core   = RocketCoreParams(mulDiv = Some(MulDivParams(
-        mulUnroll = 8,
-        mulEarlyOut = true,
-        divEarlyOut = true))),
-      dcache = Some(DCacheParams(
-        rowBits = site(SystemBusKey).beatBits,
-        nMSHRs = 0,
-        blockBytes = site(CacheBlockBytes))),
-      icache = Some(ICacheParams(
-        rowBits = site(SystemBusKey).beatBits,
-        blockBytes = site(CacheBlockBytes))))
-    List.tabulate(n)(i => RocketTileAttachParams(
-      big.copy(tileId = i + idOffset),
-      crossing
-    )) ++ prev
-  }
-  case NumTiles => up(NumTiles) + n
-}) {
-  def this(n: Int, location: HierarchicalLocation = InSubsystem) = this(n, location, RocketCrossingParams(
-    master = HierarchicalElementMasterPortParams.locationDefault(location),
-    slave = HierarchicalElementSlavePortParams.locationDefault(location),
-    mmioBaseAddressPrefixWhere = location match {
-      case InSubsystem => CBUS
-      case InCluster(clusterId) => CCBUS(clusterId)
-    }
-  ))
-}
-
-class WithNBigNpuCores1(
-  n: Int,
-  location: HierarchicalLocation,
   crossing: RocketCrossingParams,
+  nMSHRs: Int,
 ) extends Config((site, here, up) => {
   case TilesLocated(`location`) => {
     val prev = up(TilesLocated(`location`), site)
@@ -196,7 +160,7 @@ class WithNBigNpuCores1(
         divEarlyOut = true))),
       dcache = Some(DCacheParams(
         rowBits = site(SystemBusKey).beatBits,
-        nMSHRs = 0,
+        nMSHRs = nMSHRs,
         blockBytes = site(CacheBlockBytes))),
       icache = Some(ICacheParams(
         rowBits = site(SystemBusKey).beatBits,
@@ -208,14 +172,14 @@ class WithNBigNpuCores1(
   }
   case NumTiles => up(NumTiles) + n
 }) {
-  def this(n: Int, location: HierarchicalLocation = InSubsystem) = this(n, location, RocketCrossingParams(
+  def this(n: Int, location: HierarchicalLocation = InSubsystem, nMSHRs: Int = 0) = this(n, location, RocketCrossingParams(
     master = HierarchicalElementMasterPortParams.locationDefault(location),
     slave = HierarchicalElementSlavePortParams.locationDefault(location),
     mmioBaseAddressPrefixWhere = location match {
       case InSubsystem => CBUS
       case InCluster(clusterId) => CCBUS(clusterId)
     }
-  ))
+  ), nMSHRs) // if the nMSHRs is not specified, it is 0 by default
 }
 
 class WithNMedCores(
