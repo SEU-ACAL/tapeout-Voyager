@@ -97,15 +97,18 @@ export TERM=xterm-16color
 ```
 
 ## Metal 用不了怎么办？
-删除`~/.cache/coursier` 和`~/.cache/bloop` 目录，然后重新import metal.
+
+删除 `~/.cache/coursier` 和 `~/.cache/bloop` 目录，然后重新import metal.
 
 ## Firesim board_part 问题
+
 ```
 ERROR: [Board 49-71] The board_part definition was not found for xilinx.com:au280:part0:1.2. The project's board_part property was not set, but the project's part property was set to xcu280-fsvh2892-2L-e. Valid board_part values can be retrieved with the 'get_board_parts' Tcl command. Check if board.repoPaths parameter is set and the board_part is installed from the tcl app store.
 ```
 
 解决办法：
 将所有下面的0:1.2 改为 0:1.0或0:1.1 (注意别把这个文档也一键改了)
+
 ```
 set_property board_part xilinx.com:au280:part0:1.2
 ```
@@ -116,3 +119,25 @@ set_property board_part xilinx.com:au280:part0:1.2
 https://blog.csdn.net/qq_41717683/article/details/122267191
 
 新增加build-vcs和run-vcs脚本 目前只在npu上验证。
+
+## **Firesim 运行命令途中使用ctrl c中断命令导致之后无法执行命令**
+
+```
+Fatal error: One or more hosts failed while executing task 'infrasetup_node_wrapper'
+```
+
+ctrl c会去让linux把FPGA板子对应的端口卸载，然后重新加载，该情况就是在卸载后执行了ctrl c，导致未成功加载
+
+解决方法：
+
+```
+echo 1 | sudo tee /sys/bus/pci/rescan
+```
+
+**尽量不要ctrl c**
+
+## 使用Firesim前需要去看是否有人在用相应端口，否则可能导致FPGA端口挂载出问题
+
+直接使用TOP看，是否有firesim线程
+
+> 21端口的FPGA板子有概率一启动就导致服务器崩溃，目前暂时未找到解决方法（此时请不要使用21端口的板子）
