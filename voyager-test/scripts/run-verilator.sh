@@ -116,7 +116,7 @@ find_binary_in_dir() {
 }
 
 # 在cpu和npu及其子目录中查找二进制文件
-for dir in cpu npu template; do
+for dir in cpu npu tutorial; do
   base_dir="${CYDIR}/voyager-test/output/workloads/${dir}"
   if [ -d "${base_dir}" ]; then
     found_path=$(find_binary_in_dir "${base_dir}" "${binary}" "${default_suffix}")

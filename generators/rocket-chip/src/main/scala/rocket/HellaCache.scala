@@ -42,6 +42,7 @@ case class DCacheParams(
     acquireBeforeRelease: Boolean = false,
     pipelineWayMux: Boolean = false,
     clockGate: Boolean = false,
+    usingStridePrefetch: Boolean = false,
     scratch: Option[BigInt] = None) extends L1CacheParams {
 
   def tagCode: Code = Code.fromString(tagECC)
@@ -128,6 +129,8 @@ class HellaCacheReqInternal(implicit p: Parameters) extends CoreBundle()(p) with
   val no_resp = Bool() // The dcache may omit generating a response for this request
   val no_alloc = Bool()
   val no_xcpt = Bool()
+  // add for stride prefetch
+  val pc = if (tileParams.dcache.get.usingStridePrefetch) Some(Input(UInt(vaddrBitsExtended.W))) else None
 }
 
 class HellaCacheReq(implicit p: Parameters) extends HellaCacheReqInternal()(p) with HasCoreData

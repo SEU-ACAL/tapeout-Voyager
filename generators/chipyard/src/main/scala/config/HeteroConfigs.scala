@@ -55,7 +55,7 @@ class GemminiPrefetchConfig extends Config(
 // )
 
 class OurHeterSoCConfig extends Config(
-  new barf.WithHellaCachePrefetcher(Seq(5), barf.SingleStridedPrefetcherParams()) ++   // strided prefetcher, sits in front of the L1D$, monitors core requests to prefetching into the L1D$
+  new barf.WithHellaCachePrefetcher(Seq(1), barf.VecRunaheadParams()) ++   // strided prefetcher, sits in front of the L1D$, monitors core requests to prefetching into the L1D$
   new freechips.rocketchip.rocket.WithNBigNpuCores(1, nMSHRs = 16) ++ //independent Rocket for gemmini: hartid 5, with non-blocking L1D$
   new chipyard.config.WithMultiRoCCNpu ++
   new chipyard.config.WithMultiRoCCGemmini(5)(gemmini.GemminiConfigs.defaultConfig) ++ // put gemmini on hart-5(rocket)
