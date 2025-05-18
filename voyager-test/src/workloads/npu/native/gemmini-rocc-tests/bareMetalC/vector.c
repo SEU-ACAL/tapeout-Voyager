@@ -48,7 +48,7 @@ int main() {
 
   for (size_t i = 0; i < DIM; i++)
     for (size_t j = 0; j < DIM; j++){
-      A[i][j] = (j == 0);
+      A[i][j] = 2;
       B[i][j] = (j == 0);
     }
 
@@ -90,10 +90,11 @@ int main() {
   volatile uint64_t rs1_values[16], rs2_values[16];
   uint64_t waddr = DIM * 10;
   uint64_t opnum = 2; //进行 16 x opnum * opnum x 16 的矩阵乘法
+  uint64_t mode = 1;
   for (size_t i = 0; i < DIM; i++) {
     uint64_t op1 = i;
     uint64_t op2 = i + DIM;
-    rs1_values[i] = (opnum << 44)|(waddr << 30)|(op2 << 16) | (op1 << 2) | 0x3; // 0x3 = (op2_from_mem=1, op1_from_mem=1)
+    rs1_values[i] = (mode << 59)|(opnum << 44)|(waddr << 30)|(op2 << 16) | (op1 << 2) | 0x3; // 0x3 = (op2_from_mem=1, op1_from_mem=1)
     rs2_values[i] = (15 << 10) | ((i+16) << 5) | i;
   }
 
