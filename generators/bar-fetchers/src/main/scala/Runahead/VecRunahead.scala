@@ -10,7 +10,6 @@ import freechips.rocketchip.tilelink._
 import freechips.rocketchip.subsystem.{CacheBlockBytes}
 import freechips.rocketchip.rocket.{ExpandedInstruction}
 import freechips.rocketchip.rocket.InlineInstance
-import Util._
 
 case class VecRunaheadParams(
 

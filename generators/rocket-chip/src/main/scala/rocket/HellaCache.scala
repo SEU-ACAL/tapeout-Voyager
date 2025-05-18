@@ -130,11 +130,14 @@ class HellaCacheReqInternal(implicit p: Parameters) extends CoreBundle()(p) with
   val no_alloc = Bool()
   val no_xcpt = Bool()
   // add for stride prefetch
-  val pc = if (tileParams.dcache.get.usingStridePrefetch) Some(Input(UInt(vaddrBitsExtended.W))) else None
+  val pc = UInt(vaddrBitsExtended.W)
 }
 
 class HellaCacheReq(implicit p: Parameters) extends HellaCacheReqInternal()(p) with HasCoreData
 
+class HellaCacheReqWithPref(implicit p: Parameters) extends HellaCacheReq()(p) {
+  //val pc = if (tileParams.dcache.get.usingStridePrefetch) Some(Output(UInt(vaddrBitsExtended.W))) else None
+}
 class HellaCacheResp(implicit p: Parameters) extends CoreBundle()(p)
     with HasCoreMemOp
     with HasCoreData {
