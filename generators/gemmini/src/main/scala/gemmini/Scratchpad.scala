@@ -781,11 +781,18 @@ class Scratchpad[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, 
         bio.write.bits.addr := MuxCase(zero_writer_pixel_repeater.io.resp.bits.laddr.acc_row(),
           Seq(exwrite -> io.acc.write(i).bits.addr,
             (from_mvin_scale || from_mvin_scale_acc) -> dmaread_row))
+            
+        //新增ACC快写控制器
+        bio.write.bits.fast_write := false.B
+        bio.write.bits.end_fast_write := false.B
 
         when (exwrite) {
           bio.write.valid := true.B
           bio.write.bits.data := io.acc.write(i).bits.data
           bio.write.bits.mask := io.acc.write(i).bits.mask
+          //新增ACC快写控制器
+          bio.write.bits.fast_write := io.acc.write(i).bits.fast_write
+          bio.write.bits.end_fast_write := io.acc.write(i).bits.end_fast_write
         }.elsewhen (dmaread && !spad_last && !consecutive_write_block) {
           bio.write.valid := true.B
           bio.write.bits.data := Mux(from_mvin_scale,

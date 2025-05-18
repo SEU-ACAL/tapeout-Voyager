@@ -41,6 +41,8 @@ class AccumulatorWriteReq[T <: Data: Arithmetic](n: Int, t: Vec[Vec[T]]) extends
   val data = t.cloneType
   val acc = Bool()
   val mask = Vec(t.getWidth / 8, Bool()) // TODO Use aligned_to here
+  val fast_write = Bool()
+  val end_fast_write = Bool()
 }
 
 

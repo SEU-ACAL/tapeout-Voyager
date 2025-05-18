@@ -74,6 +74,7 @@ class Vec4PE() extends Module{
     alu_threads(i).io.in.bits.rob_id    := 0.U(5.W)
     alu_threads(i).io.in.bits.funct     := 0.U(8.W)
     alu_threads(i).io.in.bits.waddr     := 0.U(14.W)
+    alu_threads(i).io.in.bits.mode      := 0.U(1.W)
   }
 
   when(io.in.valid){
@@ -124,6 +125,7 @@ class Vec8PE extends Module{
     alu_threads(i).io.in.bits.rob_id    := 0.U(5.W)
     alu_threads(i).io.in.bits.funct     := 0.U(8.W)
     alu_threads(i).io.in.bits.waddr     := 0.U(14.W)
+    alu_threads(i).io.in.bits.mode      := 0.U(1.W)
   }
   when(io.in.valid){
     for (i <- 0 until 8){

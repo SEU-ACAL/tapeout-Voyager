@@ -90,59 +90,133 @@ class VecID[T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V]
     BitPat("b0100001") -> List(ZERO_VEC,ZERO_VEC,Y,Y,rs1(16,2),rs1(30,16),Y,Y,N,N,Y,N,N,N,N,N,N,N,N,N,N,N,rs2(5,0),DVECIDX,rs2(10,5),N,DTC_TYPE,rs2(14,10)), 
     BitPat("b0100010") -> List(ZERO_VEC,ZERO_VEC,Y,Y,rs1(16,2),rs1(30,16),Y,Y,N,N,Y,N,N,N,N,N,N,N,N,N,N,N,rs2(5,0),DVECIDX,rs2(10,5),N,DTC_TYPE,rs2(14,10)),
     ))
-  val counter = RegInit(0.U(12.W))
-  when(io.id_i.valid(0)){
-    when (functs(0) === INST_Vec_LoopMul_CMD_16) {
-      counter := Mux(counter ===  (rs1(58,44) << 4) - 1.U, 0.U(5.W), counter + 1.U )
-    }.elsewhen(functs(0) === INST_Vec_LoopMul_CMD_4){
-      counter := Mux(counter === 3.U, 0.U(5.W), counter + 1.U )
-    }.elsewhen(functs(0) === INST_Vec_LoopMul_CMD_8){
-      counter := Mux(counter === 7.U, 0.U(5.W), counter + 1.U )
+
+  when(rs1(59) === 0.U){
+    val counter = RegInit(0.U(12.W))
+    when(io.id_i.valid(0)){
+      when (functs(0) === INST_Vec_LoopMul_CMD_16) {
+        counter := Mux(counter ===  (rs1(58,44) << 4) - 1.U, 0.U(5.W), counter + 1.U )
+      }.elsewhen(functs(0) === INST_Vec_LoopMul_CMD_4){
+        counter := Mux(counter === 3.U, 0.U(5.W), counter + 1.U )
+      }.elsewhen(functs(0) === INST_Vec_LoopMul_CMD_8){
+        counter := Mux(counter === 7.U, 0.U(5.W), counter + 1.U )
+      }
+    }
+    val complete = (functs(0) === INST_Vec_LoopMul_CMD_16 && counter === (rs1(58,44) << 4) - 1.U ) ||
+              (functs(0) === INST_Vec_LoopMul_CMD_4 && counter === 3.U) ||
+              (functs(0) === INST_Vec_LoopMul_CMD_8 && counter === 7.U)
+  // -----------------------------------------------------------------------------
+  // id<>iss
+  // -----------------------------------------------------------------------------
+    io.id_iss_o.valid              := io.id_i.valid(0)
+    io.id_iss_o.bits.rob_id        := rob_id
+    io.id_iss_o.bits.op1           := decode_list(OP1.id)
+    io.id_iss_o.bits.op2           := decode_list(OP2.id)
+    io.id_iss_o.bits.op1_from_mem  := decode_list(OP1_from_MEM.id)
+    io.id_iss_o.bits.op2_from_mem  := decode_list(OP2_from_MEM.id)
+    io.id_iss_o.bits.config        :=
+      (WR_OP1.id to WR_ACC.id).foldLeft(0.U)((acc, id) => Cat(decode_list(id).asUInt, acc))(13, 1)
+    io.id_iss_o.bits.thread_id     := counter(3,0)
+    io.id_iss_o.bits.iteration     := decode_list(ITER.id)
+    io.id_iss_o.bits.funct         := functs(0)
+    io.id_iss_o.bits.waddr         := rs1(44,30)
+    io.id_iss_o.bits.mode          := rs1(59)
+
+  // -----------------------------------------------------------------------------
+  // id<>mem
+  // -----------------------------------------------------------------------------
+    val need_mem_access = 
+      decode_list(OP1_from_MEM.id).asInstanceOf[Bool] || decode_list(OP2_from_MEM.id).asInstanceOf[Bool]
+    
+    // id->lsu 发送 load op 的请求
+    io.id_lsu_o.valid             := need_mem_access && io.id_i.valid(0) 
+    io.id_lsu_o.bits.op1_from_mem := Mux(need_mem_access, decode_list(OP1_from_MEM.id), false.B)
+    io.id_lsu_o.bits.op2_from_mem := Mux(need_mem_access, decode_list(OP2_from_MEM.id), false.B)
+    io.id_lsu_o.bits.op1_addr     := Mux(need_mem_access, (decode_list(OP1_ADDR.id).asUInt + counter), 0.U(14.W))
+    io.id_lsu_o.bits.op2_addr     := Mux(need_mem_access, (decode_list(OP2_ADDR.id).asUInt + counter), 0.U(14.W))
+    io.id_lsu_o.bits.is_acc       := Mux(need_mem_access, decode_list(WR_ACC.id), false.B)
+
+    // lsu->id 接收 load op 完成的响应
+
+
+  // -----------------------------------------------------------------------------
+  // id<>top
+  // -----------------------------------------------------------------------------
+    // 当 load op 完成时，pop 一条指令
+    io.id_o.pop                    := Mux(complete, 0.U.bitSet(0.U, true.B), 0.U)
+    io.id_o.completed.bits         := Mux(complete, rob_id, 0.U)
+    io.id_o.completed.valid        := complete
+  }.otherwise{
+    val counter = RegInit(0.U(12.W))
+    val clear_acc :: fast_write :: end_fast_write :: read_acc :: Nil = Enum(4)
+    val state = RegInit(clear_acc)
+    val complete = WireInit(false.B)
+    when(io.id_i.valid(0) && functs(0) === INST_Vec_LoopMul_CMD_16){
+    switch(state){
+      is(clear_acc){
+          state := fast_write
+        }
+      is(fast_write){
+        counter := counter + 1.U
+        when(counter === 15.U){
+          counter := 0.U
+          state := end_fast_write
+        }
+      }
+      is(end_fast_write){
+        state := read_acc
+      }
+      is(read_acc){
+        counter := counter + 1.U
+        when(counter === 15.U){
+          counter := 0.U
+          state := clear_acc
+          complete := true.B
+        }
+      }
     }
   }
-  val complete = (functs(0) === INST_Vec_LoopMul_CMD_16 && counter === (rs1(58,44) << 4) - 1.U ) ||
-            (functs(0) === INST_Vec_LoopMul_CMD_4 && counter === 3.U) ||
-            (functs(0) === INST_Vec_LoopMul_CMD_8 && counter === 7.U)
-// -----------------------------------------------------------------------------
-// id<>iss
-// -----------------------------------------------------------------------------
-  io.id_iss_o.valid              := io.id_i.valid(0)
-  io.id_iss_o.bits.rob_id        := rob_id
-  io.id_iss_o.bits.op1           := decode_list(OP1.id)
-  io.id_iss_o.bits.op2           := decode_list(OP2.id)
-  io.id_iss_o.bits.op1_from_mem  := decode_list(OP1_from_MEM.id)
-  io.id_iss_o.bits.op2_from_mem  := decode_list(OP2_from_MEM.id)
-  io.id_iss_o.bits.config        :=
-    (WR_OP1.id to WR_ACC.id).foldLeft(0.U)((acc, id) => Cat(decode_list(id).asUInt, acc))(13, 1)
-  io.id_iss_o.bits.thread_id     := counter(3,0)
-  io.id_iss_o.bits.iteration     := decode_list(ITER.id)
-  io.id_iss_o.bits.funct         := functs(0)
-  io.id_iss_o.bits.waddr         := rs1(44,30)
+  // -----------------------------------------------------------------------------
+  // id<>iss
+  // -----------------------------------------------------------------------------
+    io.id_iss_o.valid              := io.id_i.valid(0)
+    io.id_iss_o.bits.rob_id        := rob_id
+    io.id_iss_o.bits.op1           := decode_list(OP1.id)
+    io.id_iss_o.bits.op2           := decode_list(OP2.id)
+    io.id_iss_o.bits.op1_from_mem  := decode_list(OP1_from_MEM.id)
+    io.id_iss_o.bits.op2_from_mem  := decode_list(OP2_from_MEM.id)
+    io.id_iss_o.bits.config        := state
+    io.id_iss_o.bits.thread_id     := counter(3,0)
+    io.id_iss_o.bits.iteration     := decode_list(ITER.id)
+    io.id_iss_o.bits.funct         := functs(0)
+    io.id_iss_o.bits.waddr         := rs1(44,30)
+    io.id_iss_o.bits.mode          := rs1(59)
 
-// -----------------------------------------------------------------------------
-// id<>mem
-// -----------------------------------------------------------------------------
-  val need_mem_access = 
-    decode_list(OP1_from_MEM.id).asInstanceOf[Bool] || decode_list(OP2_from_MEM.id).asInstanceOf[Bool]
-  
-  // id->lsu 发送 load op 的请求
-  io.id_lsu_o.valid             := need_mem_access && io.id_i.valid(0) 
-  io.id_lsu_o.bits.op1_from_mem := Mux(need_mem_access, decode_list(OP1_from_MEM.id), false.B)
-  io.id_lsu_o.bits.op2_from_mem := Mux(need_mem_access, decode_list(OP2_from_MEM.id), false.B)
-  io.id_lsu_o.bits.op1_addr     := Mux(need_mem_access, (decode_list(OP1_ADDR.id).asUInt + counter), 0.U(14.W))
-  io.id_lsu_o.bits.op2_addr     := Mux(need_mem_access, (decode_list(OP2_ADDR.id).asUInt + counter), 0.U(14.W))
-  io.id_lsu_o.bits.is_acc       := Mux(need_mem_access, decode_list(WR_ACC.id), false.B)
+  // -----------------------------------------------------------------------------
+  // id<>mem
+  // -----------------------------------------------------------------------------
+    val need_mem_access = 
+      decode_list(OP1_from_MEM.id).asInstanceOf[Bool] || decode_list(OP2_from_MEM.id).asInstanceOf[Bool]
+    
+    // id->lsu 发送 load op 的请求
+    io.id_lsu_o.valid             := state === fast_write 
+    io.id_lsu_o.bits.op1_from_mem := Mux(need_mem_access, decode_list(OP1_from_MEM.id), false.B)
+    io.id_lsu_o.bits.op2_from_mem := Mux(need_mem_access, decode_list(OP2_from_MEM.id), false.B)
+    io.id_lsu_o.bits.op1_addr     := Mux(need_mem_access, (decode_list(OP1_ADDR.id).asUInt + counter), 0.U(14.W))
+    io.id_lsu_o.bits.op2_addr     := Mux(need_mem_access, (decode_list(OP2_ADDR.id).asUInt + counter), 0.U(14.W))
+    io.id_lsu_o.bits.is_acc       := Mux(need_mem_access, decode_list(WR_ACC.id), false.B)
 
-  // lsu->id 接收 load op 完成的响应
+    // lsu->id 接收 load op 完成的响应
 
 
-// -----------------------------------------------------------------------------
-// id<>top
-// -----------------------------------------------------------------------------
-  // 当 load op 完成时，pop 一条指令
-  io.id_o.pop                    := Mux(complete, 0.U.bitSet(0.U, true.B), 0.U)
-  io.id_o.completed.bits         := Mux(complete, rob_id, 0.U)
-  io.id_o.completed.valid        := complete
+  // -----------------------------------------------------------------------------
+  // id<>top
+  // -----------------------------------------------------------------------------
+    // 当 load op 完成时，pop 一条指令
+    io.id_o.pop                    := Mux(complete, 0.U.bitSet(0.U, true.B), 0.U)
+    io.id_o.completed.bits         := Mux(complete, rob_id, 0.U)
+    io.id_o.completed.valid        := complete
+  }
 }
 
 

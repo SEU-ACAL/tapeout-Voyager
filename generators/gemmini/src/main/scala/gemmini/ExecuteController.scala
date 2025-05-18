@@ -1039,7 +1039,7 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
     PerfCounter(ex_preload_haz_cycle, "ex_preload_haz_cycle", "cycles during which the execute controller is stalling preloads due to hazards")
     PerfCounter(ex_mulpre_haz_cycle, "ex_mulpre_haz_cycle", "cycles during which the execute controller is stalling matmuls due to hazards")
   }
-
+  
 // VecUnit 
   val VecUnit = Module(new VecUnit(xLen, tagWidth, config, ex_queue_length, cmd_q_heads))
   //cmd
@@ -1059,6 +1059,8 @@ class ExecuteController[T <: Data, U <: Data, V <: Data](xLen: Int, tagWidth: In
       VecUnit.io.acc.read_resp(i).valid := io.acc.read_resp(i).valid
       VecUnit.io.acc.read_resp(i).bits <> io.acc.read_resp(i).bits
       VecUnit.io.acc.write(i).ready := io.acc.write(i).ready
+      io.acc.write(i).bits.fast_write := false.B
+      io.acc.write(i).bits.end_fast_write := false.B
   }
 
   when (VectorEnable === 1.U) {

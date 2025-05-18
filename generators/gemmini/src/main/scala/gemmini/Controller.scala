@@ -190,7 +190,9 @@ class GemminiModule[T <: Data: Arithmetic, U <: Data, V <: Data]
   val load_controller = withClock (gated_clock) { Module(new LoadController(outer.config, coreMaxAddrBits, local_addr_t)) }
   val store_controller = withClock (gated_clock) { Module(new StoreController(outer.config, coreMaxAddrBits, local_addr_t)) }
   val ex_controller = withClock (gated_clock) { Module(new ExecuteController(xLen, tagWidth, outer.config)) }
-
+  //新增ACC快写控制器
+  val acc_write_controller = withClock (gated_clock) { Module(new ScratchpadVecController(xLen, tagWidth, outer.config)) }
+  
   counters.io.event_io.collect(load_controller.io.counter)
   counters.io.event_io.collect(store_controller.io.counter)
   counters.io.event_io.collect(ex_controller.io.counter)
@@ -252,9 +254,21 @@ class GemminiModule[T <: Data: Arithmetic, U <: Data, V <: Data]
   spad.module.io.dma.write <> store_controller.io.dma
   ex_controller.io.srams.read <> spad.module.io.srams.read
   ex_controller.io.srams.write <> spad.module.io.srams.write
+  /*
   spad.module.io.acc.read_req <> ex_controller.io.acc.read_req
   ex_controller.io.acc.read_resp <> spad.module.io.acc.read_resp
   ex_controller.io.acc.write <> spad.module.io.acc.write
+  */
+  //连接acc_write_controller和ex_controller
+  acc_write_controller.io.acc_in.read_req <> ex_controller.io.acc.read_req
+  ex_controller.io.acc.read_resp <> acc_write_controller.io.acc_in.read_resp
+  acc_write_controller.io.acc_in.write <> ex_controller.io.acc.write
+
+  //连接acc_write_controller和spad
+  spad.module.io.acc.read_req <> acc_write_controller.io.acc_out.read_req 
+  acc_write_controller.io.acc_out.read_resp <> spad.module.io.acc.read_resp 
+  spad.module.io.acc.write <> acc_write_controller.io.acc_out.write
+  
 
   // Im2Col unit
   val im2col = withClock (gated_clock) { Module(new Im2Col(outer.config)) }
