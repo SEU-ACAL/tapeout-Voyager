@@ -24,7 +24,10 @@ import freechips.rocketchip.util.{TraceCoreParams, TraceCoreInterface}
 import freechips.rocketchip.resources.{BigIntToProperty, IntToProperty, StringToProperty}
 import freechips.rocketchip.util.BooleanToAugmentedBoolean
 import freechips.rocketchip.npu.BuildRoCCNpu
-
+import freechips.rocketchip.meek.BuildRoCCMEEK
+//===== GuardianCouncil Function: Start ====//
+import freechips.rocketchip.guardiancouncil._
+//===== GuardianCouncil Function: End   ====//
 case object TileVisibilityNodeKey extends Field[TLEphemeralNode]
 case object TileKey extends Field[TileParams]
 case object LookupByHartId extends Field[LookupByHartIdImpl]
@@ -57,7 +60,7 @@ trait HasNonDiplomaticTileParameters {
   def usingSupervisor: Boolean = tileParams.core.hasSupervisorMode
   def usingHypervisor: Boolean = usingVM && tileParams.core.useHypervisor
   def usingDebug: Boolean = tileParams.core.useDebug
-  def usingRoCC: Boolean = !p(BuildRoCC).isEmpty || !p(BuildRoCCNpu).isEmpty
+  def usingRoCC: Boolean = !p(BuildRoCC).isEmpty || !p(BuildRoCCNpu).isEmpty|| !p(BuildRoCCMEEK).isEmpty
   def usingBTB: Boolean = tileParams.btb.isDefined && tileParams.btb.get.nEntries > 0
   def usingPTW: Boolean = usingVM
   def usingDataScratchpad: Boolean = tileParams.dcache.flatMap(_.scratch).isDefined
@@ -95,7 +98,7 @@ trait HasNonDiplomaticTileParameters {
 
   // TODO make HellaCacheIO diplomatic and remove this brittle collection of hacks
   //                  Core   PTW                DTIM                    coprocessors           
-  def dcacheArbPorts = 1 + usingVM.toInt + usingDataScratchpad.toInt + p(BuildRoCC).size + p(BuildRoCCNpu).size + (tileParams.core.useVector && tileParams.core.vectorUseDCache).toInt
+  def dcacheArbPorts = 1 + usingVM.toInt + usingDataScratchpad.toInt + p(BuildRoCC).size + p(BuildRoCCNpu).size +p(BuildRoCCMEEK).size+(tileParams.core.useVector && tileParams.core.vectorUseDCache).toInt
 
   // TODO merge with isaString in CSR.scala
   def isaDTS: String = {
@@ -249,7 +252,61 @@ abstract class BaseTile private (crossing: ClockCrossingType, q: Parameters)
 
   /** Node for broadcasting a reset vector to diplomatic consumers within the tile. */
   val resetVectorNexusNode: BundleBridgeNode[UInt] = BundleBroadcast[UInt]()
+//===== GuardianCouncil Function: Start ====//
+  val ic_counter_SRNode           = BundleBridgeSource[UInt](Some(() => UInt((16*GH_GlobalParams.GH_NUM_CORES).W)))
+  val debug_maincore_status_SRNode= BundleBridgeSource[UInt](Some(() => UInt(4.W)))
+  // val big_complete_ack_SRNode    = BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_NUM_CORES-1).W)))
 
+  val ic_counter_SKNode           = BundleBridgeSink[UInt](Some(() => UInt(20.W)))
+  val clear_ic_status_SRNode      = BundleBridgeSource[UInt](Some(() => UInt(1.W)))
+  val clear_ic_status_tomainSKNode= BundleBridgeSink[UInt](Some(() => UInt(GH_GlobalParams.GH_NUM_CORES.W)))
+  val icsl_naSKNode               = BundleBridgeSink[UInt](Some(() => UInt(GH_GlobalParams.GH_NUM_CORES.W)))
+  // val icsl_ack_tocheckerSKNode    = BundleBridgeSink[Bool](Some(() => Bool()))
+  
+  // val big_switch_tocheckerSKNode    = BundleBridgeSink[Bool](Some(() => Bool()))
+  val cdc_empty_tocheckerSKNode   = BundleBridgeSink[Bool](Some(() => Bool()))
+
+  // val ghm_agg_core_id_out_SRNode  = BundleBridgeSource[UInt](Some(() => UInt(16.W)))
+  val ght_packet_out_SRNode       = BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_TOTAL_PACKETS*GH_GlobalParams.GH_WIDITH_PACKETS).W)))
+  val core_r_arfs_SRNode          = BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_WIDITH_PACKETS+8+8).W)))
+  val ght_packet_dest_SRNode      = BundleBridgeSource[UInt](Some(() => UInt(32.W)))
+  val ght_status_out_SRNode       = BundleBridgeSource[UInt](Some(() => UInt(32.W)))
+  println("#### Jessica #### Generating GHT **Nodes** on the tile, HartID:", tileParams.tileId, "...!!")
+  val ghe_packet_in_SKNode        = BundleBridgeSink[UInt](Some(() => UInt((GH_GlobalParams.GH_TOTAL_PACKETS*GH_GlobalParams.GH_WIDITH_PACKETS+1).W)))
+  val core_r_arfs_c_SKNode        = BundleBridgeSink[UInt](Some(() => UInt((GH_GlobalParams.GH_WIDITH_PACKETS+8).W)))
+  val ghe_status_in_SKNode        = BundleBridgeSink[UInt](Some(() => UInt(32.W)))
+  val ghe_event_out_SRNode        = BundleBridgeSource[UInt](Some(() => UInt(6.W)))
+
+  val clock_SRNode                = BundleBridgeSource[Clock](Some(() => Clock()))
+  // val icsl_ack_SRNode             = BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_NUM_CORES-1).W)))
+  
+  // val if_big_complete_SRNode      = BundleBridgeSource[Bool](Some(() => Bool())) 
+  // val big_complete_SKNode         = BundleBridgeSink[Bool](Some(() => Bool()))
+  // val big_checker_switch_SRNode     = BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_NUM_CORES-1).W)))
+  val reset_SRNode                = BundleBridgeSource[Bool](Some(() => Bool()))
+  val ghe_revent_out_SRNode       = BundleBridgeSource[UInt](Some(() => UInt(1.W)))
+
+  println("#### Jessica #### Generating GHE **Nodes** on the tile, HartID:", tileParams.tileId, "...!!")
+  val bigcore_hang_in_SKNode      = BundleBridgeSink[UInt](Some(() => UInt(1.W)))
+  val bigcore_comp_in_SKNode      = BundleBridgeSink[UInt](Some(() => UInt(3.W)))
+  val debug_bp_in_SKNode          = BundleBridgeSink[UInt](Some(() => UInt(2.W)))
+  // val if_big_complete_req_SKNode  = BundleBridgeSink[UInt](Some(() => UInt((GH_GlobalParams.GH_NUM_CORES-1).W)))
+  // val agg_packet_out_SRNode       = BundleBridgeSource[UInt](Some(() => UInt(128.W)))
+  // val report_fi_detection_SRNode  = BundleBridgeSource[UInt](Some(() => UInt(57.W)))
+  // val report_fi_detection_in_SKNode = BundleBridgeSink[UInt](Some(() => UInt(((GH_GlobalParams.GH_NUM_CORES - 1) * 57).W)))
+  // val agg_buffer_full_in_SKNode   = BundleBridgeSink[UInt](Some(() => UInt(1.W)))
+  // val agg_core_status_SRNode      = BundleBridgeSource[UInt](Some(() => UInt(2.W)))
+
+  // val ght_sch_na_out_SRNode       = BundleBridgeSource[UInt](Some(() => UInt(1.W)))
+  // val ghe_sch_refresh_in_SKNode   = BundleBridgeSink[UInt](Some(() => UInt(1.W)))
+
+  // val sch_na_inSKNode             = BundleBridgeSink[UInt](Some(() => UInt(16.W)))
+  // val ght_sch_dorefresh_SRNode    = BundleBridgeSource[UInt](Some(() => UInt(32.W)))
+  
+  val debug_gcounter_SKNode       = BundleBridgeSink[UInt](Some(() => UInt(64.W)))
+
+  // val agg_packet_in_SKNode        = BundleBridgeSink[UInt](Some(() => UInt(128.W)))
+  //===== GuardianCouncil Function: End ====//
   /** Node for consuming the reset vector input in tile-layer Chisel logic.
     *
     * Its width is sized by looking at the size of the address space visible

@@ -231,6 +231,7 @@ class RocketTileModuleImp(outer: RocketTile) extends BaseTileModuleImp(outer)
   val h = dcachePorts.size
   val c = core.dcacheArbPorts
   val o = outer.nDCachePorts
+  println(s"dcachePorts: $h ")
   require(h == c, s"port list size was $h, core expected $c")
   require(h == o, s"port list size was $h, outer counted $o")
   // TODO figure out how to move the below into their respective mix-ins

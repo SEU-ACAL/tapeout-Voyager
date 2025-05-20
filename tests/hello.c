@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <riscv-pk/encoding.h>
 #include "marchid.h"
-#include <stdint.h>
 
 int main(void) {
   uint64_t marchid = read_csr(marchid);

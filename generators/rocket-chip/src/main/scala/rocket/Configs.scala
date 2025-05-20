@@ -6,12 +6,94 @@ import org.chipsalliance.cde.config._
 import org.chipsalliance.diplomacy.lazymodule._
 
 import freechips.rocketchip.prci.{SynchronousCrossing, AsynchronousCrossing, RationalCrossing, ClockCrossingType}
-import freechips.rocketchip.subsystem.{TilesLocated, NumTiles, HierarchicalLocation, RocketCrossingParams, SystemBusKey, CacheBlockBytes, RocketTileAttachParams, RocketTileNpuAttachParams, InSubsystem, InCluster, HierarchicalElementMasterPortParams, HierarchicalElementSlavePortParams, CBUS, CCBUS, ClustersLocated, TileAttachConfig, CloneTileAttachParams}
+import freechips.rocketchip.subsystem.{TilesLocated, NumTiles, HierarchicalLocation, RocketCrossingParams, SystemBusKey, CacheBlockBytes, RocketTileAttachParams,RocketTileMeekAttachParams, RocketTileNpuAttachParams, InSubsystem, InCluster, HierarchicalElementMasterPortParams, HierarchicalElementSlavePortParams, CBUS, CCBUS, ClustersLocated, TileAttachConfig, CloneTileAttachParams}
 import freechips.rocketchip.tile.{RocketTileParams, RocketTileBoundaryBufferParams, FPUParams}
 import scala.reflect.ClassTag
 
 import freechips.rocketchip.npu.RocketTileNpuParams
+import freechips.rocketchip.meek.RocketTileMeekParams
+//==========================================//
+//===== GuardianCouncil Function: Start ====//
 
+
+class WithNGCCheckers(n: Int, overrideIdOffset: Option[Int] = None,crossing: RocketCrossingParams = RocketCrossingParams()) extends Config((site, here, up) => {
+
+  case TilesLocated(InSubsystem) => {
+    val prev = up(TilesLocated(InSubsystem), site)
+    val idOffset = overrideIdOffset.getOrElse(prev.size)
+    val checker = RocketTileMeekParams(
+      core = RocketCoreParams(useDebug = false,
+      mulDiv = Some(MulDivParams(
+        mulUnroll = 8,
+        mulEarlyOut = true,
+        divEarlyOut = true))),
+      dcache = Some(DCacheParams(
+        rowBits = site(SystemBusKey).beatBits,
+        nSets = 32,
+        nWays = 2,
+        nTLBSets = 1,
+        nTLBWays = 4,
+        nMSHRs = 0,
+        blockBytes = site(CacheBlockBytes))),
+      icache = Some(ICacheParams(
+        rowBits = site(SystemBusKey).beatBits,
+        nSets = 64,
+        nWays = 8,
+        nTLBSets = 1,
+        nTLBWays = 32,
+        blockBytes = site(CacheBlockBytes))))
+    List.tabulate(n)(i => RocketTileMeekAttachParams(
+      checker.copy(tileId = i + idOffset),
+      crossing
+    )) ++ prev
+  }
+})
+class WithMEEKCores(
+  n: Int,
+  location: HierarchicalLocation,
+  crossing: RocketCrossingParams,
+) extends Config((site, here, up) => {
+  case TilesLocated(`location`) => {
+    val prev = up(TilesLocated(`location`), site)
+    val idOffset = up(NumTiles)
+    val checker = RocketTileMeekParams(
+      core = RocketCoreParams(useDebug = false,
+      mulDiv = Some(MulDivParams(
+        mulUnroll = 8,
+        mulEarlyOut = true,
+        divEarlyOut = true))),
+      dcache = Some(DCacheParams(
+        rowBits = site(SystemBusKey).beatBits,
+        nSets = 32,
+        nWays = 2,
+        nTLBSets = 1,
+        nTLBWays = 4,
+        nMSHRs = 0,
+        blockBytes = site(CacheBlockBytes))),
+      icache = Some(ICacheParams(
+        rowBits = site(SystemBusKey).beatBits,
+        nSets = 64,
+        nWays = 8,
+        nTLBSets = 1,
+        nTLBWays = 32,
+        blockBytes = site(CacheBlockBytes))))
+    List.tabulate(n)(i => RocketTileMeekAttachParams(
+      checker.copy(tileId = i + idOffset),
+      crossing
+    )) ++ prev
+  }
+  case NumTiles => up(NumTiles) + n
+}) {
+  def this(n: Int, location: HierarchicalLocation = InSubsystem) = this(n, location, RocketCrossingParams(
+    master = HierarchicalElementMasterPortParams.locationDefault(location),
+    slave = HierarchicalElementSlavePortParams.locationDefault(location),
+    mmioBaseAddressPrefixWhere = location match {
+      case InSubsystem => CBUS
+      case InCluster(clusterId) => CCBUS(clusterId)
+    }
+  ))
+}
+//===== GuardianCouncil Function: End ======//
 // All the user-level bells and whistles
 class WithNHugeCores(
   n: Int,
@@ -287,6 +369,7 @@ class With1TinyCore extends Config((site, here, up) => {
 })
 
 class RocketTileAttachConfig(f: RocketTileAttachParams => RocketTileAttachParams) extends TileAttachConfig[RocketTileAttachParams](f)
+class RocketTileMEEKAttachConfig(f: RocketTileMeekAttachParams => RocketTileMeekAttachParams) extends TileAttachConfig[RocketTileMeekAttachParams](f)
 
 class RocketTileConfig(f: RocketTileParams => RocketTileParams) extends RocketTileAttachConfig(tp => tp.copy(
   tileParams = f(tp.tileParams)
@@ -295,7 +378,9 @@ class RocketTileConfig(f: RocketTileParams => RocketTileParams) extends RocketTi
 class RocketCrossingConfig(f: RocketCrossingParams => RocketCrossingParams) extends RocketTileAttachConfig(tp => tp.copy(
   crossingParams = f(tp.crossingParams)
 ))
-
+class RocketMEEKCrossingConfig(f: RocketCrossingParams => RocketCrossingParams) extends RocketTileMEEKAttachConfig(tp => tp.copy(
+  crossingParams = f(tp.crossingParams)
+))
 class RocketCoreConfig(f: RocketCoreParams => RocketCoreParams) extends RocketTileConfig(tp => tp.copy(
   core = f(tp.core)
 ))
@@ -392,12 +477,13 @@ class WithNoBtb      extends RocketTileConfig(_.copy(btb = None))
 
 // Tile CDC configs
 class WithCDC(crossingType: ClockCrossingType = SynchronousCrossing()) extends RocketCrossingConfig(_.copy(crossingType = crossingType))
+class WithMEEKCDC(crossingType: ClockCrossingType = SynchronousCrossing()) extends RocketMEEKCrossingConfig(_.copy(crossingType = crossingType))
 class WithSeperateClockReset                                           extends RocketCrossingConfig(_.copy(forceSeparateClockReset = true))
 class WithSynchronousCDCs                                              extends WithCDC(SynchronousCrossing())
 class WithAsynchronousCDCs(depth: Int, sync: Int)                      extends WithCDC(AsynchronousCrossing(depth, sync))
 class WithRationalCDCs                                                 extends WithCDC(RationalCrossing())
-
-
+class WithMEEKAsynchronousCDCs(depth: Int, sync: Int)                  extends WithMEEKCDC(AsynchronousCrossing(depth, sync))
+class WithMEEKRationalCDCs                    extends WithMEEKCDC(RationalCrossing())
 
 class WithCloneRocketTiles(
   n: Int = 1,

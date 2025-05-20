@@ -39,7 +39,7 @@ import freechips.rocketchip.rocket.{Causes, PRV, CSR, CSRs, TracedInstruction}
 import freechips.rocketchip.tile.{HasFPUParameters, TraceBundle}
 import freechips.rocketchip.util.{Str, UIntIsOneOf, CoreMonitorBundle, PlusArg}
 import freechips.rocketchip.devices.tilelink.{PLICConsts, CLINTConsts}
-
+import freechips.rocketchip.rocket._
 import boom.v4.common._
 import boom.v4.ifu.{GlobalHistory, HasBoomFrontendParameters}
 import boom.v4.util._

@@ -13,7 +13,11 @@ import freechips.rocketchip.tilelink._
 import freechips.rocketchip.devices.tilelink._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.util.{DontTouch}
-
+//==========================================//
+//===== GuardianCouncil Function: Start ====//
+import freechips.rocketchip.guardiancouncil._
+//===== GuardianCouncil Function: End ======//
+//==========================================//
 // ---------------------------------------------------------------------
 // Base system that uses the debug test module (dtm) to bringup the core
 // ---------------------------------------------------------------------
@@ -31,7 +35,13 @@ class ChipyardSystem(implicit p: Parameters) extends ChipyardSubsystem
 
   val bootROM  = p(BootROMLocated(location)).map { BootROM.attach(_, this, CBUS) }
   val maskROMs = p(MaskROMLocated(location)).map { MaskROM.attach(_, this, CBUS) }
+  //===== GuardianCouncil Function: Start ====//
+  //需要去读到in_clock 和out_clock ,并且不应该去连接到SBUS
 
+  val ghm       = p(GHMCoreLocated(location)).map { GHMCore.attach(_, this,SBUS) }
+
+  // val gagg     = p(GAGGCoreLocated(location)).map { GAGGCore.attach(_, this, GBUS) }
+  //===== GuardianCouncil Function: End ======//
   override lazy val module = new ChipyardSystemModule(this)
 }
 

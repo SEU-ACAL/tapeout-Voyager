@@ -36,7 +36,13 @@ class WithTileFrequency(fMHz: Double, hartId: Option[Int] = None) extends ClockN
     }
   },
   fMHz)
-
+class WithMEEKRocketFrequency(fMHz: Double, hartId: Option[Int] = None) extends ClockNameContainsAssignment({
+    hartId match {
+      case Some(id) => s"rocketMEEKtile_$id"
+      case None => "tile"
+    }
+  },
+  fMHz)
 class BusFrequencyAssignment[T <: HasTLBusParams](re: Regex, key: Field[T]) extends Config((site, here, up) => {
   case ClockFrequencyAssignersKey => up(ClockFrequencyAssignersKey, site) ++
     Seq((cName: String) => site(key).dtsFrequency.flatMap { f =>

@@ -6,7 +6,8 @@ import org.chipsalliance.cde.config.{Field, Parameters, Config}
 import freechips.rocketchip.tile._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.npu._
-
+import freechips.rocketchip.meek._
+import freechips.rocketchip.guardiancouncil._
 import gemmini._
 
 import chipyard.{TestSuitesKey, TestSuiteHelper}
@@ -16,6 +17,7 @@ import chipyard.{TestSuitesKey, TestSuiteHelper}
  */
 case object MultiRoCCKey extends Field[Map[Int, Seq[Parameters => LazyRoCC]]](Map.empty[Int, Seq[Parameters => LazyRoCC]])
 case object MultiRoCCNpuKey extends Field[Map[Int, Seq[Parameters => LazyRoCCNpu]]](Map.empty[Int, Seq[Parameters => LazyRoCCNpu]])
+case object MultiRoCCMEEKKey extends Field[Map[Int, Seq[Parameters => LazyRoCCMEEK]]](Map.empty[Int, Seq[Parameters => LazyRoCCMEEK]])
 /**
  * Config fragment to enable different RoCCs based on the tileId
  */
@@ -27,6 +29,9 @@ class WithMultiRoCCNpu extends Config((site, here, up) => {
   case BuildRoCCNpu => site(MultiRoCCNpuKey).getOrElse(site(TileKey).tileId, Nil)
 })
 
+class WithMultiRoCCMEEK extends Config((site, here, up) => {
+  case BuildRoCCMEEK => site(MultiRoCCMEEKKey).getOrElse(site(TileKey).tileId, Nil)
+})
 /**
  * Assigns what was previously in the BuildRoCC key to specific harts with MultiRoCCKey
  * Must be paired with WithMultiRoCC
@@ -71,6 +76,18 @@ class WithMultiSingleRoCCExample(harts: Int*) extends Config(
         (i -> Seq((p: Parameters) => {
           val accumulator = LazyModule(new AccumulatorExample(OpcodeSet.custom0, n = 4)(p))
         accumulator
+        }))
+      }
+    }
+  })
+)
+class WithMultiSingleRoCCGHE(harts: Int*) extends Config(
+  new Config((site, here, up) => {
+    case MultiRoCCMEEKKey => {
+      up(MultiRoCCMEEKKey, site) ++ harts.distinct.map{ i =>
+        (i -> Seq((p: Parameters) => {
+          val ghe = LazyModule(new GHE(OpcodeSet.custom1)(p))
+          ghe
         }))
       }
     }

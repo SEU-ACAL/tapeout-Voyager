@@ -7,7 +7,9 @@ import chisel3.util.isPow2
 import org.chipsalliance.cde.config._
 import freechips.rocketchip.rocket._
 import freechips.rocketchip.util._
-
+//===== GuardianCouncil Function: Start ====//
+import freechips.rocketchip.guardiancouncil._
+//===== GuardianCouncil Function: End   ====//
 case object MaxHartIdBits extends Field[Int]
 
 // These parameters can be varied per-core

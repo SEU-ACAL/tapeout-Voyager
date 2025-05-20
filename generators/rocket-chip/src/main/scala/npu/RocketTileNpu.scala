@@ -46,7 +46,7 @@ case class RocketTileNpuParams(
   ) extends InstantiableTileParams[RocketTileNpu] {
   require(icache.isDefined)
   require(dcache.isDefined)
-  val baseName = "rockettileNpu"
+  val baseName = "tile"
   val uniqueName = s"${baseName}_$tileId"
   def instantiate(crossing: HierarchicalElementCrossingParamsLike, lookup: LookupByHartIdImpl)(implicit p: Parameters): RocketTileNpu = {
     new RocketTileNpu(this, crossing, lookup)

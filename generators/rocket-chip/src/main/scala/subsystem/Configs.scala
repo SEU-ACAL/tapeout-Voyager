@@ -26,7 +26,11 @@ import freechips.rocketchip.util.ClockGateModelFile
 import scala.reflect.ClassTag
 
 case object MaxXLen extends Field[Int]
-
+//==========================================//
+//===== GuardianCouncil Function: Start ====//
+import freechips.rocketchip.guardiancouncil._
+//===== GuardianCouncil Function: End ======//
+//==========================================//
 class BaseSubsystemConfig extends Config ((site, here, up) => {
   // Tile parameters
   case MaxXLen => (site(PossibleTileLocations).flatMap(loc => site(TilesLocated(loc)))
@@ -53,6 +57,13 @@ class BaseSubsystemConfig extends Config ((site, here, up) => {
   case FrontBusKey => FrontBusParams(
     beatBytes = 8,
     blockBytes = site(CacheBlockBytes))
+  //===== GuardianCouncil Function: Start ====//
+  // ((site(TilesLocated(InSubsystem)).map(_.tileParams.hartId).max+1) gives the number of tiles
+  // -1 (big core) indicates the number of little cores
+  case GHMCoreLocated(InSubsystem) => Some(GHMParams(((site(TilesLocated(InSubsystem)).map(_.tileParams.tileId).max+1)-1), GH_GlobalParams.GH_WIDITH_PACKETS))
+  // case GAGGCoreLocated(InSubsystem) => Some(GAGGParams(((site(TilesLocated(InSubsystem)).map(_.tileParams.hartId).max+1)-1), GH_GlobalParams.GH_WIDITH_PACKETS))
+  //===== GuardianCouncil Function: End ======//
+  //==========================================//
   // Additional device Parameters
   case BootROMLocated(InSubsystem) => Some(BootROMParams(contentFileName = "./bootrom/bootrom.img"))
   case HasTilesExternalResetVectorKey => false
@@ -63,6 +74,7 @@ class BaseSubsystemConfig extends Config ((site, here, up) => {
   case PossibleTileLocations => Seq(InSubsystem)
 })
 
+//==========================================//
 /* Composable partial function Configs to set individual parameters */
 
 class WithJustOneBus extends Config((site, here, up) => {

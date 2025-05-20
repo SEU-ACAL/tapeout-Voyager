@@ -70,6 +70,7 @@ class ChipyardSubsystem(implicit p: Parameters) extends BaseSubsystem
     with InstantiatesHierarchicalElements
     with HasTileNotificationSinks
     with HasTileInputConstants
+    with HasGHnodes
     with CanHavePeripheryCLINT
     with CanHavePeripheryPLIC
     with HasPeripheryDebug
@@ -82,6 +83,7 @@ class ChipyardSubsystem(implicit p: Parameters) extends BaseSubsystem
     case r: RocketTile => r.module.core.rocketImpl.coreMonitorBundle
     case b: boom.v3.common.BoomTile => b.module.core.coreMonitorBundle
     case b: boom.v4.common.BoomTile => b.module.core.coreMonitorBundle
+    case b: boom.meek.common.BoomTile => b.module.core.coreMonitorBundle
   }.toList
 
   // No-tile configs have to be handled specially.

@@ -273,7 +273,7 @@ object Instructions {
   def HSV_H              = BitPat("b0110011??????????100000001110011")
   def HSV_W              = BitPat("b0110101??????????100000001110011")
   def JAL                = BitPat("b?????????????????????????1101111")
-  def JALR               = BitPat("b?????????????????000?????1100111")
+  def JALR               = BitPat("b?????????????????00??????1100111")
   def LB                 = BitPat("b?????????????????000?????0000011")
   def LBU                = BitPat("b?????????????????100?????0000011")
   def LD                 = BitPat("b?????????????????011?????0000011")
@@ -1729,4 +1729,55 @@ object CSRs {
     res += mhpmcounter31h
     res.toArray
   }
+}
+object CSRshadows{
+  val mstatus = 0x300
+  val mie = 0x304
+  val mtvec = 0x305
+  val mscratch = 0x340
+  val mepc = 0x341
+  val mip = 0x344
+  val sstatus = 0x100
+  val sie = 0x104
+  val sscratch = 0x140
+  val sepc = 0x141
+  val scause = 0x142
+  val stval = 0x143
+  val sip = 0x144
+  
+  val allshadows ={
+    val res = collection.mutable.ArrayBuffer[Int]()
+    res += mstatus
+    res += mie
+    res += mtvec
+    res += mscratch
+    res += mepc
+    res += mip
+    res += sstatus
+    res += sie
+    res += sscratch
+    res += sepc
+    res += scause
+    res += stval
+    res += sip
+  }
+
+  val CSRsize = allshadows.size
+
+  
+}
+object CSRshadowsindex{
+  val mstatus = 0x0
+  val mie = 0x1
+  val mtvec = 0x2
+  val mscratch = 0x3
+  val mepc = 0x4
+  val mip = 0x5
+  val sstatus = 0x6
+  val sie = 0x7
+  val sscratch = 0x8
+  val sepc = 0x9
+  val scause = 0xa
+  val stval = 0xb
+  val sip = 0xc
 }

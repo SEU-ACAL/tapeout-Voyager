@@ -92,7 +92,7 @@ RUNTIME_PROFILING_VFLAGS := $(if $(filter $(VERILATOR_PROFILE),all),\
 VERILATOR_THREADS ?= 1
 RUNTIME_THREADS := --threads $(VERILATOR_THREADS) --threads-dpi all
 
-USE_FST ?= 0
+USE_FST ?= 1
 TRACING_OPTS := $(if $(filter $(USE_FST),0),\
 	                  --trace,--trace-fst --trace-threads 1)
 # TODO: consider renaming +vcdfile in TestDriver.v to +waveformfile (or similar)

@@ -3,7 +3,7 @@ package chipyard
 import org.chipsalliance.cde.config.{Config}
 import freechips.rocketchip.prci.{AsynchronousCrossing}
 import freechips.rocketchip.subsystem.{InCluster}
-
+import freechips.rocketchip.guardiancouncil._
 // --------------
 // Rocket Configs
 // --------------
@@ -13,8 +13,53 @@ class RocketConfig extends Config(
   new chipyard.config.AbstractConfig)
 
 class DualRocketConfig extends Config(
+  
   new freechips.rocketchip.rocket.WithNHugeCores(2) ++
   new chipyard.config.AbstractConfig)
+// class TestConfig extends Config(
+//   new chipyard.config.WithTileFrequency(50, Some(0)) ++
+//   new chipyard.config.WithTileFrequency(50, Some(1)) ++
+//   new chipyard.config.WithTileFrequency(50, Some(2)) ++
+//   new chipyard.config.WithTileFrequency(50, Some(3)) ++
+//   new chipyard.config.WithTileFrequency(50, Some(4)) ++
+//   new freechips.rocketchip.rocket.WithAsynchronousCDCs(8, 3) ++
+//   // Frequency specifications
+//   // // new chipyard.config.WithTileFrequency(1000.0) ++        // Matches the maximum frequency of U540
+//   new chipyard.clocking.WithClockGroupsCombinedByName(("uncore",Seq("sbus", "mbus", "pbus", "fbus", "cbus", "obus", "implicit", "clock_tap"),Nil),
+//                                                       ("boom",Seq("tile_0"),Nil),
+//                                                       ("rockettile",Seq("tile_1","tile_2","tile_3","tile_4"),Nil)
+//                                                       )++
+//   new freechips.rocketchip.rocket.WithNHugeCores(5) ++
+//   new chipyard.config.AbstractConfig
+// )
+
+class MEEKConfig extends Config(
+
+  new chipyard.config.WithTileFrequency(100, Some(0)) ++
+  new chipyard.config.WithTileFrequency(50, Some(1)) ++
+  new chipyard.config.WithTileFrequency(50, Some(2)) ++
+  new chipyard.config.WithTileFrequency(50, Some(3)) ++
+  new chipyard.config.WithTileFrequency(50, Some(4)) ++
+
+  new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
+  AsynchronousCrossing().depth,
+  AsynchronousCrossing().sourceSync) ++
+  // Frequency specifications
+  // // new chipyard.config.WithTileFrequency(1000.0) ++        // Matches the maximum frequency of U540
+  new chipyard.clocking.WithClockGroupsCombinedByName(("uncore",Seq("sbus", "mbus", "pbus", "fbus", "cbus", "obus", "implicit", "clock_tap"),Nil),
+                                                      ("boom",Seq("tile_0"),Nil),
+                                                      ("rockettileMeek",Seq("tile_1","tile_2","tile_3","tile_4"),Nil)
+                                                      )++
+  // new freechips.rocketchip.guardiancouncil.WithGHE ++
+  new chipyard.config.WithMultiRoCCMEEK ++
+  new chipyard.config.WithMultiSingleRoCCGHE(0, 1, 2, 3, 4) ++ //put custom RoCC on hart0-4 for custom0 ISA extension ++
+  //  Crossing specifications
+  
+  new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1)++
+  new boom.meek.common.WithNLargeBooms(1) ++
+  // new freechips.rocketchip.rocket.WithNGCCheckers(GH_GlobalParams.GH_NUM_CORES - 1, overrideIdOffset=Some(1)) ++
+  new chipyard.config.AbstractConfig
+)
 
 class TinyRocketConfig extends Config(
   new chipyard.harness.WithDontTouchChipTopPorts(false) ++        // TODO FIX: Don't dontTouch the ports

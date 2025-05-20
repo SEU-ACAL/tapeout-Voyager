@@ -131,7 +131,7 @@ trait HasHierarchicalElements extends DefaultHierarchicalElementContextType
   * This trait is intended for the root subsystem
   */
 trait HasHierarchicalElementsRootContextModuleImp extends LazyRawModuleImp {
-  val outer: InstantiatesHierarchicalElements with HasHierarchicalElements with HasHierarchicalElementsRootContext with HasTileInputConstants
+  val outer: InstantiatesHierarchicalElements with HasHierarchicalElements with HasHierarchicalElementsRootContext with HasTileInputConstants with HasGHnodes
 
   val reset_vector = outer.tileResetVectorIONodes.zipWithIndex.map { case (n, i) => n.makeIO(s"reset_vector_$i") }
   val tile_hartids = outer.tileHartIdIONodes.zipWithIndex.map { case (n, i) => n.makeIO(s"tile_hartids_$i") }
@@ -161,6 +161,7 @@ trait HasHierarchicalElementsRootContextModuleImp extends LazyRawModuleImp {
 trait DefaultHierarchicalElementContextType
     extends Attachable
     with HasTileNotificationSinks
+    with HasGHnodes
 { this: LazyModule with Attachable =>
   def msipDomain: LazyScope
   val msipNodes: SortedMap[Int, IntNode]
@@ -207,6 +208,7 @@ trait HasHierarchicalElementsRootContext
     sinkFn   = { _ => IntSinkPortParameters(Seq(IntSinkParameters())) },
     outputRequiresInput = false,
     inputRequiresOutput = false))
+  println(s"Num tiles: $nTotalTiles")
   val meipNodes: SortedMap[Int, IntNode] = (0 until nTotalTiles).map { i =>
     (i, IntEphemeralNode())
   }.to(SortedMap)

@@ -196,6 +196,7 @@ object CSR
     require(!(Causes.all contains res))
     res
   }
+  def isWriteCSR(cmd: UInt): Bool = (cmd =/= N) && (cmd =/= R) && (cmd.isOneOf(W, S, C))
   def rnmiIntCause = 13  // NMI: Higher numbers = higher priority, must not reuse debugIntCause
   def rnmiBEUCause = 12
 

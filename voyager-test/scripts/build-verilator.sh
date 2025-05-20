@@ -6,6 +6,7 @@ help() {
   echo "选项:"
   echo "  -h, --help           显示此帮助信息并退出"
   echo "  --debug              启用调试模式"
+  echo "  --fst                启用 FST 波形"
   echo "  -j <num>             指定并行任务数 (默认: 128)"
   echo "  -c, --config <config> 指定配置参数"
   exit 0
@@ -18,7 +19,7 @@ j="256"
 # CYDIR表示chipyard的路径
 CYDIR=$(git rev-parse --show-toplevel)
 CONFIG=
-
+USE_FST=
 while [ $# -gt 0 ] ; do
   case $1 in
     -h|--help)
@@ -26,6 +27,9 @@ while [ $# -gt 0 ] ; do
       ;;
     --debug)
       debug="debug"
+      ;;
+    --fst)
+      USE_FST=1
       ;;
     -j)
       if [[ -n $2 && $2 != -* ]]; then
@@ -70,7 +74,7 @@ if [ "$debug" == "debug" ]; then
 fi
 
 cd ${CYDIR}/sims/verilator/ || { echo "Cannot enter the directory: ${CYDIR}/sims/verilator/"; exit 1; }
-make -j$j ${debug} CONFIG=$CONFIG || { echo "[Build verilator Failed!]==================="; exit 1; }
+make -j$j ${debug} CONFIG=$CONFIG USE_FST=$USE_FST || { echo "[Build verilator Failed!]==================="; exit 1; }
 # 编译成功了才会搬过来
 mkdir -p ${CYDIR}/voyager-test/output/verilator
 cp ${CYDIR}/sims/verilator/simulator-chipyard.harness-${CONFIG}${DEBUG_POSTFIX} ${CYDIR}/voyager-test/output/verilator

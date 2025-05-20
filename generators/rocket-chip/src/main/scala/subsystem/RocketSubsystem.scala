@@ -10,7 +10,7 @@ import freechips.rocketchip.prci.{ResetCrossingType, NoResetCrossing, Synchronou
 import freechips.rocketchip.tile.{RocketTile, RocketTileParams}
 import freechips.rocketchip.util.HasCoreMonitorBundles
 import freechips.rocketchip.npu._
-
+import freechips.rocketchip.meek._
 case class RocketCrossingParams(
   crossingType: ClockCrossingType = SynchronousCrossing(),
   master: HierarchicalElementPortParamsLike = HierarchicalElementMasterPortParams(),
@@ -24,6 +24,10 @@ case class RocketTileAttachParams(
   tileParams: RocketTileParams,
   crossingParams: RocketCrossingParams
 ) extends CanAttachTile { type TileType = RocketTile }
+case class RocketTileMeekAttachParams(
+  tileParams: RocketTileMeekParams,
+  crossingParams: RocketCrossingParams
+) extends CanAttachTile { type TileType = RocketTileMeek }
 
 case class RocketTileNpuAttachParams(
   tileParams: RocketTileNpuParams,
@@ -43,6 +47,7 @@ class RocketSubsystem(implicit p: Parameters) extends BaseSubsystem
     with InstantiatesHierarchicalElements
     with HasTileNotificationSinks
     with HasTileInputConstants
+    with HasGHnodes
     with CanHavePeripheryCLINT
     with CanHavePeripheryPLIC
     with HasPeripheryDebug

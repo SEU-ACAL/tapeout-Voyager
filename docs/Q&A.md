@@ -141,3 +141,13 @@ echo 1 | sudo tee /sys/bus/pci/rescan
 直接使用TOP看，是否有firesim线程
 
 > 21端口的FPGA板子有概率一启动就导致服务器崩溃，目前暂时未找到解决方法（此时请不要使用21端口的板子）
+
+## 仿真时间设置过短导致报错问题
+
+```
+[10000001000] %Fatal: TestDriver.v:147: Assertion failed in TOP.TestDriver
+%Error: /home/gb515897968/tape/tapeout-Voyager/sims/verilator/generated-src/chipyard.harness.TestHarness.MEEKConfig/gen-collateral/TestDriver.v:147: Verilog $stop
+Aborting...
+```
+
+遇到这种问题直接改tapeout根目录variables.mk的TIMEOUT_CYCLES

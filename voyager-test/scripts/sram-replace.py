@@ -175,7 +175,7 @@ def generate_ext_module(module_name, ports, mem_info, available_srams):
             if width < sram_width:
                 # If width is less than SRAM width, zero-extend
                 for i in range(num_macros):
-                    module_code += f"    assign I[{i}] = {{'{sram_width-width}'b0, RW0_wdata}};\n"
+                    module_code += f"    assign I[{i}] = {{{sram_width-width}'b0, RW0_wdata}};\n"
                 module_code += "\n"
             else:
                 # If width matches SRAM width
@@ -230,7 +230,7 @@ def generate_ext_module(module_name, ports, mem_info, available_srams):
             module_code += f"    wire [{sram_width-1}:0] I;\n\n"
             
             if width < sram_width:
-                module_code += f"    assign I = {{'{sram_width-width}'b0, RW0_wdata}};\n\n"
+                module_code += f"    assign I = {{{sram_width-width}'b0, RW0_wdata}};\n\n"
             else:
                 module_code += "    assign I = RW0_wdata;\n\n"
                 
@@ -291,7 +291,7 @@ def generate_ext_module(module_name, ports, mem_info, available_srams):
                 
                 if width < sram_width:
                     for i in range(num_macros):
-                        module_code += f"    assign I[{i}] = {{'{sram_width-width}'b0, W0_data}};\n"
+                        module_code += f"    assign I[{i}] = {{{sram_width-width}'b0, W0_data}};\n"
                 else:
                     for i in range(num_macros):
                         module_code += f"    assign I[{i}] = W0_data;\n"
@@ -347,7 +347,7 @@ def generate_ext_module(module_name, ports, mem_info, available_srams):
                 module_code += f"    wire [{sram_width-1}:0] I;\n\n"
                 
                 if width < sram_width:
-                    module_code += f"    assign I = {{'{sram_width-width}'b0, W0_data}};\n\n"
+                    module_code += f"    assign I = {{{sram_width-width}'b0, W0_data}};\n\n"
                 else:
                     module_code += "    assign I = W0_data;\n\n"
                     
