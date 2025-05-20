@@ -1482,7 +1482,7 @@ class RocketMEEK(tile: RocketTileMeek)(implicit p: Parameters) extends CoreModul
   io.dmem.req.bits.no_xcpt := DontCare
   io.dmem.req.bits.data := DontCare
   io.dmem.req.bits.mask := DontCare
-
+  io.dmem.req.bits.pc := ex_reg_pc
   // io.dmem.s1_data.data := (if (fLen == 0) mem_reg_rs2 else Mux(mem_ctrl.fp, Fill(coreDataBits / fLen, io.fpu.store_data), mem_reg_rs2))
   io.dmem.s1_data.mask := DontCare
 
