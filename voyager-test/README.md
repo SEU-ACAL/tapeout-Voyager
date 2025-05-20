@@ -13,7 +13,7 @@ make
 
 ### 添加自定义 workload (tutorial 案例分析)
 
-1. 在workload的[CMakeLists.txt](src/workload/CMakeLists.txt)中添加`tutorial`的子项目, Voyager-test 中遵循上级CMakeLists中定义下级目录所在路径的规范.
+1. 在workload的[CMakeLists.txt](src/workload/CMakeLists.txt)中添加 `tutorial`的子项目, Voyager-test 中遵循上级CMakeLists中定义下级目录所在路径的规范.
 
 ```makefile
 # src/workload/CMakeLists.txt
@@ -27,14 +27,15 @@ add_subdirectory(tutorial) # 添加tutorial子项目
 - CMakeLists.txt(src/workload/tutorial/CMakeLists.txt)
 
 #### tutorial子项目CMakeLists.txt 解读
-创建tutorial子项目，默认使用编译器`riscv64-unknown-linux-gnu-gcc`用于构建linux版本workload; 如果要构建baremetal版本workload则需要单独使用`riscv64-unknown-elf-gcc`.
 
-```makefile 
+创建tutorial子项目，默认使用编译器 `riscv64-unknown-linux-gnu-gcc`用于构建linux版本workload; 如果要构建baremetal版本workload则需要单独使用 `riscv64-unknown-elf-gcc`.
+
+```makefile
 project(tutorial C)
 set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-gcc")  
 ```
 
-这里是构建linux版本workload的配置，由于使用的是CMake定义的项目默认编译器，所以可以直接使用`CMAKE_EXE_LINKER_FLAGS`, `add_executable`等快捷CMake命令. tutorial-linux-build是build tutorial workload的target, 可以被其他target调用.
+这里是构建linux版本workload的配置，由于使用的是CMake定义的项目默认编译器，所以可以直接使用 `CMAKE_EXE_LINKER_FLAGS`, `add_executable`等快捷CMake命令. tutorial-linux-build是build tutorial workload的target, 可以被其他target调用.
 
 **文件命名规范**: `-linux` 表示构建linux版本workload, `-baremetal` 表示构建baremetal版本workload，一定要注意添加.
 
@@ -100,9 +101,23 @@ add_custom_target(build-all ALL DEPENDS
 )
 ```
 
-4. 来到voyager-test根目录的`build`目录, 执行`make tutorial-build`命令, 可以看到顺利构建tutorial workload. Enjoy it!
+4. 来到voyager-test根目录的 `build`目录, 执行 `make tutorial-build`命令, 可以看到顺利构建tutorial workload. Enjoy it!
 
-### workload 进阶教程 
+### MEEK lib
+
+如果需要为新加入的workload使用MEEK的检查功能，请运行add_python.py；
+
+```
+python3 add_check_macro.py /path/to/your/main.c
+```
+
+然后在cpu的workload文件夹下面的CMakelist.txt 的cflag加入-DCHECK=1，启用check；
+
+**每个新加入的workload都需要包含meeklib的meek.c文件；**
+
+> 目前的方式较为傻瓜，之后会给出一个一键完成的脚本
+
+### workload 进阶教程
 
 #### 使用 buddy-compiler 编译 pytorch workload (LeNet 案例分析)
 

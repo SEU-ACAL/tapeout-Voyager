@@ -7,7 +7,7 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WORKLOAD_BIN_DIR}/cpu)
 set(LINK_FLAGS "-static -Wl,--no-dynamic-linker")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINK_FLAGS}")
 # add_compile_options(-O2 -static)
-add_executable(hello-linux ${CPU_WORKLOAD_DIR}/hello/hello.c)
+add_executable(hello-linux ${CPU_WORKLOAD_DIR}/hello/hello.c )
 add_executable(cpu-spmm-linux ${CPU_WORKLOAD_DIR}/spmm/spmm.c)
 add_executable(bfs-linux ${CPU_WORKLOAD_DIR}/prefetch/bfs/bfs.c)
 add_executable(hash-linux ${CPU_WORKLOAD_DIR}/prefetch/hash/hash.c)
@@ -33,23 +33,26 @@ add_custom_target(cpu-linux-build ALL DEPENDS
 # and easy to be extended. I suggest you to add your new workload with name not 
 # vague like "mytest", but with a specific name, for example, "hash"
 #-------------------------------------------------------------------------------
-set(C_FLAGS -std=c11 -g -fno-common -O2 -static 
-    -fno-builtin-printf -specs=htif_nano.specs)
+
+include_directories(${CPU_WORKLOAD_DIR}/meeklib)
+set(C_FLAGS -std=gnu11 -g -fno-common -O2 -static 
+    -fno-builtin-printf -specs=htif_nano.specs -I${CPU_WORKLOAD_DIR}/meeklib)
+# set(C_FLAGS "${C_FLAGS} -DCHECK=1")
 set(ELF_CC "riscv64-unknown-elf-gcc")
 
 add_custom_target(cpu-baremetal-build ALL
     COMMAND ${ELF_CC} ${C_FLAGS} 
             -o ${WORKLOAD_BIN_DIR}/cpu/hello-baremetal
-            ${CPU_WORKLOAD_DIR}/hello/hello.c
+            ${CPU_WORKLOAD_DIR}/hello/hello.c ${CPU_WORKLOAD_DIR}/meeklib/meek.c 
     COMMAND ${ELF_CC} ${C_FLAGS} 
             -o ${WORKLOAD_BIN_DIR}/cpu/bfs-baremetal
-            ${CPU_WORKLOAD_DIR}/prefetch/bfs/bfs.c
+            ${CPU_WORKLOAD_DIR}/prefetch/bfs/bfs.c ${CPU_WORKLOAD_DIR}/meeklib/meek.c 
     COMMAND ${ELF_CC} ${C_FLAGS} 
             -o ${WORKLOAD_BIN_DIR}/cpu/hash-baremetal
-            ${CPU_WORKLOAD_DIR}/prefetch/hash/hash.c
+            ${CPU_WORKLOAD_DIR}/prefetch/hash/hash.c ${CPU_WORKLOAD_DIR}/meeklib/meek.c 
     DEPENDS ${CPU_WORKLOAD_DIR}/hello/hello.c
-            ${CPU_WORKLOAD_DIR}/prefetch/bfs/bfs.c
-            ${CPU_WORKLOAD_DIR}/prefetch/hash/hash.c
+            ${CPU_WORKLOAD_DIR}/prefetch/bfs/bfs.c 
+            ${CPU_WORKLOAD_DIR}/prefetch/hash/hash.c ${CPU_WORKLOAD_DIR}/meeklib/meek.c 
     COMMENT "Building baremetal workloads for CPU"
     VERBATIM)
 

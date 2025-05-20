@@ -1,4 +1,10 @@
 #include <stdio.h>
+#if defined(CHECK) && (CHECK == 1)
+#include <meek.h>
+#endif
+#if defined(CHECK) && (CHECK == 1)
+#include <meek.h>
+#endif
 #include <stdlib.h>
 
 typedef struct {
@@ -23,6 +29,10 @@ void spmm(const CSRMatrix* sparse, const double* dense, int dense_cols, double* 
 }
 
 int main() {
+  #if defined(CHECK) && (CHECK == 1)
+  rStartup();
+  #endif
+
     CSRMatrix A;
     A.rows = 3;
     A.cols = 3;
@@ -64,5 +74,9 @@ int main() {
     // [ (4*1 +5*3),  (4*2 +5*4)  ] = [19, 28]
     free(result);
 
+    #if defined(CHECK) && (CHECK == 1)
+      rCleanup();
+    #endif
     return 0;
+
 }
