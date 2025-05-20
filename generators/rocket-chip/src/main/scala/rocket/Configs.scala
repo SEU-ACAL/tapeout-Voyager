@@ -243,7 +243,8 @@ class WithNBigNpuCores(
       dcache = Some(DCacheParams(
         rowBits = site(SystemBusKey).beatBits,
         nMSHRs = nMSHRs,
-        blockBytes = site(CacheBlockBytes))),
+        blockBytes = site(CacheBlockBytes),
+        usingStridePrefetch = true)),
       icache = Some(ICacheParams(
         rowBits = site(SystemBusKey).beatBits,
         blockBytes = site(CacheBlockBytes))))

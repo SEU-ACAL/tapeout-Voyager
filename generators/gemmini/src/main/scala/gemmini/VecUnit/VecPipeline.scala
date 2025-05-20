@@ -38,6 +38,7 @@ class IdIssReq extends Bundle {
   val rob_id = UInt(5.W)
   val funct = UInt(8.W)
   val waddr = UInt(14.W)
+  val mode = UInt(1.W)
 }
 
 class id_iss extends Module {  
@@ -61,6 +62,7 @@ class id_iss extends Module {
   io.id_iss_o.bits.rob_id       := uint_dff(id_iss_hs,                        0.U(5.W), io.id_iss_i.bits.rob_id)
   io.id_iss_o.bits.funct        := uint_dff(id_iss_hs,                        0.U(8.W), io.id_iss_i.bits.funct)
   io.id_iss_o.bits.waddr       := uint_dff(id_iss_hs,                       0.U(14.W), io.id_iss_i.bits.waddr)
+  io.id_iss_o.bits.mode         := uint_dff(id_iss_hs,                        0.U(1.W), io.id_iss_i.bits.mode)
 }   
 
 // -----------------------------------------------------------------------------
@@ -110,6 +112,7 @@ class IssExReq extends Bundle {
   val rob_id = UInt(5.W)
   val funct = UInt(8.W)
   val waddr = UInt(14.W)
+  val mode = UInt(1.W)
 }
 
 class iss_ex extends Module {
@@ -118,19 +121,20 @@ class iss_ex extends Module {
   val iss_ex_o = Decoupled(new IssExReq())
   })
   
-  val iss_ex_hs = io.iss_ex_i.fire
+  val iss_ex_hs = true.B
 
   io.iss_ex_o.valid := bool_dff(true.B, false.B, io.iss_ex_i.valid)
   io.iss_ex_i.ready := bool_dff(true.B, false.B, io.iss_ex_o.ready)
 
   io.iss_ex_o.bits.op1       := uvec_dff(iss_ex_hs, VecInit(Seq.fill(16)(0.U(8.W))), io.iss_ex_i.bits.op1)
   io.iss_ex_o.bits.op2       := uvec_dff(iss_ex_hs, VecInit(Seq.fill(16)(0.U(8.W))), io.iss_ex_i.bits.op2)
-  io.iss_ex_o.bits.config    := uint_dff(iss_ex_hs,                       0.U(16.W), io.iss_ex_i.bits.config)
+  io.iss_ex_o.bits.config    := uint_dff(iss_ex_hs,                       0.U(15.W), io.iss_ex_i.bits.config)
   io.iss_ex_o.bits.iteration := uint_dff(iss_ex_hs,                        0.U(4.W), io.iss_ex_i.bits.iteration)
   io.iss_ex_o.bits.thread_id := uint_dff(iss_ex_hs,                        0.U(4.W), io.iss_ex_i.bits.thread_id)    
   io.iss_ex_o.bits.rob_id    := uint_dff(iss_ex_hs,                        0.U(5.W), io.iss_ex_i.bits.rob_id)
   io.iss_ex_o.bits.funct     := uint_dff(iss_ex_hs,                        0.U(8.W), io.iss_ex_i.bits.funct)
   io.iss_ex_o.bits.waddr     := uint_dff(iss_ex_hs,                       0.U(14.W), io.iss_ex_i.bits.waddr)
+  io.iss_ex_o.bits.mode      := uint_dff(iss_ex_hs,                        0.U(1.W), io.iss_ex_i.bits.mode)
 }
 
 // -----------------------------------------------------------------------------

@@ -14,6 +14,7 @@ class thread_input extends Bundle {
   val rob_id    = UInt(5.W)
   val funct     = UInt(8.W)
   val waddr     = UInt(14.W)
+  val mode      = UInt(1.W)
 }
 
 class thread_output extends Bundle {

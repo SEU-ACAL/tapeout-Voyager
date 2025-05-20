@@ -28,7 +28,7 @@ class VecISS (implicit vc: VecConfig) extends Module {
 // -----------------------------------------------------------------------------
 // iss->ex
 // -----------------------------------------------------------------------------
-  io.iss_ex_o.valid          := ops_ready
+  io.iss_ex_o.valid          := io.id_iss_i.valid
   io.iss_ex_o.bits.op1       := Mux(bypass_lsu, io.id_iss_i.bits.op1, 
                                 Mux(io.lsu_iss_i.valid, io.lsu_iss_i.bits.op1, 
                                     VecInit(Seq.fill(16)(0.U(8.W)))))
@@ -41,4 +41,5 @@ class VecISS (implicit vc: VecConfig) extends Module {
   io.iss_ex_o.bits.rob_id    := io.id_iss_i.bits.rob_id
   io.iss_ex_o.bits.funct     := io.id_iss_i.bits.funct
   io.iss_ex_o.bits.waddr     := io.id_iss_i.bits.waddr
+  io.iss_ex_o.bits.mode      := io.id_iss_i.bits.mode
 }

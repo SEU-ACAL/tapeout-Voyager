@@ -6,6 +6,7 @@ import org.chipsalliance.cde.config.{Field, Parameters}
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.util._
 import freechips.rocketchip.tilelink._
+import freechips.rocketchip.tile._
 import freechips.rocketchip.subsystem.{CacheBlockBytes}
 
 trait CanInstantiatePrefetcher {
@@ -22,8 +23,8 @@ class Snoop(implicit val p: Parameters) extends Bundle {
   def block_address = block << log2Up(blockBytes)
 }
 
-class StrideMonitor(implicit val p: Parameters) extends Bundle {
-  val pc   = UInt()
+class StrideMonitor(override implicit val p: Parameters) extends CoreBundle {
+  val pc   = UInt(vaddrBitsExtended.W)
   val addr = UInt()
   val kill = Bool()
   val read = Bool()
@@ -41,6 +42,7 @@ class Prefetch(implicit val p: Parameters) extends Bundle {
 class PrefetcherIO(implicit p: Parameters) extends Bundle {
   val snoop = Input(Valid(new Snoop))
   val request = Decoupled(new Prefetch)
+  val stride = Input(Valid(new StrideMonitor))
   val hit = Output(Bool())
 }
 

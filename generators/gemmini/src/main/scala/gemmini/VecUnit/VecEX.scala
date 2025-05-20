@@ -56,7 +56,7 @@ class VecEX [T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V
   vec4PE2.io.thread_id := 0.U
   vec8PE.io.thread_id := 0.U
 
-  when(io.iss_ex_i.valid){
+  when(io.iss_ex_i.valid && io.iss_ex_i.bits.mode === 0.U){
     when(io.iss_ex_i.bits.funct === INST_Vec_LoopMul_CMD_16){
       vec4PE1.io.west.valid := true.B
       vec4PE1.io.west.bits.vector_rst := VecInit(Seq.fill(16)(0.U(8.W)))
@@ -132,9 +132,11 @@ class VecEX [T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V
         io.acc.write(i).valid := false.B
         io.acc.write(i).bits.mask := VecInit(Seq.fill(64)(true.B))
         io.acc.write(i).bits.acc  := false.B
+        io.acc.write(i).bits.fast_write := false.B
+        io.acc.write(i).bits.end_fast_write := false.B
     }
   //---------------------------------读写ACC---------------------------------
-  when(io.iss_ex_i.bits.funct === INST_Vec_LoopMul_CMD_16){
+  when(io.iss_ex_i.bits.funct === INST_Vec_LoopMul_CMD_16 && io.iss_ex_i.bits.mode === 0.U ){
     when(vec4PE2_out_d1 && !vec4PE2.io.out.valid) {
       read_acc := true.B
     }.elsewhen(acc_read_counter === 15.U) {
@@ -181,6 +183,33 @@ class VecEX [T <: Data, U <: Data, V <: Data](config: GemminiArrayConfig[T, U, V
         io.ex_cmt_o.bits.funct := io.iss_ex_i.bits.funct
       }
     }          
+  }.elsewhen(io.iss_ex_i.valid && io.iss_ex_i.bits.mode === 1.U && 
+            io.iss_ex_i.bits.funct === INST_Vec_LoopMul_CMD_16){
+    val clear_acc :: fast_write :: end_fast_write :: read_acc :: Nil = Enum(4)
+    for(i <- 0 until acc_banks){
+      when(io.acc.write(i).ready){
+        when(io.iss_ex_i.bits.config === fast_write){
+          io.acc.write(i).valid := true.B
+          io.acc.write(i).bits.data := VecInit.tabulate(16)(i => VecInit(Seq(io.iss_ex_i.bits.op1(i).asSInt.pad(32))))
+          io.acc.write(i).bits.mask := VecInit(Seq.fill(64)(true.B))
+          io.acc.write(i).bits.acc  := true.B
+          io.acc.write(i).bits.fast_write := true.B
+        }.elsewhen(io.iss_ex_i.bits.config === end_fast_write){
+          io.acc.write(i).valid := true.B
+          io.acc.write(i).bits.mask := VecInit(Seq.fill(64)(true.B))
+          io.acc.write(i).bits.fast_write := true.B
+          io.acc.write(i).bits.end_fast_write := true.B
+          io.acc.write(i).bits.acc := true.B
+        }.elsewhen(io.iss_ex_i.bits.config === clear_acc){
+          io.acc.write(i).valid := true.B
+          io.acc.write(i).bits.data := VecInit.tabulate(16)(i => VecInit(Seq(0.U.asSInt.pad(32))))
+          io.acc.write(i).bits.mask := VecInit(Seq.fill(64)(true.B))
+        }
+      }
+      when(io.iss_ex_i.bits.config === read_acc &&io.acc.read_resp(i).ready){
+        io.acc.read_req(i).valid := true.B
+      }
+    }
   }
 }
  

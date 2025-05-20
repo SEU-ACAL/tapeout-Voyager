@@ -1017,6 +1017,7 @@ class RocketNpu(tile: RocketTileNpu)(implicit p: Parameters) extends CoreModule(
   io.dmem.req.valid     := ex_reg_valid && ex_ctrl.mem
   val ex_dcache_tag = Cat(ex_waddr, ex_ctrl.fp)
   require(coreParams.dcacheReqTagBits >= ex_dcache_tag.getWidth)
+  io.dmem.req.bits.pc := ex_reg_pc
   io.dmem.req.bits.tag  := ex_dcache_tag
   io.dmem.req.bits.cmd  := ex_ctrl.mem_cmd
   io.dmem.req.bits.size := ex_reg_mem_size
