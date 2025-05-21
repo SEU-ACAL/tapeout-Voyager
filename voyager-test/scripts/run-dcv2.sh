@@ -118,9 +118,9 @@ link
 compile_ultra
 
 # 生成报告
-report_area -hierarchy > $REPORT_DIR/area.rpt
+report_area > $REPORT_DIR/area.rpt
 report_timing > $REPORT_DIR/timing.rpt
-report_power -hierarchy > $REPORT_DIR/power.rpt
+report_power > $REPORT_DIR/power.rpt
 
 # 保存网表
 write -format verilog -output $REPORT_DIR/netlist.v
