@@ -39,6 +39,7 @@ DESIGN_DIR="${CYDIR}/voyager-test/output/dc/design"
 REPORT_DIR="${CYDIR}/voyager-test/output/dc/reports"
 TMP_DIR="${CYDIR}/voyager-test/output/dc/tmp"
 TCL_FILE="${CYDIR}/voyager-test/output/dc/dc_script.tcl"
+DB_FILE="/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/"
 
 mkdir -p $WORK_DIR
 mkdir -p $DESIGN_DIR
@@ -49,7 +50,7 @@ source ${CYDIR}/voyager-test/scripts/env-source.sh dc
 #-------------------------------------------------------------------
 # Step0 执行build Verilator
 #-------------------------------------------------------------------
-${CYDIR}/voyager-test/scripts/build-verilator.sh --config ${CONFIG}
+# ${CYDIR}/voyager-test/scripts/build-verilator.sh --config ${CONFIG}
 
 #-------------------------------------------------------------------
 # Step1 搬运对应Config的Verilog到工作目录
@@ -60,162 +61,38 @@ cp -r ${DESIGN_SOURCE_DIR}/* ${DESIGN_DIR}/
 #-------------------------------------------------------------------
 # Step2 替换SRAM
 #-------------------------------------------------------------------
-MODEL_MEMS_V=$DESIGN_DIR/chipyard.harness.TestHarness.${CONFIG}.model.mems.v
-TOP_MEMS_V=$DESIGN_DIR/chipyard.harness.TestHarness.${CONFIG}.top.mems.v
-JSON_FILE=$DESIGN_DIR/metadata/seq_mems.json
+echo "正在检查SRAM  File..."
+python ${CYDIR}/voyager-test/scripts/read_json.py $DB_FILE $DESIGN_DIR "/home/hxm123/tapeout-Voyager/sims/verilator/generated-src/chipyard.harness.TestHarness.GemminiRocketConfig/gen-collateral/metadata/seq_mems.json"
 
-if [ ! -f "$MODEL_MEMS_V" ] || [ ! -f "$TOP_MEMS_V" ] || [ ! -f "$JSON_FILE" ]; then
-    echo "Error: One of the following files not found:"
-    echo "  - $MODEL_MEMS_V"
-    echo "  - $TOP_MEMS_V" 
-    echo "  - $JSON_FILE"
-    exit 1
-fi
-
-# 替换顶层SRAM和模型SRAM
-echo "正在替换顶层SRAM..."
-python ${CYDIR}/voyager-test/scripts/sram-replace.py $JSON_FILE $TOP_MEMS_V -o $DESIGN_DIR/chipyard.harness.TestHarness.${CONFIG}.top.mems.sv
-
-echo "正在替换模型SRAM..."
-python ${CYDIR}/voyager-test/scripts/sram-replace.py $JSON_FILE $MODEL_MEMS_V -o $DESIGN_DIR/chipyard.harness.TestHarness.${CONFIG}.model.mems.sv
-
-# DESIGN_FILE="${DESIGN_DIR}/gen-collateral/*.v ${DESIGN_DIR}/gen-collateral/*.sv"
 #-------------------------------------------------------------------
 # Step3 编写tcl脚本
 #-------------------------------------------------------------------
+db_dir="/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c"
+
+# 获取所有 .db 文件的列表
+db_files=$(ls ${db_dir}/*.db 2>/dev/null)
+
+# 检查是否找到 .db 文件
+if [ -z "$db_files" ]; then
+  echo "错误：目录 ${db_dir} 中没有找到 .db 文件"
+  exit 1
+fi
+
+# 将文件路径格式化为 Tcl 所需的字符串（以空格分隔）
+tcl_db_list=$(echo "$db_files" | tr '\n' ' ')
+
+
 cat > $TCL_FILE << EOF
 # 设置搜索路径
 set search_path [list . $DESIGN_DIR]
 define_design_lib work -path $TMP_DIR
 
-# 设置目标库 m4 swbso ffg0p99v0c
-set target_library "
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta1024x30m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta1024x31m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta1024x32m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta1024x36m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x12m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x16m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x20m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x22m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x23m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x25m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x26m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x27m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x30m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x31m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x33m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x50m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x59m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x64m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta160x57m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta192x43m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x12m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x16m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x20m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x22m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x23m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x25m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x27m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x28m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x29m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x31m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x32m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x33m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x36m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x64m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x72m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x78m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x8m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x12m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x16m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x22m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x23m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x24m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x25m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x27m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x31m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x32m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x36m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x4m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x5m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x72m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x78m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x8m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x20m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x31m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x32m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x58m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x61m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x64m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x69m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x72m4swbso_110a_ffg0p99v0c.db \
+set target_library "$tcl_db_list\
 /opt/dc/lib/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp12t40p140_180a/tcbn28hpcplusbwp12t40p140ffg0p99v0c.db \
 /opt/dc/lib/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp12t40p140_180a/tcbn28hpcplusbwp12t40p140ffg0p88v0c.db \
 /opt/dc/lib/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp12t40p140_180a/tcbn28hpcplusbwp12t40p140ffg1p05v0c.db \
 "
-
-set link_library "\
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta1024x30m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta1024x31m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta1024x32m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta1024x36m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x12m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x16m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x20m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x22m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x23m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x25m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x26m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x27m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x30m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x31m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x33m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x50m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x59m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta128x64m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta160x57m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta192x43m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x12m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x16m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x20m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x22m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x23m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x25m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x27m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x28m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x29m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x31m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x32m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x33m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x36m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x64m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x72m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x78m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta256x8m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x12m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x16m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x22m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x23m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x24m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x25m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x27m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x31m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x32m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x36m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x4m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x5m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x72m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x78m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta512x8m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x20m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x31m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x32m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x58m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x61m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x64m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x69m4swbso_110a_ffg0p99v0c.db \
-/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/tem5n28hpcplvta64x72m4swbso_110a_ffg0p99v0c.db \
+set link_library "$tcl_db_list\
 /opt/dc/lib/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp12t40p140_180a/tcbn28hpcplusbwp12t40p140ffg0p99v0c.db \
 /opt/dc/lib/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp12t40p140_180a/tcbn28hpcplusbwp12t40p140ffg0p88v0c.db \
 /opt/dc/lib/TSMCHOME/digital/Front_End/timing_power_noise/NLDM/tcbn28hpcplusbwp12t40p140_180a/tcbn28hpcplusbwp12t40p140ffg1p05v0c.db \
@@ -258,7 +135,7 @@ EOF
 echo "Running DC synthesis for design: ${CONFIG}, top module: $TOP_MODULE"
 dc_shell -f $TCL_FILE 
 
-rm $TCL_FILE
+# rm $TCL_FILE
 rm -rf ${CYDIR}/alib-52
 
 echo "Synthesis completed. Reports are available in $REPORT_DIR directory."
