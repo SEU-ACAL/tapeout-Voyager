@@ -2,7 +2,8 @@ package freechips.rocketchip.guardiancouncil
 
 //修改GH_WIDITH_PACKETS会牵一发动全身
 object GH_GlobalParams {
-  val GH_NUM_CORES = 6;
+  val GH_NUM_CORES = 5;
+  // val GH_NUM_CHECKER = 5;
   val GH_DEBUG = 1;
   val GH_WIDITH_PERF = 64;
   val GH_TOTAL_PACKETS = 2;

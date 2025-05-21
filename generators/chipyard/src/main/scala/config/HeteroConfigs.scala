@@ -121,7 +121,7 @@ class TestHeterSoCConfig extends Config(
                                                       // ("gemini",Seq("tile_5"),Nil)
                                                       )++
   //  Crossing specifications
-  new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 2) ++
+  new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1) ++
   new boom.meek.common.WithNLargeBooms(1) ++//需要修改
   new chipyard.config.AbstractConfig
 )

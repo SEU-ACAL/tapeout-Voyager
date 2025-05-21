@@ -35,9 +35,9 @@ add_custom_target(cpu-linux-build ALL DEPENDS
 #-------------------------------------------------------------------------------
 
 include_directories(${CPU_WORKLOAD_DIR}/meeklib)
-set(C_FLAGS -std=gnu11 -g -fno-common -O2 -static 
+set(C_FLAGS -std=gnu11 -g -DCHECK=1 -fno-common -O2 -static 
     -fno-builtin-printf -specs=htif_nano.specs -I${CPU_WORKLOAD_DIR}/meeklib)
-# set(C_FLAGS "${C_FLAGS} -DCHECK=1")
+
 set(ELF_CC "riscv64-unknown-elf-gcc")
 
 add_custom_target(cpu-baremetal-build ALL

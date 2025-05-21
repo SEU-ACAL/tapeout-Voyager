@@ -60,7 +60,7 @@ class BaseSubsystemConfig extends Config ((site, here, up) => {
   //===== GuardianCouncil Function: Start ====//
   // ((site(TilesLocated(InSubsystem)).map(_.tileParams.hartId).max+1) gives the number of tiles
   // -1 (big core) indicates the number of little cores
-  case GHMCoreLocated(InSubsystem) => Some(GHMParams(((site(TilesLocated(InSubsystem)).map(_.tileParams.tileId).max+1)-1), GH_GlobalParams.GH_WIDITH_PACKETS))
+  case GHMCoreLocated(InSubsystem) => Some(GHMParams(GH_GlobalParams.GH_NUM_CORES-1, GH_GlobalParams.GH_WIDITH_PACKETS))
   // case GAGGCoreLocated(InSubsystem) => Some(GAGGParams(((site(TilesLocated(InSubsystem)).map(_.tileParams.hartId).max+1)-1), GH_GlobalParams.GH_WIDITH_PACKETS))
   //===== GuardianCouncil Function: End ======//
   //==========================================//

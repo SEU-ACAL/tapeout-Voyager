@@ -419,104 +419,91 @@ trait CanAttachTile {
       println("#### Jessica #### Tieing off Tile **Nodes** on the sub-system, HartID:", tileParams.tileId,"...!!")
     }
 
-    // GHE connections
-    val tile_ghe_packet_in_EPNode = BundleBridgeEphemeralNode[UInt]()
-    context.tile_ghe_packet_in_EPNodes = context.tile_ghe_packet_in_EPNodes :+ tile_ghe_packet_in_EPNode
-    domain.element.ghe_packet_in_SKNode := tile_ghe_packet_in_EPNode
 
-    val core_r_arfs_c_EPNode = BundleBridgeEphemeralNode[UInt]()
-    context.core_r_arfs_c_EPNodes = context.core_r_arfs_c_EPNodes :+ core_r_arfs_c_EPNode
-    domain.element.core_r_arfs_c_SKNode := core_r_arfs_c_EPNode
+    if(tileParams.tileId < GH_GlobalParams.GH_NUM_CORES) {
 
+      // GHE connections
+      val tile_ghe_packet_in_EPNode = BundleBridgeEphemeralNode[UInt]()
+      context.tile_ghe_packet_in_EPNodes = context.tile_ghe_packet_in_EPNodes :+ tile_ghe_packet_in_EPNode
+      domain.element.ghe_packet_in_SKNode := tile_ghe_packet_in_EPNode
 
-    val tile_icsl_counter_in_EPNode = BundleBridgeEphemeralNode[UInt]()
-    context.tile_icsl_counter_in_EPNodes = context.tile_icsl_counter_in_EPNodes :+ tile_icsl_counter_in_EPNode
-    domain.element.ic_counter_SKNode := tile_icsl_counter_in_EPNode
-
-    val tile_clear_ic_status_out_EPNode = BundleBridgeEphemeralNode[UInt]()
-    context.tile_clear_ic_status_out_EPNodes = context.tile_clear_ic_status_out_EPNodes :+ tile_clear_ic_status_out_EPNode
-    tile_clear_ic_status_out_EPNode := domain.element.clear_ic_status_SRNode
-
-    val clear_ic_status_tomainEPNode = BundleBridgeEphemeralNode[UInt]()
-    context.clear_ic_status_tomainEPNodes = context.clear_ic_status_tomainEPNodes :+ clear_ic_status_tomainEPNode
-    domain.element.clear_ic_status_tomainSKNode := clear_ic_status_tomainEPNode
+      val core_r_arfs_c_EPNode = BundleBridgeEphemeralNode[UInt]()
+      context.core_r_arfs_c_EPNodes = context.core_r_arfs_c_EPNodes :+ core_r_arfs_c_EPNode
+      domain.element.core_r_arfs_c_SKNode := core_r_arfs_c_EPNode
 
 
+      val tile_icsl_counter_in_EPNode = BundleBridgeEphemeralNode[UInt]()
+      context.tile_icsl_counter_in_EPNodes = context.tile_icsl_counter_in_EPNodes :+ tile_icsl_counter_in_EPNode
+      domain.element.ic_counter_SKNode := tile_icsl_counter_in_EPNode
 
-    val cdc_empty_tocheckerEPNode = BundleBridgeEphemeralNode[Bool]()
-    context.cdc_empty_tocheckerEPNodes = context.cdc_empty_tocheckerEPNodes :+ cdc_empty_tocheckerEPNode
-    domain.element.cdc_empty_tocheckerSKNode := cdc_empty_tocheckerEPNode
+      val tile_clear_ic_status_out_EPNode = BundleBridgeEphemeralNode[UInt]()
+      context.tile_clear_ic_status_out_EPNodes = context.tile_clear_ic_status_out_EPNodes :+ tile_clear_ic_status_out_EPNode
+      tile_clear_ic_status_out_EPNode := domain.element.clear_ic_status_SRNode
 
-    val icsl_naEPNode = BundleBridgeEphemeralNode[UInt]()
-    context.icsl_naEPNodes = context.icsl_naEPNodes :+ icsl_naEPNode
-    domain.element.icsl_naSKNode := icsl_naEPNode
+      val clear_ic_status_tomainEPNode = BundleBridgeEphemeralNode[UInt]()
+      context.clear_ic_status_tomainEPNodes = context.clear_ic_status_tomainEPNodes :+ clear_ic_status_tomainEPNode
+      domain.element.clear_ic_status_tomainSKNode := clear_ic_status_tomainEPNode
 
-    val tile_ghe_status_in_EPNode = BundleBridgeEphemeralNode[UInt]()
-    context.tile_ghe_status_in_EPNodes = context.tile_ghe_status_in_EPNodes :+ tile_ghe_status_in_EPNode
-    domain.element.ghe_status_in_SKNode := tile_ghe_status_in_EPNode
+      val cdc_empty_tocheckerEPNode = BundleBridgeEphemeralNode[Bool]()
+      context.cdc_empty_tocheckerEPNodes = context.cdc_empty_tocheckerEPNodes :+ cdc_empty_tocheckerEPNode
+      domain.element.cdc_empty_tocheckerSKNode := cdc_empty_tocheckerEPNode
 
-    val tile_ghe_event_out_EPNode = BundleBridgeEphemeralNode[UInt]()
-    context.tile_ghe_event_out_EPNodes = context.tile_ghe_event_out_EPNodes :+ tile_ghe_event_out_EPNode
-    tile_ghe_event_out_EPNode := domain.element.ghe_event_out_SRNode
+      val icsl_naEPNode = BundleBridgeEphemeralNode[UInt]()
+      context.icsl_naEPNodes = context.icsl_naEPNodes :+ icsl_naEPNode
+      domain.element.icsl_naSKNode := icsl_naEPNode
 
-    val tile_clock_EPNode = BundleBridgeEphemeralNode[Clock]()
-    context.tile_clock_EPNodes = context.tile_clock_EPNodes :+ tile_clock_EPNode
-    tile_clock_EPNode := domain.element.clock_SRNode
+      val tile_ghe_status_in_EPNode = BundleBridgeEphemeralNode[UInt]()
+      context.tile_ghe_status_in_EPNodes = context.tile_ghe_status_in_EPNodes :+ tile_ghe_status_in_EPNode
+      domain.element.ghe_status_in_SKNode := tile_ghe_status_in_EPNode
 
-    val tile_reset_EPNode = BundleBridgeEphemeralNode[Bool]()
-    context.tile_reset_EPNodes = context.tile_reset_EPNodes :+ tile_reset_EPNode
-    tile_reset_EPNode := domain.element.reset_SRNode
+      val tile_ghe_event_out_EPNode = BundleBridgeEphemeralNode[UInt]()
+      context.tile_ghe_event_out_EPNodes = context.tile_ghe_event_out_EPNodes :+ tile_ghe_event_out_EPNode
+      tile_ghe_event_out_EPNode := domain.element.ghe_event_out_SRNode
 
-    // val tile_if_big_complete_EPNode = BundleBridgeEphemeralNode[Bool]()
-    // context.tile_if_big_complete_EPNodes = context.tile_if_big_complete_EPNodes :+ tile_if_big_complete_EPNode
-    // tile_if_big_complete_EPNode := domain.tile.if_big_complete_SRNode
+      val tile_clock_EPNode = BundleBridgeEphemeralNode[Clock]()
+      context.tile_clock_EPNodes = context.tile_clock_EPNodes :+ tile_clock_EPNode
+      tile_clock_EPNode := domain.element.clock_SRNode
 
-    // val tile_big_complete_EPNode = BundleBridgeEphemeralNode[Bool]()
-    // context.tile_big_complete_EPNodes = context.tile_big_complete_EPNodes :+ tile_big_complete_EPNode
-    // domain.tile.big_complete_SKNode := tile_big_complete_EPNode
+      val tile_reset_EPNode = BundleBridgeEphemeralNode[Bool]()
+      context.tile_reset_EPNodes = context.tile_reset_EPNodes :+ tile_reset_EPNode
+      tile_reset_EPNode := domain.element.reset_SRNode
 
-    val tile_ghe_revent_out_EPNode = BundleBridgeEphemeralNode[UInt]()
-    context.tile_ghe_revent_out_EPNodes = context.tile_ghe_revent_out_EPNodes :+ tile_ghe_revent_out_EPNode
-    tile_ghe_revent_out_EPNode := domain.element.ghe_revent_out_SRNode
+      val tile_ghe_revent_out_EPNode = BundleBridgeEphemeralNode[UInt]()
+      context.tile_ghe_revent_out_EPNodes = context.tile_ghe_revent_out_EPNodes :+ tile_ghe_revent_out_EPNode
+      tile_ghe_revent_out_EPNode := domain.element.ghe_revent_out_SRNode
+      println("#### Jessica #### Connecting GHE **Nodes** on the sub-system, HartID:", tileParams.tileId, "...!!")
+    }else{
+      val useless_tile_icsl_counter_in_EPNode      = BundleBridgeSource[UInt](Some(() => UInt(20.W)))
+      val useless_tile_clear_ic_status_out_EPNode  = BundleBridgeSink[UInt](Some(() => UInt(1.W)))
+      val useless_clear_ic_status_tomainEPNode     = BundleBridgeSource[UInt](Some(() => UInt(GH_GlobalParams.GH_NUM_CORES.W)))
+      val useless_icsl_naEPNode                    = BundleBridgeSource[UInt](Some(() => UInt(GH_GlobalParams.GH_NUM_CORES.W)))
+      val useless_cdc_empty_tocheckerEPNode        = BundleBridgeSource[Bool](Some(() => Bool()))
+      val useless_tile_ghe_packet_in_EPNode        = BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_TOTAL_PACKETS*GH_GlobalParams.GH_WIDITH_PACKETS+1).W)))
+      val useless_core_r_arfs_c_EPNode             = BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_WIDITH_PACKETS+8).W)))
+      val useless_tile_ghe_status_in_EPNode        = BundleBridgeSource[UInt](Some(() => UInt(32.W)))
+      val useless_tile_ghe_event_out_EPNode        = BundleBridgeSink[UInt](Some(() => UInt(6.W)))
+      val useless_tile_clock_EPNode                = BundleBridgeSink[Clock](Some(() => Clock()))
+      val useless_tile_reset_EPNode                = BundleBridgeSink[Bool](Some(() => Bool()))
+      val useless_tile_ghe_revent_out_EPNode       = BundleBridgeSink[UInt](Some(() => UInt(1.W)))
 
-    // val tile_agg_packet_out_EPNode = BundleBridgeEphemeralNode[UInt]()
-    // context.tile_agg_packet_out_EPNodes = context.tile_agg_packet_out_EPNodes :+ tile_agg_packet_out_EPNode
-    // tile_agg_packet_out_EPNode := domain.element.agg_packet_out_SRNode
 
-    // val tile_report_fi_detection_EPNode = BundleBridgeEphemeralNode[UInt]()
-    // context.tile_report_fi_detection_EPNodes = context.tile_report_fi_detection_EPNodes :+ tile_report_fi_detection_EPNode
-    // tile_report_fi_detection_EPNode := domain.element.report_fi_detection_SRNode
+      // GHE connections
 
-    // val tile_report_fi_detection_in_EPNode = BundleBridgeEphemeralNode[UInt]()
-    // context.tile_report_fi_detection_in_EPNodes = context.tile_report_fi_detection_in_EPNodes :+ tile_report_fi_detection_in_EPNode
-    // domain.element.report_fi_detection_in_SKNode := tile_report_fi_detection_in_EPNode
-
-
-    // val tile_agg_buffer_full_in_EPNode = BundleBridgeEphemeralNode[UInt]()
-    // context.tile_agg_buffer_full_in_EPNodes = context.tile_agg_buffer_full_in_EPNodes :+ tile_agg_buffer_full_in_EPNode
-    // domain.element.agg_buffer_full_in_SKNode := tile_agg_buffer_full_in_EPNode
-
-    // val tile_agg_core_status_out_EPNode = BundleBridgeEphemeralNode[UInt]()
-    // context.tile_agg_core_status_out_EPNodes = context.tile_agg_core_status_out_EPNodes :+ tile_agg_core_status_out_EPNode
-    // tile_agg_core_status_out_EPNode := domain.element.agg_core_status_SRNode
-
-    // val tile_ght_sch_na_out_EPNode = BundleBridgeEphemeralNode[UInt]()
-    // context.tile_ght_sch_na_out_EPNodes = context.tile_ght_sch_na_out_EPNodes :+ tile_ght_sch_na_out_EPNode
-    // tile_ght_sch_na_out_EPNode := domain.element.ght_sch_na_out_SRNode
-
-    // val tile_ghe_sch_refresh_in_EPNode = BundleBridgeEphemeralNode[UInt]()
-    // context.tile_ghe_sch_refresh_in_EPNodes = context.tile_ghe_sch_refresh_in_EPNodes :+ tile_ghe_sch_refresh_in_EPNode
-    // domain.element.ghe_sch_refresh_in_SKNode := tile_ghe_sch_refresh_in_EPNode
-
-    // val tile_ght_sch_dorefresh_EPNode = BundleBridgeEphemeralNode[UInt]()
-    // context.tile_ght_sch_dorefresh_EPNodes = context.tight_sch_dorefresh_SRNodele_ght_sch_dorefresh_EPNodes :+ tile_ght_sch_dorefresh_EPNode
-    // tile_ght_sch_dorefresh_EPNode := domain.element.
-
-    // val tile_agg_packet_in_EPNode = BundleBridgeEphemeralNode[UInt]()
-    // context.tile_agg_packet_in_EPNodes = context.tile_agg_packet_in_EPNodes :+ tile_agg_packet_in_EPNode
-    // domain.element.agg_packet_in_SKNode := tile_agg_packet_in_EPNode
-
-    println("#### Jessica #### Connecting GHE **Nodes** on the sub-system, HartID:", tileParams.tileId, "...!!")
+      domain.element.ghe_packet_in_SKNode := useless_tile_ghe_packet_in_EPNode
+      domain.element.core_r_arfs_c_SKNode := useless_core_r_arfs_c_EPNode
+      domain.element.ic_counter_SKNode := useless_tile_icsl_counter_in_EPNode
+      useless_tile_clear_ic_status_out_EPNode := domain.element.clear_ic_status_SRNode
+      domain.element.clear_ic_status_tomainSKNode := useless_clear_ic_status_tomainEPNode
+      domain.element.cdc_empty_tocheckerSKNode := useless_cdc_empty_tocheckerEPNode
+      domain.element.icsl_naSKNode := useless_icsl_naEPNode
+      domain.element.ghe_status_in_SKNode := useless_tile_ghe_status_in_EPNode
+      useless_tile_ghe_event_out_EPNode := domain.element.ghe_event_out_SRNode
+      useless_tile_clock_EPNode := domain.element.clock_SRNode
+      useless_tile_reset_EPNode := domain.element.reset_SRNode
+      useless_tile_ghe_revent_out_EPNode := domain.element.ghe_revent_out_SRNode
+      println("#### Jessica #### Connecting USELESS **Nodes** on the sub-system, HartID:", tileParams.tileId, "...!!")
+    }
+    
   }
   //===== GuardianCouncil Function: End ======//
 }
