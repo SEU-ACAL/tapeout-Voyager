@@ -108,7 +108,8 @@ class R_ICSL (val params: R_ICSLParams) extends Module with HasR_ICSLIO {
 
 
     is (fsm_postchecking){
-      sl_counter                                := sl_counter
+      // sl_counter                                := sl_counter
+      sl_counter                                := Mux(io.if_check_completed.asBool, 0.U, sl_counter)
       clear_ic_status                           := 0.U
       icsl_checkermode                          := Mux(io.if_correct_process.asBool, 1.U, 0.U)
       if_rh_cp_pc                               := 1.U
@@ -132,7 +133,14 @@ class R_ICSL (val params: R_ICSLParams) extends Module with HasR_ICSLIO {
   
   }
 
-  io.check_done                                 := (if_instants_completion.asBool || if_slow_completion.asBool) && (!io.something_inflight)&&(fsm_state===fsm_checking)
+  // io.check_done                                 := (if_instants_completion.asBool || if_slow_completion.asBool) && (!io.something_inflight)&&(fsm_state===fsm_checking)
+  val check_done = RegInit(false.B)
+  when(io.if_check_completed.asBool){
+    check_done := false.B
+  }.elsewhen((if_instants_completion.asBool || if_slow_completion.asBool) && (!io.something_inflight) && (icsl_checkermode.asBool) && !(io.returned_to_special_address_valid.asBool)){
+    check_done := true.B
+  }
+  io.check_done := check_done
 
   ic_counter_shadow                             := ic_counter_reg(params.width_of_ic-2,0) + 1.U // The checker core requires to run one more insts due to the custom jump
   ic_counter_done                               := ic_counter_reg(params.width_of_ic-1)
@@ -141,7 +149,8 @@ class R_ICSL (val params: R_ICSLParams) extends Module with HasR_ICSLIO {
   if_overtaking_next_cycle                      := Mux((if_just_overtaking.asBool ||  (sl_counter >= ic_counter_shadow)), 1.U, 0.U)
   
 
-  if_ret_special_pc                             := Mux(io.if_check_completed.asBool && icsl_checkermode.asBool, 1.U, 0.U)
+  // if_ret_special_pc                             := Mux(io.if_check_completed.asBool && icsl_checkermode.asBool, 1.U, 0.U)
+  if_ret_special_pc                             := Mux(if_rh_cp_pc.asBool && icsl_checkermode.asBool, 1.U, 0.U)
   
   icsl_run                                      := io.icsl_run
   io.clear_ic_status                            := clear_ic_status
@@ -156,7 +165,8 @@ class R_ICSL (val params: R_ICSLParams) extends Module with HasR_ICSLIO {
   val icsl_stalld_fsm_checking                   = Reg(Bool())
   val icsl_stalld_fsm_postchecking               = Reg(Bool())
   icsl_stalld_fsm_checking                      := ((sl_counter + io.num_valid_insts_in_pipeline) >= ic_counter_shadow)
-  icsl_stalld_fsm_postchecking                  := (io.num_valid_insts_in_pipeline > 0.U) || (!if_ret_special_pc.asBool)
+  // icsl_stalld_fsm_postchecking                  := (io.num_valid_insts_in_pipeline > 0.U) || (!if_ret_special_pc.asBool)
+  icsl_stalld_fsm_postchecking                  := (io.num_valid_insts_in_pipeline > 0.U)
   io.icsl_stalld                                := Mux(icsl_checkermode.asBool,
                                                    Mux(fsm_state === fsm_checking, icsl_stalld_fsm_checking, 
                                                    Mux(fsm_state === fsm_postchecking, icsl_stalld_fsm_postchecking, false.B)), false.B)

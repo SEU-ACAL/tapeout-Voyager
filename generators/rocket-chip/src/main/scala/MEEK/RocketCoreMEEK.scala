@@ -910,7 +910,8 @@ class RocketMEEK(tile: RocketTileMeek)(implicit p: Parameters) extends CoreModul
   rf_wen_rsu := rsu_slave.io.arfs_valid_out
   rsu_pc := rsu_slave.io.pcarf_out
   io.rsu_status := rsu_slave.io.rsu_status
-  rsu_slave.io.do_cp_check := icsl.io.if_rh_cp_pc & rsu_slave.io.rsu_status(1) & io.if_correct_process
+  // rsu_slave.io.do_cp_check := icsl.io.if_rh_cp_pc & rsu_slave.io.rsu_status(1) & io.if_correct_process
+  rsu_slave.io.do_cp_check := icsl.io.check_done.asUInt & (rsu_slave.io.rsu_status === 3.U).asUInt & (!(!div.io.req.ready || io.fpu.fpu_inflight)).asUInt
 
   for (i <-0 until 32){
     rsu_slave.io.core_arfs_in(i) := rf.read(i.U)
