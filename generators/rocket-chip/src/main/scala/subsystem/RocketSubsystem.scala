@@ -11,6 +11,8 @@ import freechips.rocketchip.tile.{RocketTile, RocketTileParams}
 import freechips.rocketchip.util.HasCoreMonitorBundles
 import freechips.rocketchip.npu._
 import freechips.rocketchip.meek._
+import freechips.rocketchip.buckyball._
+
 case class RocketCrossingParams(
   crossingType: ClockCrossingType = SynchronousCrossing(),
   master: HierarchicalElementPortParamsLike = HierarchicalElementMasterPortParams(),
@@ -33,6 +35,11 @@ case class RocketTileNpuAttachParams(
   tileParams: RocketTileNpuParams,
   crossingParams: RocketCrossingParams
 ) extends CanAttachTile { type TileType = RocketTileNpu }
+
+case class RocketTileAttachParamsBB(
+  tileParams: RocketTileParamsBB,
+  crossingParams: RocketCrossingParams
+) extends CanAttachTile { type TileType = RocketTileBB }
 
 trait HasRocketTiles {
   this: BaseSubsystem with InstantiatesHierarchicalElements =>

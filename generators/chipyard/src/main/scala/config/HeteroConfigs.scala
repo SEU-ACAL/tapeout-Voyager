@@ -4,10 +4,11 @@ import org.chipsalliance.cde.config.{Config}
 import freechips.rocketchip.guardiancouncil._
 import freechips.rocketchip.prci.{AsynchronousCrossing}
 import freechips.rocketchip.subsystem.{InCluster}
+import freechips.rocketchip.tile._
+
 // ---------------------
 // Heterogenous Configs
 // ---------------------
-
 class LargeBoomAndRocketConfig extends Config(
   new boom.v3.common.WithNLargeBooms(1) ++                    // single-core boom
   new freechips.rocketchip.rocket.WithNHugeCores(1) ++         // single rocket-core
@@ -123,5 +124,15 @@ class TestHeterSoCConfig extends Config(
   //  Crossing specifications
   new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1) ++
   new boom.meek.common.WithNLargeBooms(1) ++
+  new chipyard.config.AbstractConfig
+)
+
+// BuckyBall配置
+class BuckyBallRocketConfig extends Config(
+  new freechips.rocketchip.rocket.WithNBigCores(4) ++
+  new freechips.rocketchip.rocket.WithNBigBBCores(1) ++
+  new chipyard.config.WithMultiRoCCBB ++
+  new chipyard.config.WithMultiRoCCBuckyBall(5)(buckyball.BuckyBallConfigs.defaultConfig) ++
+  new chipyard.config.WithSystemBusWidth(128) ++
   new chipyard.config.AbstractConfig
 )

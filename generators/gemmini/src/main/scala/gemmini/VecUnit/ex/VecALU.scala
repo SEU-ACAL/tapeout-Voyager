@@ -25,7 +25,7 @@ class thread_output extends Bundle {
   val rob_id     = UInt(5.W)
 }
 
-class VecALUThread  extends Module {
+class VecThread  extends Module {
 	val io = IO(new Bundle {
 		val in  = Flipped(Decoupled(new thread_input()))
 		val out = Decoupled(new thread_output())
@@ -65,8 +65,6 @@ class VecALUThread  extends Module {
 		thread_busy := true.B
 		thread_iteration := io.in.bits.iteration
 	}
-
-	// shit
 
 
 // -----------------------------------------------------------------------------
