@@ -11,7 +11,7 @@ import freechips.rocketchip.rocket.MStatus
 import freechips.rocketchip.rocket.constants.MemoryOpConstants
 
 import buckyball.util.Util._
-import buckyball.front.FrontendTLBIO
+import buckyball.frontend.FrontendTLBIO
 import buckyball.mem.LocalAddr
 
 import midas.targetutils.PerfCounter

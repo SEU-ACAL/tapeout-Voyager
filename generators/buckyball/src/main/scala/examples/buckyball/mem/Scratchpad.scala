@@ -11,7 +11,7 @@ import freechips.rocketchip.tilelink._
 import buckyball.util.Util._
 import buckyball.util.Pipeline
 import buckyball.BuckyBallConfig
-import buckyball.front.FrontendTLBIO
+import buckyball.frontend.FrontendTLBIO
 
 
 // DMA Memory IO类定义

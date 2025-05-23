@@ -22,6 +22,7 @@ case class BuckyBallConfig(
   veclane: Int = 16,
 
   tlb_size: Int = 4,
+  rob_entries: Int = 32,  // RoB条目数量
   
   dma_maxbytes: Int = 64,
   dma_buswidth: Int = 128,
@@ -37,6 +38,8 @@ case class BuckyBallConfig(
   max_in_flight_mem_reqs: Int = 16,
   aligned_to: Int = 1,
   spad_read_delay: Int = 0,
+
+  addr_length: Int = 14, // 256KB的索引长度
   
 ) {
   val sp_width = veclane * inputType.getWidth
@@ -58,7 +61,7 @@ case class BuckyBallConfig(
 
 object BuckyBallConfigs {
   val defaultConfig = BuckyBallConfig(
-    inputType = SInt(8.W),
-    accType = SInt(32.W)
+    inputType = UInt(8.W),
+    accType = UInt(32.W)
   )
 }
