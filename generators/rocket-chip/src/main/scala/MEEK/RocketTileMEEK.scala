@@ -175,7 +175,7 @@ class RocketTileMeekModuleImp(outer: RocketTileMeek) extends BaseTileModuleImp(o
 //make it generic
   
   //arfs 是固定的
-  val arfs_in = outer.core_r_arfs_c_SKNode.bundle
+  val arfs_in = outer.core_r_arfs_c_SKNode.map(_.bundle).getOrElse(0.U((2*GH_GlobalParams.GH_WIDITH_PERF+1).W))
   val arfs_index = arfs_in (143, 136)
   val ptype_rcu = Mux(s_or_r.asBool && ((arfs_index(2,0) === 7.U)), true.B, false.B)
   val arfs_if_CPS = Mux(ptype_rcu.asBool && (arfs_index (6, 3) === outer.rocketParams.tileId.U), 1.U, 0.U)
@@ -184,7 +184,7 @@ class RocketTileMeekModuleImp(outer: RocketTileMeek) extends BaseTileModuleImp(o
   // val icsl_ack          = outer.icsl_ack_tocheckerSKNode.bundle
   // dontTouch(icsl_ack)//for debug
   // core.io.icsl_ack := icsl_ack
-  core.io.cdc_empty    := outer.cdc_empty_tocheckerSKNode.bundle
+  core.io.cdc_empty    := outer.cdc_empty_tocheckerSKNode.map(_.bundle).getOrElse(0.U(1.W))
   // core.io.big_switch   := outer.big_switch_tocheckerSKNode.bundle
   val packet_in         = WireInit(0.U((2*GH_GlobalParams.GH_WIDITH_PACKETS+1).W))
   //极度旧的chisel写法
@@ -193,7 +193,7 @@ class RocketTileMeekModuleImp(outer: RocketTileMeek) extends BaseTileModuleImp(o
   val packet_index_vec  = WireInit(VecInit.fill(GH_GlobalParams.GH_TOTAL_PACKETS)(0.U(8.W)))
   val packet_vec_in     = WireInit(VecInit.fill(GH_GlobalParams.GH_TOTAL_PACKETS)(0.U((GH_GlobalParams.GH_WIDITH_PACKETS).W)))
 
-  packet_in := outer.ghe_packet_in_SKNode.bundle
+  packet_in := outer.ghe_packet_in_SKNode.map(_.bundle).getOrElse(0.U((2*GH_GlobalParams.GH_WIDITH_PACKETS+1).W))
   // dontTouch(packet_in)
   // dontTouch(packet_en)
   // val ptype_fg = ((packet_index_vec(0)(2) === 0.U) && (packet_index_vec(0)(1,0) =/= 0.U) && (s_or_r === 0.U))
@@ -217,19 +217,26 @@ class RocketTileMeekModuleImp(outer: RocketTileMeek) extends BaseTileModuleImp(o
 
 
   val arf_copy_bridge   = Module(new GH_Bridge(GH_BridgeParams(1)))
-  outer.clock_SRNode.bundle  := clock
-  outer.reset_SRNode.bundle  := reset
+  outer.clock_SRNode.foreach{node=>
+    node.bundle:=clock
+  }  
+  outer.reset_SRNode.foreach{node=>
+    node.bundle:=reset
+  }
  // Other cores:
   // For other cores: no GHT is required, and hence tied-off
   core.io.clk_enable_gh := 1.U // the core is never gated
-  outer.ght_packet_out_SRNode.bundle := 0.U
-  outer.ght_packet_dest_SRNode.bundle := 0.U
   val zeros_4bits = WireInit(0.U(4.W))
 
 
 
-  outer.ghe_event_out_SRNode.bundle := Cat(0.U, (ghe_bridge.io.out | Cat(core.io.packet_cdc_ready, zeros_4bits) | Cat(zeros_4bits, core.io.lsl_near_full)))
-  outer.ghe_revent_out_SRNode.bundle := core.io.lsl_highwatermark
+  outer.ghe_event_out_SRNode.foreach{node=>
+    node.bundle := Cat(0.U, (ghe_bridge.io.out | Cat(core.io.packet_cdc_ready, zeros_4bits) | Cat(zeros_4bits, core.io.lsl_near_full)))
+
+  } 
+  outer.ghe_revent_out_SRNode.foreach{node=>
+    node.bundle:= core.io.lsl_highwatermark
+  }
   core.io.arfs_if_CPS := arfs_if_CPS
   core.io.packet_arfs := packet_rcu
   core.io.packet_lsl := packet_vec_in
@@ -239,9 +246,10 @@ class RocketTileMeekModuleImp(outer: RocketTileMeek) extends BaseTileModuleImp(o
   core.io.record_pc := record_pc_bridge.io.out
   core.io.elu_deq := elu_deq_bridge.io.out
   core.io.elu_sel := elu_sel_bridge.io.out
-  core.io.ic_counter := outer.ic_counter_SKNode.bundle
-  outer.clear_ic_status_SRNode.bundle := core.io.clear_ic_status
-  
+  core.io.ic_counter := outer.ic_counter_SKNode.map(_.bundle).getOrElse(0.U(20.W))
+  outer.clear_ic_status_SRNode.foreach{node=>
+    node.bundle := core.io.clear_ic_status
+  }
   core.io.core_trace := core_trace(0)
   core.io.debug_perf_ctrl := debug_perf_ctrl
   core.io.record_and_store := record_and_store
@@ -311,27 +319,22 @@ class RocketTileMeekModuleImp(outer: RocketTileMeek) extends BaseTileModuleImp(o
     (core.io.rocc.csrs zip roccCSRIOs.flatten).foreach { t => t._2 <> t._1 }
     //===== GuardianCouncil Function: Start ====//
     cmdRouter.get.io.ghe_packet_in := 0.U
-    cmdRouter.get.io.ghe_status_in := outer.ghe_status_in_SKNode.bundle
+    cmdRouter.get.io.ghe_status_in := outer.ghe_status_in_SKNode.map(_.bundle).getOrElse(0.U(32.W))
     ghe_bridge.io.in := cmdRouter.get.io.ghe_event_out
     ght_bridge.io.in := cmdRouter.get.io.ght_mask_out
     ght_cfg_bridge.io.in := cmdRouter.get.io.ght_cfg_out
     ght_cfg_v_bridge.io.in := cmdRouter.get.io.ght_cfg_valid
-    outer.ght_status_out_SRNode.bundle := cmdRouter.get.io.ght_status_out
+    outer.ght_status_out_SRNode.foreach{node=>
+      node.bundle := cmdRouter.get.io.ght_status_out
+    } 
 
-    // agg
-    // outer.agg_packet_out_SRNode.bundle := cmdRouter.get.io.agg_packet_out
-    // outer.report_fi_detection_SRNode.bundle := cmdRouter.get.io.report_fi_detection_out
+
     cmdRouter.get.io.agg_buffer_full := 0.U
-    // outer.agg_core_status_SRNode.bundle := Mux(!s_or_r.asBool, cmdRouter.get.io.agg_core_status_out, core.io.icsl_status)
-    // outer.ght_sch_na_out_SRNode.bundle := cmdRouter.get.io.ght_sch_na_out
     cmdRouter.get.io.ght_sch_refresh := 0.U
     cmdRouter.get.io.ght_buffer_status := 0.U
     // For big_core GHT
-    cmdRouter.get.io.bigcore_comp := outer.bigcore_comp_in_SKNode.bundle
-    // outer.ght_sch_dorefresh_SRNode.bundle := cmdRouter.get.io.ght_sch_dorefresh_out    
-
+    cmdRouter.get.io.bigcore_comp := outer.bigcore_comp_in_SKNode.map(_.bundle).getOrElse(0.U(3.W))
     arf_copy_bridge.io.in := cmdRouter.get.io.arf_copy_out
-
     /* R Features */
     cmdRouter.get.io.rsu_status_in := core.io.rsu_status
     cmdRouter.get.io.elu_status_in := core.io.elu_status

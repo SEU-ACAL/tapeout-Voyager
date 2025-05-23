@@ -65,7 +65,7 @@ class OurHeterSoCConfig extends Config(
   new chipyard.config.WithTileFrequency(500, Some(3)) ++
   new chipyard.config.WithTileFrequency(500, Some(4)) ++
   new chipyard.config.WithTileFrequency(500, Some(5)) ++
-  
+  new freechips.rocketchip.guardiancouncil.WithGuardianCouncilNodes++
   new barf.WithHellaCachePrefetcher(Seq(5), barf.SingleStridedPrefetcherParams()) ++   // strided prefetcher, sits in front of the L1D$, monitors core requests to prefetching into the L1D$
   
   new freechips.rocketchip.rocket.WithNBigNpuCores(1, nMSHRs = 16) ++ //independent Rocket for gemmini: hartid 5, with non-blocking L1D$
@@ -100,7 +100,7 @@ class TestHeterSoCConfig extends Config(
   new chipyard.config.WithTileFrequency(50, Some(3)) ++
   new chipyard.config.WithTileFrequency(50, Some(4)) ++
   new chipyard.config.WithTileFrequency(50, Some(5)) ++
-  
+  new freechips.rocketchip.guardiancouncil.WithGuardianCouncilNodes++
   new barf.WithHellaCachePrefetcher(Seq(5), barf.SingleStridedPrefetcherParams()) ++   // strided prefetcher, sits in front of the L1D$, monitors core requests to prefetching into the L1D$
   
   new freechips.rocketchip.rocket.WithNBigNpuCores(1, nMSHRs = 16) ++ //independent Rocket for gemmini: hartid 5, with non-blocking L1D$
@@ -129,10 +129,8 @@ class TestHeterSoCConfig extends Config(
 
 // BuckyBall配置
 class BuckyBallRocketConfig extends Config(
-  new freechips.rocketchip.rocket.WithNBigCores(4) ++
-  new freechips.rocketchip.rocket.WithNBigBBCores(1) ++
   new chipyard.config.WithMultiRoCCBB ++
-  new chipyard.config.WithMultiRoCCBuckyBall(5)(buckyball.BuckyBallConfigs.defaultConfig) ++
+  new chipyard.config.WithMultiRoCCBuckyBall(0)(buckyball.BuckyBallConfigs.defaultConfig) ++
   new chipyard.config.WithSystemBusWidth(128) ++
   new chipyard.config.AbstractConfig
 )

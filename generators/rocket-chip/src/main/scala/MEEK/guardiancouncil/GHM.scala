@@ -392,33 +392,34 @@ object GHMCore {
         ghm.clear_ic_status_SkNodes(i)                  := subsystem.tile_clear_ic_status_out_EPNodes(i)
         subsystem.clear_ic_status_tomainEPNodes(i)      := ghm.clear_ic_status_tomainSRNodes(i)
         subsystem.icsl_naEPNodes(i)                     := ghm.icsl_naSRNodes(i)
-      }else{
-        val useless_ghm_ghe_packet_out_SRNodes   = (BundleBridgeSource[UInt]())
-        val useless_core_r_arfs_c_SRNodes        = (BundleBridgeSource[UInt]())
-        val useless_icsl_out_SRNodes             = (BundleBridgeSource[UInt]())
-        val useless_ghm_ghe_status_out_SRNodes   = (BundleBridgeSource[UInt]())
-        val useless_ghm_ghe_event_in_SKNodes     = (BundleBridgeSink[UInt]())
-        val useless_ghm_clock_in_SKNodes         = (BundleBridgeSink[Clock]())
-        val useless_ghm_reset_in_SKNodes         = (BundleBridgeSink[Bool]())
-        val useless_ghm_cdc_empty_out_SKNodes    = (BundleBridgeSource[Bool]())
-        val useless_ghm_ghe_revent_in_SKNodes    = (BundleBridgeSink[UInt]())
-        val useless_clear_ic_status_SkNodes      = (BundleBridgeSink[UInt]())
-        val useless_clear_ic_status_tomainSRNodes= (BundleBridgeSource[UInt]())
-        val useless_icsl_naSRNodes               = (BundleBridgeSource[UInt]())
-        subsystem.tile_ghe_packet_in_EPNodes(i)         := useless_ghm_ghe_packet_out_SRNodes
-        subsystem.core_r_arfs_c_EPNodes(i)              := useless_core_r_arfs_c_SRNodes
-        subsystem.tile_icsl_counter_in_EPNodes(i)       := useless_icsl_out_SRNodes
-        subsystem.tile_ghe_status_in_EPNodes(i)         := useless_ghm_ghe_status_out_SRNodes
-        subsystem.cdc_empty_tocheckerEPNodes(i)         := useless_ghm_cdc_empty_out_SKNodes
-        subsystem.clear_ic_status_tomainEPNodes(i)      := useless_clear_ic_status_tomainSRNodes
-        subsystem.icsl_naEPNodes(i)                     := useless_icsl_naSRNodes
-        useless_ghm_ghe_event_in_SKNodes                := subsystem.tile_ghe_event_out_EPNodes(i)
-        useless_ghm_clock_in_SKNodes                    := subsystem.tile_clock_EPNodes(i)
-        useless_ghm_reset_in_SKNodes                    := subsystem.tile_reset_EPNodes(i)
-        useless_ghm_ghe_revent_in_SKNodes               := subsystem.tile_ghe_revent_out_EPNodes(i)
-        useless_clear_ic_status_SkNodes                 := subsystem.tile_clear_ic_status_out_EPNodes(i)
-
       }
+      // else{
+      //   val useless_ghm_ghe_packet_out_SRNodes   = (BundleBridgeSource[UInt]())
+      //   val useless_core_r_arfs_c_SRNodes        = (BundleBridgeSource[UInt]())
+      //   val useless_icsl_out_SRNodes             = (BundleBridgeSource[UInt]())
+      //   val useless_ghm_ghe_status_out_SRNodes   = (BundleBridgeSource[UInt]())
+      //   val useless_ghm_ghe_event_in_SKNodes     = (BundleBridgeSink[UInt]())
+      //   val useless_ghm_clock_in_SKNodes         = (BundleBridgeSink[Clock]())
+      //   val useless_ghm_reset_in_SKNodes         = (BundleBridgeSink[Bool]())
+      //   val useless_ghm_cdc_empty_out_SKNodes    = (BundleBridgeSource[Bool]())
+      //   val useless_ghm_ghe_revent_in_SKNodes    = (BundleBridgeSink[UInt]())
+      //   val useless_clear_ic_status_SkNodes      = (BundleBridgeSink[UInt]())
+      //   val useless_clear_ic_status_tomainSRNodes= (BundleBridgeSource[UInt]())
+      //   val useless_icsl_naSRNodes               = (BundleBridgeSource[UInt]())
+      //   subsystem.tile_ghe_packet_in_EPNodes(i)         := useless_ghm_ghe_packet_out_SRNodes
+      //   subsystem.core_r_arfs_c_EPNodes(i)              := useless_core_r_arfs_c_SRNodes
+      //   subsystem.tile_icsl_counter_in_EPNodes(i)       := useless_icsl_out_SRNodes
+      //   subsystem.tile_ghe_status_in_EPNodes(i)         := useless_ghm_ghe_status_out_SRNodes
+      //   subsystem.cdc_empty_tocheckerEPNodes(i)         := useless_ghm_cdc_empty_out_SKNodes
+      //   subsystem.clear_ic_status_tomainEPNodes(i)      := useless_clear_ic_status_tomainSRNodes
+      //   subsystem.icsl_naEPNodes(i)                     := useless_icsl_naSRNodes
+      //   useless_ghm_ghe_event_in_SKNodes                := subsystem.tile_ghe_event_out_EPNodes(i)
+      //   useless_ghm_clock_in_SKNodes                    := subsystem.tile_clock_EPNodes(i)
+      //   useless_ghm_reset_in_SKNodes                    := subsystem.tile_reset_EPNodes(i)
+      //   useless_ghm_ghe_revent_in_SKNodes               := subsystem.tile_ghe_revent_out_EPNodes(i)
+      //   useless_clear_ic_status_SkNodes                 := subsystem.tile_clear_ic_status_out_EPNodes(i)
+
+      // }
     }
 
     subsystem.tile_bigcore_comp_EPNode            := ghm.bigcore_comp_SRNode

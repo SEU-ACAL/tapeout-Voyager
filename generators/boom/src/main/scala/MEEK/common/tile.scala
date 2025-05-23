@@ -198,8 +198,12 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
   debug_gtimer_tiny := Mux(debug_gtimer_reset.asBool, 0.U, Mux((s_or_r === 1.U), Mux(debug_gtimer_tiny === 3.U, 0.U, debug_gtimer_tiny + 1.U), 0.U))
   debug_gtimer := Mux(debug_gtimer_reset.asBool, 0.U, Mux((s_or_r === 1.U), Mux(debug_gtimer_tiny === 3.U, debug_gtimer + 1.U, debug_gtimer), 0.U))
   val gc_core_width                               = outer.boomParams.core.decodeWidth
-  outer.clock_SRNode.bundle := clock
-  outer.reset_SRNode.bundle := reset
+  outer.clock_SRNode.foreach{node=>
+    node.bundle := clock
+  } 
+  outer.reset_SRNode.foreach{node=>
+    node.bundle := reset
+  } 
   if (outer.tileParams.tileId == 0) {
     println("#### Jessica #### Generating GH BUF for the big core, HartID: ", outer.boomParams.tileId, "...!!!")
    
@@ -215,16 +219,19 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
     // fi_latency                                   := fiu.io.fi_rslt
 
 
-    outer.ght_packet_out_SRNode.bundle           := gh_buf.io.packet_out
-    outer.ght_packet_dest_SRNode.bundle          := Mux(gh_buf.io.gh_packet_dest=/=0.U,(gh_buf.io.gh_packet_dest),0.U)//送入ghm
+    outer.ght_packet_out_SRNode.foreach{node=>
+    node.bundle := gh_buf.io.packet_out
+    }          
+    outer.ght_packet_dest_SRNode.foreach{node=>
+    node.bundle :=Mux(gh_buf.io.gh_packet_dest=/=0.U,(gh_buf.io.gh_packet_dest),0.U)//送入ghm
+    }                  
     core.io.gh_stall                             := gh_buf.io.core_hang_up
     if_ght_filters_empty_bridge.io.in            := gh_buf.io.ght_filters_empty
-    
-    
-    outer.ghe_event_out_SRNode.bundle            := ghe_bridge.io.out
-    outer.clear_ic_status_SRNode.bundle          := 0.U
-    core.io.clear_ic_status_tomain               := outer.clear_ic_status_tomainSKNode.bundle
-    core.io.icsl_na                              := outer.icsl_naSKNode.bundle
+    outer.ghe_event_out_SRNode.foreach{node=>
+      node.bundle := ghe_bridge.io.out
+    }          
+    core.io.clear_ic_status_tomain               := outer.clear_ic_status_tomainSKNode.map(_.bundle).getOrElse(0.U)
+    core.io.icsl_na                              := outer.icsl_naSKNode.map(_.bundle).getOrElse(0.U)
 
     
 
@@ -283,7 +290,7 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
       gh_buf.io.gh_prfs_rd(w)                    := RegNext(core.io.prf_rd(w))
     }
     gh_buf.io.gh_can_fwd                           := (ght_bridge.io.out | (!if_correct_process_bridge.io.out))
-    gh_buf.io.cdc_not_ready                      := outer.bigcore_hang_in_SKNode.bundle
+    gh_buf.io.cdc_not_ready                      := outer.bigcore_hang_in_SKNode.map(_.bundle).getOrElse(false.B)
     gh_buf.io.ic_crnt_target                     := RegNext(core.io.ic_crnt_target)
     
                         
@@ -302,20 +309,19 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
 
     core.io.if_correct_process                   := if_correct_process_bridge.io.out
 
-    outer.core_r_arfs_SRNode.bundle              := Cat(core.io.arfs_ecp_dest,core.io.r_arfs_pidx(0), core.io.r_arfs(0))
-    
-
-    
-    
+    outer.core_r_arfs_SRNode.foreach{node=>
+      node.bundle := Cat(core.io.arfs_ecp_dest,core.io.r_arfs_pidx(0), core.io.r_arfs(0))
+    }
     val ic_counter_superset                       = WireInit(0.U((16*GH_GlobalParams.GH_NUM_CORES).W))
     ic_counter_superset                          := core.io.ic_counter.reverse.reduce(Cat(_,_))
-    outer.ic_counter_SRNode.bundle               := ic_counter_superset
-    // outer.icsl_ack_SRNode.bundle                 := (core.io.icsl_na_ack.asUInt)(4,1)
-    // outer.big_checker_switch_SRNode.bundle       := (core.io.big_checker_switch.asUInt)(4,1)
+    outer.ic_counter_SRNode.foreach{node=>
+      node.bundle := ic_counter_superset
+    }
     core.io.num_of_checker                       := number_checkers_bridge.io.out
     core.io.debug_perf_ctrl                      := debug_perf_sel
-    outer.debug_maincore_status_SRNode.bundle    := core.io.debug_maincore_status
-    // outer.big_complete_ack_SRNode.bundle         := core.io.if_big_complete_ack.asUInt 
+    outer.debug_maincore_status_SRNode.foreach{node=>
+      node.bundle := core.io.debug_maincore_status
+    } 
   } else { 
     // Not be used, added to pass the compile
     core.io.gh_stall                             := 0.U
@@ -448,8 +454,8 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
     core.io.rocc.busy <> (cmdRouter.io.busy || outer.roccs.map(_.module.io.busy).reduce(_||_))
     core.io.rocc.interrupt := outer.roccs.map(_.module.io.interrupt).reduce(_||_)
     //===== GuardianCouncil Function: Start ====//
-    cmdRouter.io.ghe_packet_in                   := ((outer.ghe_packet_in_SKNode.bundle) ) // Revisit: current agg packet and filtered packets are using the same channel
-    cmdRouter.io.ghe_status_in                   := outer.ghe_status_in_SKNode.bundle
+    cmdRouter.io.ghe_packet_in                   := outer.ghe_packet_in_SKNode.map(_.bundle).getOrElse(0.U) // Revisit: current agg packet and filtered packets are using the same channel
+    cmdRouter.io.ghe_status_in                   := outer.ghe_status_in_SKNode.map(_.bundle).getOrElse(0.U)
     ghe_bridge.io.in                             := cmdRouter.io.ghe_event_out
     ght_bridge.io.in                             := cmdRouter.io.ght_mask_out
     debug_gtimer_reset_bridge.io.in              := cmdRouter.io.gtimer_reset_out
@@ -461,7 +467,9 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
     cdc_cnt := cdc_cnt+1.U
 
     
-    outer.ght_status_out_SRNode.bundle           := Mux(cdc_cnt===3.U,Cat(if_ght_filters_empty_bridge.io.out, cmdRouter.io.ght_status_out(30,0)),0.U)
+    outer.ght_status_out_SRNode.foreach{node=>
+      node.bundle := Mux(cdc_cnt===3.U,Cat(if_ght_filters_empty_bridge.io.out, cmdRouter.io.ght_status_out(30,0)),0.U)
+    }         
     number_checkers_bridge.io.in                 := cmdRouter.io.ght_status_out(30,23)
 
     // agg
@@ -471,7 +479,7 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
     // outer.ght_sch_na_out_SRNode.bundle           := cmdRouter.io.ght_sch_na_out
     cmdRouter.io.ght_sch_refresh                 := 0.U
     // For big_core GHT
-    cmdRouter.io.bigcore_comp                    := outer.bigcore_comp_in_SKNode.bundle
+    cmdRouter.io.bigcore_comp                    := outer.bigcore_comp_in_SKNode.map(_.bundle).getOrElse(0.U)
     // outer.ght_sch_dorefresh_SRNode.bundle        := cmdRouter.io.ght_sch_dorefresh_out    
     cmdRouter.io.ght_buffer_status               := ght_buffer_status_bridge.io.out
     
@@ -486,7 +494,7 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
     // cmdRouter.io.fi_latency                      := fi_latency
     cmdRouter.io.debug_bp_cdc                    := debug_bp_cdc_bridge.io.out
     cmdRouter.io.debug_bp_filter                 := debug_bp_filter_bridge.io.out
-    cmdRouter.io.debug_gcounter                  := outer.debug_gcounter_SKNode.bundle
+    cmdRouter.io.debug_gcounter                  := outer.debug_gcounter_SKNode.map(_.bundle).getOrElse(0.U)
 
     /* R Features */
     icctrl_bridge.io.in                          := cmdRouter.io.icctrl_out

@@ -40,7 +40,7 @@ class MEEKConfig extends Config(
   new chipyard.config.WithTileFrequency(500, Some(2)) ++
   new chipyard.config.WithTileFrequency(500, Some(3)) ++
   new chipyard.config.WithTileFrequency(500, Some(4)) ++
-
+  new freechips.rocketchip.guardiancouncil.WithGuardianCouncilNodes++
   new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
   AsynchronousCrossing().depth,
   AsynchronousCrossing().sourceSync) ++

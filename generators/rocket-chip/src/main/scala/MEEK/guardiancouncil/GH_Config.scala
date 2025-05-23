@@ -13,3 +13,6 @@ class WithGHE extends Config((site, here, up) => {
         ghe
     })
 })
+class WithGuardianCouncilNodes extends Config((site, here, up) => {
+  case EnableGuardianCouncilNodes => true
+})

@@ -27,6 +27,7 @@ import freechips.rocketchip.npu.BuildRoCCNpu
 import freechips.rocketchip.meek.BuildRoCCMEEK
 //===== GuardianCouncil Function: Start ====//
 import freechips.rocketchip.guardiancouncil._
+case object EnableGuardianCouncilNodes extends Field[Boolean](false)
 //===== GuardianCouncil Function: End   ====//
 case object TileVisibilityNodeKey extends Field[TLEphemeralNode]
 case object TileKey extends Field[TileParams]
@@ -217,7 +218,7 @@ trait HasTileParameters extends HasNonDiplomaticTileParameters {
 /** Base class for all Tiles that use TileLink */
 abstract class BaseTile private (crossing: ClockCrossingType, q: Parameters)
     extends BaseHierarchicalElement(crossing)(q)
-    with HasNonDiplomaticTileParameters
+    with HasNonDiplomaticTileParameters 
 {
   // Public constructor alters Parameters to supply some legacy compatibility keys
   def this(tileParams: TileParams, crossing: ClockCrossingType, lookup: LookupByHartIdImpl, p: Parameters) = {
@@ -234,7 +235,9 @@ abstract class BaseTile private (crossing: ClockCrossingType, q: Parameters)
   def ceaseNode: IntOutwardNode               // Tile has ceased to retire instructions
   def wfiNode: IntOutwardNode                 // Tile is waiting for an interrupt
   def module: BaseTileModuleImp[BaseTile]
-
+  //===== GuardianCouncil Function: Start ====//
+  val enableGCNodes = p(EnableGuardianCouncilNodes)
+  //===== GuardianCouncil Function: END ====//
   /** Node for broadcasting a hart id to diplomatic consumers within the tile. */
   val hartIdNexusNode: BundleBridgeNode[UInt] = BundleBroadcast[UInt](registered = p(InsertTimingClosureRegistersOnHartIds))
 
@@ -252,61 +255,7 @@ abstract class BaseTile private (crossing: ClockCrossingType, q: Parameters)
 
   /** Node for broadcasting a reset vector to diplomatic consumers within the tile. */
   val resetVectorNexusNode: BundleBridgeNode[UInt] = BundleBroadcast[UInt]()
-//===== GuardianCouncil Function: Start ====//
-  val ic_counter_SRNode           = BundleBridgeSource[UInt](Some(() => UInt((16*GH_GlobalParams.GH_NUM_CORES).W)))
-  val debug_maincore_status_SRNode= BundleBridgeSource[UInt](Some(() => UInt(4.W)))
-  // val big_complete_ack_SRNode    = BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_NUM_CORES-1).W)))
 
-  val ic_counter_SKNode           = BundleBridgeSink[UInt](Some(() => UInt(20.W)))
-  val clear_ic_status_SRNode      = BundleBridgeSource[UInt](Some(() => UInt(1.W)))
-  val clear_ic_status_tomainSKNode= BundleBridgeSink[UInt](Some(() => UInt(GH_GlobalParams.GH_NUM_CORES.W)))
-  val icsl_naSKNode               = BundleBridgeSink[UInt](Some(() => UInt(GH_GlobalParams.GH_NUM_CORES.W)))
-  // val icsl_ack_tocheckerSKNode    = BundleBridgeSink[Bool](Some(() => Bool()))
-  
-  // val big_switch_tocheckerSKNode    = BundleBridgeSink[Bool](Some(() => Bool()))
-  val cdc_empty_tocheckerSKNode   = BundleBridgeSink[Bool](Some(() => Bool()))
-
-  // val ghm_agg_core_id_out_SRNode  = BundleBridgeSource[UInt](Some(() => UInt(16.W)))
-  val ght_packet_out_SRNode       = BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_TOTAL_PACKETS*GH_GlobalParams.GH_WIDITH_PACKETS).W)))
-  val core_r_arfs_SRNode          = BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_WIDITH_PACKETS+8+8).W)))
-  val ght_packet_dest_SRNode      = BundleBridgeSource[UInt](Some(() => UInt(32.W)))
-  val ght_status_out_SRNode       = BundleBridgeSource[UInt](Some(() => UInt(32.W)))
-  println("#### Jessica #### Generating GHT **Nodes** on the tile, HartID:", tileParams.tileId, "...!!")
-  val ghe_packet_in_SKNode        = BundleBridgeSink[UInt](Some(() => UInt((GH_GlobalParams.GH_TOTAL_PACKETS*GH_GlobalParams.GH_WIDITH_PACKETS+1).W)))
-  val core_r_arfs_c_SKNode        = BundleBridgeSink[UInt](Some(() => UInt((GH_GlobalParams.GH_WIDITH_PACKETS+8).W)))
-  val ghe_status_in_SKNode        = BundleBridgeSink[UInt](Some(() => UInt(32.W)))
-  val ghe_event_out_SRNode        = BundleBridgeSource[UInt](Some(() => UInt(6.W)))
-
-  val clock_SRNode                = BundleBridgeSource[Clock](Some(() => Clock()))
-  // val icsl_ack_SRNode             = BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_NUM_CORES-1).W)))
-  
-  // val if_big_complete_SRNode      = BundleBridgeSource[Bool](Some(() => Bool())) 
-  // val big_complete_SKNode         = BundleBridgeSink[Bool](Some(() => Bool()))
-  // val big_checker_switch_SRNode     = BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_NUM_CORES-1).W)))
-  val reset_SRNode                = BundleBridgeSource[Bool](Some(() => Bool()))
-  val ghe_revent_out_SRNode       = BundleBridgeSource[UInt](Some(() => UInt(1.W)))
-
-  println("#### Jessica #### Generating GHE **Nodes** on the tile, HartID:", tileParams.tileId, "...!!")
-  val bigcore_hang_in_SKNode      = BundleBridgeSink[UInt](Some(() => UInt(1.W)))
-  val bigcore_comp_in_SKNode      = BundleBridgeSink[UInt](Some(() => UInt(3.W)))
-  val debug_bp_in_SKNode          = BundleBridgeSink[UInt](Some(() => UInt(2.W)))
-  // val if_big_complete_req_SKNode  = BundleBridgeSink[UInt](Some(() => UInt((GH_GlobalParams.GH_NUM_CORES-1).W)))
-  // val agg_packet_out_SRNode       = BundleBridgeSource[UInt](Some(() => UInt(128.W)))
-  // val report_fi_detection_SRNode  = BundleBridgeSource[UInt](Some(() => UInt(57.W)))
-  // val report_fi_detection_in_SKNode = BundleBridgeSink[UInt](Some(() => UInt(((GH_GlobalParams.GH_NUM_CORES - 1) * 57).W)))
-  // val agg_buffer_full_in_SKNode   = BundleBridgeSink[UInt](Some(() => UInt(1.W)))
-  // val agg_core_status_SRNode      = BundleBridgeSource[UInt](Some(() => UInt(2.W)))
-
-  // val ght_sch_na_out_SRNode       = BundleBridgeSource[UInt](Some(() => UInt(1.W)))
-  // val ghe_sch_refresh_in_SKNode   = BundleBridgeSink[UInt](Some(() => UInt(1.W)))
-
-  // val sch_na_inSKNode             = BundleBridgeSink[UInt](Some(() => UInt(16.W)))
-  // val ght_sch_dorefresh_SRNode    = BundleBridgeSource[UInt](Some(() => UInt(32.W)))
-  
-  val debug_gcounter_SKNode       = BundleBridgeSink[UInt](Some(() => UInt(64.W)))
-
-  // val agg_packet_in_SKNode        = BundleBridgeSink[UInt](Some(() => UInt(128.W)))
-  //===== GuardianCouncil Function: End ====//
   /** Node for consuming the reset vector input in tile-layer Chisel logic.
     *
     * Its width is sized by looking at the size of the address space visible
@@ -324,6 +273,33 @@ abstract class BaseTile private (crossing: ClockCrossingType, q: Parameters)
     BundleBridgeSink[NMI](Some(() => new NMI(visiblePhysAddrBits)))
   }
   val nmiNode: Option[BundleBridgeInwardNode[NMI]] = nmiSinkNode.map(_ := BundleBridgeNameNode("nmi"))
+
+  //===== GuardianCouncil Function: Start ====//
+  val ic_counter_SRNode: Option[BundleBridgeSource[UInt]]             = if(enableGCNodes) Some(BundleBridgeSource[UInt](Some(() => UInt((16*GH_GlobalParams.GH_NUM_CORES).W)))                                   )else None                  
+  val debug_maincore_status_SRNode: Option[BundleBridgeSource[UInt]]  = if(enableGCNodes) Some(BundleBridgeSource[UInt](Some(() => UInt(4.W)))                                                                   )else None                                                                                                     
+  val ic_counter_SKNode: Option[BundleBridgeSink[UInt]]               = if(enableGCNodes) Some(BundleBridgeSink[UInt](Some(() => UInt(20.W)))                                                                    )else None              
+  val clear_ic_status_SRNode: Option[BundleBridgeSource[UInt]]        = if(enableGCNodes) Some(BundleBridgeSource[UInt](Some(() => UInt(1.W)))                                                                   )else None          
+  val clear_ic_status_tomainSKNode: Option[BundleBridgeSink[UInt]]    = if(enableGCNodes) Some(BundleBridgeSink[UInt](Some(() => UInt(GH_GlobalParams.GH_NUM_CORES.W)))                                          )else None  
+  val icsl_naSKNode: Option[BundleBridgeSink[UInt]]                   = if(enableGCNodes) Some(BundleBridgeSink[UInt](Some(() => UInt(GH_GlobalParams.GH_NUM_CORES.W)))                                          )else None            
+  val ght_packet_out_SRNode: Option[BundleBridgeSource[UInt]]         = if(enableGCNodes) Some(BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_TOTAL_PACKETS*GH_GlobalParams.GH_WIDITH_PACKETS).W))))else None
+  val core_r_arfs_SRNode: Option[BundleBridgeSource[UInt]]            = if(enableGCNodes) Some(BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_WIDITH_PACKETS+8+8).W)))                             )else None                
+  val ght_packet_dest_SRNode: Option[BundleBridgeSource[UInt]]        = if(enableGCNodes) Some(BundleBridgeSource[UInt](Some(() => UInt(32.W)))                                                                  )else None                                                                                                         
+  val ght_status_out_SRNode: Option[BundleBridgeSource[UInt]]         = if(enableGCNodes) Some(BundleBridgeSource[UInt](Some(() => UInt(32.W)))                                                                  )else None            
+  println("#### Jessica #### Generating GHT **Nodes** on the tile, HartID:", tileParams.tileId, "...!!")
+  val ghe_packet_in_SKNode: Option[BundleBridgeSink[UInt]]            = if(enableGCNodes) Some(BundleBridgeSink[UInt](Some(() => UInt((GH_GlobalParams.GH_TOTAL_PACKETS*GH_GlobalParams.GH_WIDITH_PACKETS+1).W))))else None
+  val core_r_arfs_c_SKNode: Option[BundleBridgeSink[UInt]]            = if(enableGCNodes) Some(BundleBridgeSink[UInt](Some(() => UInt((GH_GlobalParams.GH_WIDITH_PACKETS+8).W)))                                 )else None                
+  val ghe_status_in_SKNode: Option[BundleBridgeSink[UInt]]            = if(enableGCNodes) Some(BundleBridgeSink[UInt](Some(() => UInt(32.W)))                                                                    )else None                          
+  val ghe_event_out_SRNode: Option[BundleBridgeSource[UInt]]          = if(enableGCNodes) Some(BundleBridgeSource[UInt](Some(() => UInt(6.W)))                                                                   )else None                    
+  val clock_SRNode:Option[BundleBridgeSource[Clock]]                  = if(enableGCNodes) Some(BundleBridgeSource[Clock](Some(() => Clock()))                                                                    )else None                            
+  val reset_SRNode:Option[BundleBridgeSource[Bool]]                   = if(enableGCNodes) Some(BundleBridgeSource[Bool](Some(() => Bool()))                                                                      )else None                                              
+  val cdc_empty_tocheckerSKNode:Option[BundleBridgeSink[Bool]]        = if(enableGCNodes) Some(BundleBridgeSink[Bool](Some(() => Bool()))                                                                        )else None          
+  val ghe_revent_out_SRNode: Option[BundleBridgeSource[UInt]]         = if(enableGCNodes) Some(BundleBridgeSource[UInt](Some(() => UInt(1.W)))                                                                   )else None                                              
+  println("#### Jessica #### Generating GHE **Nodes** on the tile, HartID:", tileParams.tileId, "...!!")
+  val bigcore_hang_in_SKNode: Option[BundleBridgeSink[UInt]]          = if(enableGCNodes) Some(BundleBridgeSink[UInt](Some(() => UInt(1.W))) )else None                                                                                    
+  val bigcore_comp_in_SKNode: Option[BundleBridgeSink[UInt]]          = if(enableGCNodes) Some(BundleBridgeSink[UInt](Some(() => UInt(3.W))) )else None                                                                                          
+  val debug_bp_in_SKNode: Option[BundleBridgeSink[UInt]]              = if(enableGCNodes) Some(BundleBridgeSink[UInt](Some(() => UInt(2.W))) )else None                                                                              
+  val debug_gcounter_SKNode:Option[BundleBridgeSink[UInt]]            = if(enableGCNodes) Some(BundleBridgeSink[UInt](Some(() => UInt(64.W))))else None                                                                                      
+  //===== GuardianCouncil Function: End ====//
 
   /** Node for broadcasting an address prefix to diplomatic consumers within the tile.
     *
