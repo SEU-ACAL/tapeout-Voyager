@@ -7,7 +7,7 @@ import org.chipsalliance.cde.config.Parameters
 import midas.targetutils.PerfCounter
 import gemmini.{GemminiArrayConfig, Arithmetic, ScratchpadReadIO, ScratchpadWriteIO, GemminiCmd}
 import gemmini.{AccumulatorReadReq, AccumulatorWriteReq, AccumulatorScaleResp, Activation}
-import gemmini.VecUnit.ex.VecALUThread
+import gemmini.VecUnit.ex.VecThread
 // import gemmini.VecUnit.ex.VecLUTThread
 // import gemmini.VecUnit.ex.VecTC
 import gemmini.GemminiISA._

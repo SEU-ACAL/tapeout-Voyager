@@ -6,12 +6,13 @@ import org.chipsalliance.cde.config._
 import org.chipsalliance.diplomacy.lazymodule._
 
 import freechips.rocketchip.prci.{SynchronousCrossing, AsynchronousCrossing, RationalCrossing, ClockCrossingType}
-import freechips.rocketchip.subsystem.{TilesLocated, NumTiles, HierarchicalLocation, RocketCrossingParams, SystemBusKey, CacheBlockBytes, RocketTileAttachParams,RocketTileMeekAttachParams, RocketTileNpuAttachParams, InSubsystem, InCluster, HierarchicalElementMasterPortParams, HierarchicalElementSlavePortParams, CBUS, CCBUS, ClustersLocated, TileAttachConfig, CloneTileAttachParams}
+import freechips.rocketchip.subsystem.{TilesLocated, NumTiles, HierarchicalLocation, RocketCrossingParams, SystemBusKey, CacheBlockBytes, RocketTileAttachParams,RocketTileMeekAttachParams, RocketTileNpuAttachParams, RocketTileAttachParamsBB, InSubsystem, InCluster, HierarchicalElementMasterPortParams, HierarchicalElementSlavePortParams, CBUS, CCBUS, ClustersLocated, TileAttachConfig, CloneTileAttachParams}
 import freechips.rocketchip.tile.{RocketTileParams, RocketTileBoundaryBufferParams, FPUParams}
 import scala.reflect.ClassTag
 
 import freechips.rocketchip.npu.RocketTileNpuParams
 import freechips.rocketchip.meek.RocketTileMeekParams
+import freechips.rocketchip.buckyball.RocketTileParamsBB
 //==========================================//
 //===== GuardianCouncil Function: Start ====//
 
@@ -141,7 +142,47 @@ class WithNHugeCores(
     }
   ))
 }
-
+//===== BuckyBall Function: Start ======//
+class WithNBigBBCores(
+  n: Int,
+  location: HierarchicalLocation,
+  crossing: RocketCrossingParams,
+  nMSHRs: Int,
+) extends Config((site, here, up) => {
+  case TilesLocated(`location`) => {
+    val prev = up(TilesLocated(`location`), site)
+    val idOffset = up(NumTiles)
+    val big = RocketTileParamsBB(
+      core   = RocketCoreParams(mulDiv = Some(MulDivParams(
+        mulUnroll = 8,
+        mulEarlyOut = true,
+        divEarlyOut = true))),
+      dcache = Some(DCacheParams(
+        rowBits = site(SystemBusKey).beatBits,
+        nMSHRs = nMSHRs,
+        blockBytes = site(CacheBlockBytes),
+        usingStridePrefetch = true)),
+      icache = Some(ICacheParams(
+        rowBits = site(SystemBusKey).beatBits,
+        blockBytes = site(CacheBlockBytes))))
+    List.tabulate(n)(i => RocketTileAttachParamsBB(
+      big.copy(tileId = i + idOffset),
+      crossing
+    )) ++ prev
+  }
+  case NumTiles => up(NumTiles) + n
+}) {
+  def this(n: Int, location: HierarchicalLocation = InSubsystem, nMSHRs: Int = 0) = this(n, location, RocketCrossingParams(
+    master = HierarchicalElementMasterPortParams.locationDefault(location),
+    slave = HierarchicalElementSlavePortParams.locationDefault(location),
+    mmioBaseAddressPrefixWhere = location match {
+      case InSubsystem => CBUS
+      case InCluster(clusterId) => CCBUS(clusterId)
+    }
+  ), 
+  nMSHRs) // if the nMSHRs is not specified, it is 0 by default
+}
+//===== BuckyBall Function: End ======//
 class WithNHugeNpuCores(
   n: Int,
   location: HierarchicalLocation,
