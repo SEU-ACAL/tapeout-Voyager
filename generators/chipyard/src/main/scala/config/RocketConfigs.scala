@@ -35,11 +35,11 @@ class DualRocketConfig extends Config(
 
 class MEEKConfig extends Config(
 
-  new chipyard.config.WithTileFrequency(100, Some(0)) ++
-  new chipyard.config.WithTileFrequency(50, Some(1)) ++
-  new chipyard.config.WithTileFrequency(50, Some(2)) ++
-  new chipyard.config.WithTileFrequency(50, Some(3)) ++
-  new chipyard.config.WithTileFrequency(50, Some(4)) ++
+  new chipyard.config.WithTileFrequency(1000, Some(0)) ++
+  new chipyard.config.WithTileFrequency(500, Some(1)) ++
+  new chipyard.config.WithTileFrequency(500, Some(2)) ++
+  new chipyard.config.WithTileFrequency(500, Some(3)) ++
+  new chipyard.config.WithTileFrequency(500, Some(4)) ++
 
   new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
   AsynchronousCrossing().depth,

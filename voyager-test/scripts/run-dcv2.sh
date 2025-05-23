@@ -62,7 +62,7 @@ cp -r ${DESIGN_SOURCE_DIR}/* ${DESIGN_DIR}/
 # Step2 替换SRAM
 #-------------------------------------------------------------------
 echo "正在检查SRAM  File..."
-python ${CYDIR}/voyager-test/scripts/read_json.py $DB_FILE $DESIGN_DIR "/home/hxm123/tapeout-Voyager/sims/verilator/generated-src/chipyard.harness.TestHarness.GemminiRocketConfig/gen-collateral/metadata/seq_mems.json"
+python ${CYDIR}/voyager-test/scripts/read_json.py $DB_FILE $DESIGN_DIR " ${CYDIR}/sims/verilator/generated-src/chipyard.harness.TestHarness.GemminiRocketConfig/gen-collateral/metadata/seq_mems.json"
 
 #-------------------------------------------------------------------
 # Step3 编写tcl脚本

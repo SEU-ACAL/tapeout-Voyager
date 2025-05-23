@@ -58,12 +58,12 @@ class GemminiPrefetchConfig extends Config(
 
 class OurHeterSoCConfig extends Config(
 
-  new chipyard.config.WithTileFrequency(100, Some(0)) ++
-  new chipyard.config.WithTileFrequency(50, Some(1)) ++
-  new chipyard.config.WithTileFrequency(50, Some(2)) ++
-  new chipyard.config.WithTileFrequency(50, Some(3)) ++
-  new chipyard.config.WithTileFrequency(50, Some(4)) ++
-  new chipyard.config.WithTileFrequency(50, Some(5)) ++
+  new chipyard.config.WithTileFrequency(1000, Some(0)) ++
+  new chipyard.config.WithTileFrequency(500, Some(1)) ++
+  new chipyard.config.WithTileFrequency(500, Some(2)) ++
+  new chipyard.config.WithTileFrequency(500, Some(3)) ++
+  new chipyard.config.WithTileFrequency(500, Some(4)) ++
+  new chipyard.config.WithTileFrequency(500, Some(5)) ++
   
   new barf.WithHellaCachePrefetcher(Seq(5), barf.SingleStridedPrefetcherParams()) ++   // strided prefetcher, sits in front of the L1D$, monitors core requests to prefetching into the L1D$
   
@@ -103,7 +103,7 @@ class TestHeterSoCConfig extends Config(
   new barf.WithHellaCachePrefetcher(Seq(5), barf.SingleStridedPrefetcherParams()) ++   // strided prefetcher, sits in front of the L1D$, monitors core requests to prefetching into the L1D$
   
   new freechips.rocketchip.rocket.WithNBigNpuCores(1, nMSHRs = 16) ++ //independent Rocket for gemmini: hartid 5, with non-blocking L1D$
-  
+
   new chipyard.config.WithMultiRoCCNpu ++
   new chipyard.config.WithMultiRoCCGemmini(5)(gemmini.GemminiConfigs.defaultConfig) ++ // put gemmini on hart-5(rocket)
   
@@ -122,6 +122,6 @@ class TestHeterSoCConfig extends Config(
                                                       )++
   //  Crossing specifications
   new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1) ++
-  new boom.meek.common.WithNLargeBooms(1) ++//需要修改
+  new boom.meek.common.WithNLargeBooms(1) ++
   new chipyard.config.AbstractConfig
 )

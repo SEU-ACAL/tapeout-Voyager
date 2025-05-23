@@ -214,7 +214,10 @@ class FireSimRocketConfig extends Config(
   new WithFireSimConfigTweaks ++
   new chipyard.RocketConfig)
 // DOC include end: firesimconfig
-
+class FireSimMEEKConfig extends Config(
+  new WithDefaultFireSimBridges ++
+  new WithFireSimConfigTweaks ++
+  new chipyard.MEEKConfig)
 class FireSimHeterConfig extends Config(
   new WithDefaultFireSimBridges ++
   new WithFireSimConfigTweaks ++
