@@ -21,6 +21,7 @@ import freechips.rocketchip.tilelink.{
 import freechips.rocketchip.util.InOrderArbiter
 //===== GuardianCouncil Function: Start ====//
 import freechips.rocketchip.guardiancouncil._
+// import scala.collection.mutable.Queue
 //===== GuardianCouncil Function: End   ====//
 case object BuildRoCCMEEK extends Field[Seq[Parameters => LazyRoCCMEEK]](Nil)
 
@@ -411,6 +412,16 @@ class RoccCommandRouterBoom(opcodes: Seq[OpcodeSet])(implicit p: Parameters)
     //===== GuardianCouncil Function: End   ====//
   })
 
+  val cmd = Queue(io.in)
+  val cmdReadys = io.out.zip(opcodes).map { case (out, opcode) =>
+    val me = opcode.matches(cmd.bits.inst.opcode)
+    out.valid := cmd.valid && me
+    out.bits := cmd.bits
+    out.ready && me
+  }
+  cmd.ready := cmdReadys.reduce(_ || _)
+  io.busy := cmd.valid
+  //修改了cmd的方式
   // val cmd = Queue(io.in)
   // val cmdReadys = io.out.zip(opcodes).map { case (out, opcode) =>
   //   val me = opcode.matches(cmd.bits.inst.opcode)
@@ -420,16 +431,6 @@ class RoccCommandRouterBoom(opcodes: Seq[OpcodeSet])(implicit p: Parameters)
   // }
   // cmd.ready := cmdReadys.reduce(_ || _)
   // io.busy := cmd.valid
-  //修改了cmd的方式
-  val cmd = (io.in)
-  val cmdReadys = io.out.zip(opcodes).map { case (out, opcode) =>
-    val me = opcode.matches(cmd.bits.inst.opcode)
-    out.valid := cmd.valid && me
-    out.bits := cmd.bits
-    out.ready && me
-  }
-  cmd.ready := cmdReadys.reduce(_ || _)
-  io.busy := cmd.valid
   //===== GuardianCouncil Function: Start ====//
   io.ghe_event_out := io.ghe_event_in
   io.ght_mask_out := io.ght_mask_in

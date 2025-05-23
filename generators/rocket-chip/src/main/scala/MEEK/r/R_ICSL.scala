@@ -181,6 +181,10 @@ class R_ICSL (val params: R_ICSLParams) extends Module with HasR_ICSLIO {
   checking_cycle                                := Mux(io.if_correct_process.asBool && fsm_state===fsm_checking, checking_cycle + 1.U, checking_cycle)
   checking_inst                                 := Mux(io.if_correct_process.asBool && fsm_state===fsm_checking && io.new_commit.asBool, checking_inst + 1.U, checking_inst)
   // when()
+  // val debug_perf_fsm_reset                       = RegInit(0.U(64.W))
+  // val debug_perf_fsm_nonchecking                 = RegInit(0.U(64.W))
+  // val debug_perf_fsm_checking                    = RegInit(0.U(64.W))
+  // val debug_perf_fsm_fsm_postchecking            = RegInit(0.U(64.W))
   val debug_perf_howmany_checkpoints             = RegInit(0.U(64.W))
   val debug_perf_checking                        = RegInit(0.U(64.W))
   val debug_perf_postchecking                    = RegInit(0.U(64.W))
@@ -190,6 +194,9 @@ class R_ICSL (val params: R_ICSLParams) extends Module with HasR_ICSLIO {
   val debug_perf_nonchecking_MOtherThreads       = RegInit(0.U(64.W))
   val debug_perf_nonchecking_MSched              = RegInit(0.U(64.W))
   val debug_perf_nonchecking_MCheck              = RegInit(0.U(64.W))
+  val debug_perf_num_st                          = RegInit(0.U(64.W))
+  val debug_perf_num_ld                          = RegInit(0.U(64.W))
+  val debug_L_timer_worest                       = RegInit(0.U(64.W))
 
   val debug_perf_insts                           = RegInit(0.U(64.W))
   val debug_perf_CPStrans                        = RegInit(0.U(64.W))
@@ -200,6 +207,7 @@ class R_ICSL (val params: R_ICSLParams) extends Module with HasR_ICSLIO {
   debug_perf_postchecking                       := Mux(io.debug_perf_reset.asBool, 0.U, Mux((fsm_state === fsm_postchecking), debug_perf_postchecking + 1.U, debug_perf_postchecking))
   debug_perf_otherthread                        := Mux(io.debug_perf_reset.asBool, 0.U, Mux(((fsm_state === fsm_checking) || (fsm_state === fsm_postchecking)) && (!io.if_correct_process.asBool),  debug_perf_otherthread + 1.U, debug_perf_otherthread))
   debug_perf_nonchecking                        := Mux(io.debug_perf_reset.asBool, 0.U, Mux((fsm_state === fsm_nonchecking), debug_perf_nonchecking + 1.U, debug_perf_nonchecking))
+  
   /*
   debug_perf_nonchecking_OtherThreads           := Mux(io.debug_perf_reset.asBool, 0.U, Mux((fsm_state === fsm_nonchecking) && (!io.if_correct_process.asBool), debug_perf_nonchecking_OtherThreads + 1.U, debug_perf_nonchecking_OtherThreads))
   debug_perf_nonchecking_MOtherThreads          := Mux(io.debug_perf_reset.asBool, 0.U, Mux((fsm_state === fsm_nonchecking) && (io.if_correct_process.asBool) && (io.main_core_status === 3.U), debug_perf_nonchecking_MOtherThreads + 1.U, debug_perf_nonchecking_MOtherThreads))
@@ -211,9 +219,6 @@ class R_ICSL (val params: R_ICSLParams) extends Module with HasR_ICSLIO {
   
 
 
-  val debug_perf_num_st                          = RegInit(0.U(64.W))
-  val debug_perf_num_ld                          = RegInit(0.U(64.W))
-  val debug_L_timer_worest                       = RegInit(0.U(64.W))
 
   debug_perf_num_st                             := Mux(io.debug_perf_reset.asBool, 0.U, debug_perf_num_st + io.st_deq)
   debug_perf_num_ld                             := Mux(io.debug_perf_reset.asBool, 0.U, debug_perf_num_ld + io.ld_deq)

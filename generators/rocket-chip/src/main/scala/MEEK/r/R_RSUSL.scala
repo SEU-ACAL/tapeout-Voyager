@@ -183,8 +183,8 @@ class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
   val apply_counter_memdelay                      = RegInit(0.U(8.W))
   val do_check                                    = RegInit(0.U(1.W))
   val checking_counter                            = RegInit(0.U(8.W))
-
-
+  val do_check_reg                                = RegInit(0.U(1.W))
+  do_check_reg := do_check
   apply_snapshot_memdelay                        := apply_snapshot
   apply_counter_memdelay                         := apply_counter
   arf_addr                                       := Mux(apply_snapshot.asBool, apply_counter, 0.U)
@@ -234,11 +234,11 @@ class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
   io.rsu_status                                  := Mux(rsu_status === 0.U, 0.U, Mux(rsu_status === 1.U, 1.U, Mux(rsu_status === 3.U, Mux(io.check_done === 0.U, 1.U, 3.U), rsu_status)))
 
 
-
+//这里在之后需要更改，实际硬件不允许这样做，目前是为了方便调试
   val if_check_fail                               = RegInit(false.B)
   val debug_fail                                  = RegInit(VecInit(Seq.fill(params.numARFS)(false.B)))
   for(i <-0 until params.numARFS){
-    when(do_check.asBool&&(io.core_arfs_in(i)=/=arfs_ss_ECP(i)||io.core_farfs_in(i)=/=farfs_ss_ECP(i))){
+    when(do_check.asBool&&(!do_check_reg.asBool)&&(io.core_arfs_in(i)=/=arfs_ss_ECP(i)||io.core_farfs_in(i)=/=farfs_ss_ECP(i))){
       if_check_fail := true.B
       debug_fail(i) := true.B
     }.otherwise{
@@ -249,7 +249,7 @@ class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
 
   dontTouch(if_check_fail)
   dontTouch(debug_fail)
-  // assert((!if_check_fail),"check failure") //修改了ecp比较逻辑：小核不必等待ecp即可返回loop，所以极可能出现check fail
+  assert((!if_check_fail),"check failure") 
 
   if (GH_GlobalParams.GH_DEBUG == 1) {
     // when ((io.core_trace.asBool) && (pcarfs_ss_delay =/= pcarfs_ss)) {
