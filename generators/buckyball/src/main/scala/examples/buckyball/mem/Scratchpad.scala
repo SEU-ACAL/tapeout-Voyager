@@ -15,7 +15,7 @@ import buckyball.front.FrontendTLBIO
 
 
 // DMA Memory IO类定义
-class ScratchpadReadMemIO(local_addr_t: LocalAddr, scale_t_bits: Int)(implicit p: Parameters) extends CoreBundle {
+class ScratchpadReadMemIO(local_addr_t: LocalAddr)(implicit p: Parameters) extends CoreBundle {
   val req = Decoupled(new Bundle {
     val vaddr = UInt(coreMaxAddrBits.W)
     val laddr = local_addr_t.cloneType
@@ -28,7 +28,7 @@ class ScratchpadReadMemIO(local_addr_t: LocalAddr, scale_t_bits: Int)(implicit p
   }))
 }
 
-class ScratchpadWriteMemIO(local_addr_t: LocalAddr, accTypeWidth: Int, scale_t_bits: Int)(implicit p: Parameters) extends CoreBundle {
+class ScratchpadWriteMemIO(local_addr_t: LocalAddr, accTypeWidth: Int)(implicit p: Parameters) extends CoreBundle {
   val req = Decoupled(new Bundle {
     val vaddr = UInt(coreMaxAddrBits.W)
     val laddr = local_addr_t.cloneType
@@ -75,8 +75,8 @@ class Scratchpad(config: BuckyBallConfig)
     val io = IO(new Bundle {
       // DMA ports
       val dma = new Bundle {
-        val read = Flipped(new ScratchpadReadMemIO(local_addr_t, mvin_scale_t_bits))
-        val write = Flipped(new ScratchpadWriteMemIO(local_addr_t, accType.getWidth, acc_scale_t_bits))
+        val read = Flipped(new ScratchpadReadMemIO(local_addr_t))
+        val write = Flipped(new ScratchpadWriteMemIO(local_addr_t, accType.getWidth))
       }
 
       // SRAM ports

@@ -34,20 +34,10 @@ case class BuckyBallConfig(
   sp_capacity: BuckyBallMemCapacity = CapacityInKilobytes(256),
   acc_capacity: BuckyBallMemCapacity = CapacityInKilobytes(64),
   
-  meshRows: Int = 1,
-  meshColumns: Int = 1,
-  tileRows: Int = 1,
-  tileColumns: Int = 16,
-  
   max_in_flight_mem_reqs: Int = 16,
   aligned_to: Int = 1,
-  spad_read_delay: Int = 1,
+  spad_read_delay: Int = 0,
   
-  use_shared_ext_mem: Boolean = false,
-  is_dummy: Boolean = false,
-  
-  mvin_scale_t_bits: Int = 32,
-  acc_scale_t_bits: Int = 32,
 ) {
   val sp_width = veclane * inputType.getWidth
   val sp_bank_entries = sp_capacity match {
