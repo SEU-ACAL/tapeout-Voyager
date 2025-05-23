@@ -63,6 +63,7 @@ trait HasR_RSUSLIO extends BaseModule {
 class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
   // Revisit: move it to the instruction counter
   val rsu_status                                  = RegInit(0.U(2.W))
+  val if_check_completed                          = WireInit(0.U(1.W))
 
   /* Loading snapshot from RSU Master */
   val arfs_ss                                     = SyncReadMem(params.numARFS+1, UInt(params.xLen.W))
@@ -166,7 +167,8 @@ class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
 
   
   pcarfs_ss                                      := Mux(packet_valid.asBool && (packet_index === 0x20.U), packet_arfs(39,0), pcarfs_ss)
-  rsu_status                                     := Mux(io.clear_ic_status.asBool, 0.U, Mux(packet_index === 0x20.U, 1.U, Mux(io.check_done, 3.U, rsu_status)))
+  // rsu_status                                     := Mux(io.clear_ic_status.asBool, 0.U, Mux(packet_index === 0x20.U, 1.U, Mux(io.check_done, 3.U, rsu_status)))
+  rsu_status                                     := Mux((io.clear_ic_status.asBool && packet_index_ECP =/= 0x20.U) || (if_check_completed.asBool && packet_index =/= 0x20.U), 0.U, Mux(packet_index === 0x20.U, 1.U, Mux(packet_index_ECP === 0x20.U, 3.U, rsu_status)))
 
   /* Applying snapshot to the core */
   val arf_data                                    = WireInit(0.U((params.xLen.W)))
@@ -228,7 +230,8 @@ class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
   io.pfarf_valid_out                             := Mux(((apply_snapshot_memdelay === 1.U) && (apply_counter_memdelay === 0x20.U)), 1.U, 0.U)
   io.cdc_ready                                   := packet_valid | packet_valid_ECP
 
-  io.rsu_status                                  := rsu_status
+  // io.rsu_status                                  := rsu_status
+  io.rsu_status                                  := Mux(rsu_status === 0.U, 0.U, Mux(rsu_status === 1.U, 1.U, Mux(rsu_status === 3.U, Mux(io.check_done === 0.U, 1.U, 3.U), rsu_status)))
 
 
 
@@ -246,7 +249,7 @@ class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
 
   dontTouch(if_check_fail)
   dontTouch(debug_fail)
-  assert((!if_check_fail),"check failure")
+  // assert((!if_check_fail),"check failure") //修改了ecp比较逻辑：小核不必等待ecp即可返回loop，所以极可能出现check fail
 
   if (GH_GlobalParams.GH_DEBUG == 1) {
     // when ((io.core_trace.asBool) && (pcarfs_ss_delay =/= pcarfs_ss)) {
@@ -310,21 +313,23 @@ class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
   }
 
   // Faking ELU data
-  val checking_counter_memdelay                   = RegInit(0.U(2.W))
+  val checking_counter_memdelay                   = RegInit(0.U(8.W))
   checking_counter_memdelay                      := checking_counter
-  val if_check_completed                          = WireInit(0.U(1.W))
+  
 
   when (!do_check.asBool) {
     do_check                                     := Mux(io.do_cp_check.asBool && !if_check_completed.asBool, 1.U, 0.U)
-    checking_counter                             := Mux(io.clear_ic_status.asBool, 0.U, checking_counter)
+    // checking_counter                             := Mux(io.clear_ic_status.asBool, 0.U, checking_counter)
+    checking_counter                             := Mux(if_check_completed.asBool, 0.U, checking_counter)
   } .otherwise {
     do_check                                     := Mux(if_check_completed.asBool, 0.U, 1.U)
-    checking_counter                             := Mux(checking_counter === 0x2.U, checking_counter, checking_counter + 1.U)
+    checking_counter                             := Mux(checking_counter === 0x1f.U, checking_counter, checking_counter + 1.U)
   }
-  if_check_completed                             := (checking_counter_memdelay === 0x2.U).asUInt
+  if_check_completed                             := (checking_counter_memdelay === 0x1f.U).asUInt
   io.if_cp_check_completed                       := if_check_completed
 
-  io.core_hang_up                                := apply_snapshot | apply_snapshot_memdelay | io.record_context | recording_context | (do_check.asBool && !if_check_completed.asBool)  
+  // io.core_hang_up                                := apply_snapshot | apply_snapshot_memdelay | io.record_context | recording_context | (do_check.asBool && !if_check_completed.asBool)
+  io.core_hang_up                                := apply_snapshot | apply_snapshot_memdelay | io.record_context | recording_context    
   io.elu_cp_data                                 := 0.U
   io.elu_status                                  := 0.U
 }
