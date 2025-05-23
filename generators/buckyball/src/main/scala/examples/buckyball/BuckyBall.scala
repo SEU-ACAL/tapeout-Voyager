@@ -11,23 +11,18 @@ import freechips.rocketchip.tile._
 import freechips.rocketchip.util.ClockGate
 import freechips.rocketchip.tilelink.TLIdentityNode
 import BBISA._
-import front.FrontendTLB
 import mem.Scratchpad
-
+import frontend.{FrontendTLB, Decoder}
 import freechips.rocketchip.buckyball._
+import freechips.rocketchip.buckyball.LazyRoCCBB
 
-class BuckyBallCmd(rob_entries: Int)(implicit p: Parameters) extends Bundle {
-  val cmd = new RoCCCommandBB
-  val rob_id = UInt(log2Up(rob_entries).W)
-  val from_matmul_fsm = Bool()
-  val from_conv_fsm = Bool()
-}
 
-class BuckyBall(val config: BuckyBallConfig)(implicit p: Parameters)
-  extends LazyRoCCBB (opcodes = config.opcodes, nPTWPorts = 2) {
+
+class BuckyBall(val bbconfig: BuckyBallConfig)(implicit p: Parameters)
+  extends LazyRoCCBB (opcodes = bbconfig.opcodes, nPTWPorts = 2) {
 
   val xLen = p(TileKey).core.xLen   // the width of core's register file
-  val spad = LazyModule(new Scratchpad(config))
+  val spad = LazyModule(new Scratchpad(bbconfig))
 
   override lazy val module = new BuckyBallModule(this)
   override val tlNode = spad.id_node 
@@ -37,7 +32,7 @@ class BuckyBall(val config: BuckyBallConfig)(implicit p: Parameters)
 
 class BuckyBallModule(outer: BuckyBall) extends LazyRoCCModuleImpBB(outer) 
   with HasCoreParameters {
-  import outer.config._
+  import outer.bbconfig._
   import outer.spad
   
   val tagWidth = 32
@@ -56,38 +51,37 @@ class BuckyBallModule(outer: BuckyBall) extends LazyRoCCModuleImpBB(outer)
 
   spad.module.io.flush := tlb.io.exp.map(_.flush()).reduce(_ || _)
 // -----------------------------------------------------------------------------
-// Frontend: Decode
+// Frontend: Decode and Command Processing
 // -----------------------------------------------------------------------------
-  // val decoder = Module(new Decoder())
+  implicit val bbconfig: BuckyBallConfig = outer.bbconfig
+  val decoder = Module(new Decoder)
+  decoder.io.id_i.valid := io.cmd.valid
+  decoder.io.id_i.bits.cmd := io.cmd.bits
+  io.cmd.ready := decoder.io.id_i.ready
 
 // -----------------------------------------------------------------------------
-// Frontend: Reservation Station
+// Frontend: Reservation Station with integrated RoB
 // -----------------------------------------------------------------------------
-  // val rs = Module(new ReservationStation(rob_entries, xLen)) // 使用配置中的 rob_entries
-
-
-// -----------------------------------------------------------------------------
-// Frontend: Instruction Dispatch 
-// -----------------------------------------------------------------------------
-
+  // val rs = Module(new ReservationStation)
+  // decoder.io.id_rs <> rs.io.
 
 // -----------------------------------------------------------------------------
 // Backend: Load Controller
 // -----------------------------------------------------------------------------
-  // val LoadModule = Module(new LoadController(xLen))
 
 
 // -----------------------------------------------------------------------------
 // Backend: Store Controller
 // -----------------------------------------------------------------------------
-  // val StoreModule = Module(new StoreController(xLen))
+
 
 // -----------------------------------------------------------------------------
 // Backend: Execute Controller
 // -----------------------------------------------------------------------------
-  // val ExecuteModule = Module(new ExecuteController(xLen))  
+
 
   //---------------------------------------------------------------------------
-  // 流水线连接
+  // 响应接口连接
   //---------------------------------------------------------------------------
+
 }
