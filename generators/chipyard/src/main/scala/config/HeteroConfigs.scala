@@ -129,6 +129,8 @@ class TestHeterSoCConfig extends Config(
 
 // BuckyBall配置
 class BuckyBallRocketConfig extends Config(
+  // new freechips.rocketchip.rocket.WithNHugeCores(1) ++      
+  new freechips.rocketchip.rocket.WithNBuckyBallCores(1) ++      
   new chipyard.config.WithMultiRoCCBB ++
   new chipyard.config.WithMultiRoCCBuckyBall(0)(buckyball.BuckyBallConfigs.defaultConfig) ++
   new chipyard.config.WithSystemBusWidth(128) ++

@@ -143,7 +143,7 @@ class WithNHugeCores(
   ))
 }
 //===== BuckyBall Function: Start ======//
-class WithNBigBBCores(
+class WithNBuckyBallCores(
   n: Int,
   location: HierarchicalLocation,
   crossing: RocketCrossingParams,
