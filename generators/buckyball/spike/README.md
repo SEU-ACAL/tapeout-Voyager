@@ -9,5 +9,10 @@ Usage:
 ```
 make
 make install
+
+cd Voyager/toolchains/riscv-tools/riscv-isa-sim/build
+make 
+make install
+
 spike --extension=buckyball <custom_buckyball_program>
 ```
