@@ -168,7 +168,7 @@ class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
   
   pcarfs_ss                                      := Mux(packet_valid.asBool && (packet_index === 0x20.U), packet_arfs(39,0), pcarfs_ss)
   // rsu_status                                     := Mux(io.clear_ic_status.asBool, 0.U, Mux(packet_index === 0x20.U, 1.U, Mux(io.check_done, 3.U, rsu_status)))
-  rsu_status                                     := Mux((io.clear_ic_status.asBool && packet_index_ECP =/= 0x20.U) || (if_check_completed.asBool && packet_index =/= 0x20.U), 0.U, Mux(packet_index === 0x20.U, 1.U, Mux(packet_index_ECP === 0x20.U, 3.U, rsu_status)))
+  rsu_status                                     := Mux((io.clear_ic_status.asBool && packet_index_ECP =/= 0x20.U) || (if_check_completed.asBool && packet_index =/= 0x20.U), 0.U, Mux(packet_index === 0x20.U, 1.U, Mux(packet_index_ECP === 0x20.U&&(!has_ECP), 3.U, rsu_status)))
 
   /* Applying snapshot to the core */
   val arf_data                                    = WireInit(0.U((params.xLen.W)))
@@ -255,61 +255,61 @@ class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
     // when ((io.core_trace.asBool) && (pcarfs_ss_delay =/= pcarfs_ss)) {
     //   printf(midas.targetutils.SynthesizePrintf("[C%x] Paste PC [%x]\n", io.core_id, pcarfs_ss))
     // }
-    // when ((io.core_trace.asBool) && packet_valid_ECP===1.U&&(!has_ECP)&&(packet_index_ECP=/=0x20.U)) {
-    //   printf(midas.targetutils.SynthesizePrintf("[C%x] ECP idx[%x] arfs %x farfs %x\n", io.core_id,packet_index_ECP,packet_arfs_ECP,packet_farfs_ECP))
-    // }
+    when ((io.core_trace.asBool) && packet_valid_ECP===1.U&&(!has_ECP)&&(packet_index_ECP=/=0x20.U)) {
+      printf(midas.targetutils.SynthesizePrintf("[C%x] ECP idx[%x] arfs %x farfs %x\n", io.core_id,packet_index_ECP,packet_arfs_ECP,packet_farfs_ECP))
+    }
 
     val fail_idx= PriorityEncoder(debug_fail)
 
     when(do_check.asBool && (io.core_trace.asBool)) {
       printf(midas.targetutils.SynthesizePrintf("[C%x] Check Finish %x\n", io.core_id,if_check_fail))
     }
-    // when (if_check_fail && (io.core_trace.asBool)) {
+    when (if_check_fail && (io.core_trace.asBool)) {
 
-    //   printf(midas.targetutils.SynthesizePrintf("Check FAIL C[%x] [FAIL][C_ARFS,C_FARFS,ECP_ARFS,ECP_FARFS] = \n" +
-    //     "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
-    //     "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
-    //     "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
-    //     "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
-    //     "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
-    //     "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
-    //     "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
-    //     "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"
-    //     , io.core_id,debug_fail(0),io.core_arfs_in(0),io.core_farfs_in(0),arfs_ss_ECP(0),farfs_ss_ECP(0),
-    //     debug_fail(1),io.core_arfs_in(1),io.core_farfs_in(1),arfs_ss_ECP(1),farfs_ss_ECP(1),
-    //     debug_fail(2),io.core_arfs_in(2),io.core_farfs_in(2),arfs_ss_ECP(2),farfs_ss_ECP(2),
-    //     debug_fail(3),io.core_arfs_in(3),io.core_farfs_in(3),arfs_ss_ECP(3),farfs_ss_ECP(3),
-    //     debug_fail(4),io.core_arfs_in(4),io.core_farfs_in(4),arfs_ss_ECP(4),farfs_ss_ECP(4),
-    //     debug_fail(5),io.core_arfs_in(5),io.core_farfs_in(5),arfs_ss_ECP(5),farfs_ss_ECP(5),
-    //     debug_fail(6),io.core_arfs_in(6),io.core_farfs_in(6),arfs_ss_ECP(6),farfs_ss_ECP(6),
-    //     debug_fail(7),io.core_arfs_in(7),io.core_farfs_in(7),arfs_ss_ECP(7),farfs_ss_ECP(7),
-    //     debug_fail(8),io.core_arfs_in(8),io.core_farfs_in(8),arfs_ss_ECP(8),farfs_ss_ECP(8),
-    //     debug_fail(9),io.core_arfs_in(9),io.core_farfs_in(9),arfs_ss_ECP(9),farfs_ss_ECP(9),
-    //     debug_fail(10),io.core_arfs_in(10),io.core_farfs_in(10),arfs_ss_ECP(10),farfs_ss_ECP(10),
-    //     debug_fail(11),io.core_arfs_in(11),io.core_farfs_in(11),arfs_ss_ECP(11),farfs_ss_ECP(11),
-    //     debug_fail(12),io.core_arfs_in(12),io.core_farfs_in(12),arfs_ss_ECP(12),farfs_ss_ECP(12),
-    //     debug_fail(13),io.core_arfs_in(13),io.core_farfs_in(13),arfs_ss_ECP(13),farfs_ss_ECP(13),
-    //     debug_fail(14),io.core_arfs_in(14),io.core_farfs_in(14),arfs_ss_ECP(14),farfs_ss_ECP(14),
-    //     debug_fail(15),io.core_arfs_in(15),io.core_farfs_in(15),arfs_ss_ECP(15),farfs_ss_ECP(15),
-    //     debug_fail(16),io.core_arfs_in(16),io.core_farfs_in(16),arfs_ss_ECP(16),farfs_ss_ECP(16),
-    //     debug_fail(17),io.core_arfs_in(17),io.core_farfs_in(17),arfs_ss_ECP(17),farfs_ss_ECP(17),
-    //     debug_fail(18),io.core_arfs_in(18),io.core_farfs_in(18),arfs_ss_ECP(18),farfs_ss_ECP(18),
-    //     debug_fail(19),io.core_arfs_in(19),io.core_farfs_in(19),arfs_ss_ECP(19),farfs_ss_ECP(19),
-    //     debug_fail(20),io.core_arfs_in(20),io.core_farfs_in(20),arfs_ss_ECP(20),farfs_ss_ECP(20),
-    //     debug_fail(21),io.core_arfs_in(21),io.core_farfs_in(21),arfs_ss_ECP(21),farfs_ss_ECP(21),
-    //     debug_fail(22),io.core_arfs_in(22),io.core_farfs_in(22),arfs_ss_ECP(22),farfs_ss_ECP(22),
-    //     debug_fail(23),io.core_arfs_in(23),io.core_farfs_in(23),arfs_ss_ECP(23),farfs_ss_ECP(23),
-    //     debug_fail(24),io.core_arfs_in(24),io.core_farfs_in(24),arfs_ss_ECP(24),farfs_ss_ECP(24),
-    //     debug_fail(25),io.core_arfs_in(25),io.core_farfs_in(25),arfs_ss_ECP(25),farfs_ss_ECP(25),
-    //     debug_fail(26),io.core_arfs_in(26),io.core_farfs_in(26),arfs_ss_ECP(26),farfs_ss_ECP(26),
-    //     debug_fail(27),io.core_arfs_in(27),io.core_farfs_in(27),arfs_ss_ECP(27),farfs_ss_ECP(27),
-    //     debug_fail(28),io.core_arfs_in(28),io.core_farfs_in(28),arfs_ss_ECP(28),farfs_ss_ECP(28),
-    //     debug_fail(29),io.core_arfs_in(29),io.core_farfs_in(29),arfs_ss_ECP(29),farfs_ss_ECP(29),
-    //     debug_fail(30),io.core_arfs_in(30),io.core_farfs_in(30),arfs_ss_ECP(30),farfs_ss_ECP(30),
-    //     debug_fail(31),io.core_arfs_in(31),io.core_farfs_in(31),arfs_ss_ECP(31),farfs_ss_ECP(31)
-    //   ))
-    //   printf(midas.targetutils.SynthesizePrintf("[C%x] Check Fail [idx %x ECP arfs %x farfs %x Checker arfs %x farfs %x]\n", io.core_id,fail_idx,arfs_ss_ECP(fail_idx),farfs_ss_ECP(fail_idx),io.core_arfs_in(fail_idx),io.core_farfs_in(fail_idx)))
-    // }
+      printf(midas.targetutils.SynthesizePrintf("Check FAIL C[%x] [FAIL][C_ARFS,C_FARFS,ECP_ARFS,ECP_FARFS] = \n" +
+        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
+        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
+        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
+        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
+        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
+        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
+        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
+        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"
+        , io.core_id,debug_fail(0),io.core_arfs_in(0),io.core_farfs_in(0),arfs_ss_ECP(0),farfs_ss_ECP(0),
+        debug_fail(1),io.core_arfs_in(1),io.core_farfs_in(1),arfs_ss_ECP(1),farfs_ss_ECP(1),
+        debug_fail(2),io.core_arfs_in(2),io.core_farfs_in(2),arfs_ss_ECP(2),farfs_ss_ECP(2),
+        debug_fail(3),io.core_arfs_in(3),io.core_farfs_in(3),arfs_ss_ECP(3),farfs_ss_ECP(3),
+        debug_fail(4),io.core_arfs_in(4),io.core_farfs_in(4),arfs_ss_ECP(4),farfs_ss_ECP(4),
+        debug_fail(5),io.core_arfs_in(5),io.core_farfs_in(5),arfs_ss_ECP(5),farfs_ss_ECP(5),
+        debug_fail(6),io.core_arfs_in(6),io.core_farfs_in(6),arfs_ss_ECP(6),farfs_ss_ECP(6),
+        debug_fail(7),io.core_arfs_in(7),io.core_farfs_in(7),arfs_ss_ECP(7),farfs_ss_ECP(7),
+        debug_fail(8),io.core_arfs_in(8),io.core_farfs_in(8),arfs_ss_ECP(8),farfs_ss_ECP(8),
+        debug_fail(9),io.core_arfs_in(9),io.core_farfs_in(9),arfs_ss_ECP(9),farfs_ss_ECP(9),
+        debug_fail(10),io.core_arfs_in(10),io.core_farfs_in(10),arfs_ss_ECP(10),farfs_ss_ECP(10),
+        debug_fail(11),io.core_arfs_in(11),io.core_farfs_in(11),arfs_ss_ECP(11),farfs_ss_ECP(11),
+        debug_fail(12),io.core_arfs_in(12),io.core_farfs_in(12),arfs_ss_ECP(12),farfs_ss_ECP(12),
+        debug_fail(13),io.core_arfs_in(13),io.core_farfs_in(13),arfs_ss_ECP(13),farfs_ss_ECP(13),
+        debug_fail(14),io.core_arfs_in(14),io.core_farfs_in(14),arfs_ss_ECP(14),farfs_ss_ECP(14),
+        debug_fail(15),io.core_arfs_in(15),io.core_farfs_in(15),arfs_ss_ECP(15),farfs_ss_ECP(15),
+        debug_fail(16),io.core_arfs_in(16),io.core_farfs_in(16),arfs_ss_ECP(16),farfs_ss_ECP(16),
+        debug_fail(17),io.core_arfs_in(17),io.core_farfs_in(17),arfs_ss_ECP(17),farfs_ss_ECP(17),
+        debug_fail(18),io.core_arfs_in(18),io.core_farfs_in(18),arfs_ss_ECP(18),farfs_ss_ECP(18),
+        debug_fail(19),io.core_arfs_in(19),io.core_farfs_in(19),arfs_ss_ECP(19),farfs_ss_ECP(19),
+        debug_fail(20),io.core_arfs_in(20),io.core_farfs_in(20),arfs_ss_ECP(20),farfs_ss_ECP(20),
+        debug_fail(21),io.core_arfs_in(21),io.core_farfs_in(21),arfs_ss_ECP(21),farfs_ss_ECP(21),
+        debug_fail(22),io.core_arfs_in(22),io.core_farfs_in(22),arfs_ss_ECP(22),farfs_ss_ECP(22),
+        debug_fail(23),io.core_arfs_in(23),io.core_farfs_in(23),arfs_ss_ECP(23),farfs_ss_ECP(23),
+        debug_fail(24),io.core_arfs_in(24),io.core_farfs_in(24),arfs_ss_ECP(24),farfs_ss_ECP(24),
+        debug_fail(25),io.core_arfs_in(25),io.core_farfs_in(25),arfs_ss_ECP(25),farfs_ss_ECP(25),
+        debug_fail(26),io.core_arfs_in(26),io.core_farfs_in(26),arfs_ss_ECP(26),farfs_ss_ECP(26),
+        debug_fail(27),io.core_arfs_in(27),io.core_farfs_in(27),arfs_ss_ECP(27),farfs_ss_ECP(27),
+        debug_fail(28),io.core_arfs_in(28),io.core_farfs_in(28),arfs_ss_ECP(28),farfs_ss_ECP(28),
+        debug_fail(29),io.core_arfs_in(29),io.core_farfs_in(29),arfs_ss_ECP(29),farfs_ss_ECP(29),
+        debug_fail(30),io.core_arfs_in(30),io.core_farfs_in(30),arfs_ss_ECP(30),farfs_ss_ECP(30),
+        debug_fail(31),io.core_arfs_in(31),io.core_farfs_in(31),arfs_ss_ECP(31),farfs_ss_ECP(31)
+      ))
+      // printf(midas.targetutils.SynthesizePrintf("[C%x] Check Fail [idx %x ECP arfs %x farfs %x Checker arfs %x farfs %x]\n", io.core_id,fail_idx,arfs_ss_ECP(fail_idx),farfs_ss_ECP(fail_idx),io.core_arfs_in(fail_idx),io.core_farfs_in(fail_idx)))
+    }
   }
 
   // Faking ELU data

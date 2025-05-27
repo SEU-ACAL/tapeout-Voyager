@@ -156,7 +156,7 @@ class GHEImp(outer: GHE)(implicit p: Parameters) extends LazyRoCCMEEKModuleImp(o
     }
 
     when (doInitialised){
-      printf(midas.targetutils.SynthesizePrintf("Littel Init state %d\n",(funct )))
+      // printf(midas.targetutils.SynthesizePrintf("Littel Init state %d\n",(funct )))
       ghe_initialised_reg      := (funct & 0x0F.U);
     }
 
@@ -170,11 +170,11 @@ class GHEImp(outer: GHE)(implicit p: Parameters) extends LazyRoCCMEEKModuleImp(o
       }
     }
     when(doInitialised&&(funct&0x0F.U)===0x01.U){
-      printf(midas.targetutils.SynthesizePrintf("Ghe State Empty\n"))
+      // printf(midas.targetutils.SynthesizePrintf("Ghe State Empty\n"))
       ghe_status_reg             := 0.U 
     }
     .elsewhen(ghe_status_in===0x2.U){
-      printf(midas.targetutils.SynthesizePrintf("Ghe State %d\n",ghe_status_in))
+      // printf(midas.targetutils.SynthesizePrintf("Ghe State %d\n",ghe_status_in))
       ghe_status_reg             := ghe_status_in
     }
     
@@ -197,7 +197,7 @@ class GHEImp(outer: GHE)(implicit p: Parameters) extends LazyRoCCMEEKModuleImp(o
     //开始校验
     when (doMask) {
       ght_status_reg           := (funct & 0x0F.U);
-      printf(midas.targetutils.SynthesizePrintf("Check State %d\n",(funct & 0x0F.U)))
+      // printf(midas.targetutils.SynthesizePrintf("Check State %d\n",(funct & 0x0F.U)))
     }
 
     when (doCritical) {

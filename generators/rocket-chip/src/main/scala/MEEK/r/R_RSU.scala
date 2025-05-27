@@ -210,13 +210,13 @@ class R_RSU(val params: R_RSUParams) extends Module with HasR_RSUIO {
 
   
   if (GH_GlobalParams.GH_DEBUG == 1) {
-    // when ((doSnapshot === 1.U) && (io.core_trace.asBool)) {
-    //   printf(midas.targetutils.SynthesizePrintf("[CHECK POINTS --- Boom]: SCP[%x] ECP[%x] ARFS = [%x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x]\n", 
-    //   io.ic_crnt_target(4,0),io.ic_old_crnt_target(4,0),io.arfs_in(0), io.arfs_in(1), io.arfs_in(2), io.arfs_in(3),io.arfs_in(4), io.arfs_in(5), io.arfs_in(6), io.arfs_in(7),
-    //   io.arfs_in(8), io.arfs_in(9), io.arfs_in(10), io.arfs_in(11),io.arfs_in(12), io.arfs_in(13), io.arfs_in(14), io.arfs_in(15),
-    //   io.arfs_in(16), io.arfs_in(17), io.arfs_in(18), io.arfs_in(19),io.arfs_in(20), io.arfs_in(21), io.arfs_in(22), io.arfs_in(23),
-    //   io.arfs_in(24), io.arfs_in(25), io.arfs_in(26), io.arfs_in(27),io.arfs_in(28), io.arfs_in(29), io.arfs_in(30), io.arfs_in(31)))
-    // }
+    when ((doSnapshot === 1.U) && (io.core_trace.asBool)) {
+      printf(midas.targetutils.SynthesizePrintf("[CHECK POINTS --- Boom]: SCP[%x] ECP[%x] ARFS = [%x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x]\n", 
+      io.ic_crnt_target(4,0),io.ic_old_crnt_target(4,0),io.arfs_in(0), io.arfs_in(1), io.arfs_in(2), io.arfs_in(3),io.arfs_in(4), io.arfs_in(5), io.arfs_in(6), io.arfs_in(7),
+      io.arfs_in(8), io.arfs_in(9), io.arfs_in(10), io.arfs_in(11),io.arfs_in(12), io.arfs_in(13), io.arfs_in(14), io.arfs_in(15),
+      io.arfs_in(16), io.arfs_in(17), io.arfs_in(18), io.arfs_in(19),io.arfs_in(20), io.arfs_in(21), io.arfs_in(22), io.arfs_in(23),
+      io.arfs_in(24), io.arfs_in(25), io.arfs_in(26), io.arfs_in(27),io.arfs_in(28), io.arfs_in(29), io.arfs_in(30), io.arfs_in(31)))
+    }
   }
   
 }
