@@ -1,0 +1,18 @@
+[
+    {
+        "arguments": [
+            "g++",
+            "-c",
+            "-std=c++17",
+            "-I",
+            "/home/mio/Code/Voyager/.conda-env/riscv-tools/include",
+            "-fPIC",
+            "-O3",
+            "-o",
+            "libgemmini.so",
+            "gemmini.cc"
+        ],
+        "directory": "/home/mio/Code/Voyager/generators/buckyball/spike",
+        "file": "gemmini.cc"
+    }
+]

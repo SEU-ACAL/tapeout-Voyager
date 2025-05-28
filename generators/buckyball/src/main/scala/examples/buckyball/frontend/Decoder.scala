@@ -6,6 +6,7 @@ import chisel3.stage._
 import org.chipsalliance.cde.config.Parameters
 import buckyball.BuckyBallConfig
 import freechips.rocketchip.buckyball.RoCCCommandBB
+import buckyball.BBISA._
 
 
 class BuckyBallRawCmd(implicit p: Parameters) extends Bundle {
@@ -27,25 +28,25 @@ object DefaultConstants {
 
 object LSDecodeFields extends Enumeration {
   type Field = Value
-  val LD_EN, ST_EN, MEMADDR, SPADDR, ITER = Value
+  val PID, PSTART, PEND, // PID大于1表示是流水线指令 
+      LD_EN, ST_EN, MEMADDR, SPADDR, ITER = Value
 }
 
 // index of the decoded fields
 object EXDecodeFields extends Enumeration {
   type Field = Value
-  val PID, // PID大于1表示是流水线指令 
+  val PID, PSTART, PEND, // PID大于1表示是流水线指令 
       OP1_EN, OP2_EN, WR_SPAD, OP1_FROM_SPAD, OP2_FROM_SPAD, OP1_SPADDR, OP2_SPADDR, WR_SPADDR,
       ITER = Value
 }
 
-class IdRsReq extends Bundle {
+class PostDecodeCmd extends Bundle {
   val is_load       = Bool()
   val is_store      = Bool()
   val mem_addr      = UInt(14.W)
   val sp_addr       = UInt(14.W)
 
   val is_ex         = Bool()
-  val pid           = UInt(8.W)   // 流水线ID
   val iter          = UInt(10.W) // 迭代次数
   val op1_en        = Bool()
   val op2_en        = Bool()
@@ -55,6 +56,10 @@ class IdRsReq extends Bundle {
   val op1_spaddr    = UInt(14.W)
   val op2_spaddr    = UInt(14.W)
   val wr_spaddr     = UInt(14.W)
+
+  val pid           = UInt(8.W)   // 流水线ID
+  val pstart        = Bool() // 流水线的开始
+  val pend          = Bool() // 流水线的结束
 }
 
 class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
@@ -64,34 +69,34 @@ class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
     val id_i = Flipped(Decoupled(new Bundle {
       val cmd = new RoCCCommandBB
     }))
-    val id_rs = Decoupled(new IdRsReq)
+    val id_rs = Decoupled(new PostDecodeCmd)
   })
 
   val addrLen = bbconfig.addr_length
 
   io.id_i.ready := io.id_rs.ready // 如果保留站阻塞了，id_i也阻塞
+
+  val func7 = io.id_i.bits.cmd.inst.funct
+  val rs1   = io.id_i.bits.cmd.rs1
+  val rs2   = io.id_i.bits.cmd.rs2
+
 // -----------------------------------------------------------------------------
 // Decode Load/Store instructions
 // -----------------------------------------------------------------------------
-
   import LSDecodeFields._
-  val ls_default_decode = List(N,N,DADDR,DADDR,DITER)
+  val ls_default_decode = List(N,N,N,N,DADDR,DADDR,DITER)
   val ls_decode_list = ListLookup(func7, ls_default_decode, Array(
-    BitPat("b0000011") -> List(N,Y,rs1,rs2(addrLen-1,0),rs2(2*addrLen+9,addrLen)), // mvout
-    BitPat("b0000010") -> List(Y,N,rs1,rs2(addrLen-1,0),rs2(2*addrLen+9,addrLen)), // mvin
+    MVOUT_BITPAT -> List(N,Y,N,N,rs1,rs2(addrLen-1,0),rs2(2*addrLen+9,addrLen)), // mvout
+    MVIN_BITPAT  -> List(Y,N,N,N,rs1,rs2(addrLen-1,0),rs2(2*addrLen+9,addrLen)), // mvin
   ))
 
 // -----------------------------------------------------------------------------
 // Decode EX instructions
 // -----------------------------------------------------------------------------
-  val func7 = io.id_i.bits.cmd.inst.funct
-  val rs1   = io.id_i.bits.cmd.rs1
-  val rs2   = io.id_i.bits.cmd.rs2
-
   import EXDecodeFields._
-  val ex_default_decode = List(N,N,N,N,N,N,DADDR,DADDR,DADDR,DITER)
+  val ex_default_decode = List(N,N,N,N,N,N,N,N,DADDR,DADDR,DADDR,DITER)
   val ex_decode_list = ListLookup(func7, ex_default_decode, Array(
-    BitPat("b0011111") -> List(N,Y,Y,Y,N,N,rs1(2*addrLen-1,addrLen),rs1(2*addrLen+9,addrLen),rs2(addrLen-1,0),rs1(2*addrLen+9,addrLen)), // bb_matmul_warp16
+    VXM_BITPAT -> List(N,N,N,Y,Y,Y,N,N,rs1(2*addrLen-1,addrLen),rs1(2*addrLen+9,addrLen),rs2(addrLen-1,0),rs1(2*addrLen+9,addrLen)), // bb_matmul_warp16
   ))
 
   io.id_rs.valid              := io.id_i.valid
@@ -101,16 +106,19 @@ class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
   io.id_rs.bits.sp_addr       := ls_decode_list(3).asUInt
 
   io.id_rs.bits.is_ex         := !ls_decode_list(0).asBool && !ls_decode_list(1).asBool
-  io.id_rs.bits.pid           := ex_decode_list(0).asUInt
-  io.id_rs.bits.op1_en        := ex_decode_list(1).asBool
-  io.id_rs.bits.op2_en        := ex_decode_list(2).asBool
-  io.id_rs.bits.wr_spad_en    := ex_decode_list(3).asBool
-  io.id_rs.bits.op1_from_spad := ex_decode_list(4).asBool
-  io.id_rs.bits.op2_from_spad := ex_decode_list(5).asBool
-  io.id_rs.bits.op1_spaddr    := ex_decode_list(6).asUInt
-  io.id_rs.bits.op2_spaddr    := ex_decode_list(7).asUInt
-  io.id_rs.bits.wr_spaddr     := ex_decode_list(8).asUInt
-  io.id_rs.bits.iter          := ex_decode_list(9).asUInt
+  io.id_rs.bits.op1_en        := ex_decode_list(3).asBool
+  io.id_rs.bits.op2_en        := ex_decode_list(4).asBool
+  io.id_rs.bits.wr_spad_en    := ex_decode_list(5).asBool
+  io.id_rs.bits.op1_from_spad := ex_decode_list(6).asBool
+  io.id_rs.bits.op2_from_spad := ex_decode_list(7).asBool
+  io.id_rs.bits.op1_spaddr    := ex_decode_list(8).asUInt
+  io.id_rs.bits.op2_spaddr    := ex_decode_list(9).asUInt
+  io.id_rs.bits.wr_spaddr     := ex_decode_list(10).asUInt
+  io.id_rs.bits.iter          := ex_decode_list(11).asUInt
+
+  io.id_rs.bits.pid           := ex_decode_list(0).asUInt | ls_decode_list(0).asUInt
+  io.id_rs.bits.pstart        := ex_decode_list(1).asBool || ls_decode_list(1).asBool 
+  io.id_rs.bits.pend          := ex_decode_list(2).asBool || ls_decode_list(2).asBool 
 }
 
 

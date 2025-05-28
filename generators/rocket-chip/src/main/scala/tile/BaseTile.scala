@@ -25,6 +25,7 @@ import freechips.rocketchip.resources.{BigIntToProperty, IntToProperty, StringTo
 import freechips.rocketchip.util.BooleanToAugmentedBoolean
 import freechips.rocketchip.npu.BuildRoCCNpu
 import freechips.rocketchip.meek.BuildRoCCMEEK
+import freechips.rocketchip.buckyball.BuildRoCCBB
 //===== GuardianCouncil Function: Start ====//
 import freechips.rocketchip.guardiancouncil._
 case object EnableGuardianCouncilNodes extends Field[Boolean](false)
@@ -61,7 +62,7 @@ trait HasNonDiplomaticTileParameters {
   def usingSupervisor: Boolean = tileParams.core.hasSupervisorMode
   def usingHypervisor: Boolean = usingVM && tileParams.core.useHypervisor
   def usingDebug: Boolean = tileParams.core.useDebug
-  def usingRoCC: Boolean = !p(BuildRoCC).isEmpty || !p(BuildRoCCNpu).isEmpty|| !p(BuildRoCCMEEK).isEmpty
+  def usingRoCC: Boolean = !p(BuildRoCC).isEmpty || !p(BuildRoCCNpu).isEmpty|| !p(BuildRoCCMEEK).isEmpty || !p(BuildRoCCBB).isEmpty // may can be overrided by each one, not in global config
   def usingBTB: Boolean = tileParams.btb.isDefined && tileParams.btb.get.nEntries > 0
   def usingPTW: Boolean = usingVM
   def usingDataScratchpad: Boolean = tileParams.dcache.flatMap(_.scratch).isDefined
@@ -99,7 +100,7 @@ trait HasNonDiplomaticTileParameters {
 
   // TODO make HellaCacheIO diplomatic and remove this brittle collection of hacks
   //                  Core   PTW                DTIM                    coprocessors           
-  def dcacheArbPorts = 1 + usingVM.toInt + usingDataScratchpad.toInt + p(BuildRoCC).size + p(BuildRoCCNpu).size +p(BuildRoCCMEEK).size+(tileParams.core.useVector && tileParams.core.vectorUseDCache).toInt
+  def dcacheArbPorts = 1 + usingVM.toInt + usingDataScratchpad.toInt + p(BuildRoCC).size + p(BuildRoCCNpu).size +p(BuildRoCCMEEK).size+ p(BuildRoCCBB).size + (tileParams.core.useVector && tileParams.core.vectorUseDCache).toInt // may can be overrided by each one, not in global config
 
   // TODO merge with isaString in CSR.scala
   def isaDTS: String = {

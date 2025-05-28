@@ -1,12 +1,16 @@
 package buckyball
 
 import chisel3._
+import chisel3.util._
+import org.chipsalliance.cde.config.Parameters
+import freechips.rocketchip.buckyball.RoCCCommandBB
 
+class BuckyBallRawCmd(implicit p: Parameters) extends Bundle {
+  val cmd = new RoCCCommandBB
+}
 
 object BBISA {
-  val MVIN_CMD  = 0.U
-  val MVOUT_CMD = 1.U
-  val VXM_CMD   = 2.U
-  
-
+  val MVIN_BITPAT  = BitPat("b0000010")
+  val MVOUT_BITPAT = BitPat("b0000011")
+  val VXM_BITPAT   = BitPat("b0011111")
 }
