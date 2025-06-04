@@ -90,6 +90,43 @@ add_custom_command(
   COMMENT "Generating bb_mul_warp16"
 )
 
+add_custom_command(
+  OUTPUT  bb_mvin_mvout-baremetal bb_mvin_mvout-linux
+  COMMAND ${BUDDY_OPT} ${BUCKYBALL_OPTEST_DIR}/bb_mvin_mvout.mlir 
+            # -convert-scf-to-cf
+            # -llvm-request-c-wrappers
+            # -lower-buckyball 
+            # -arith-bufferize
+            # -buffer-deallocation
+            # -finalizing-bufferize
+            # -convert-arith-to-llvm
+            # -convert-func-to-llvm
+            # -finalize-memref-to-llvm
+            # -reconcile-unrealized-casts |
+            -lower-buckyball |
+          ${BUDDY_TRANSLATE} --buddy-to-llvmir |
+          ${BUDDY_LLC} -filetype=obj -mtriple=riscv64
+            -mattr=+buddyext,+D -float-abi=hard
+            -relocation-model=pic
+            -o log.o
+  COMMAND ${ELF_CC} -O2 -static -specs=htif_nano.specs log.o -o bb_mvin_mvout-baremetal
+
+  COMMAND ${BUDDY_OPT} ${BUCKYBALL_OPTEST_DIR}/bb_mvin_mvout.mlir 
+            -lower-buckyball 
+            -convert-scf-to-cf
+            -convert-arith-to-llvm 
+            -finalize-memref-to-llvm 
+            -convert-func-to-llvm
+            -reconcile-unrealized-casts |
+          ${BUDDY_TRANSLATE} --buddy-to-llvmir |
+          ${BUDDY_LLC} -filetype=obj -mtriple=riscv64
+            -mattr=+buddyext,+D -float-abi=hard
+            -o log.o
+  COMMAND ${LINUX_CC} -O2 -static log.o -o bb_mvin_mvout-linux
+  DEPENDS ${BUCKYBALL_OPTEST_DIR}/bb_mvin_mvout.mlir
+  COMMENT "Generating bb_mvin_mvout"
+)
+
 add_custom_target(buckyball-OpTest ALL DEPENDS
   bb_mvin-baremetal
   bb_mvin-linux
@@ -97,4 +134,6 @@ add_custom_target(buckyball-OpTest ALL DEPENDS
   bb_mvout-linux
   bb_mul_warp16-baremetal
   bb_mul_warp16-linux
+  bb_mvin_mvout-baremetal
+  bb_mvin_mvout-linux
 )

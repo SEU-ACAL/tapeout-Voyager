@@ -3,7 +3,7 @@
 CYDIR=$(git rev-parse --show-toplevel)
 # 切换环境变量
 source ${CYDIR}/env.sh
-git submodule update --init tools/buddy-mlir 
+cd ${CYDIR} && git submodule update --init tools/buddy-mlir 
 
 cd ${CYDIR}/tools/buddy-mlir/build || { echo "Cannot enter the directory: ${CYDIR}/tools/buddy-mlir/build"; exit 1; }
 ninja -j256

@@ -38,6 +38,11 @@ class SimpleWriteRequest(dataWidth: Int)(implicit p: Parameters) extends CoreBun
   val status = new MStatus
 }
 
+// 简化的写入响应
+class SimpleWriteResponse extends Bundle {
+  val done = Bool()
+}
+
 // 简化的读取器
 class SimpleStreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, dataWidth: Int)
                         (implicit p: Parameters) extends LazyModule {
@@ -127,6 +132,7 @@ class SimpleStreamWriter(nXacts: Int, beatBits: Int, maxBytes: Int, dataWidth: I
 
     val io = IO(new Bundle {
       val req = Flipped(Decoupled(new SimpleWriteRequest(dataWidth)))
+      val resp = Decoupled(new SimpleWriteResponse)
       val tlb = new FrontendTLBIO
       val busy = Output(Bool())
       val flush = Input(Bool())
@@ -166,6 +172,10 @@ class SimpleStreamWriter(nXacts: Int, beatBits: Int, maxBytes: Int, dataWidth: I
     tl.a.bits.address := io.tlb.resp.paddr
 
     tl.d.ready := true.B
+
+    // 响应处理
+    io.resp.valid := tl.d.valid && state === s_writing
+    io.resp.bits.done := bytesSent + write_size >= req.len
 
     // 状态机
     io.req.ready := state === s_idle

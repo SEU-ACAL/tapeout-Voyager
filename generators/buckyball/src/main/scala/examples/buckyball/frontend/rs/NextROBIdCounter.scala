@@ -11,7 +11,6 @@ class BuckyBallCmd(implicit bbconfig: BuckyBallConfig) extends Bundle {
   val cmd_type        = UInt(2.W) // 01: Load, 10: Store, 11: Ex
 }
 
-
 class NextROBIdCounter(implicit bbconfig: BuckyBallConfig) extends Module {
   val rob_entries = bbconfig.rob_entries
   

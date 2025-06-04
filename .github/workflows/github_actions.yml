@@ -59,7 +59,9 @@ jobs:
         run: |
           source ~/.zshrc
           chipyard_exec
+          setproxy
           cd voyager-test
+          rm -rf build
           mkdir -p build && cd build 
           cmake ..
           make build-all

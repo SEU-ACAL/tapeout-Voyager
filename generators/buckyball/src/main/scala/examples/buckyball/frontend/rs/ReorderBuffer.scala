@@ -55,6 +55,13 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
   // ROB条目数组
   val RobEntries = Reg(Vec(rob_entries, new RoBEntry))
   
+  // 初始化ROB entries为无效状态
+  for (i <- 0 until rob_entries) {
+    when(reset.asBool) {
+      RobEntries(i).state := RoBState.sInvalid
+    }
+  }
+  
 // -----------------------------------------------------------------------------
 // 入队
 // -----------------------------------------------------------------------------
@@ -65,7 +72,8 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
   val head_ptr     = io.post_indexed_cmd_i.new_head_ptr
 
   when(io.post_indexed_cmd_i.cmd.fire) {
-    assert(RobEntries(rob_id).state === RoBState.sWaiting || 
+    assert(RobEntries(rob_id).state === RoBState.sInvalid || 
+        RobEntries(rob_id).state === RoBState.sWaiting || 
         RobEntries(rob_id).state === RoBState.sIssued, "Inserting to non-empty ROB entry")
     
     RobEntries(rob_id).state    := RoBState.sWaiting
@@ -99,6 +107,12 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
   // to ROBCounter
   io.rob_robcnt_o.valid       := io.commit_i.valid
   io.rob_robcnt_o.bits        := io.commit_i.bits
+  
+  // 清理已完成的ROB entry
+  // 当ROBCounter接收到commit信号后，head_ptr会推进，此时可以清理对应的entry
+  when(io.rob_robcnt_o.fire) {
+    RobEntries(io.rob_robcnt_o.bits).state := RoBState.sInvalid
+  }
   
   // to top
   io.rob_cmt_o.resp.valid     := io.commit_i.valid

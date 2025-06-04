@@ -9,24 +9,37 @@ import org.chipsalliance.cde.config._
 import freechips.rocketchip.diplomacy._
 import freechips.rocketchip.tile._
 import freechips.rocketchip.util.ClockGate
-import freechips.rocketchip.tilelink.TLIdentityNode
+import freechips.rocketchip.tilelink._
 import BBISA._
-import mem.Scratchpad
+import mem.{Scratchpad, SimpleStreamReader, SimpleStreamWriter}
 import frontend.{FrontendTLB, Decoder}
 import frontend.rs.ReservationStation
 import freechips.rocketchip.buckyball._
 import freechips.rocketchip.buckyball.LazyRoCCBB
-
+import buckyball.load.MemLoader
+import buckyball.store.MemStorer
+import buckyball.exec.ExecuteController
 
 
 class BuckyBall(val bbconfig: BuckyBallConfig)(implicit p: Parameters)
   extends LazyRoCCBB (opcodes = bbconfig.opcodes, nPTWPorts = 2) {
 
   val xLen = p(TileKey).core.xLen   // the width of core's register file
-  val spad = LazyModule(new Scratchpad(bbconfig))
+  
+  // DMA组件现在在BuckyBall层面
+  val id_node = TLIdentityNode()
+  val xbar_node = TLXbar()
+  
+  val spad_w = bbconfig.inputType.getWidth * bbconfig.veclane
+  val reader = LazyModule(new SimpleStreamReader(bbconfig.max_in_flight_mem_reqs, bbconfig.dma_buswidth, bbconfig.dma_maxbytes, spad_w))
+  val writer = LazyModule(new SimpleStreamWriter(bbconfig.max_in_flight_mem_reqs, bbconfig.dma_buswidth, bbconfig.dma_maxbytes, spad_w))
+
+  xbar_node := TLBuffer() := reader.node
+  xbar_node := TLBuffer() := writer.node
+  id_node := TLWidthWidget(bbconfig.dma_buswidth/8) := TLBuffer() := xbar_node
 
   override lazy val module = new BuckyBallModule(this)
-  override val tlNode = spad.id_node 
+  override val tlNode = id_node 
   override val atlNode = TLIdentityNode() 
   val node = tlNode 
 }
@@ -34,23 +47,29 @@ class BuckyBall(val bbconfig: BuckyBallConfig)(implicit p: Parameters)
 class BuckyBallModule(outer: BuckyBall) extends LazyRoCCModuleImpBB(outer) 
   with HasCoreParameters {
   import outer.bbconfig._
-  import outer.spad
   
   val tagWidth = 32
 
 // -----------------------------------------------------------------------------
 // Frontend: TLB
 // -----------------------------------------------------------------------------
-  implicit val edge = outer.spad.id_node.edges.out.head
+  implicit val edge: TLEdgeOut = outer.id_node.edges.out.head
   val tlb = Module(new FrontendTLB(2, tlb_size, dma_maxbytes))
-  (tlb.io.clients zip outer.spad.module.io.tlb).foreach(t => t._1 <> t._2)
 
   tlb.io.exp.foreach(_.flush_skip := false.B)
   tlb.io.exp.foreach(_.flush_retry := false.B)
 
   io.ptw <> tlb.io.ptw
 
-  spad.module.io.flush := tlb.io.exp.map(_.flush()).reduce(_ || _)
+  // Flush信号给DMA组件
+  outer.reader.module.io.flush := tlb.io.exp.map(_.flush()).reduce(_ || _)
+  outer.writer.module.io.flush := tlb.io.exp.map(_.flush()).reduce(_ || _)
+
+// -----------------------------------------------------------------------------
+// Memory: Scratchpad (纯粹的SRAM banks)
+// -----------------------------------------------------------------------------
+  val spad = Module(new Scratchpad(outer.bbconfig))
+
 // -----------------------------------------------------------------------------
 // Frontend: Decode and Command Processing
 // -----------------------------------------------------------------------------
@@ -71,71 +90,15 @@ class BuckyBallModule(outer: BuckyBall) extends LazyRoCCModuleImpBB(outer)
 // =============================================================================
 
   // -----------------------------------------------------------------------------
-  // Initialize Scratchpad DMA Interfaces
-  // -----------------------------------------------------------------------------
-  spad.module.io.dma.read.req.valid := false.B
-  spad.module.io.dma.read.req.bits.vaddr := 0.U
-  spad.module.io.dma.read.req.bits.laddr.is_acc_addr := false.B
-  spad.module.io.dma.read.req.bits.laddr.accumulate := false.B
-  spad.module.io.dma.read.req.bits.laddr.read_full_acc_row := false.B
-  spad.module.io.dma.read.req.bits.laddr.garbage := false.B
-  spad.module.io.dma.read.req.bits.laddr.garbage_bit := 0.U
-  spad.module.io.dma.read.req.bits.laddr.data := 0.U
-  spad.module.io.dma.read.req.bits.len := 0.U
-  spad.module.io.dma.read.req.bits.status := 0.U.asTypeOf(new freechips.rocketchip.rocket.MStatus)
-  spad.module.io.dma.read.resp.ready := true.B
-
-  spad.module.io.dma.write.req.valid := false.B
-  spad.module.io.dma.write.req.bits.vaddr := 0.U
-  spad.module.io.dma.write.req.bits.laddr.is_acc_addr := false.B
-  spad.module.io.dma.write.req.bits.laddr.accumulate := false.B
-  spad.module.io.dma.write.req.bits.laddr.read_full_acc_row := false.B
-  spad.module.io.dma.write.req.bits.laddr.garbage := false.B
-  spad.module.io.dma.write.req.bits.laddr.garbage_bit := 0.U
-  spad.module.io.dma.write.req.bits.laddr.data := 0.U
-  spad.module.io.dma.write.req.bits.len := 0.U
-  spad.module.io.dma.write.req.bits.status := 0.U.asTypeOf(new freechips.rocketchip.rocket.MStatus)
-  spad.module.io.dma.write.req.bits.cmd_id := 0.U
-  spad.module.io.dma.write.resp.ready := true.B
-
-  // -----------------------------------------------------------------------------
-  // Initialize Scratchpad SRAM Read Interfaces
-  // -----------------------------------------------------------------------------
-  for (i <- 0 until 4) {
-    spad.module.io.srams.read(i).req.valid := false.B
-    spad.module.io.srams.read(i).req.bits.addr := 0.U
-    spad.module.io.srams.read(i).req.bits.fromDMA := false.B
-    spad.module.io.srams.read(i).resp.ready := true.B
-  }
-
-  // -----------------------------------------------------------------------------
-  // Initialize Scratchpad SRAM Write Interfaces
-  // -----------------------------------------------------------------------------
-  for (i <- 0 until 4) {
-    spad.module.io.srams.write(i).en := false.B
-    spad.module.io.srams.write(i).addr := 0.U
-    for (j <- 0 until 16) {
-      spad.module.io.srams.write(i).mask(j) := false.B
-    }
-    spad.module.io.srams.write(i).data := 0.U
-  }
-
-  // -----------------------------------------------------------------------------
   // Initialize ReservationStation Issue Interfaces (Backend ready signals)
   // -----------------------------------------------------------------------------
-  rs.io.issue_o.ld.ready := false.B
-  rs.io.issue_o.st.ready := false.B
-  rs.io.issue_o.ex.ready := false.B
+  // rs.io.issue_o.ex.ready := false.B // 现在连接到ExecuteController了
 
   // -----------------------------------------------------------------------------
   // Initialize ReservationStation Commit Interfaces (Backend completion signals)
   // -----------------------------------------------------------------------------
-  rs.io.commit_i.ld.valid := false.B
-  rs.io.commit_i.ld.bits.rob_id := 0.U
-  rs.io.commit_i.st.valid := false.B
-  rs.io.commit_i.st.bits.rob_id := 0.U
-  rs.io.commit_i.ex.valid := false.B
-  rs.io.commit_i.ex.bits.rob_id := 0.U
+  // rs.io.commit_i.ex.valid := false.B // 现在连接到ExecuteController了
+  // rs.io.commit_i.ex.bits.rob_id := 0.U
 
 // =============================================================================
 // DEFAULT INITIALIZATION FOR UNCONNECTED SIGNALS - END
@@ -144,17 +107,48 @@ class BuckyBallModule(outer: BuckyBall) extends LazyRoCCModuleImpBB(outer)
 // -----------------------------------------------------------------------------
 // Backend: Load Controller
 // -----------------------------------------------------------------------------
-
+  val memLoader = Module(new MemLoader)
+  memLoader.io.cmdReq <> rs.io.issue_o.ld
+  rs.io.commit_i.ld <> memLoader.io.cmdResp
+  
+  // 连接MemLoader直接到SimpleStreamReader
+  memLoader.io.dmaReq <> outer.reader.module.io.req
+  outer.reader.module.io.resp <> memLoader.io.dmaResp
+  
+  // 连接DMA Reader的TLB到TLB (client 1) - DMA内部做地址翻译
+  outer.reader.module.io.tlb <> tlb.io.clients(1)
+  
+  // 连接MemLoader到Scratchpad SRAM写入接口
+  memLoader.io.sramWrite <> spad.io.srams.write
 
 // -----------------------------------------------------------------------------
 // Backend: Store Controller
 // -----------------------------------------------------------------------------
-
+  val memStorer = Module(new MemStorer)
+  memStorer.io.cmdReq <> rs.io.issue_o.st
+  rs.io.commit_i.st <> memStorer.io.cmdResp
+  
+  // 连接MemStorer直接到SimpleStreamWriter
+  memStorer.io.dmaReq <> outer.writer.module.io.req
+  outer.writer.module.io.resp <> memStorer.io.dmaResp
+  
+  // 连接DMA Writer的TLB到TLB (client 0) - DMA内部做地址翻译
+  outer.writer.module.io.tlb <> tlb.io.clients(0)
+  
+  // 连接MemStorer到Scratchpad SRAM读取接口
+  memStorer.io.sramRead <> spad.io.srams.read
 
 // -----------------------------------------------------------------------------
 // Backend: Execute Controller
 // -----------------------------------------------------------------------------
-
+  val exec = Module(new ExecuteController)
+  exec.io.cmdReq <> rs.io.issue_o.ex
+  rs.io.commit_i.ex <> exec.io.cmdResp
+  
+  // 连接ExecuteController到Scratchpad的专用执行接口
+  exec.io.sramReadA <> spad.io.exec.readA
+  exec.io.sramReadB <> spad.io.exec.readB  
+  exec.io.sramWrite <> spad.io.exec.write
 
 //---------------------------------------------------------------------------
 // 返回RoCC接口连接

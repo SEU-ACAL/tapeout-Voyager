@@ -39,6 +39,7 @@ class ReservationStation(implicit bbconfig: BuckyBallConfig, p: Parameters) exte
   val rob_id_width = log2Up(bbconfig.rob_entries)
 
   val io = IO(new Bundle {
+    // RAW CMD -> PostDecodeCmd -> BuckyBallCmd
     // ================================ 连接前端    
     val id_i = Flipped(Decoupled(new PostDecodeCmd))
     val rs_rocc_o = new Bundle {      
@@ -49,10 +50,10 @@ class ReservationStation(implicit bbconfig: BuckyBallConfig, p: Parameters) exte
     val commit_i = new RSCMTInterface(rob_id_width)
   })
 
-  val ROB = Module(new ReorderBuffer)
+  val ROB          = Module(new ReorderBuffer)
   val RobIdCounter = Module(new NextROBIdCounter)
-  val ISSQueue = Module(new IssueQueue(queue_entries))
-  val CMTQueue = Module(new CommitQueue(queue_entries))
+  val ISSQueue     = Module(new IssueQueue(queue_entries))
+  val CMTQueue     = Module(new CommitQueue(queue_entries))
 
   // id -> RobIdCounter -> ROB
   RobIdCounter.io.post_decode_cmd_i <> io.id_i
