@@ -121,13 +121,13 @@ $ ./voyager-test/scripts/run-verilator.sh --config RocketConfig hello --debug
 $ ./voyager-test/scripts/run-verilator.sh --config RocketConfig hello --debug --vcd2fst
 ```
 
-**5.2 批测试**
+**5.3 批测试**
 
 批量测试脚本，通过添加测试的配置和workload，可以批量测试所有配置和workload；每个RTL配置会和所有workload进行组合测试。
 
 ```shell
 $ ./voyager-test/scripts/batch-test.sh --npu-test # 运行NPU相关测试
-$ ./voyager-test/scripts/batch-test.sh --cpu-test # 运行CPU相关测试
+$ ./voyager-test/scripts/batch-test.sh --meek-test # 运行Meek相关测试
 $ ./voyager-test/scripts/batch-test.sh --full-test # 运行所有测试配置
 ```
 
@@ -160,8 +160,8 @@ $ ./voyager-test/scripts/run-vcs.sh --config RocketConfig hello --debug
 服务器上看波形很卡，建议本地装个verdi看
 
 ```shell
-source ./voyager-test/scripts/env-source.sh vcs
-verdi
+$ source ./voyager-test/scripts/env-source.sh vcs
+$ verdi
 ```
 
 ## 七、firesim
@@ -181,8 +181,8 @@ $ ./voyager-test/scripts/run-dc.sh --config GemminiRocketConfig --top RocketTile
 
 注：vcs和dc版本不同，所以环境变量也不同，单独使用需要使用脚本切换。
 ```shell
-source ./voyager-test/scripts/env-source.sh vcs
-source ./voyager-test/scripts/env-source.sh dc
+$ source ./voyager-test/scripts/env-source.sh vcs
+$ source ./voyager-test/scripts/env-source.sh dc
 ```
 如果由于 license 问题导致脚本切换失败，可使用`lmdown`和 `lmli` 手动切换
 如果直接使用 `build-vcs.sh`, `run-vcs.sh` 和 `run-dc.sh` 会自动切换，无需手动切换。
@@ -195,17 +195,7 @@ pre-commit 由`./build-setup.sh`已经安装好，无需单独安装。
 Commit代码前，请打开 `scripts/permission-check.sh` 找到`allowed_dirs`，将你需要修改的文件夹路径取消注释。
 通过这种方式我们防止提交文件夹污染，只有位于这几个文件夹的文件修改允许提交。
 
-**9.2 专用测试**
-
-为了尽可能增大CI的覆盖范围，可以通过在commit message中包含特定的tag，来触发特定的测试；测试用例在batch-test.sh中自行添加即可。
-
-- [npu-test] 触发NPU相关测试。
-- [meek-test] 触发Meek相关测试。
-- [full-test] 触发除DC外的所有测试。
-- [dc-eval] 触发DC综合。
-
-
-### 可提交物说明
+**9.2 可提交物说明**
 
 Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `scripts` 四个文件夹可提交，其余全部.gitignore
 
@@ -216,6 +206,18 @@ Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `
 - rocket-chip/src
 - gemmini/src
 - bar-fetchers/src: 存放预取器代码
+
+
+**9.3 专用测试**
+
+为了尽可能增大CI的覆盖范围，可以通过在commit message中包含特定的tag，来触发特定的测试；测试用例在batch-test.sh中自行添加即可。
+
+- [npu-test] 触发NPU相关测试。
+- [meek-test] 触发Meek相关测试。
+- [full-test] 触发除DC外的所有测试。
+- [dc-eval] 触发DC综合。
+
+[commit message示例](https://github.com/SEU-ACAL/tapeout-Voyager/commit/d1498106558c0bf3851b32334eac6fe89f1d714c)
 
 ## 十、文档目录
 

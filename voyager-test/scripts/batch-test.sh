@@ -15,11 +15,12 @@ NC='\033[0m' # No Color
 declare -A TEST_SUITES
 
 # NPU测试套件配置
+# 注意: 纯NPU配置跑不了hello (因为是多核的) 
 NPU_CONFIGS=("GemminiRocketConfig")
-NPU_TESTS=("hello" 
+NPU_TESTS=("template"  
            "template")
 
-# CPU测试套件配置
+# MEEK测试套件配置
 MEEK_CONFIGS=("OurHeterSoCConfig")
 MEEK_TESTS=("hello")
 
@@ -83,7 +84,7 @@ run_test() {
   local test=$2
   
   log_info "运行测试: $config + $test (debug模式)"
-  ${SCRIPT_DIR}/run-verilator.sh --debug --config $config $test
+  ${SCRIPT_DIR}/run-verilator.sh --debug --config $config $test --vcd2fst
   
   if [ $? -eq 0 ]; then
     log_success "测试 $config + $test 通过"

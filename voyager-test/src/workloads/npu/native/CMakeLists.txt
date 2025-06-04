@@ -3,8 +3,8 @@ project(npu_native C)
 set(NATIVE_DIR ${NPU_WORKLOAD_DIR}/native)
 set(ROCC_TESTS_DIR ${NATIVE_DIR}/gemmini-rocc-tests)
 set(ROCC_TESTS_BUILD_DIR ${NATIVE_DIR}/gemmini-rocc-tests/build)
-set(OUTPUT_DIRECTORY ${WORKLOAD_BIN_DIR}/npu/native)
-# set(GEMMINI_INCLUDE_DIR ${NATIVE_DIR}/gemmini-rocc-tests/include)
+set(OUTPUT_DIRECTORY ${OUTPUT_BIN_DIR}/npu/native)
+set(GEMMINI_INCLUDE_DIR ${NATIVE_DIR}/gemmini-rocc-tests/include)
 
 # include_directories(
 #   ${GEMMINI_INCLUDE_DIR}

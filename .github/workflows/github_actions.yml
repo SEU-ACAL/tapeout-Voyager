@@ -4,14 +4,6 @@ on:
   push:
     branches:
       - dev
-  workflow_dispatch:
-    inputs:
-      # 需要在github手动开启该选项
-      enable_specific_test:
-        description: 'Enable specific test job'
-        required: false
-        type: boolean
-        default: false
 jobs:
   Code-Pull:
     name: Code Pull
@@ -28,7 +20,7 @@ jobs:
           chipyard_exec
           setproxy
           git reset --hard origin/${{ github.ref }}
-          git pull origin ${{ github.ref }}
+          git pull origin ${{ github.ref }} --recurse-submodules
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "🍏 pull from repository ${{ job.status }}."
@@ -132,10 +124,10 @@ jobs:
   # ============== 专用测试 ==================
   # NPU测试: 匹配到[npu-test]或[full-test]才会执行
   NPU-Specific-Test:
-    name: NPU Specific Test Job
+    name: NPU Specific Test
     runs-on: fpga
     needs: Test-Workloads
-    if: (contains(github.event.head_commit.message, '[npu-test]') || contains(github.event.head_commit.message, '[full-test]')) && github.event.inputs.enable_specific_test == 'true'
+    if: contains(github.event.head_commit.message, '[npu-test]') || contains(github.event.head_commit.message, '[full-test]')
     steps:
       - name: Run NPU Specific Test
         shell: zsh {0}
@@ -159,12 +151,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Meek测试: 匹配到[meek-test]才会执行
+  # Meek测试: 匹配到[meek-test]或[full-test]才会执行
   Meek-Specific-Test:
-    name: Meek Specific Test Job
+    name: Meek Specific Test
     runs-on: fpga
     needs: Test-Workloads
-    if: (contains(github.event.head_commit.message, '[meek-test]') || contains(github.event.head_commit.message, '[full-test]')) && github.event.inputs.enable_specific_test == 'true'
+    if: contains(github.event.head_commit.message, '[meek-test]') || contains(github.event.head_commit.message, '[full-test]')
     steps:
       - name: Run Meek Specific Test
         shell: zsh {0}
@@ -190,10 +182,10 @@ jobs:
 
   # DC 测试: 匹配到[dc-eval]才会执行，失败不会退回
   DC-Evaluation:
-    name: DC Evaluation Job
+    name: DC Area Evaluation
     runs-on: fpga
     needs: Test-Workloads
-    if: (contains(github.event.head_commit.message, '[dc-eval]') && github.event.inputs.enable_specific_test == 'true')
+    if: contains(github.event.head_commit.message, '[dc-eval]')
     steps:
       - name: Run DC Evaluation
         shell: zsh {0}

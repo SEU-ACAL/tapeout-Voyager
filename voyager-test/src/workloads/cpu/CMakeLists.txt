@@ -2,8 +2,6 @@
 #-------------------------------------------------------------------------------
 # build linux version workload
 #-------------------------------------------------------------------------------
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WORKLOAD_BIN_DIR}/cpu)
-
 set(LINK_FLAGS "-static -Wl,--no-dynamic-linker")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINK_FLAGS}")
 # add_compile_options(-O2 -static)
@@ -41,14 +39,11 @@ set(C_FLAGS -std=gnu11 -g -DCHECK=1 -fno-common -O2 -static
 set(ELF_CC "riscv64-unknown-elf-gcc")
 
 add_custom_target(cpu-baremetal-build ALL
-    COMMAND ${ELF_CC} ${C_FLAGS} 
-            -o ${WORKLOAD_BIN_DIR}/cpu/hello-baremetal
+    COMMAND ${ELF_CC} ${C_FLAGS} -o hello-baremetal
             ${CPU_WORKLOAD_DIR}/hello/hello.c ${CPU_WORKLOAD_DIR}/meeklib/meek.c 
-    COMMAND ${ELF_CC} ${C_FLAGS} 
-            -o ${WORKLOAD_BIN_DIR}/cpu/bfs-baremetal
+    COMMAND ${ELF_CC} ${C_FLAGS} -o bfs-baremetal
             ${CPU_WORKLOAD_DIR}/prefetch/bfs/bfs.c ${CPU_WORKLOAD_DIR}/meeklib/meek.c 
-    COMMAND ${ELF_CC} ${C_FLAGS} 
-            -o ${WORKLOAD_BIN_DIR}/cpu/hash-baremetal
+    COMMAND ${ELF_CC} ${C_FLAGS} -o hash-baremetal
             ${CPU_WORKLOAD_DIR}/prefetch/hash/hash.c ${CPU_WORKLOAD_DIR}/meeklib/meek.c 
     DEPENDS ${CPU_WORKLOAD_DIR}/hello/hello.c
             ${CPU_WORKLOAD_DIR}/prefetch/bfs/bfs.c 

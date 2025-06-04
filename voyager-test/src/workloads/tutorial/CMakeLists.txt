@@ -3,8 +3,6 @@ project(tutorial C)
 #-------------------------------------------------------------------------------
 # build linux version workload
 #-------------------------------------------------------------------------------
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${WORKLOAD_BIN_DIR}/tutorial)
-
 set(LINK_FLAGS "-static -Wl,--no-dynamic-linker")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINK_FLAGS}")
 
@@ -24,9 +22,7 @@ set(C_FLAGS -std=c11 -g -fno-common -O2 -static
             -fno-builtin-printf -specs=htif_nano.specs)
 
 add_custom_target(tutorial-baremetal-build ALL
-    COMMAND ${ELF_CC} ${C_FLAGS}
-            -o ${WORKLOAD_BIN_DIR}/tutorial/tutorial-baremetal
-            ${TUTORIAL_WORKLOAD_DIR}/tutorial.c
+    COMMAND ${ELF_CC} ${C_FLAGS} -o tutorial-baremetal ${TUTORIAL_WORKLOAD_DIR}/tutorial.c
     DEPENDS ${TUTORIAL_WORKLOAD_DIR}/tutorial.c
     COMMENT "Building baremetal workloads for tutorial"
     VERBATIM)
