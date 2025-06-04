@@ -20,7 +20,9 @@ jobs:
           chipyard_exec
           setproxy
           git reset --hard origin/${{ github.ref }}
-          git pull origin ${{ github.ref }} --recurse-submodules
+          git pull origin ${{ github.ref }}
+        # 更新子模块，后续需要改为脚本批量管理
+          git submodule update --init tools/buddy-mlir 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "🍏 pull from repository ${{ job.status }}."
