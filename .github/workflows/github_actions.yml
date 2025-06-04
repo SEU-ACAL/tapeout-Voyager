@@ -129,8 +129,8 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-# ============== 专用测试 ==================
-# NPU测试: 匹配到[npu-test]或[full-test]才会执行
+  # ============== 专用测试 ==================
+  # NPU测试: 匹配到[npu-test]或[full-test]才会执行
   NPU-Specific-Test:
     name: NPU Specific Test Job
     runs-on: fpga
@@ -146,20 +146,20 @@ jobs:
           echo "Triggered by commit: ${{ github.event.head_commit.message }}"
           ./voyager-test/scripts/batch-test.sh --npu-test
       - run: echo "🍏 NPU Specific Test is ${{ job.status }}."
-    # 如果检查失败，强制回退分支
-    - name: Revert Bad Commit
-      if: failure()
-      shell: zsh {0}
-      run: |
-        source ~/.zshrc
-        chipyard_exec
-        setproxy
-        git reset --hard HEAD~1
-        git push --force origin ${{ github.ref }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # 如果检查失败，强制回退分支
+      - name: Revert Bad Commit
+        if: failure()
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          setproxy
+          git reset --hard HEAD~1
+          git push --force origin ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-# Meek测试: 匹配到[meek-test]才会执行
+  # Meek测试: 匹配到[meek-test]才会执行
   Meek-Specific-Test:
     name: Meek Specific Test Job
     runs-on: fpga
@@ -175,20 +175,20 @@ jobs:
           echo "Triggered by commit: ${{ github.event.head_commit.message }}"
           ./voyager-test/scripts/batch-test.sh --meek-test
       - run: echo "🍏 Meek Specific Test is ${{ job.status }}."
-    # 如果检查失败，强制回退分支
-    - name: Revert Bad Commit
-      if: failure()
-      shell: zsh {0}
-      run: |
-        source ~/.zshrc
-        chipyard_exec
-        setproxy
-        git reset --hard HEAD~1
-        git push --force origin ${{ github.ref }}
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      # 如果检查失败，强制回退分支
+      - name: Revert Bad Commit
+        if: failure()
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          setproxy
+          git reset --hard HEAD~1
+          git push --force origin ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-# DC 测试: 匹配到[dc-eval]才会执行，失败不会退回
+  # DC 测试: 匹配到[dc-eval]才会执行，失败不会退回
   DC-Evaluation:
     name: DC Evaluation Job
     runs-on: fpga
