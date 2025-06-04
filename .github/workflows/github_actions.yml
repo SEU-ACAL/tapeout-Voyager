@@ -13,7 +13,6 @@ jobs:
         run: |
           echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
           echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      # 更新子模块，后续需要改为脚本批量管理
       - name: Pull from the repository
         shell: zsh {0}
         run: |
@@ -22,7 +21,6 @@ jobs:
           setproxy
           git reset --hard origin/${{ github.ref }}
           git pull origin ${{ github.ref }}
-          git submodule update --init tools/buddy-mlir 
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "🍏 pull from repository ${{ job.status }}."

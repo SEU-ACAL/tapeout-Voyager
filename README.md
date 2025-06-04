@@ -217,8 +217,6 @@ Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `
 - [full-test] 触发除DC外的所有测试。
 - [dc-eval] 触发DC综合。
 
-[commit message示例](https://github.com/SEU-ACAL/tapeout-Voyager/commit/d1498106558c0bf3851b32334eac6fe89f1d714c)
-
 ## 十、文档目录
 
 其余具体可见`docs`下的文档，欢迎大家多写文档，记录下用法和一些坑.
