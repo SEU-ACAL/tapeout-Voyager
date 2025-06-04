@@ -66,11 +66,13 @@ add_custom_target(sync-bin
   COMMENT "Syncing binary files to output directory"
 )
 
-# 设置执行顺序：build-compiler 必须先完成，sync-bin 必须最后执行
-add_dependencies(npu-build build-compiler)
+# 设置执行顺序：build-compiler 必须先于 npu-buckyball 完成，sync-bin 必须最后执行
+add_dependencies(npu-buckyball build-compiler) # 属于 npu-build 的子目录，由于依赖需要直接指定
+
 add_dependencies(sync-bin cpu-build npu-build tutorial-build)
 add_custom_target(build-all ALL DEPENDS
   create-dirs
+  build-compiler
   sync-bin
 )
 

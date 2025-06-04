@@ -3,7 +3,7 @@ run-name: ${{ github.actor }} is running CI Test 🚀
 on:
   push:
     branches:
-      - dev
+      - other
 jobs:
   Code-Pull:
     name: Code Pull
@@ -61,23 +61,11 @@ jobs:
           chipyard_exec
           setproxy
           cd voyager-test
-          rm -rf build
-          mkdir -p build && cd build 
+          rm -rf build 
+          mkdir -p build && cd build
           cmake ..
           make build-all
       - run: echo "🍏 Workloads build test is ${{ job.status }}."
-        # 如果检查失败，强制回退分支
-      - name: Revert Bad Commit
-        if: failure()
-        shell: zsh {0}
-        run: |
-          source ~/.zshrc
-          chipyard_exec
-          setproxy
-          git reset --hard HEAD~1
-          git push --force origin ${{ github.ref }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Build Verilator
         shell: zsh {0}
         run: |
