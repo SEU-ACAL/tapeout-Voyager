@@ -44,6 +44,9 @@ while [ $# -gt 0 ] ; do
   case $1 in
     --pk) pk=1 ;;
     --ext=*) extension="${1#--ext=}" ;;
+    --ext) 
+        shift
+        extension="$1" ;;
     -h | --help) show_help=1 ;;
     *) binary=$1
   esac

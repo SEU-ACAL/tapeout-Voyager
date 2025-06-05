@@ -85,6 +85,9 @@ $ cd Voyager
 $ ./voyager-test/scripts/run-spike.sh hello 
 $ ./voyager-test/scripts/run-spike.sh --pk cpu-spmm
 $ ./voyager-test/scripts/run-spike.sh matmul_os
+
+# 使用buckyballFunc扩展运行bb_mvin_mvout
+$ ./voyager-test/scripts/run-spike.sh --ext=buckyballFunc bb_mvin_mvout
 ```
 
 

@@ -17,8 +17,8 @@ void buckyball_state_t::reset() {
   
   resetted = true;
   
-  printf("buckyball extension configured with:\n");
-  printf("    dim = %u\n", DIM);
+  // printf("buckyball extension configured with:\n");
+  // printf("    dim = %u\n", DIM);
 }
 
 void buckyballFunc_t::reset() {

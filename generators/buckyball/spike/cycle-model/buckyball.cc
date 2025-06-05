@@ -94,7 +94,7 @@ std::vector<disasm_insn_t*> buckyballCycle_t::get_disasms() {
   return insns;
 }
 
-void buckyball_state_t::reset() {
+void buckyballCycle_t::reset() {
   spad.clear();
   accumulator.clear();
   // if (memSisyphus) {
