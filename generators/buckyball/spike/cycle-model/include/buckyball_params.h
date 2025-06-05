@@ -19,6 +19,7 @@ static const elem_t elem_t_max = 127;
 static const elem_t elem_t_min = -128;
 typedef int32_t acc_t;
 typedef int64_t full_t;
+typedef int32_t lantency_t;
 
 #define HAS_MVIN_SCALE
 typedef float scale_t;

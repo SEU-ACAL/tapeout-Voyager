@@ -1,4 +1,4 @@
-#include "buckyball.h"
+#include "include/buckyball.h"
 #include <riscv/mmu.h>
 #include <riscv/trap.h>
 #include <stdexcept>
@@ -8,27 +8,26 @@
 
 using namespace std;
 
-REGISTER_EXTENSION(buckyball, []() { return new buckyball_t; })
+REGISTER_EXTENSION(buckyballCycle, []() { return new buckyballCycle_t; })
 
 #define dprintf(...) { if (p->get_log_commits_enabled()) printf(__VA_ARGS__); }
 
 //===----------------------------------------------------------------------===//
 // 所有指令实现的索引
 //===----------------------------------------------------------------------===//
-reg_t buckyball_t::CUSTOMFN(XCUSTOM_ACC)(rocc_insn_t insn, reg_t xs1, reg_t xs2) {
-  if (!buckyball_state.resetted) {
-    reset();
-  }
-
+reg_t buckyballCycle_t::CUSTOMFN(XCUSTOM_ACC)(rocc_insn_t insn, reg_t xs1, reg_t xs2) {
   if (insn.funct == mvin_funct) {
-    mvin(xs1, xs2, 0);
+    mvin(xs1, xs2);
+  } else if (insn.funct == mvout_funct) {
+    mvout(xs1, xs2);
+  } else if (insn.funct == matmul_funct) {
+    matmul(xs1, xs2);
   } else if (insn.funct == fence_funct) {
     dprintf("BUCKYBALL: fence instruction\n");
   } else {
     dprintf("BUCKYBALL: encountered unknown instruction with funct: %d\n", insn.funct);
     illegal_instruction();
   }
-  buckyball_state.op_in_progress = (insn.funct != flush_funct);
   return 0;
 }
 
@@ -36,7 +35,7 @@ reg_t buckyball_t::CUSTOMFN(XCUSTOM_ACC)(rocc_insn_t insn, reg_t xs1, reg_t xs2)
 // 自定义指令
 //===----------------------------------------------------------------------===//
 static reg_t buckyball_custom(processor_t* p, insn_t insn, reg_t pc) {
-  buckyball_t* buckyball = static_cast<buckyball_t*>(p->get_extension("buckyball"));
+  buckyballCycle_t* buckyball = static_cast<buckyballCycle_t*>(p->get_extension("buckyballCycle"));
   rocc_insn_union_t u;
   state_t* state = p->get_state();
   buckyball->set_processor(p);
@@ -54,7 +53,7 @@ static reg_t buckyball_custom(processor_t* p, insn_t insn, reg_t pc) {
 //===----------------------------------------------------------------------===//
 // 注册指令，负责将指令集注册到Spike中
 //===----------------------------------------------------------------------===//
-std::vector<insn_desc_t> buckyball_t::get_instructions() {
+std::vector<insn_desc_t> buckyballCycle_t::get_instructions() {
   std::vector<insn_desc_t> insns;
   push_custom_insn(insns, ROCC_OPCODE3, ROCC_OPCODE_MASK, ILLEGAL_INSN_FUNC, buckyball_custom);
   return insns;
@@ -63,7 +62,7 @@ std::vector<insn_desc_t> buckyball_t::get_instructions() {
 //===----------------------------------------------------------------------===//
 // 反汇编：目前返回空值，不支持反汇编
 //===----------------------------------------------------------------------===//
-std::vector<disasm_insn_t*> buckyball_t::get_disasms() {
+std::vector<disasm_insn_t*> buckyballCycle_t::get_disasms() {
   std::vector<disasm_insn_t*> insns;
   
   // Define argument types for buckyball instructions
@@ -93,4 +92,12 @@ std::vector<disasm_insn_t*> buckyball_t::get_disasms() {
     {&buckyball_rs1, &buckyball_rs2}));
   
   return insns;
+}
+
+void buckyball_state_t::reset() {
+  spad.clear();
+  accumulator.clear();
+  // if (memSisyphus) {
+  //   memSisyphus->reset();
+  // }
 }

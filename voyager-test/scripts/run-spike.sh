@@ -1,14 +1,15 @@
 #!/bin/bash
 
 help () {
-  echo "Run a RISCV Gemmini program on Spike, our functional ISA simulator"
+  echo "Run a RISCV program on Spike, our functional ISA simulator"
   echo
-  echo "Usage: $0 [-h|--help] [--pk] BINARY"
+  echo "Usage: $0 [-h|--help] [--pk] [--ext=EXTENSION] BINARY"
   echo
   echo "Options:"
   echo " pk      Run binaries on the proxy kernel, which enables virtual memory"
   echo "         and a few syscalls. If this option is not set, binaries will be"
   echo "         run in baremetal mode."
+  echo " ext     Specify extension to use: gemmini or buckyballCycle or buckyballFunc (default: gemmini)"
   echo " BINARY  The RISCV binary that you want to run. This can either be the"
   echo '         name of a program in `software/gemmini-rocc-tests`, or it can'
   echo "         be the full path to a binary you compiled."
@@ -16,6 +17,7 @@ help () {
   echo "Examples:"
   echo "         $0 resnet50"
   echo "         $0 --pk mvin_mvout"
+  echo "         $0 --ext=buckyballFunc path/to/binary-baremetal"
   echo "         $0 path/to/binary-baremetal"
   echo
   echo 'Note:    Run this command after running `scripts/build-spike.sh`.'
@@ -36,10 +38,12 @@ CYDIR=$(git rev-parse --show-toplevel)
 pk=0
 show_help=0
 binary=""
+extension="gemmini"
 
 while [ $# -gt 0 ] ; do
   case $1 in
     --pk) pk=1 ;;
+    --ext=*) extension="${1#--ext=}" ;;
     -h | --help) show_help=1 ;;
     *) binary=$1
   esac
@@ -49,6 +53,12 @@ done
 
 if [ $show_help -eq 1 ]; then
    help
+fi
+
+# Validate extension
+if [ "$extension" != "gemmini" ] && [ "$extension" != "buckyballCycle" ] && [ "$extension" != "buckyballFunc" ]; then
+    echo "Error: Unknown extension '$extension'. Use 'gemmini' or 'buckyballCycle' or 'buckyballFunc'."
+    exit 1
 fi
 
 if [ $pk -eq 1 ]; then
@@ -79,7 +89,7 @@ find_binary_in_dir() {
     return 1
 }
 
-for dir in cpu npu template; do
+for dir in cpu npu tutorial; do
     base_dir="${CYDIR}/voyager-test/output/workloads/${dir}"
     if [ -d "${base_dir}" ]; then
         found_path=$(find_binary_in_dir "${base_dir}" "${binary}" "${default_suffix}")
@@ -98,5 +108,4 @@ if [ ! -f "${full_binary_path}" ]; then
     exit 1
 fi
 
-
-spike --extension=gemmini $PK "${full_binary_path}"
+spike --extension=${extension} $PK "${full_binary_path}"
