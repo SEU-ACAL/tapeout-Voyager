@@ -67,13 +67,12 @@ add_custom_target(sync-bin
 )
 
 # 设置执行顺序：build-compiler 必须先于 buckyball-OpTest 完成，sync-bin 必须最后执行
+add_dependencies(gemmini-native create-dirs)
 add_dependencies(buckyball-OpTest build-compiler) # 属于 npu-build 的子目录，由于依赖需要直接指定
 
 add_dependencies(sync-bin cpu-build npu-build tutorial-build)
-add_custom_target(build-all ALL DEPENDS
-  create-dirs
-  build-compiler
-  sync-bin
+add_custom_target(build-all ALL 
+  DEPENDS sync-bin
 )
 
 add_custom_target(clean-all

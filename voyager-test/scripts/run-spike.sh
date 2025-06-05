@@ -3,21 +3,23 @@
 help () {
   echo "Run a RISCV program on Spike, our functional ISA simulator"
   echo
-  echo "Usage: $0 [-h|--help] [--pk] [--ext=EXTENSION] BINARY"
+  echo "Usage: $0 [-h|--help] [--pk] [--ext=EXTENSION] [--debug] BINARY"
   echo
   echo "Options:"
-  echo " pk      Run binaries on the proxy kernel, which enables virtual memory"
-  echo "         and a few syscalls. If this option is not set, binaries will be"
-  echo "         run in baremetal mode."
-  echo " ext     Specify extension to use: gemmini or buckyballCycle or buckyballFunc (default: gemmini)"
-  echo " BINARY  The RISCV binary that you want to run. This can either be the"
-  echo '         name of a program in `software/gemmini-rocc-tests`, or it can'
-  echo "         be the full path to a binary you compiled."
+  echo " pk           Run binaries on the proxy kernel, which enables virtual memory"
+  echo "              and a few syscalls. If this option is not set, binaries will be"
+  echo "              run in baremetal mode."
+  echo " ext          Specify extension to use: gemmini or buckyballCycle or buckyballFunc (default: gemmini)"
+  echo " debug        Output disassembly and commit logs to log directory"
+  echo " BINARY       The RISCV binary that you want to run. This can either be the"
+  echo '              name of a program in `software/gemmini-rocc-tests`, or it can'
+  echo "              be the full path to a binary you compiled."
   echo
   echo "Examples:"
   echo "         $0 resnet50"
   echo "         $0 --pk mvin_mvout"
   echo "         $0 --ext=buckyballFunc path/to/binary-baremetal"
+  echo "         $0 --debug --ext=buckyballFunc path/to/binary-baremetal"
   echo "         $0 path/to/binary-baremetal"
   echo
   echo 'Note:    Run this command after running `scripts/build-spike.sh`.'
@@ -34,9 +36,12 @@ if [ $# -le 0 ]; then
 fi
 
 CYDIR=$(git rev-parse --show-toplevel)
+ROOT=${CYDIR}/voyager-test
+TIMESTAMP=$(date +%Y-%m-%d-%H-%M)
 
 pk=0
 show_help=0
+debug=0
 binary=""
 extension="gemmini"
 
@@ -47,6 +52,7 @@ while [ $# -gt 0 ] ; do
     --ext) 
         shift
         extension="$1" ;;
+    --debug) debug=1 ;;
     -h | --help) show_help=1 ;;
     *) binary=$1
   esac
@@ -111,4 +117,13 @@ if [ ! -f "${full_binary_path}" ]; then
     exit 1
 fi
 
-spike --extension=${extension} $PK "${full_binary_path}"
+if [ $debug -eq 1 ]; then
+    LOG_DIR="${ROOT}/log/${TIMESTAMP}-${binary}-spike-run-log"
+    mkdir -p "${LOG_DIR}"
+    # spike --extension=${extension} -l --log=${LOG_DIR}/disasm.log \
+    spike --extension=${extension} -l --log=${LOG_DIR}/disasm.log --log-commits \
+        $PK "${full_binary_path}" 2>&1 | tee ${LOG_DIR}/stdout.log
+else
+    spike --extension=${extension} $PK "${full_binary_path}"
+fi
+

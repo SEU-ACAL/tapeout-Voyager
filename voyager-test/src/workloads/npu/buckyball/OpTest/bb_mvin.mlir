@@ -14,7 +14,7 @@ func.func @main() -> i8 {
   
   // 使用BuckyBall的mvin操作将数据从内存移至暂存器
   // CHECK: mvin
-  "buckyball.mvin"(%input, %sp_addr) : (memref<16x32xi8>, i64) -> ()
+  "buckyball.bb_mvin"(%input, %sp_addr) : (memref<16x32xi8>, i64) -> ()
   
   // 释放内存
   memref.dealloc %input : memref<16x32xi8>
@@ -31,7 +31,7 @@ func.func @dynamic_test(%rows: index, %cols: index, %addr: i64) -> i8 {
   
   // 使用动态参数的mvin操作
   // CHECK: mvin
-  "buckyball.mvin"(%input, %addr) : (memref<?x?xi8>, i64) -> ()
+  "buckyball.bb_mvin"(%input, %addr) : (memref<?x?xi8>, i64) -> ()
   
   // 释放内存 
   memref.dealloc %input : memref<?x?xi8>

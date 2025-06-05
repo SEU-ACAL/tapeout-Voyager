@@ -14,7 +14,7 @@ func.func @main() -> i8 {
   
   // 使用BuckyBall的mvout操作将数据从暂存器移至内存
   // CHECK: mvout
-  "buckyball.mvout"(%output, %sp_addr) : (memref<16x32xi8>, i64) -> ()
+  "buckyball.bb_mvout"(%output, %sp_addr) : (memref<16x32xi8>, i64) -> ()
   
   // 释放内存
   memref.dealloc %output : memref<16x32xi8>
@@ -31,7 +31,7 @@ func.func @dynamic_test(%rows: index, %cols: index, %addr: i64) -> i8 {
   
   // 使用动态参数的mvout操作
   // CHECK: mvout
-  "buckyball.mvout"(%output, %addr) : (memref<?x?xi8>, i64) -> ()
+  "buckyball.bb_mvout"(%output, %addr) : (memref<?x?xi8>, i64) -> ()
   
   // 释放内存
   memref.dealloc %output : memref<?x?xi8>
@@ -54,14 +54,14 @@ func.func @matmul_test(%m: index, %n: index, %k: index) -> i8 {
   %c_addr = arith.constant 2000 : i64
   
   // 将A、B矩阵加载到暂存器
-  "buckyball.mvin"(%a, %a_addr) : (memref<?x?xi8>, i64) -> ()
-  "buckyball.mvin"(%b, %b_addr) : (memref<?x?xi8>, i64) -> ()
+  "buckyball.bb_mvin"(%a, %a_addr) : (memref<?x?xi8>, i64) -> ()
+  "buckyball.bb_mvin"(%b, %b_addr) : (memref<?x?xi8>, i64) -> ()
   
   // 执行矩阵乘法（此处省略具体实现）
   
   // 将结果从暂存器写回内存
   // CHECK: mvout
-  "buckyball.mvout"(%c, %c_addr) : (memref<?x?xi8>, i64) -> ()
+  "buckyball.bb_mvout"(%c, %c_addr) : (memref<?x?xi8>, i64) -> ()
   
   // 释放内存
   memref.dealloc %a : memref<?x?xi8>

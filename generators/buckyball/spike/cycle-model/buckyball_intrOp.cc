@@ -9,9 +9,15 @@
 
 using namespace std;
 
-REGISTER_EXTENSION(buckyballCycle, []() { return new buckyballCycle_t; })
+// REGISTER_EXTENSION is defined in buckyball.cc
 
 #define dprintf(...) { if (p->get_log_commits_enabled()) printf(__VA_ARGS__); }
+
+void buckyball_state_t::reset() {
+  spad.clear();
+  accumulator.clear();
+  // 可以在这里添加其他需要重置的状态
+}
 
 void buckyballCycle_t::reset() {
   buckyball_state.reset();
@@ -89,6 +95,19 @@ void buckyballCycle_t::mvin(reg_t rs1, reg_t rs2) {
   // TODO: 实现内存模型的set_read调用
   // buckyball_state.memSisyphus->set_read(memAddr, spadAddr, nlen);
 
+}
+
+void buckyballCycle_t::mvout(reg_t rs1, reg_t rs2) {
+  // rs1 = memAddr
+  // rs2 = nlen << addrLen | spadAddr
+  int addrlen = 14;
+
+  int nlen = (rs2 >> (2 * addrlen)) & 0xFFFF;
+  size_t memAddr = rs1;
+  size_t spadAddr = rs2 & 0xFFFF;
+
+  // TODO: 实现内存模型的set_write调用
+  // buckyball_state.memSisyphus->set_write(memAddr, spadAddr, nlen);
 }
 
 void buckyballCycle_t::matmul(reg_t rs1, reg_t rs2) {

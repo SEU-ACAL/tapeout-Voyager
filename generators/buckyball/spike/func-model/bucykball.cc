@@ -1,4 +1,5 @@
 #include "buckyball.h"
+#include <cstdio>
 #include <riscv/mmu.h>
 #include <riscv/trap.h>
 #include <iostream>
@@ -42,61 +43,54 @@ void buckyballFunc_t::write_to_dram(reg_t addr, T data) {
 }
 
 // Move data from DRAM to scratchpad
-// rs1: mem_addr, rs2: sp_addr[addrLen-1:0] | rows[2*addrLen-1:addrLen] | cols[2*addrLen+9:2*addrLen] 
-// cols: 最后一行的元素个数，其他行默认为完整一行(DIM个元素)
-void buckyballFunc_t::mvin(reg_t dram_addr, reg_t sp_addr) {
-  auto const base_sp_addr = sp_addr & ((1UL << addr_len) - 1);  // rs2[addrLen-1:0]
-  auto const rows = (sp_addr >> addr_len) & ((1UL << addr_len) - 1);  // rs2[2*addrLen-1:addrLen]
-  auto const last_row_cols = (sp_addr >> (2 * addr_len)) & 0x3FF;  // rs2[2*addrLen+9:2*addrLen], 10 bits
-
-  dprintf("BUCKYBALL: mvin - 0x%02lx last_row_cols and 0x%02lx rows from 0x%08lx to addr 0x%08lx\n", 
-          last_row_cols, rows, dram_addr, sp_addr & 0xFFFFFFFF);
-
-  size_t dram_offset = 0;
+// rs1: mem_addr, rs2: sp_addr[spAddrLen-1:0] | rows[spAddrLen+9:spAddrLen]
+// 每次都搬运完整的行(DIM个元素)
+void buckyballFunc_t::mvin(reg_t rs1, reg_t rs2) {
+  auto const base_dram_addr = rs1 & ((1UL << memAddrLen) - 1); // rs1 memddrLen-1:0
+  auto const base_sp_addr = rs2 & ((1UL << spAddrLen) - 1);  // rs2[spAddrLen-1:0]
+  auto const rows = (rs2 >> spAddrLen) & 0x3FF;  // rs2[spAddrLen+9:spAddrLen], 10 bits
+  
+  dprintf("rs1=%lx, rs2=%lx\n", rs1, rs2);
+  dprintf("BUCKYBALL: mvin - 0x%02lx rows from mem 0x%08lx to spad 0x%08lx\n", 
+          rows, base_dram_addr, base_sp_addr);
+  
   for (size_t i = 0; i < rows; ++i) {
-    // 前面的行是完整行(DIM个元素)，最后一行是last_row_cols个元素
-    size_t current_row_cols = (i == rows - 1) ? last_row_cols : DIM;
-    
-    for (size_t j = 0; j < current_row_cols; ++j) {
-      const size_t spad_row = base_sp_addr + i;
-      const size_t spad_col = j;
+    auto const dram_row_addr = base_dram_addr + i*DIM*sizeof(elem_t);
+    const size_t spad_row = base_sp_addr + i;
 
-      auto const dram_byte_addr = dram_addr + dram_offset * sizeof(elem_t);
+    for (size_t j = 0; j < DIM; ++j) {
+      auto const dram_byte_addr = dram_row_addr + j*sizeof(elem_t);
       elem_t value = read_from_dram<elem_t>(dram_byte_addr);
-
-      buckyball_state.spad.at(spad_row).at(spad_col) = value;
-
-      dprintf("%d ", buckyball_state.spad.at(spad_row).at(spad_col));
-      dram_offset++;
+      buckyball_state.spad.at(spad_row).at(j) = value;
+      // dprintf("%d ", value);
     }
-    dprintf("\n");
+    // dprintf("\n");
   }
 }
 
 // Move data from scratchpad to DRAM  
-// rs1: mem_addr, rs2: sp_addr[addrLen-1:0] | rows[addrLen+9:addrLen]
-// mvout不存在col，每次都搬完整的行出去(DIM个元素)
-void buckyballFunc_t::mvout(reg_t dram_addr, reg_t sp_addr) {
-  auto const base_sp_addr = sp_addr & ((1UL << addr_len) - 1);  // rs2[addrLen-1:0]
-  auto const rows = (sp_addr >> addr_len) & 0x3FF;  // rs2[addrLen+9:addrLen], 10 bits
+// rs1: mem_addr, rs2: sp_addr[spAddrLen-1:0] | rows[spAddrLen+9:spAddrLen]
+// 每次都搬运完整的行(DIM个元素)
+void buckyballFunc_t::mvout(reg_t rs1, reg_t rs2) {
+  auto const base_dram_addr = rs1 & ((1UL << memAddrLen) - 1); // rs1 memddrLen-1:0
+  auto const base_sp_addr = rs2 & ((1UL << spAddrLen) - 1);  // rs2[spAddrLen-1:0]
+  auto const rows = (rs2 >> spAddrLen) & 0x3FF;  // rs2[spAddrLen+9:spAddrLen], 10 bits
 
-  dprintf("buckyball: mvout - 0x%02lx rows from 0x%08lx to addr 0x%08lx\n", 
-          rows, sp_addr, dram_addr);
+  dprintf("rs1=%lx, rs2=%lx\n", rs1, rs2);
+  dprintf("BUCKYBALL: mvout - 0x%02lx rows from spad 0x%08lx to mem 0x%08lx\n", 
+          rows, base_sp_addr, base_dram_addr);
 
   for (size_t i = 0; i < rows; ++i) {
-    auto const dram_row_addr = dram_addr + i*DIM*sizeof(elem_t);
+    auto const dram_row_addr = base_dram_addr + i*DIM*sizeof(elem_t);
+    const size_t spad_row = base_sp_addr + i;
 
     for (size_t j = 0; j < DIM; ++j) {
-      const size_t spad_row = base_sp_addr + i;
-      const size_t spad_col = j;
-
       auto const dram_byte_addr = dram_row_addr + j*sizeof(elem_t);
-      elem_t value = buckyball_state.spad.at(spad_row).at(spad_col);
-
+      elem_t value = buckyball_state.spad.at(spad_row).at(j);
       write_to_dram<elem_t>(dram_byte_addr, value);
-      dprintf("%d ", value);
+      // dprintf("%d ", value);
     }
-    dprintf("\n");
+    // dprintf("\n");
   }
 }
 
@@ -150,8 +144,46 @@ std::vector<insn_desc_t> buckyballFunc_t::get_instructions() {
   return insns;
 }
 
-std::vector<disasm_insn_t*> buckyballFunc_t::get_disasms()
-{
+std::vector<disasm_insn_t*> buckyballFunc_t::get_disasms() {
   std::vector<disasm_insn_t*> insns;
+  
+  // Define argument types for buckyball instructions
+  struct : public arg_t {
+    std::string to_string(insn_t insn) const {
+      return "x" + std::to_string(insn.rs1());
+    }
+  } static buckyball_rs1;
+  
+  struct : public arg_t {
+    std::string to_string(insn_t insn) const {
+      return "x" + std::to_string(insn.rs2());
+    }
+  } static buckyball_rs2;
+  
+  // Custom-3 opcode is ROCC_OPCODE3 (0111 1011)
+  // MVIN instruction (funct = 24)
+  insns.push_back(new disasm_insn_t("bb_mvin", 
+    ROCC_OPCODE3 | (24 << 25), 
+    ROCC_OPCODE_MASK | (0x7F << 25), 
+    {&buckyball_rs1, &buckyball_rs2}));
+  
+  // MVOUT instruction (funct = 25)
+  insns.push_back(new disasm_insn_t("bb_mvout", 
+    ROCC_OPCODE3 | (25 << 25), 
+    ROCC_OPCODE_MASK | (0x7F << 25), 
+    {&buckyball_rs1, &buckyball_rs2}));
+  
+  // MATMUL instruction (funct = 32)
+  insns.push_back(new disasm_insn_t("bb_matmul_warp16", 
+    ROCC_OPCODE3 | (32 << 25), 
+    ROCC_OPCODE_MASK | (0x7F << 25), 
+    {&buckyball_rs1, &buckyball_rs2}));
+  
+  // FLUSH instruction (funct = 7) - no operands needed
+  insns.push_back(new disasm_insn_t("bb_flush", 
+    ROCC_OPCODE3 | (7 << 25), 
+    ROCC_OPCODE_MASK | (0x7F << 25), 
+    {}));
+  
   return insns;
 }

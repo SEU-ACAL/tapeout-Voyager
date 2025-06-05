@@ -7,7 +7,8 @@
 #include "buckyball_params.h"
 
 static const uint32_t sp_matrices = (BANK_NUM * BANK_ROWS) / DIM;
-static const uint64_t addr_len = ADDR_LEN;
+static const uint64_t spAddrLen = SPAD_ADDR_LEN;
+static const uint64_t memAddrLen = MEM_ADDR_LEN;
 
 #define MAKECUSTOMFN(opcode) custom ## opcode
 #define CUSTOMFN(opcode) MAKECUSTOMFN(opcode)
@@ -41,9 +42,9 @@ private:
   buckyball_state_t buckyball_state;
   processor_t* p;
 
-  const unsigned mvin_funct = 2;   // func7: 0000010
-  const unsigned mvout_funct = 3;  // func7: 0000011
-  const unsigned matmul_funct = 31; // func7: 0011111 (bb_matmul_warp16)
+  const unsigned mvin_funct = 24;   // func7: 0010000
+  const unsigned mvout_funct = 25;  // func7: 0010001
+  const unsigned matmul_funct = 32; // func7: 0100000 (bb_matmul_warp16)
   const unsigned flush_funct = 7;
 
   template <class T>

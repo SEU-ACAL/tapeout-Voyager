@@ -6,7 +6,8 @@
 
 #define XCUSTOM_ACC 3
 #define DIM 16
-#define ADDR_LEN 14
+#define MEM_ADDR_LEN 32
+#define SPAD_ADDR_LEN 14
 #define BANK_NUM 4
 #define BANK_ROWS 4096
 

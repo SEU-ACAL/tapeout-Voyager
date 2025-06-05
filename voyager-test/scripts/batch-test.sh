@@ -113,6 +113,7 @@ run_test() {
 filter_output() {
   local input="$1"
   # 过滤掉 verilator 的警告信息、UART信息、finish信息、日志信息等
+  # 尽量精确不要误伤workload内的数据
   echo "$input" | grep -v "^%Warning:" | \
                    grep -v "^\[UART\]" | \
                    grep -v "^- .*Verilog \$finish" | \
