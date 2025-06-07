@@ -38,42 +38,35 @@ class NextROBIdCounter(implicit bbconfig: BuckyBallConfig) extends Module {
   }
   // ROBCounter->ROB
   when(io.post_decode_cmd_i.fire) {
-    io.post_index_cmd_o.cmd.valid         := true.B
-    io.post_index_cmd_o.cmd.bits.rob_id   := tail_ptr
-    io.post_index_cmd_o.cmd.bits.cmd_type := Mux(io.post_decode_cmd_i.bits.is_load, 1.U, 
-                                              Mux(io.post_decode_cmd_i.bits.is_store, 2.U, 
-                                                Mux(io.post_decode_cmd_i.bits.is_ex, 3.U, 0.U)))
+    io.post_index_cmd_o.cmd.valid                := true.B
+    io.post_index_cmd_o.cmd.bits.rob_id          := tail_ptr
+    io.post_index_cmd_o.cmd.bits.cmd_type        := Mux(io.post_decode_cmd_i.bits.is_load, 1.U, 
+                                                     Mux(io.post_decode_cmd_i.bits.is_store, 2.U, 
+                                                       Mux(io.post_decode_cmd_i.bits.is_ex, 3.U, 0.U)))
     io.post_index_cmd_o.cmd.bits.post_decode_cmd := io.post_decode_cmd_i.bits
-    io.post_index_cmd_o.new_head_ptr  := head_ptr
+    io.post_index_cmd_o.new_head_ptr             := head_ptr
   }.otherwise {
-    // =============================================================================
-    // DEFAULT INITIALIZATION FOR ALL OUTPUT SIGNALS - START
-    // =============================================================================
-    io.post_index_cmd_o.cmd.valid := false.B
-    io.post_index_cmd_o.cmd.bits.rob_id := 0.U
-    io.post_index_cmd_o.cmd.bits.cmd_type := 0.U
-    // Initialize all post_decode_cmd fields
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_load := false.B
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_store := false.B
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.mem_addr := 0.U
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.sp_addr := 0.U
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_ex := false.B
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.iter := 0.U
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.op1_en := false.B
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.op2_en := false.B
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.wr_spad_en := false.B
+    io.post_index_cmd_o.cmd.valid                              := false.B
+    io.post_index_cmd_o.cmd.bits.rob_id                        := 0.U
+    io.post_index_cmd_o.cmd.bits.cmd_type                      := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_load       := false.B
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_store      := false.B
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.mem_addr      := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.sp_addr       := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_ex         := false.B
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.iter          := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.op1_en        := false.B
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.op2_en        := false.B
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.wr_spad_en    := false.B
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.op1_from_spad := false.B
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.op2_from_spad := false.B
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.op1_spaddr := 0.U
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.op2_spaddr := 0.U
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.wr_spaddr := 0.U
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.pid := 0.U
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.pstart := 0.U
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.pend := 0.U
-    io.post_index_cmd_o.new_head_ptr := 0.U
-    // =============================================================================
-    // DEFAULT INITIALIZATION FOR ALL OUTPUT SIGNALS - END
-    // =============================================================================
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.op1_spaddr    := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.op2_spaddr    := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.wr_spaddr     := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.pid           := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.pstart        := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.pend          := 0.U
+    io.post_index_cmd_o.new_head_ptr                           := 0.U
   }
 
 

@@ -39,6 +39,11 @@ class BuckyBall(val bbconfig: BuckyBallConfig)(implicit p: Parameters)
   id_node := TLWidthWidget(bbconfig.dma_buswidth/8) := TLBuffer() := xbar_node
 
   override lazy val module = new BuckyBallModule(this)
+
+  // The LazyRoCC class contains two TLOutputNode instances, atlNode and tlNode. 
+  // atlNode connects into a tile-local arbiter along with the backside of the L1 instruction cache. 
+  // tlNode connects directly to the L1-L2 crossbar. 
+  // The corresponding Tilelink ports in the module implementation’s IO bundle are atl and tl, respectively.
   override val tlNode = id_node 
   override val atlNode = TLIdentityNode() 
   val node = tlNode 
@@ -75,9 +80,9 @@ class BuckyBallModule(outer: BuckyBall) extends LazyRoCCModuleImpBB(outer)
 // -----------------------------------------------------------------------------
   implicit val bbconfig: BuckyBallConfig = outer.bbconfig
   val decoder = Module(new Decoder)
-  decoder.io.id_i.valid := io.cmd.valid
+  decoder.io.id_i.valid    := io.cmd.valid
   decoder.io.id_i.bits.cmd := io.cmd.bits
-  io.cmd.ready := decoder.io.id_i.ready
+  io.cmd.ready             := decoder.io.id_i.ready
 
 // -----------------------------------------------------------------------------
 // Frontend: Reservation Station with integrated RoB

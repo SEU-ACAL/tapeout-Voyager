@@ -10,54 +10,13 @@ set(BUDDY_LLC ${BUDDY_BINARY_DIR}/buddy-llc)
 set(BUCKYBALL_OPTEST_DIR ${NPU_WORKLOAD_DIR}/buckyball/OpTest)
 
 add_custom_command(
-  OUTPUT  bb_mvin-baremetal bb_mvin-linux
-  COMMAND ${BUDDY_OPT} ${BUCKYBALL_OPTEST_DIR}/bb_mvin.mlir 
-            -lower-buckyball |
-          ${BUDDY_TRANSLATE} --buddy-to-llvmir |
-          ${BUDDY_LLC} -filetype=obj -mtriple=riscv64
-            -mattr=+buddyext,+D -float-abi=hard
-            -o log.o
-  COMMAND ${ELF_CC} -O2 -static -specs=htif_nano.specs log.o -o bb_mvin-baremetal
-
-  COMMAND ${BUDDY_OPT} ${BUCKYBALL_OPTEST_DIR}/bb_mvin.mlir 
-            -lower-buckyball |
-          ${BUDDY_TRANSLATE} --buddy-to-llvmir |
-          ${BUDDY_LLC} -filetype=obj -mtriple=riscv64
-            -mattr=+buddyext,+D -float-abi=hard
-            -o log.o
-  COMMAND ${LINUX_CC} -O2 -static log.o -o bb_mvin-linux
-  DEPENDS ${BUCKYBALL_OPTEST_DIR}/bb_mvin.mlir
-  COMMENT "Generating bb_mvin"
-)
-
-add_custom_command(
-  OUTPUT  bb_mvout-baremetal bb_mvout-linux
-  COMMAND ${BUDDY_OPT} ${BUCKYBALL_OPTEST_DIR}/bb_mvout.mlir 
-            -lower-buckyball |
-          ${BUDDY_TRANSLATE} --buddy-to-llvmir |
-          ${BUDDY_LLC} -filetype=obj -mtriple=riscv64
-            -mattr=+buddyext,+D -float-abi=hard
-            -o log.o
-  COMMAND ${ELF_CC} -O2 -static -specs=htif_nano.specs log.o -o bb_mvout-baremetal
-
-  COMMAND ${BUDDY_OPT} ${BUCKYBALL_OPTEST_DIR}/bb_mvout.mlir 
-            -lower-buckyball |
-          ${BUDDY_TRANSLATE} --buddy-to-llvmir |
-          ${BUDDY_LLC} -filetype=obj -mtriple=riscv64
-            -mattr=+buddyext,+D -float-abi=hard
-            -o log.o
-  COMMAND ${LINUX_CC} -O2 -static log.o -o bb_mvout-linux
-  DEPENDS ${BUCKYBALL_OPTEST_DIR}/bb_mvout.mlir
-  COMMENT "Generating bb_mvout"
-)
-
-add_custom_command(
   OUTPUT  bb_mul_warp16-baremetal bb_mul_warp16-linux
   COMMAND ${BUDDY_OPT} ${BUCKYBALL_OPTEST_DIR}/bb_mul_warp16.mlir 
             -lower-buckyball |
           ${BUDDY_TRANSLATE} --buddy-to-llvmir |
           ${BUDDY_LLC} -filetype=obj -mtriple=riscv64
             -mattr=+buddyext,+D -float-abi=hard
+            -relocation-model=pic
             -o log.o
   COMMAND ${ELF_CC} -O2 -static -specs=htif_nano.specs log.o -o bb_mul_warp16-baremetal
 
@@ -95,10 +54,6 @@ add_custom_command(
 )
 
 add_custom_target(buckyball-OpTest ALL DEPENDS
-  bb_mvin-baremetal
-  bb_mvin-linux
-  bb_mvout-baremetal
-  bb_mvout-linux
   bb_mul_warp16-baremetal
   bb_mul_warp16-linux
   bb_mvin_mvout-baremetal

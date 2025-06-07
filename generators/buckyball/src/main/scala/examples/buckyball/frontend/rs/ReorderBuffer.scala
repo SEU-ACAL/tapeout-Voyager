@@ -83,10 +83,26 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
   }
 
 // -----------------------------------------------------------------------------
-// 发射：按顺序发射到ISSQueue
+// 发射：按顺序发射到ISSQueue，考虑Load/Store互斥约束
 // -----------------------------------------------------------------------------
   val issue_ptr = RegInit(0.U(log2Up(rob_entries).W))
-  val can_issue = RobEntries(issue_ptr).state === RoBState.sWaiting && RobEntries(issue_ptr).ready
+  
+  // 跟踪已发射但未完成的指令类型
+  val load_in_flight = RegInit(false.B)
+  val store_in_flight = RegInit(false.B)
+  
+  // 当前要发射的指令类型
+  val current_cmd_type = RobEntries(issue_ptr).cmd_type
+  val is_load = current_cmd_type === 1.U
+  val is_store = current_cmd_type === 2.U
+  val is_ex = current_cmd_type === 3.U
+  
+  // 检查Load/Store互斥约束
+  val load_blocked = is_load && store_in_flight  // Load被正在执行的Store阻塞
+  val store_blocked = is_store && load_in_flight // Store被正在执行的Load阻塞
+  
+  val basic_can_issue = RobEntries(issue_ptr).state === RoBState.sWaiting && RobEntries(issue_ptr).ready
+  val can_issue = basic_can_issue && !load_blocked && !store_blocked
   
   io.issue_o.valid := can_issue
   io.issue_o.bits := RobEntries(issue_ptr).cmd
@@ -94,6 +110,20 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
   when(io.issue_o.fire) {
     RobEntries(issue_ptr).state := RoBState.sIssued
     issue_ptr := (issue_ptr + 1.U) % rob_entries.U
+    
+    // 更新in_flight标志
+    when(is_load) {
+      load_in_flight := true.B
+    }
+    when(is_store) {
+      store_in_flight := true.B
+    }
+  }
+  
+  // Debug: 打印发射决策
+  when(basic_can_issue) {
+    printf(p"[DEBUG] ROB: issue_ptr=$issue_ptr, cmd_type=$current_cmd_type, load_in_flight=$load_in_flight, store_in_flight=$store_in_flight\n")
+    printf(p"[DEBUG] ROB: load_blocked=$load_blocked, store_blocked=$store_blocked, can_issue=$can_issue\n")
   }
 
 // -----------------------------------------------------------------------------
@@ -102,6 +132,15 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
   // 出队
   when(io.commit_i.valid) {
     RobEntries(io.commit_i.bits).state := RoBState.sComplete
+    
+    // 清除in_flight标志
+    val completed_cmd_type = RobEntries(io.commit_i.bits).cmd_type
+    when(completed_cmd_type === 1.U) { // Load完成
+      load_in_flight := false.B
+    }
+    when(completed_cmd_type === 2.U) { // Store完成
+      store_in_flight := false.B
+    }
   }
 
   // to ROBCounter

@@ -44,7 +44,7 @@ class IssueQueue(queue_entries: Int = 4)(implicit bbconfig: BuckyBallConfig) ext
                           (is_store && st_queue.io.enq.ready) || 
                           (is_ex && ex_queue.io.enq.ready)
   
-  // 将队列的输出连接到issue接口
+  // 将队列的输出直接连接到issue接口
   io.issue_o.ld <> ld_queue.io.deq
   io.issue_o.st <> st_queue.io.deq
   io.issue_o.ex <> ex_queue.io.deq

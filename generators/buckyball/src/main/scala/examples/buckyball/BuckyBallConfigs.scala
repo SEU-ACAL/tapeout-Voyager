@@ -39,8 +39,8 @@ case class BuckyBallConfig(
   aligned_to: Int = 1,
   spad_read_delay: Int = 0,
 
-  addr_length: Int = 14, // 256KB的索引长度
-  
+  spAddrLen: Int = 14, // 256KB的索引长度
+  memAddrLen: Int = 32, // 4GB的索引长度
 ) {
   val sp_width = veclane * inputType.getWidth
   val sp_bank_entries = sp_capacity match {

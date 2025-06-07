@@ -25,19 +25,3 @@ bb_mvin_mvout-run:
 		-o log.o
 	@riscv64-unknown-linux-gnu-gcc log.o -O2 -static -specs=htif_nano.specs -o a.out
 
-bb_mvin-lower:
-	@${BUDDY_OPT} ./bb_mvin.mlir -lower-buckyball -o log.mlir
-
-bb_mvin-translate:
-	@${BUDDY_OPT} ./bb_mvin.mlir -lower-buckyball | \
-	${BUDDY_TRANSLATE} -buddy-to-llvmir \
-		-o log.ll
-
-bb_mvin-run:
-	@${BUDDY_OPT} ./bb_mvin.mlir -lower-buckyball | \
-	${BUDDY_TRANSLATE} -buddy-to-llvmir | \
-	${BUDDY_LLC} -filetype=obj -mtriple=riscv64 \
-		-mattr=+buddyext,+D -float-abi=hard \
-		-relocation-model=pic \
-		-o log.o
-	@riscv64-unknown-linux-gnu-gcc log.o -O2 -static -specs=htif_nano.specs -o a.out

@@ -30,13 +30,14 @@ class MemLoader(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
     val sramWrite = Vec(bbconfig.sp_banks, new SramWriteIO(bbconfig.sp_bank_entries, spad_w, mask_len))
   })
 
-  val s_idle :: s_dma_req :: s_dma_wait :: s_sram_write :: Nil = Enum(4)
+  val s_idle :: s_dma_req :: s_dma_wait :: Nil = Enum(3)
   val state = RegInit(s_idle)
   
   val rob_id_reg = RegInit(0.U(rob_id_width.W))
-  val sp_addr_reg = Reg(UInt(14.W))
-  val mem_addr_reg = Reg(UInt(14.W))  // 缓存mem_addr
-  val data_reg = Reg(UInt(spad_w.W))
+  val sp_addr_reg = Reg(UInt(bbconfig.spAddrLen.W))
+  val mem_addr_reg = Reg(UInt(bbconfig.memAddrLen.W))  // 缓存mem_addr
+  val iter_reg = Reg(UInt(10.W))  // 缓存迭代次数
+  val resp_count = Reg(UInt(log2Up(16).W))  // 计数接收到的响应数量，最多支持16个响应
 
   // 接收load指令
   io.cmdReq.ready := state === s_idle
@@ -46,44 +47,81 @@ class MemLoader(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
     rob_id_reg := io.cmdReq.bits.rob_id
     sp_addr_reg := io.cmdReq.bits.cmd.post_decode_cmd.sp_addr
     mem_addr_reg := io.cmdReq.bits.cmd.post_decode_cmd.mem_addr  // 缓存mem_addr
+    iter_reg := io.cmdReq.bits.cmd.post_decode_cmd.iter  // 缓存迭代次数
+    
+    // Debug: 打印接收到的命令参数
+    printf(p"[DEBUG] MemLoader: Load command received:\n")
+    printf(p"  mem_addr: 0x${Hexadecimal(io.cmdReq.bits.cmd.post_decode_cmd.mem_addr)}\n")
+    printf(p"  sp_addr: ${io.cmdReq.bits.cmd.post_decode_cmd.sp_addr}\n")
+    printf(p"  iter: ${io.cmdReq.bits.cmd.post_decode_cmd.iter}\n")
+    printf(p"  rob_id: ${io.cmdReq.bits.rob_id}\n")
   }
 
-  // 发起DMA读取请求 - 使用缓存的mem_addr
+  // 发起DMA读取请求 - 读取iter_reg行数据
   io.dmaReq.valid := state === s_dma_req
   io.dmaReq.bits.vaddr := mem_addr_reg
-  io.dmaReq.bits.len := (bbconfig.veclane * bbconfig.inputType.getWidth / 8).U // 一行数据的字节数
+  io.dmaReq.bits.len := iter_reg * (bbconfig.veclane * bbconfig.inputType.getWidth / 8).U // iter行数据的字节数
   io.dmaReq.bits.status := 0.U.asTypeOf(new MStatus) // 简化：使用默认状态
 
+  // Debug: 打印DMA请求信息
+  when (io.dmaReq.valid && !io.dmaReq.ready) {
+    printf(p"[DEBUG] MemLoader: DMA request blocked, state=$state, vaddr=0x${Hexadecimal(mem_addr_reg)}\n")
+  }
+  
   when (io.dmaReq.fire) {
+    printf(p"[DEBUG] MemLoader: DMA request fired, vaddr=0x${Hexadecimal(mem_addr_reg)}, len=${io.dmaReq.bits.len}\n")
     state := s_dma_wait
+    resp_count := 0.U  // 重置响应计数器
   }
 
   // 等待DMA响应
   io.dmaResp.ready := state === s_dma_wait
   
+  // Debug: 打印DMA响应状态
+  when (state === s_dma_wait) {
+    printf(p"[DEBUG] MemLoader: Waiting for DMA response, dmaResp.valid=${io.dmaResp.valid}, dmaResp.ready=${io.dmaResp.ready}, state=$state\n")
+  }
+  
+  // Debug: 每个周期打印状态  
+  printf(p"[DEBUG] MemLoader: Current state=$state, dmaResp.ready=${io.dmaResp.ready}, resp_count=$resp_count\n")
+  
+  // Debug: 监控ready信号变化
+  when (RegNext(io.dmaResp.ready) =/= io.dmaResp.ready) {
+    printf(p"[DEBUG] MemLoader: dmaResp.ready changed from ${RegNext(io.dmaResp.ready)} to ${io.dmaResp.ready}, state=$state\n")
+  }
+  
   when (io.dmaResp.fire) {
-    data_reg := io.dmaResp.bits.data
-    state := s_sram_write
+    printf(p"[DEBUG] MemLoader: DMA response received, data=0x${Hexadecimal(io.dmaResp.bits.data)}, last=${io.dmaResp.bits.last}, resp_count=$resp_count\n")
+    resp_count := resp_count + 1.U
+    // 收到最后一个响应时转回idle状态
+    when (io.dmaResp.bits.last) {
+      printf(p"[DEBUG] MemLoader: Last response received, changing state to idle\n")
+      state := s_idle
+    }.otherwise {
+      printf(p"[DEBUG] MemLoader: Not last response, staying in dma_wait state\n")
+    }
   }
 
-  // 写入SRAM
-  val laddr = LocalAddr.cast_to_sp_addr(bbconfig.local_addr_t, sp_addr_reg)
+  // 流式写入SRAM - 每收到一个响应就立即写入
+  val current_sp_addr = sp_addr_reg + resp_count
+  val laddr = LocalAddr.cast_to_sp_addr(bbconfig.local_addr_t, current_sp_addr)
   val target_bank = laddr.sp_bank()
   val target_row = laddr.sp_row()
   
   for (i <- 0 until bbconfig.sp_banks) {
-    io.sramWrite(i).en := (state === s_sram_write) && (target_bank === i.U)
+    io.sramWrite(i).en := io.dmaResp.fire && (target_bank === i.U)
     io.sramWrite(i).addr := target_row
-    io.sramWrite(i).data := data_reg
+    io.sramWrite(i).data := io.dmaResp.bits.data
     io.sramWrite(i).mask := VecInit(Seq.fill(mask_len)(true.B))
   }
 
-  when (state === s_sram_write) {
-    state := s_idle
+  // Debug: 打印SRAM写入信息
+  when (io.dmaResp.fire) {
+    printf(p"[DEBUG] MemLoader: Writing to SRAM bank=$target_bank, row=$target_row, sp_addr=$current_sp_addr, data=0x${Hexadecimal(io.dmaResp.bits.data)}\n")
   }
 
-  // 发送完成信号
-  io.cmdResp.valid := (state === s_sram_write)
+  // 发送完成信号 - 只有收到最后一个响应时才发送
+  io.cmdResp.valid := io.dmaResp.fire && io.dmaResp.bits.last
   io.cmdResp.bits.rob_id := rob_id_reg
 }
 

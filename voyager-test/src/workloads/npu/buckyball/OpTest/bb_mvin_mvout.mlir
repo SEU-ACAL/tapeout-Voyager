@@ -26,9 +26,9 @@ func.func @main() -> i8 {
   // 使用mvout将数据从暂存器搬回输出内存
   // CHECK: mvout  
   buckyball.bb_mvout %arrayB %spadAddr : memref<3x16xi8> i64
-  // 打印搬移后的输出矩阵
+  // // 打印搬移后的输出矩阵
   buckyball.print %arrayB : memref<3x16xi8>
-  // 释放分配的内存
+  // // 释放分配的内存
   // memref.dealloc %arrayA : memref<2x16xi8>
   memref.dealloc %arrayB : memref<3x16xi8>
   return %0 : i8
