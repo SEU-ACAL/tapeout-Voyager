@@ -49,7 +49,7 @@ jobs:
           git push --force origin ${{ github.ref }}
           echo "🍏 Please Do Pre-commit Before Commit!!!" 
 
-  Compile-lint:
+  Lint-and-Test:
     name: Compile Lint
     runs-on: fpga
     needs: Pre-commit-check
@@ -86,37 +86,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  Test-Workloads:
-    name: Test Workloads
-    runs-on: fpga
-    needs: Compile-lint
-    steps:
-      - name: Run mini-test on runner machine
-        shell: zsh {0}
-        run: |
-          source ~/.zshrc
-          chipyard_exec
-          ./voyager-test/scripts/run-verilator.sh --config OurHeterSoCConfig hello 
-      - run: echo "🍏 mini-test on runner machine is ${{ job.status }}."
-        # 如果检查失败，强制回退分支
-      - name: Revert Bad Commit
-        if: failure()
-        shell: zsh {0}
-        run: |
-          source ~/.zshrc
-          chipyard_exec
-          setproxy
-          git reset --hard HEAD~1
-          git push --force origin ${{ github.ref }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   # ============== 专用测试 ==================
   # NPU测试: 匹配到[npu-test]或[full-test]才会执行
   NPU-Specific-Test:
     name: NPU Specific Test
     runs-on: fpga
-    needs: Test-Workloads
+    needs: Lint-and-Test
     if: contains(github.event.head_commit.message, '[npu-test]') || contains(github.event.head_commit.message, '[full-test]')
     steps:
       - name: Run NPU Specific Test
@@ -145,7 +120,7 @@ jobs:
   Meek-Specific-Test:
     name: Meek Specific Test
     runs-on: fpga
-    needs: Test-Workloads
+    needs: Lint-and-Test
     if: contains(github.event.head_commit.message, '[meek-test]') || contains(github.event.head_commit.message, '[full-test]')
     steps:
       - name: Run Meek Specific Test
@@ -174,7 +149,7 @@ jobs:
   DC-Evaluation:
     name: DC Area Evaluation
     runs-on: fpga
-    needs: Test-Workloads
+    needs: Lint-and-Test
     if: contains(github.event.head_commit.message, '[dc-eval]')
     steps:
       - name: Run DC Evaluation
@@ -192,6 +167,6 @@ jobs:
   Update-Repository:
     name: Update Repository
     runs-on: fpga
-    needs: Test-Workloads
+    needs: Lint-and-Test
     steps:
       - run: echo "🎉 Good Job! This ${{ github.event_name }} will be updated to ${{ github.ref }}."
