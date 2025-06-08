@@ -12,15 +12,25 @@ set(BUCKYBALL_OPTEST_DIR ${NPU_WORKLOAD_DIR}/buckyball/OpTest)
 
 
 add_custom_command(
-  OUTPUT  bb_mvin_mvout-baremetal bb_mvin_mvout-linux
+  OUTPUT  bb_mvin_mvout_multi-baremetal bb_mvin_mvout_single-baremetal bb_mvin_mvout-linux
   COMMAND ${BUDDY_OPT} ${BUCKYBALL_OPTEST_DIR}/bb_mvin_mvout.mlir 
-            -lower-buckyball |
+            -lower-buckyball="hartId=5"  |
           ${BUDDY_TRANSLATE} --buddy-to-llvmir |
           ${BUDDY_LLC} -filetype=obj -mtriple=riscv64
             -mattr=+buddyext,+D -float-abi=hard
             -relocation-model=pic
             -o log.o
-  COMMAND ${ELF_CC} -O2 -static -specs=htif_nano.specs log.o -o bb_mvin_mvout-baremetal
+  COMMAND ${ELF_CC} -c ${BUCKYBALL_OPTEST_DIR}/start.S -o start.o
+  COMMAND ${ELF_CC} -O2 -static -specs=htif_nano.specs log.o start.o -o bb_mvin_mvout_multi-baremetal
+
+  COMMAND ${BUDDY_OPT} ${BUCKYBALL_OPTEST_DIR}/bb_mvin_mvout.mlir 
+          -lower-buckyball  |
+        ${BUDDY_TRANSLATE} --buddy-to-llvmir |
+        ${BUDDY_LLC} -filetype=obj -mtriple=riscv64
+          -mattr=+buddyext,+D -float-abi=hard
+          -relocation-model=pic
+          -o log.o
+  COMMAND ${ELF_CC} -O2 -static -specs=htif_nano.specs log.o -o bb_mvin_mvout_single-baremetal
 
   COMMAND ${BUDDY_OPT} ${BUCKYBALL_OPTEST_DIR}/bb_mvin_mvout.mlir 
             -lower-buckyball |
@@ -127,7 +137,8 @@ add_custom_command(
 
 
 add_custom_target(buckyball-OpTest ALL DEPENDS
-  bb_mvin_mvout-baremetal
+  bb_mvin_mvout_multi-baremetal 
+  bb_mvin_mvout_single-baremetal
   bb_mvin_mvout-linux
   bb_dma1-baremetal
   bb_dma1-linux

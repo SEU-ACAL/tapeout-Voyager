@@ -32,6 +32,7 @@ add_custom_target(cpu-linux-build ALL DEPENDS
 # vague like "mytest", but with a specific name, for example, "hash"
 #-------------------------------------------------------------------------------
 
+# 此处开启了CHECK宏
 include_directories(${CPU_WORKLOAD_DIR}/meeklib)
 set(C_FLAGS -std=gnu11 -g -DCHECK=1 -fno-common -O2 -static 
     -fno-builtin-printf -specs=htif_nano.specs -I${CPU_WORKLOAD_DIR}/meeklib)

@@ -153,3 +153,10 @@ rs2:
 
 ![image](./img/dma1.png)
 ![image](./img/dma2.png)
+
+约定：
+1. 所有EX指令的op1和op2不能同时访问同一个bank
+2. 所有指令对scratchpad的访问不能超出该bank
+3. 所有bank均为单端口(同时可读可写，应该不支持读写同一个地址(未测试))
+4. 目前的bank划分，scratchpad为4个bank(64KBx4)，acc为2个bank(64KBx2)
+5. acc的两个bank是弹性的，当CPU需要使用spad时，会操作acc中的bank2

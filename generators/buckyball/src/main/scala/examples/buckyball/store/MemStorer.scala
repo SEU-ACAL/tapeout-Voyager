@@ -12,6 +12,7 @@ import buckyball.frontend.rs.{ReservationStationIssue, ReservationStationComplet
 import buckyball.mem.{SimpleWriteRequest, SimpleWriteResponse, SramReadIO, LocalAddr}
 import buckyball.frontend.FrontendTLBIO
 import freechips.rocketchip.rocket.MStatus
+import buckyball.mem.{SimpleReadRequest, SimpleReadResponse, SramReadIO}
 
 class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
   val rob_id_width = log2Up(bbconfig.rob_entries)
@@ -36,9 +37,12 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   
   val rob_id_reg = RegInit(0.U(rob_id_width.W))
   val mem_addr_reg = Reg(UInt(bbconfig.memAddrLen.W))
-  val sp_addr_reg = Reg(UInt(bbconfig.spAddrLen.W))  
   val iter_reg = Reg(UInt(10.W))
   val sram_count = Reg(UInt(log2Up(16).W))
+  
+  // 缓存解码好的bank信息
+  val rd_bank_reg = Reg(UInt(log2Up(bbconfig.sp_banks).W))
+  val rd_bank_addr_reg = Reg(UInt(log2Up(bbconfig.sp_bank_entries).W))
 
   // 数据缓存相关寄存器
   val data_buffer = Reg(UInt((align_bytes * 8).W))  // 16字节缓存
@@ -52,8 +56,9 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
     state := s_sram_req
     rob_id_reg := io.cmdReq.bits.rob_id
     mem_addr_reg := io.cmdReq.bits.cmd.post_decode_cmd.mem_addr
-    sp_addr_reg := io.cmdReq.bits.cmd.post_decode_cmd.sp_addr  
     iter_reg := io.cmdReq.bits.cmd.post_decode_cmd.iter
+    rd_bank_reg := io.cmdReq.bits.cmd.post_decode_cmd.rd_bank
+    rd_bank_addr_reg := io.cmdReq.bits.cmd.post_decode_cmd.rd_bank_addr
     sram_count := 0.U
     
     // 初始化缓存状态
@@ -61,10 +66,10 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   }
 
   // 流式读取SRAM数据
-  val current_sp_addr = sp_addr_reg + sram_count
-  val laddr = LocalAddr.cast_to_sp_addr(bbconfig.local_addr_t, current_sp_addr)
-  val target_bank = laddr.sp_bank()
-  val target_row = laddr.sp_row()
+  // 计算当前读取的bank和地址
+  val current_bank_addr = rd_bank_addr_reg + sram_count
+  val target_bank = rd_bank_reg  // 所有读取都来自同一个bank
+  val target_row = current_bank_addr
   
   for (i <- 0 until bbconfig.sp_banks) {
     io.sramRead(i).req.valid := (state === s_sram_req) && (target_bank === i.U)

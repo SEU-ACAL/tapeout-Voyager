@@ -7,16 +7,6 @@
 2. 使用spike运行可执行文件，将workload与spike对齐
 3. 使用verilator运行可执行文件，将RTL与预期结果对齐
 
-<!-- <style> 
-/* 颜色标记工具 */
-.red    { color: #FF6B6B; font-weight: bold; background: #FFF2F2; padding: 2px 6px; border-radius: 3px; }
-.blue   { color: #4ECDC4; font-weight: bold; background: #F0FFFE; padding: 2px 6px; border-radius: 3px; }
-.yellow { color: #FFD93D; font-weight: bold; background: #FFFBF0; padding: 2px 6px; border-radius: 3px; }
-.green  { color: #6BCF7F; font-weight: bold; background: #F0FFF4; padding: 2px 6px; border-radius: 3px; }
-.purple { color: #4D96FF; font-weight: bold; background: #F0F8FF; padding: 2px 6px; border-radius: 3px; }
-</style> -->
-<!-- > **注意**: 本文档使用了自定义样式进行颜色标记。如需完整样式效果，请参考 [styles.css](styles.css) 文件。在GitHub等不支持内联CSS的环境中，颜色标记可能无法正常显示。 -->
-
 
 ## OpTest
 
@@ -39,7 +29,7 @@
         <span class="blue">[CHECK2]</span> 打印结果应该与输入矩阵相同 <br>
     </td>
     <td>
-        <img src="img/bb_mvin_mvout.png" alt="bb_mvin_mvout" width="100%">
+        <img src="img/bb_mvin_mvout.png" alt="bb_mvin_mvout" width="50%">
     </td>
 </tr>
 <tr>
@@ -57,7 +47,7 @@
         <span class="blue">[CHECK2]</span> 打印结果应该与输入矩阵相同 <br>
     </td>
     <td>
-        <img src="img/bb_dma1.png" alt="bb_dma1" width="100%">
+        <img src="img/bb_dma1.png" alt="bb_dma1" width="50%">
     </td>
 </tr>
 <tr>
@@ -75,7 +65,7 @@
         <span class="blue">[CHECK2]</span> 打印结果应该显示A和B内容交换 <br>
     </td>
     <td>
-        <img src="img/bb_dma2.png" alt="bb_dma2" width="100%">
+        <img src="img/bb_dma2.png" alt="bb_dma2" width="50%">
     </td>
 </tr>
 <tr>
@@ -96,7 +86,7 @@
         <span class="blue">[CHECK2]</span> 打印结果应该与输入矩阵相同 <br>
     </td>
     <td>
-        <img src="img/bb_dma3.png" alt="bb_dma3" width="100%">
+        <img src="img/bb_dma3.png" alt="bb_dma3" width="50%">
     </td>
 </tr>
 
@@ -123,10 +113,12 @@
         预期的测试结果
     </td>
     <td>
-        <img src="img/demo.png" alt="demo" width="100%">
+        <img src="img/demo.png" alt="demo" width="50%">
     </td>
 </tr>
 ```
 
 ### 尚未解决的bug
 - [bb_dma2](Optest/bb_dma2.mlir) 非对齐写入还是有bug，当写入的目标mem地址不是16字节对齐时，移除 {aligment = 16} 会报 dma 请求地址不对齐。在bb_mvin_mvout的简单测试中，没有 {aligment = 16} 后，打印结果是正确的。目前看来带上对齐就没事，不带还是有概率出事。
+
+> **PS**: 本文档使用了自定义样式进行颜色标记。在GitHub等不支持内联CSS的环境中，颜色标记可能无法正常显示。

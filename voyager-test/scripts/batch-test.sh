@@ -20,7 +20,7 @@ DIFFTEST_MODE="off"
 # NPU测试套件配置
 # 注意: 纯NPU配置跑不了hello (因为是多核的) 
 BB_CONFIGS=("BuckyBallRocketConfig")
-BB_TESTS=("bb_mvin_mvout"
+BB_TESTS=("bb_mvin_mvout_single"
           )
 
 NPU_CONFIGS=("GemminiRocketConfig")
@@ -34,8 +34,7 @@ MEEK_TESTS=("hello")
 # 全量测试套件配置
 FULL_CONFIGS=("OurHeterSoCConfig")
 FULL_TESTS=("hello" 
-            "cpu-spmm" 
-            "template")
+            "bb_mvin_mvout_multi")
 
 # 对比测试配置映射 (RTL配置 -> Spike扩展)
 declare -A DIFFTEST_CONFIG_MAP

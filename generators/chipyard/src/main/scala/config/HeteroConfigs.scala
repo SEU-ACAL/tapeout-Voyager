@@ -68,10 +68,12 @@ class OurHeterSoCConfig extends Config(
   new freechips.rocketchip.guardiancouncil.WithGuardianCouncilNodes++
   new barf.WithHellaCachePrefetcher(Seq(5), barf.SingleStridedPrefetcherParams()) ++   // strided prefetcher, sits in front of the L1D$, monitors core requests to prefetching into the L1D$
   
-  new freechips.rocketchip.rocket.WithNBigNpuCores(1, nMSHRs = 16) ++ //independent Rocket for gemmini: hartid 5, with non-blocking L1D$
-  
-  new chipyard.config.WithMultiRoCCNpu ++
-  new chipyard.config.WithMultiRoCCGemmini(5)(gemmini.GemminiConfigs.defaultConfig) ++ // put gemmini on hart-5(rocket)
+  // new freechips.rocketchip.rocket.WithNBigNpuCores(1, nMSHRs = 16) ++ //independent Rocket for gemmini: hartid 5, with non-blocking L1D$
+  // new chipyard.config.WithMultiRoCCNpu ++
+  // new chipyard.config.WithMultiRoCCGemmini(5)(gemmini.GemminiConfigs.defaultConfig) ++ // put gemmini on hart-5(rocket)
+  new freechips.rocketchip.rocket.WithNBuckyBallCores(1, nMSHRs = 16) ++ //independent Rocket for gemmini: hartid 5, with non-blocking L1D$
+  new chipyard.config.WithMultiRoCCBB ++
+  new chipyard.config.WithMultiRoCCBuckyBall(5)(buckyball.BuckyBallConfigs.defaultConfig) ++ // put gemmini on hart-5(rocket)
   
   new chipyard.config.WithMultiRoCCMEEK ++
   new chipyard.config.WithMultiSingleRoCCGHE(0, 1, 2, 3, 4) ++ //put custom RoCC on hart0-4 for custom0 ISA extension ++
@@ -103,10 +105,12 @@ class TestHeterSoCConfig extends Config(
   new freechips.rocketchip.guardiancouncil.WithGuardianCouncilNodes++
   new barf.WithHellaCachePrefetcher(Seq(5), barf.SingleStridedPrefetcherParams()) ++   // strided prefetcher, sits in front of the L1D$, monitors core requests to prefetching into the L1D$
   
-  new freechips.rocketchip.rocket.WithNBigNpuCores(1, nMSHRs = 16) ++ //independent Rocket for gemmini: hartid 5, with non-blocking L1D$
-
-  new chipyard.config.WithMultiRoCCNpu ++
-  new chipyard.config.WithMultiRoCCGemmini(5)(gemmini.GemminiConfigs.defaultConfig) ++ // put gemmini on hart-5(rocket)
+  // new freechips.rocketchip.rocket.WithNBigNpuCores(1, nMSHRs = 16) ++ //independent Rocket for gemmini: hartid 5, with non-blocking L1D$
+  // new chipyard.config.WithMultiRoCCNpu ++
+  // new chipyard.config.WithMultiRoCCGemmini(5)(gemmini.GemminiConfigs.defaultConfig) ++ // put gemmini on hart-5(rocket)
+  new freechips.rocketchip.rocket.WithNBuckyBallCores(1, nMSHRs = 16) ++ //independent Rocket for buckyball: hartid 5, with non-blocking L1D$
+  new chipyard.config.WithMultiRoCCBB ++
+  new chipyard.config.WithMultiRoCCBuckyBall(5)(buckyball.BuckyBallConfigs.defaultConfig) ++ // put buckyball on hart-5(rocket)
   
   new chipyard.config.WithMultiRoCCMEEK ++
   new chipyard.config.WithMultiSingleRoCCGHE(0, 1, 2, 3, 4) ++ //put custom RoCC on hart0-4 for custom0 ISA extension ++
@@ -119,7 +123,7 @@ class TestHeterSoCConfig extends Config(
   new chipyard.clocking.WithClockGroupsCombinedByName(("uncore",Seq("sbus", "mbus", "pbus", "fbus", "cbus", "obus", "implicit", "clock_tap"),Nil),
                                                       ("boom",Seq("tile_0"),Nil),//大核
                                                       ("rockettile",Seq("tile_1","tile_2","tile_3","tile_4","tile_5"),Nil)//meek小核
-                                                      // ("gemini",Seq("tile_5"),Nil)
+                                                      // ("gemmini",Seq("tile_5"),Nil)
                                                       )++
   //  Crossing specifications
   new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1) ++
@@ -129,7 +133,6 @@ class TestHeterSoCConfig extends Config(
 
 // BuckyBall配置
 class BuckyBallRocketConfig extends Config(
-  // new freechips.rocketchip.rocket.WithNHugeCores(1) ++      
   new freechips.rocketchip.rocket.WithNBuckyBallCores(1) ++      
   new chipyard.config.WithMultiRoCCBB ++
   new chipyard.config.WithMultiRoCCBuckyBall(0)(buckyball.BuckyBallConfigs.defaultConfig) ++

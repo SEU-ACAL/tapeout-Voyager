@@ -43,7 +43,7 @@ class BuckyBall(val bbconfig: BuckyBallConfig)(implicit p: Parameters)
   // The LazyRoCC class contains two TLOutputNode instances, atlNode and tlNode. 
   // atlNode connects into a tile-local arbiter along with the backside of the L1 instruction cache. 
   // tlNode connects directly to the L1-L2 crossbar. 
-  // The corresponding Tilelink ports in the module implementation’s IO bundle are atl and tl, respectively.
+  // The corresponding Tilelink ports in the module implementation's IO bundle are atl and tl, respectively.
   override val tlNode = id_node 
   override val atlNode = TLIdentityNode() 
   val node = tlNode 
@@ -90,25 +90,6 @@ class BuckyBallModule(outer: BuckyBall) extends LazyRoCCModuleImpBB(outer)
   val rs = Module(new ReservationStation)
   decoder.io.id_rs <> rs.io.id_i
 
-// =============================================================================
-// DEFAULT INITIALIZATION FOR UNCONNECTED SIGNALS - START
-// =============================================================================
-
-  // -----------------------------------------------------------------------------
-  // Initialize ReservationStation Issue Interfaces (Backend ready signals)
-  // -----------------------------------------------------------------------------
-  // rs.io.issue_o.ex.ready := false.B // 现在连接到ExecuteController了
-
-  // -----------------------------------------------------------------------------
-  // Initialize ReservationStation Commit Interfaces (Backend completion signals)
-  // -----------------------------------------------------------------------------
-  // rs.io.commit_i.ex.valid := false.B // 现在连接到ExecuteController了
-  // rs.io.commit_i.ex.bits.rob_id := 0.U
-
-// =============================================================================
-// DEFAULT INITIALIZATION FOR UNCONNECTED SIGNALS - END
-// =============================================================================
-
 // -----------------------------------------------------------------------------
 // Backend: Load Controller
 // -----------------------------------------------------------------------------
@@ -151,8 +132,7 @@ class BuckyBallModule(outer: BuckyBall) extends LazyRoCCModuleImpBB(outer)
   rs.io.commit_i.ex <> exec.io.cmdResp
   
   // 连接ExecuteController到Scratchpad的专用执行接口
-  exec.io.sramReadA <> spad.io.exec.readA
-  exec.io.sramReadB <> spad.io.exec.readB  
+  exec.io.sramRead <> spad.io.exec.read
   exec.io.sramWrite <> spad.io.exec.write
 
 //---------------------------------------------------------------------------

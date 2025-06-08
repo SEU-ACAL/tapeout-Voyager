@@ -7,6 +7,7 @@ import org.chipsalliance.cde.config.Parameters
 import buckyball.BuckyBallConfig
 import freechips.rocketchip.buckyball.RoCCCommandBB
 import buckyball.BBISA._
+import buckyball.mem.LocalAddr
 
 
 class BuckyBallRawCmd(implicit p: Parameters) extends Bundle {
@@ -43,20 +44,36 @@ object EXDecodeFields extends Enumeration {
 class PostDecodeCmd(implicit bbconfig: BuckyBallConfig) extends Bundle {
   val is_load       = Bool()
   val is_store      = Bool()
-  val mem_addr      = UInt(bbconfig.memAddrLen.W)
-  val sp_addr       = UInt(bbconfig.spAddrLen.W)
-
   val is_ex         = Bool()
-  val iter          = UInt(10.W) // 迭代次数
+  
+  // 内存地址 - 只用于load/store
+  val mem_addr      = UInt(bbconfig.memAddrLen.W)
+  
+  // 迭代次数 - 所有指令都可能用到
+  val iter          = UInt(10.W)
+  
+  // Scratchpad读取地址和bank信息 - store源地址
+  val rd_bank       = UInt(log2Up(bbconfig.sp_banks).W)
+  val rd_bank_addr  = UInt(log2Up(bbconfig.sp_bank_entries).W)
+  
+  // Scratchpad写入地址和bank信息 - load目标地址，execute结果地址(后续拆到acc中)
+  val wr_bank       = UInt(log2Up(bbconfig.sp_banks).W)
+  val wr_bank_addr  = UInt(log2Up(bbconfig.sp_bank_entries).W)
+  
+  // Execute专用字段
   val op1_en        = Bool()
   val op2_en        = Bool()
   val wr_spad_en    = Bool()
   val op1_from_spad = Bool()
   val op2_from_spad = Bool()
-  val op1_spaddr    = UInt(bbconfig.spAddrLen.W)
-  val op2_spaddr    = UInt(bbconfig.spAddrLen.W)
-  val wr_spaddr     = UInt(bbconfig.spAddrLen.W)
+  
+  // Execute的操作数地址（保留原始字段名）
+  val op1_bank      = UInt(log2Up(bbconfig.sp_banks).W)
+  val op1_bank_addr = UInt(log2Up(bbconfig.sp_bank_entries).W)
+  val op2_bank      = UInt(log2Up(bbconfig.sp_banks).W)
+  val op2_bank_addr = UInt(log2Up(bbconfig.sp_bank_entries).W)
 
+  // 流水线控制
   val pid           = UInt(8.W)   // 流水线ID
   val pstart        = Bool() // 流水线的开始
   val pend          = Bool() // 流水线的结束
@@ -104,25 +121,57 @@ class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
   io.id_rs.bits.is_load       := ls_decode_list(3).asBool
   io.id_rs.bits.is_store      := ls_decode_list(4).asBool
   io.id_rs.bits.mem_addr      := ls_decode_list(5).asUInt
-  io.id_rs.bits.sp_addr       := ls_decode_list(6).asUInt
-
   io.id_rs.bits.is_ex         := !ls_decode_list(3).asBool && !ls_decode_list(4).asBool
-  io.id_rs.bits.op1_en        := ex_decode_list(3).asBool
-  io.id_rs.bits.op2_en        := ex_decode_list(4).asBool
-  io.id_rs.bits.wr_spad_en    := ex_decode_list(5).asBool
-  io.id_rs.bits.op1_from_spad := ex_decode_list(6).asBool
-  io.id_rs.bits.op2_from_spad := ex_decode_list(7).asBool
-  io.id_rs.bits.op1_spaddr    := ex_decode_list(8).asUInt
-  io.id_rs.bits.op2_spaddr    := ex_decode_list(9).asUInt
-  io.id_rs.bits.wr_spaddr     := ex_decode_list(10).asUInt
-  
   io.id_rs.bits.iter          := Mux(io.id_rs.bits.is_ex, ex_decode_list(11).asUInt, 
                                   Mux(io.id_rs.bits.is_load || io.id_rs.bits.is_store, ls_decode_list(7).asUInt, 0.U))
 
   io.id_rs.bits.pid           := Mux(io.id_rs.bits.is_ex, ex_decode_list(0).asUInt, 
                                   Mux(io.id_rs.bits.is_load, ls_decode_list(0).asUInt, 0.U))
   io.id_rs.bits.pstart        := ex_decode_list(1).asBool || ls_decode_list(1).asBool 
-  io.id_rs.bits.pend          := ex_decode_list(2).asBool || ls_decode_list(2).asBool 
+  io.id_rs.bits.pend          := ex_decode_list(2).asBool || ls_decode_list(2).asBool
+
+  io.id_rs.bits.op1_en        := ex_decode_list(3).asBool
+  io.id_rs.bits.op2_en        := ex_decode_list(4).asBool
+  io.id_rs.bits.wr_spad_en    := ex_decode_list(5).asBool
+  io.id_rs.bits.op1_from_spad := ex_decode_list(6).asBool
+  io.id_rs.bits.op2_from_spad := ex_decode_list(7).asBool
+  
+  // LocalAddr解析 - 在解码阶段完成bank和本地地址的计算
+  // 地址映射 (4个bank，每个bank 4096行)：
+  // spaddr[13:12] -> bank_num (0-3)
+  // spaddr[11:0]  -> bank_addr (0-4095)
+  
+  // 从原始指令字段解析地址
+  val op1_spaddr = ex_decode_list(8).asUInt  // rs1[spAddrLen-1:0]
+  val op2_spaddr = ex_decode_list(9).asUInt  // rs1[2*spAddrLen-1:spAddrLen] 
+  val wr_spaddr = ex_decode_list(10).asUInt  // rs2[spAddrLen-1:0]
+  val ls_spaddr = ls_decode_list(6).asUInt   // load/store的sp_addr
+  
+  val op1_laddr = LocalAddr.cast_to_sp_addr(bbconfig.local_addr_t, op1_spaddr)
+  val op2_laddr = LocalAddr.cast_to_sp_addr(bbconfig.local_addr_t, op2_spaddr)
+  val wr_laddr = LocalAddr.cast_to_sp_addr(bbconfig.local_addr_t, wr_spaddr)
+  val ls_laddr = LocalAddr.cast_to_sp_addr(bbconfig.local_addr_t, ls_spaddr)
+  
+  // 根据指令类型分配bank信息
+  // Load: wr_bank = ls_spaddr解析的bank (写入scratchpad), rd_bank不用
+  // Store: rd_bank = ls_spaddr解析的bank (从scratchpad读取), wr_bank不用  
+  // Execute: rd_bank = op1_spaddr解析的bank (OpA，也作为读取), op1_bank/op2_bank = 操作数bank, wr_bank = wr_spaddr解析的bank (结果)
+  
+  io.id_rs.bits.rd_bank := Mux(io.id_rs.bits.is_ex, op1_laddr.sp_bank(), ls_laddr.sp_bank())
+  io.id_rs.bits.rd_bank_addr := Mux(io.id_rs.bits.is_ex, op1_laddr.sp_row(), ls_laddr.sp_row())
+  
+  io.id_rs.bits.wr_bank := Mux(io.id_rs.bits.is_ex, wr_laddr.sp_bank(), ls_laddr.sp_bank())
+  io.id_rs.bits.wr_bank_addr := Mux(io.id_rs.bits.is_ex, wr_laddr.sp_row(), ls_laddr.sp_row())
+  
+  io.id_rs.bits.op1_bank := op1_laddr.sp_bank()  // execute的OpA
+  io.id_rs.bits.op1_bank_addr := op1_laddr.sp_row()
+  io.id_rs.bits.op2_bank := op2_laddr.sp_bank()  // execute的OpB
+  io.id_rs.bits.op2_bank_addr := op2_laddr.sp_row()
+  
+  // 断言：执行指令中OpA和OpB必须访问不同的bank
+  assert(!(io.id_rs.bits.is_ex && io.id_rs.bits.op1_en && io.id_rs.bits.op2_en && 
+           io.id_rs.bits.op1_bank === io.id_rs.bits.op2_bank), 
+    "Decoder: Execute instruction OpA and OpB cannot access the same bank")
 }
 
 

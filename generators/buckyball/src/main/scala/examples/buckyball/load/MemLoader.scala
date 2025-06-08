@@ -9,7 +9,7 @@ import framework.pipeline.SisyphusData
 import org.chipsalliance.cde.config.Parameters
 import buckyball.BuckyBallConfig
 import buckyball.frontend.rs.{ReservationStationIssue, ReservationStationComplete, BuckyBallCmd}
-import buckyball.mem.{SimpleReadRequest, SimpleReadResponse, SramWriteIO, LocalAddr}
+import buckyball.mem.{SimpleReadRequest, SimpleReadResponse, SramWriteIO}
 import buckyball.frontend.FrontendTLBIO
 import freechips.rocketchip.rocket.MStatus
 
@@ -34,10 +34,13 @@ class MemLoader(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   val state = RegInit(s_idle)
   
   val rob_id_reg = RegInit(0.U(rob_id_width.W))
-  val sp_addr_reg = Reg(UInt(bbconfig.spAddrLen.W))
   val mem_addr_reg = Reg(UInt(bbconfig.memAddrLen.W))  // 缓存mem_addr
   val iter_reg = Reg(UInt(10.W))  // 缓存迭代次数
   val resp_count = Reg(UInt(log2Up(16).W))  // 计数接收到的响应数量，最多支持16个响应
+  
+  // 缓存解码好的bank信息
+  val wr_bank_reg = Reg(UInt(log2Up(bbconfig.sp_banks).W))
+  val wr_bank_addr_reg = Reg(UInt(log2Up(bbconfig.sp_bank_entries).W))
 
   // 接收load指令
   io.cmdReq.ready := state === s_idle
@@ -45,10 +48,11 @@ class MemLoader(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   when (io.cmdReq.fire && io.cmdReq.bits.cmd.post_decode_cmd.is_load) {
     state := s_dma_req
     rob_id_reg := io.cmdReq.bits.rob_id
-    sp_addr_reg := io.cmdReq.bits.cmd.post_decode_cmd.sp_addr
-    mem_addr_reg := io.cmdReq.bits.cmd.post_decode_cmd.mem_addr  // 缓存mem_addr
-    iter_reg := io.cmdReq.bits.cmd.post_decode_cmd.iter  // 缓存迭代次数
-    
+    mem_addr_reg := io.cmdReq.bits.cmd.post_decode_cmd.mem_addr
+    iter_reg := io.cmdReq.bits.cmd.post_decode_cmd.iter
+    wr_bank_reg := io.cmdReq.bits.cmd.post_decode_cmd.wr_bank
+    wr_bank_addr_reg := io.cmdReq.bits.cmd.post_decode_cmd.wr_bank_addr
+    resp_count := 0.U
   }
 
   // 发起DMA读取请求 - 读取iter_reg行数据
@@ -74,10 +78,10 @@ class MemLoader(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   }
 
   // 流式写入SRAM - 每收到一个响应就立即写入
-  val current_sp_addr = sp_addr_reg + resp_count
-  val laddr = LocalAddr.cast_to_sp_addr(bbconfig.local_addr_t, current_sp_addr)
-  val target_bank = laddr.sp_bank()
-  val target_row = laddr.sp_row()
+  // 计算当前写入的bank和地址
+  val current_bank_addr = wr_bank_addr_reg + resp_count
+  val target_bank = wr_bank_reg  // 所有响应都写入同一个bank
+  val target_row = current_bank_addr
   
   for (i <- 0 until bbconfig.sp_banks) {
     io.sramWrite(i).en := io.dmaResp.fire && (target_bank === i.U)

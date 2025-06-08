@@ -51,21 +51,25 @@ class NextROBIdCounter(implicit bbconfig: BuckyBallConfig) extends Module {
     io.post_index_cmd_o.cmd.bits.cmd_type                      := 0.U
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_load       := false.B
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_store      := false.B
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.mem_addr      := 0.U
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.sp_addr       := 0.U
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_ex         := false.B
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.mem_addr      := 0.U
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.iter          := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.rd_bank       := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.rd_bank_addr  := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.wr_bank       := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.wr_bank_addr  := 0.U
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.op1_en        := false.B
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.op2_en        := false.B
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.wr_spad_en    := false.B
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.op1_from_spad := false.B
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.op2_from_spad := false.B
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.op1_spaddr    := 0.U
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.op2_spaddr    := 0.U
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.wr_spaddr     := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.op1_bank      := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.op1_bank_addr := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.op2_bank      := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.op2_bank_addr := 0.U
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.pid           := 0.U
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.pstart        := 0.U
-    io.post_index_cmd_o.cmd.bits.post_decode_cmd.pend          := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.pstart        := false.B
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.pend          := false.B
     io.post_index_cmd_o.new_head_ptr                           := 0.U
   }
 

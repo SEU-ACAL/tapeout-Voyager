@@ -24,19 +24,19 @@ case class BuckyBallConfig(
   tlb_size: Int = 4,
   rob_entries: Int = 32,  // RoB条目数量
   
-  dma_maxbytes: Int = 64,
+  dma_maxbytes: Int = 64, // 未使用
   dma_buswidth: Int = 128,
   
   sp_banks: Int = 4,
   acc_banks: Int = 2,
   
-  sp_singleported: Boolean = false,
+  sp_singleported: Boolean = true,
   
   sp_capacity: BuckyBallMemCapacity = CapacityInKilobytes(256),
   acc_capacity: BuckyBallMemCapacity = CapacityInKilobytes(64),
   
-  max_in_flight_mem_reqs: Int = 16,
-  aligned_to: Int = 1,
+  max_in_flight_mem_reqs: Int = 16, // 未使用
+  aligned_to: Int = 1, 
   spad_read_delay: Int = 0,
 
   spAddrLen: Int = 14, // 256KB的索引长度

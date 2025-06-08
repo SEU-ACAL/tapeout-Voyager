@@ -18,16 +18,13 @@ class ExecuteController(implicit bbconfig: BuckyBallConfig, p: Parameters) exten
     val cmdReq = Flipped(Decoupled(new ReservationStationIssue(new BuckyBallCmd, rob_id_width)))
     val cmdResp = Decoupled(new ReservationStationComplete(rob_id_width))
     
-    // 连接到Scratchpad的SRAM读取接口（读取操作数）
-    val sramReadA = Vec(bbconfig.sp_banks, new SramReadIO(bbconfig.sp_bank_entries, spad_w))
-    val sramReadB = Vec(bbconfig.sp_banks, new SramReadIO(bbconfig.sp_bank_entries, spad_w))
-    
-    // 连接到Scratchpad的SRAM写入接口（写入结果）
+    // 连接到Scratchpad的SRAM读写接口
+    val sramRead = Vec(bbconfig.sp_banks, new SramReadIO(bbconfig.sp_bank_entries, spad_w))
     val sramWrite = Vec(bbconfig.sp_banks, new SramWriteIO(bbconfig.sp_bank_entries, spad_w, spad_w/8))
   })
 
   // 状态机
-  val s_idle :: s_read_a :: s_read_b :: s_wait_a :: s_wait_b :: s_compute :: s_write :: Nil = Enum(7)
+  val s_idle :: s_read_both :: s_wait_both :: s_compute :: s_write :: Nil = Enum(5)
   val state = RegInit(s_idle)
   
   val rob_id_reg = RegInit(0.U(rob_id_width.W))
@@ -35,56 +32,74 @@ class ExecuteController(implicit bbconfig: BuckyBallConfig, p: Parameters) exten
   val operand_b = Reg(UInt(spad_w.W))
   val result = Reg(UInt(spad_w.W))
   
+  // 直接使用解码好的bank和本地地址信息
+  val cmd_reg = Reg(new BuckyBallCmd)
+  
+  val opA_bank = cmd_reg.post_decode_cmd.op1_bank        // OpA使用op1_bank
+  val opA_bank_addr = cmd_reg.post_decode_cmd.op1_bank_addr
+  val opB_bank = cmd_reg.post_decode_cmd.op2_bank        // OpB使用op2_bank
+  val opB_bank_addr = cmd_reg.post_decode_cmd.op2_bank_addr
+  val dest_bank = cmd_reg.post_decode_cmd.wr_bank        // 结果使用wr_bank
+  val dest_bank_addr = cmd_reg.post_decode_cmd.wr_bank_addr
+  
+  // 断言：确保OpA和OpB访问不同的bank
+  assert(!(state === s_read_both && opA_bank === opB_bank), 
+    "ExecuteController: OpA and OpB cannot access the same bank")
+  
   // 接收execute指令
   io.cmdReq.ready := state === s_idle
   
   when (io.cmdReq.fire && io.cmdReq.bits.cmd.post_decode_cmd.is_ex) {
-    state := s_read_a
+    state := s_read_both
     rob_id_reg := io.cmdReq.bits.rob_id
+    cmd_reg := io.cmdReq.bits.cmd
   }
 
-  // 读取操作数A
+  // 同时读取OpA和OpB（因为它们在不同bank，可以并行）
   for (i <- 0 until bbconfig.sp_banks) {
-    io.sramReadA(i).req.valid := (state === s_read_a) && (i.U === 0.U) // 简化：只用bank 0
-    io.sramReadA(i).req.bits.addr := 0.U // 简化：固定地址
-    io.sramReadA(i).req.bits.fromDMA := false.B
+    // 同时向OpA和OpB的bank发出读请求
+    io.sramRead(i).req.valid := (state === s_read_both) && 
+                                ((opA_bank === i.U) || (opB_bank === i.U))
+    io.sramRead(i).req.bits.addr := Mux(opA_bank === i.U, opA_bank_addr, opB_bank_addr)
+    io.sramRead(i).req.bits.fromDMA := false.B
   }
   
-  when (state === s_read_a && io.sramReadA.map(_.req.fire).reduce(_ || _)) {
-    state := s_wait_a
-  }
-
-  // 等待操作数A响应
-  val sram_a_resp_valid = io.sramReadA.map(_.resp.valid).reduce(_ || _)
-  val sram_a_resp_data = Mux1H(io.sramReadA.map(_.resp.valid), io.sramReadA.map(_.resp.bits.data))
-  
-  io.sramReadA.foreach(_.resp.ready := state === s_wait_a)
-  
-  when (state === s_wait_a && sram_a_resp_valid) {
-    operand_a := sram_a_resp_data
-    state := s_read_b
+  when (state === s_read_both) {
+    // 检查两个bank的请求是否都发出了
+    val opA_req_fired = io.sramRead(opA_bank).req.fire
+    val opB_req_fired = io.sramRead(opB_bank).req.fire
+    when (opA_req_fired && opB_req_fired) {
+      state := s_wait_both
+    }
   }
 
-  // 读取操作数B
-  for (i <- 0 until bbconfig.sp_banks) {
-    io.sramReadB(i).req.valid := (state === s_read_b) && (i.U === 0.U) // 简化：只用bank 0
-    io.sramReadB(i).req.bits.addr := 1.U // 简化：固定地址
-    io.sramReadB(i).req.bits.fromDMA := false.B
-  }
+  // 等待两个操作数响应 - 根据响应的bank来区分OpA和OpB
+  val sram_resp_valid = io.sramRead.map(_.resp.valid).reduce(_ || _)
+  val sram_resp_data = Mux1H(io.sramRead.map(_.resp.valid), io.sramRead.map(_.resp.bits.data))
+  val resp_bank = OHToUInt(VecInit(io.sramRead.map(_.resp.valid)))
   
-  when (state === s_read_b && io.sramReadB.map(_.req.fire).reduce(_ || _)) {
-    state := s_wait_b
-  }
-
-  // 等待操作数B响应
-  val sram_b_resp_valid = io.sramReadB.map(_.resp.valid).reduce(_ || _)
-  val sram_b_resp_data = Mux1H(io.sramReadB.map(_.resp.valid), io.sramReadB.map(_.resp.bits.data))
+  io.sramRead.foreach(_.resp.ready := state === s_wait_both)
   
-  io.sramReadB.foreach(_.resp.ready := state === s_wait_b)
+  val a_received = RegInit(false.B)
+  val b_received = RegInit(false.B)
   
-  when (state === s_wait_b && sram_b_resp_valid) {
-    operand_b := sram_b_resp_data
-    state := s_compute
+  when (state === s_wait_both) {
+    when (sram_resp_valid) {
+      // 根据响应的bank来判断这是OpA还是OpB的数据
+      when (resp_bank === opA_bank && !a_received) {
+        operand_a := sram_resp_data
+        a_received := true.B
+      }
+      when (resp_bank === opB_bank && !b_received) {
+        operand_b := sram_resp_data  
+        b_received := true.B
+      }
+    }
+    when (a_received && b_received) {
+      state := s_compute
+      a_received := false.B
+      b_received := false.B
+    }
   }
 
   // 向量加法计算
@@ -95,8 +110,8 @@ class ExecuteController(implicit bbconfig: BuckyBallConfig, p: Parameters) exten
 
   // 写入结果
   for (i <- 0 until bbconfig.sp_banks) {
-    io.sramWrite(i).en := (state === s_write) && (i.U === 0.U) // 简化：只用bank 0
-    io.sramWrite(i).addr := 2.U // 简化：固定结果地址
+    io.sramWrite(i).en := (state === s_write) && (dest_bank === i.U)
+    io.sramWrite(i).addr := dest_bank_addr
     io.sramWrite(i).data := result
     io.sramWrite(i).mask := VecInit(Seq.fill(spad_w/8)(true.B))
   }

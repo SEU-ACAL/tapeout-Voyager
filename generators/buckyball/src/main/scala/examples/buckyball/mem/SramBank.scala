@@ -28,9 +28,13 @@ class SramWriteIO(val n: Int, val w: Int, val mask_len: Int) extends Bundle {
 }
 
 class SramBank(n: Int, w: Int, aligned_to: Int, single_ported: Boolean) extends Module {
-  // Simplified SRAM bank using local memory
-
+  
   require(w % aligned_to == 0 || w < aligned_to)
+  
+  // single_ported参数表示此SRAM bank的期望使用模式
+  // true: 单端口模式，支持同时读写，但读写地址可能不同
+  // false: 多端口模式，支持多个并发读取（在外部仲裁）
+  // 注意：Chisel的SyncReadMem本身支持同时读写
   
   val mask_len = (w / (aligned_to * 8)) max 1 // How many mask bits are there?
   val mask_elem = UInt((w min (aligned_to * 8)).W) // What datatype does each mask bit correspond to?

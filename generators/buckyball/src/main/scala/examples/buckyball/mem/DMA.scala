@@ -17,20 +17,17 @@ import buckyball.mem.LocalAddr
 import midas.targetutils.PerfCounter
 import midas.targetutils.SynthesizePrintf
 
-// 简化的读取请求
 class SimpleReadRequest()(implicit p: Parameters) extends CoreBundle {
   val vaddr = UInt(coreMaxAddrBits.W)
   val len = UInt(16.W) // 读取长度（字节）
   val status = new MStatus
 }
 
-// 简化的读取响应
 class SimpleReadResponse(dataWidth: Int) extends Bundle {
   val data = UInt(dataWidth.W)
   val last = Bool()
 }
 
-// 简化的写入请求
 class SimpleWriteRequest(dataWidth: Int)(implicit p: Parameters) extends CoreBundle {
   val vaddr = UInt(coreMaxAddrBits.W)
   val data = UInt(dataWidth.W)
@@ -39,12 +36,10 @@ class SimpleWriteRequest(dataWidth: Int)(implicit p: Parameters) extends CoreBun
   val status = new MStatus
 }
 
-// 简化的写入响应
 class SimpleWriteResponse extends Bundle {
   val done = Bool()
 }
 
-// 简化的读取器
 class SimpleStreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, dataWidth: Int)
                         (implicit p: Parameters) extends LazyModule {
   val node = TLClientNode(Seq(TLMasterPortParameters.v1(Seq(TLClientParameters(
@@ -170,7 +165,7 @@ class SimpleStreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, dataWidth: I
   }
 }
 
-// 简化的写入器 - 数据已经对齐并带有mask
+// 约定：数据已经对齐并带有mask
 class SimpleStreamWriter(nXacts: Int, beatBits: Int, maxBytes: Int, dataWidth: Int)
                         (implicit p: Parameters) extends LazyModule {
   val node = TLClientNode(Seq(TLMasterPortParameters.v1(Seq(TLClientParameters(

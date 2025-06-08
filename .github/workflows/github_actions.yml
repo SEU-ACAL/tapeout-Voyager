@@ -71,7 +71,7 @@ jobs:
         run: |
           source ~/.zshrc
           chipyard_exec
-          ./voyager-test/scripts/build-verilator.sh --config OurHeterSoCConfig
+          ./voyager-test/scripts/batch-test.sh --full-test
       - run: echo "🍏 Verilator build test is ${{ job.status }}."
         # 如果检查失败，强制回退分支
       - name: Revert Bad Commit
