@@ -1,0 +1,6 @@
+/* 颜色标记工具 */
+.red    { color: #FF6B6B; font-weight: bold; background: #FFF2F2; padding: 2px 6px; border-radius: 3px; }
+.blue   { color: #4ECDC4; font-weight: bold; background: #F0FFFE; padding: 2px 6px; border-radius: 3px; }
+.yellow { color: #FFD93D; font-weight: bold; background: #FFFBF0; padding: 2px 6px; border-radius: 3px; }
+.green  { color: #6BCF7F; font-weight: bold; background: #F0FFF4; padding: 2px 6px; border-radius: 3px; }
+.purple { color: #4D96FF; font-weight: bold; background: #F0F8FF; padding: 2px 6px; border-radius: 3px; } 

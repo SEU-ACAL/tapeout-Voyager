@@ -1,3 +1,5 @@
+<link rel="stylesheet" type="text/css" href="styles.css">
+
 # Buckyball Test Suite
 
 该测试集用于验证Buckyball的正确性。<span class="red">未经测试的代码都是错误的代码</span>，再怎么强调验证的重要性都不为过。测试集中所有测试用例都可以通过spike和verilator进行验证。验证流程如下：
@@ -5,14 +7,16 @@
 2. 使用spike运行可执行文件，将workload与spike对齐
 3. 使用verilator运行可执行文件，将RTL与预期结果对齐
 
-<style> 
+<!-- <style> 
 /* 颜色标记工具 */
 .red    { color: #FF6B6B; font-weight: bold; background: #FFF2F2; padding: 2px 6px; border-radius: 3px; }
 .blue   { color: #4ECDC4; font-weight: bold; background: #F0FFFE; padding: 2px 6px; border-radius: 3px; }
 .yellow { color: #FFD93D; font-weight: bold; background: #FFFBF0; padding: 2px 6px; border-radius: 3px; }
 .green  { color: #6BCF7F; font-weight: bold; background: #F0FFF4; padding: 2px 6px; border-radius: 3px; }
 .purple { color: #4D96FF; font-weight: bold; background: #F0F8FF; padding: 2px 6px; border-radius: 3px; }
-</style>
+</style> -->
+<!-- > **注意**: 本文档使用了自定义样式进行颜色标记。如需完整样式效果，请参考 [styles.css](styles.css) 文件。在GitHub等不支持内联CSS的环境中，颜色标记可能无法正常显示。 -->
+
 
 ## OpTest
 
@@ -76,7 +80,8 @@
 </tr>
 <tr>
     <td><a href="OpTest/bb_dma3.mlir">bb_dma3</a> <br> 
-        <span class="purple">[耗时较长]</span><span class="yellow">[等fence指令]</span>
+        <span class="purple">[耗时较长]</span><br>
+        <span class="yellow">[需要fence]</span>
     </td>
     <td>验证mvin/mvout模块长读入读出的正确性</td>
     <td>
