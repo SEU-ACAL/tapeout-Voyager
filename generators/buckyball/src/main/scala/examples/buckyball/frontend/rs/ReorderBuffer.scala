@@ -120,12 +120,6 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
     }
   }
   
-  // Debug: 打印发射决策
-  when(basic_can_issue) {
-    printf(p"[DEBUG] ROB: issue_ptr=$issue_ptr, cmd_type=$current_cmd_type, load_in_flight=$load_in_flight, store_in_flight=$store_in_flight\n")
-    printf(p"[DEBUG] ROB: load_blocked=$load_blocked, store_blocked=$store_blocked, can_issue=$can_issue\n")
-  }
-
 // -----------------------------------------------------------------------------
 // 提交
 // -----------------------------------------------------------------------------

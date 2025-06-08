@@ -49,12 +49,6 @@ class MemLoader(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
     mem_addr_reg := io.cmdReq.bits.cmd.post_decode_cmd.mem_addr  // 缓存mem_addr
     iter_reg := io.cmdReq.bits.cmd.post_decode_cmd.iter  // 缓存迭代次数
     
-    // Debug: 打印接收到的命令参数
-    printf(p"[DEBUG] MemLoader: Load command received:\n")
-    printf(p"  mem_addr: 0x${Hexadecimal(io.cmdReq.bits.cmd.post_decode_cmd.mem_addr)}\n")
-    printf(p"  sp_addr: ${io.cmdReq.bits.cmd.post_decode_cmd.sp_addr}\n")
-    printf(p"  iter: ${io.cmdReq.bits.cmd.post_decode_cmd.iter}\n")
-    printf(p"  rob_id: ${io.cmdReq.bits.rob_id}\n")
   }
 
   // 发起DMA读取请求 - 读取iter_reg行数据
@@ -63,13 +57,7 @@ class MemLoader(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   io.dmaReq.bits.len := iter_reg * (bbconfig.veclane * bbconfig.inputType.getWidth / 8).U // iter行数据的字节数
   io.dmaReq.bits.status := 0.U.asTypeOf(new MStatus) // 简化：使用默认状态
 
-  // Debug: 打印DMA请求信息
-  when (io.dmaReq.valid && !io.dmaReq.ready) {
-    printf(p"[DEBUG] MemLoader: DMA request blocked, state=$state, vaddr=0x${Hexadecimal(mem_addr_reg)}\n")
-  }
-  
   when (io.dmaReq.fire) {
-    printf(p"[DEBUG] MemLoader: DMA request fired, vaddr=0x${Hexadecimal(mem_addr_reg)}, len=${io.dmaReq.bits.len}\n")
     state := s_dma_wait
     resp_count := 0.U  // 重置响应计数器
   }
@@ -77,28 +65,11 @@ class MemLoader(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   // 等待DMA响应
   io.dmaResp.ready := state === s_dma_wait
   
-  // Debug: 打印DMA响应状态
-  when (state === s_dma_wait) {
-    printf(p"[DEBUG] MemLoader: Waiting for DMA response, dmaResp.valid=${io.dmaResp.valid}, dmaResp.ready=${io.dmaResp.ready}, state=$state\n")
-  }
-  
-  // Debug: 每个周期打印状态  
-  printf(p"[DEBUG] MemLoader: Current state=$state, dmaResp.ready=${io.dmaResp.ready}, resp_count=$resp_count\n")
-  
-  // Debug: 监控ready信号变化
-  when (RegNext(io.dmaResp.ready) =/= io.dmaResp.ready) {
-    printf(p"[DEBUG] MemLoader: dmaResp.ready changed from ${RegNext(io.dmaResp.ready)} to ${io.dmaResp.ready}, state=$state\n")
-  }
-  
   when (io.dmaResp.fire) {
-    printf(p"[DEBUG] MemLoader: DMA response received, data=0x${Hexadecimal(io.dmaResp.bits.data)}, last=${io.dmaResp.bits.last}, resp_count=$resp_count\n")
     resp_count := resp_count + 1.U
     // 收到最后一个响应时转回idle状态
     when (io.dmaResp.bits.last) {
-      printf(p"[DEBUG] MemLoader: Last response received, changing state to idle\n")
       state := s_idle
-    }.otherwise {
-      printf(p"[DEBUG] MemLoader: Not last response, staying in dma_wait state\n")
     }
   }
 
@@ -113,11 +84,6 @@ class MemLoader(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
     io.sramWrite(i).addr := target_row
     io.sramWrite(i).data := io.dmaResp.bits.data
     io.sramWrite(i).mask := VecInit(Seq.fill(mask_len)(true.B))
-  }
-
-  // Debug: 打印SRAM写入信息
-  when (io.dmaResp.fire) {
-    printf(p"[DEBUG] MemLoader: Writing to SRAM bank=$target_bank, row=$target_row, sp_addr=$current_sp_addr, data=0x${Hexadecimal(io.dmaResp.bits.data)}\n")
   }
 
   // 发送完成信号 - 只有收到最后一个响应时才发送

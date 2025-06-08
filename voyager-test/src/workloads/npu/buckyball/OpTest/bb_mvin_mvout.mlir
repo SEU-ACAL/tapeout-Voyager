@@ -2,6 +2,15 @@
 // RUN:     -lower-buckyball | \
 // RUN: FileCheck %s
 
+// Spec: 
+// 目的：mvin和mvout指令的正确性
+// 1. 打印输入矩阵 
+// 2. 打印搬移前目标地址的矩阵  [CHECK] 打印结果应为全0矩阵
+// 3. 使用mvin将数据从内存搬到暂存器
+// 4. 使用mvout将数据从暂存器搬回输出内存
+// 5. 打印搬移后目标地址的矩阵  [CHECK] 打印结果应该与输入矩阵相同
+
+
 memref.global "private" @input_matrix : memref<3x16xi8> = dense<[[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15],
                                                                  [16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31],
                                                                  [32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47]]>
@@ -26,9 +35,9 @@ func.func @main() -> i8 {
   // 使用mvout将数据从暂存器搬回输出内存
   // CHECK: mvout  
   buckyball.bb_mvout %arrayB %spadAddr : memref<3x16xi8> i64
-  // // 打印搬移后的输出矩阵
+  // 打印搬移后的输出矩阵
   buckyball.print %arrayB : memref<3x16xi8>
-  // // 释放分配的内存
+  // 释放分配的内存
   // memref.dealloc %arrayA : memref<2x16xi8>
   memref.dealloc %arrayB : memref<3x16xi8>
   return %0 : i8

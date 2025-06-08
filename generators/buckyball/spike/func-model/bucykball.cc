@@ -95,10 +95,40 @@ void buckyballFunc_t::mvout(reg_t rs1, reg_t rs2) {
 }
 
 // Matrix multiplication using warp16 pattern (simplified placeholder)
-void buckyballFunc_t::matmul_warp16(reg_t rs1, reg_t rs2) {
-  dprintf("buckyball: matmul_warp16 - rs1=0x%08lx, rs2=0x%08lx\n", rs1, rs2);
-  
+void buckyballFunc_t::mul_warp16(reg_t rs1, reg_t rs2) {
+  // Extract operands from rs1 and rs2 according to README specification
+  auto const op1_spaddr = rs1 & ((1UL << spAddrLen) - 1);  // rs1[spAddrLen-1:0]
+  auto const op2_spaddr = (rs1 >> spAddrLen) & ((1UL << spAddrLen) - 1);  // rs1[2*spAddrLen-1:spAddrLen]
+  auto const wr_spaddr = rs2 & ((1UL << spAddrLen) - 1);   // rs2[spAddrLen-1:0]  
+  auto const iter = (rs2 >> spAddrLen) & 0x3FF;  // rs2[spAddrLen+9:spAddrLen], 10 bits
 
+  dprintf("buckyball: mul_warp16 - rs1=0x%08lx, rs2=0x%08lx\n", rs1, rs2);
+  dprintf("BUCKYBALL: mul_warp16 - op1_addr=0x%08lx, op2_addr=0x%08lx, wr_addr=0x%08lx, iter=0x%02lx\n", 
+          op1_spaddr, op2_spaddr, wr_spaddr, iter);
+
+  // Perform matrix multiplication for specified iterations
+  for (size_t i = 0; i < iter; ++i) {
+    // For each iteration, compute one row of result matrix
+    const size_t result_row = wr_spaddr + i;
+    const size_t op1_row = op1_spaddr + i;
+    
+    // Initialize result row to zero
+    for (size_t col = 0; col < DIM; ++col) {
+      buckyball_state.spad.at(result_row).at(col) = 0;
+    }
+    
+    // Compute dot product for each column of result
+    for (size_t col = 0; col < DIM; ++col) {
+      elem_t sum = 0;
+      for (size_t k = 0; k < DIM; ++k) {
+        // op1[i][k] * op2[k][col]
+        elem_t a = buckyball_state.spad.at(op1_row).at(k);
+        elem_t b = buckyball_state.spad.at(op2_spaddr + k).at(col);
+        sum += a * b;
+      }
+      buckyball_state.spad.at(result_row).at(col) = sum;
+    }
+  }
 }
 
 reg_t buckyballFunc_t::CUSTOMFN(XCUSTOM_ACC)(rocc_insn_t insn, reg_t xs1, reg_t xs2) {
@@ -110,8 +140,8 @@ reg_t buckyballFunc_t::CUSTOMFN(XCUSTOM_ACC)(rocc_insn_t insn, reg_t xs1, reg_t 
     mvin(xs1, xs2);
   } else if (insn.funct == mvout_funct) {
     mvout(xs1, xs2);
-  } else if (insn.funct == matmul_funct) {
-    matmul_warp16(xs1, xs2);
+  } else if (insn.funct == mul_funct) {
+    mul_warp16(xs1, xs2);
   } else if (insn.funct == flush_funct) {
     dprintf("buckyball: flush\n");
   } else {
@@ -174,7 +204,7 @@ std::vector<disasm_insn_t*> buckyballFunc_t::get_disasms() {
     {&buckyball_rs1, &buckyball_rs2}));
   
   // MATMUL instruction (funct = 32)
-  insns.push_back(new disasm_insn_t("bb_matmul_warp16", 
+  insns.push_back(new disasm_insn_t("bb_mul_warp16", 
     ROCC_OPCODE3 | (32 << 25), 
     ROCC_OPCODE_MASK | (0x7F << 25), 
     {&buckyball_rs1, &buckyball_rs2}));
