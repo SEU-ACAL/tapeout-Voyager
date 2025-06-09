@@ -131,7 +131,7 @@ $ ./voyager-test/scripts/run-verilator.sh --config RocketConfig hello --debug --
 ```shell
 $ ./voyager-test/scripts/batch-test.sh --npu-test # 运行NPU相关测试
 $ ./voyager-test/scripts/batch-test.sh --meek-test # 运行Meek相关测试
-$ ./voyager-test/scripts/batch-test.sh --full-test # 运行所有测试配置
+$ ./voyager-test/scripts/batch-test.sh --soc-test # 运行soc测试配置
 ```
 
 ## 六、VCS
@@ -217,7 +217,7 @@ Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `
 
 - [npu-test] 触发NPU相关测试。
 - [meek-test] 触发Meek相关测试。
-- [full-test] 触发除DC外的所有测试。
+- [soc-test] 触发soc测试配置。
 - [dc-eval] 触发DC综合。
 
 ## 十、文档目录

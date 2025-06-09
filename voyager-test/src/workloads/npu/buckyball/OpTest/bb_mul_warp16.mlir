@@ -2,7 +2,7 @@
 // RUN: %run
 
 // Matrix A: 16x16 (identity-like matrix for easier verification)
-memref.global "private" @matrix_a : memref<16x16xi8> = dense<[[1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+memref.global "private" @matrix_a : memref<16x16xi8> = dense<[[1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1, 1, -1],
                                                               [0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                                                               [0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                                                               [0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0],

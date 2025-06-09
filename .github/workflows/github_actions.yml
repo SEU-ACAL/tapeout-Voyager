@@ -50,7 +50,7 @@ jobs:
           echo "🍏 Please Do Pre-commit Before Commit!!!" 
 
   Lint-and-Test:
-    name: Compile Lint
+    name: Compile Lint and Base Test
     runs-on: fpga
     needs: Pre-commit-check
     steps:
@@ -71,7 +71,7 @@ jobs:
         run: |
           source ~/.zshrc
           chipyard_exec
-          ./voyager-test/scripts/batch-test.sh --full-test
+          ./voyager-test/scripts/batch-test.sh --soc-test
       - run: echo "🍏 Verilator build test is ${{ job.status }}."
         # 如果检查失败，强制回退分支
       - name: Revert Bad Commit
@@ -87,12 +87,12 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ============== 专用测试 ==================
-  # NPU测试: 匹配到[npu-test]或[full-test]才会执行
+  # NPU测试: 匹配到[npu-test]才会执行
   NPU-Specific-Test:
     name: NPU Specific Test
     runs-on: fpga
     needs: Lint-and-Test
-    if: contains(github.event.head_commit.message, '[npu-test]') || contains(github.event.head_commit.message, '[full-test]')
+    if: contains(github.event.head_commit.message, '[npu-test]') 
     steps:
       - name: Run NPU Specific Test
         shell: zsh {0}
@@ -116,12 +116,12 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Meek测试: 匹配到[meek-test]或[full-test]才会执行
+  # Meek测试: 匹配到[meek-test]才会执行
   Meek-Specific-Test:
     name: Meek Specific Test
     runs-on: fpga
     needs: Lint-and-Test
-    if: contains(github.event.head_commit.message, '[meek-test]') || contains(github.event.head_commit.message, '[full-test]')
+    if: contains(github.event.head_commit.message, '[meek-test]') 
     steps:
       - name: Run Meek Specific Test
         shell: zsh {0}

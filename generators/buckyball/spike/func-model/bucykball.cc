@@ -50,7 +50,7 @@ void buckyballFunc_t::mvin(reg_t rs1, reg_t rs2) {
   auto const base_sp_addr = rs2 & ((1UL << spAddrLen) - 1);  // rs2[spAddrLen-1:0]
   auto const rows = (rs2 >> spAddrLen) & 0x3FF;  // rs2[spAddrLen+9:spAddrLen], 10 bits
   
-  dprintf("rs1=%lx, rs2=%lx\n", rs1, rs2);
+  dprintf("BUCKYBALL: mvin - rs1=%lx, rs2=%lx\n", rs1, rs2);
   dprintf("BUCKYBALL: mvin - 0x%02lx rows from mem 0x%08lx to spad 0x%08lx\n", 
           rows, base_dram_addr, base_sp_addr);
   
@@ -76,7 +76,7 @@ void buckyballFunc_t::mvout(reg_t rs1, reg_t rs2) {
   auto const base_sp_addr = rs2 & ((1UL << spAddrLen) - 1);  // rs2[spAddrLen-1:0]
   auto const rows = (rs2 >> spAddrLen) & 0x3FF;  // rs2[spAddrLen+9:spAddrLen], 10 bits
 
-  dprintf("rs1=%lx, rs2=%lx\n", rs1, rs2);
+  dprintf("BUCKYBALL: mvout - rs1=%lx, rs2=%lx\n", rs1, rs2);
   dprintf("BUCKYBALL: mvout - 0x%02lx rows from spad 0x%08lx to mem 0x%08lx\n", 
           rows, base_sp_addr, base_dram_addr);
 
@@ -94,16 +94,15 @@ void buckyballFunc_t::mvout(reg_t rs1, reg_t rs2) {
   }
 }
 
-// Matrix multiplication using warp16 pattern (simplified placeholder)
+// Matrix multiplication using warp16 pattern
 void buckyballFunc_t::mul_warp16(reg_t rs1, reg_t rs2) {
-  // Extract operands from rs1 and rs2 according to README specification
   auto const op1_spaddr = rs1 & ((1UL << spAddrLen) - 1);  // rs1[spAddrLen-1:0]
   auto const op2_spaddr = (rs1 >> spAddrLen) & ((1UL << spAddrLen) - 1);  // rs1[2*spAddrLen-1:spAddrLen]
   auto const wr_spaddr = rs2 & ((1UL << spAddrLen) - 1);   // rs2[spAddrLen-1:0]  
   auto const iter = (rs2 >> spAddrLen) & 0x3FF;  // rs2[spAddrLen+9:spAddrLen], 10 bits
 
-  dprintf("buckyball: mul_warp16 - rs1=0x%08lx, rs2=0x%08lx\n", rs1, rs2);
-  dprintf("BUCKYBALL: mul_warp16 - op1_addr=0x%08lx, op2_addr=0x%08lx, wr_addr=0x%08lx, iter=0x%02lx\n", 
+  dprintf("BUCKYBALL: mul_warp16 - rs1=0x%08lx, rs2=0x%08lx\n", rs1, rs2);
+  dprintf("BUCKYBALL: mul_warp16 - op1_spaddr=0x%08lx, op2_spaddr=0x%08lx, wr_spaddr=0x%08lx, iter=0x%02lx\n", 
           op1_spaddr, op2_spaddr, wr_spaddr, iter);
 
   // Perform matrix multiplication for specified iterations
@@ -143,9 +142,9 @@ reg_t buckyballFunc_t::CUSTOMFN(XCUSTOM_ACC)(rocc_insn_t insn, reg_t xs1, reg_t 
   } else if (insn.funct == mul_funct) {
     mul_warp16(xs1, xs2);
   } else if (insn.funct == flush_funct) {
-    dprintf("buckyball: flush\n");
+    dprintf("BUCKYBALL: flush\n");
   } else {
-    dprintf("buckyball: encountered unknown instruction with funct: %d\n", insn.funct);
+    dprintf("BUCKYBALL: encountered unknown instruction with funct: %d\n", insn.funct);
     illegal_instruction();
   }
   
