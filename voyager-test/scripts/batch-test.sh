@@ -32,8 +32,8 @@ MEEK_CONFIGS=("OurHeterSoCConfig")
 MEEK_TESTS=("hello")
 
 # 全量测试套件配置
-FULL_CONFIGS=("OurHeterSoCConfig")
-FULL_TESTS=("hello" 
+SOC_CONFIGS=("OurHeterSoCConfig")
+SOC_TESTS=("hello" 
             "bb_mvin_mvout_multi")
 
 # 对比测试配置映射 (RTL配置 -> Spike扩展)
@@ -50,7 +50,7 @@ help() {
   echo "测试套件:"
   echo "  --npu-test          运行NPU相关测试  "
   echo "  --meek-test         运行Meek相关测试 "
-  echo "  --full-test         运行所有测试配置 "
+  echo "  --soc-test          运行soc测试 "
   echo
   echo "选项:"
   echo "  --difftest=on       启用对比测试模式 (先跑spike后跑rtl并对比结果)"
@@ -59,6 +59,7 @@ help() {
   echo "示例:"
   echo "  $0 --npu-test                    # 运行所有NPU测试"
   echo "  $0 --meek-test --difftest=on     # 运行Meek测试并启用对比模式"
+  echo "  $0 --soc-test                    # 运行soc测试"
   exit 0
 }
 
@@ -306,8 +307,8 @@ while [ $# -gt 0 ]; do
     --meek-test)
       TEST_SUITE="meek"
       ;;
-    --full-test)
-      TEST_SUITE="full"
+    --soc-test)
+      TEST_SUITE="soc"
       ;;
     --difftest=on)
       DIFFTEST_MODE="on"
@@ -322,7 +323,7 @@ done
 
 # 检查测试套件是否指定
 if [ -z "$TEST_SUITE" ]; then
-  log_error "请指定测试队列 (--bb-test, --npu-test, --meek-test, 或 --full-test)"
+  log_error "请指定测试队列 (--bb-test, --npu-test, --meek-test, 或 --soc-test)"
   help
 fi
 
@@ -340,9 +341,9 @@ case $TEST_SUITE in
     log_info "执行Meek测试队列"
     run_batch_test MEEK_TESTS "${MEEK_CONFIGS[@]}"
     ;;
-  "full")
+  "soc")
     log_info "执行全量测试队列"
-    run_batch_test FULL_TESTS "${FULL_CONFIGS[@]}"
+    run_batch_test SOC_TESTS "${SOC_CONFIGS[@]}"
     ;;
   *)
     log_error "未知的测试队列: $TEST_SUITE"
