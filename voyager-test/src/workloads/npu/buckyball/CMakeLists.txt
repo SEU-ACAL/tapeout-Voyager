@@ -7,7 +7,9 @@ set(BUCKYBALL_WORKLOAD_DIR ${NPU_WORKLOAD_DIR}/buckyball)
 
 add_custom_target(npu-buckyball ALL DEPENDS
   buckyball-OpTest 
+  buckyball-CTest 
   COMMENT "Building Buckyball Components"
   )
 
 add_subdirectory(OpTest)
+add_subdirectory(CTest)
