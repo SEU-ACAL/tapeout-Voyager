@@ -377,3 +377,13 @@ class FireSimOurHeterSoCConfig extends Config(
   new WithDefaultFireSimBridges ++
   new WithFireSimConfigTweaks ++
   new chipyard.OurHeterSoCConfig)
+
+class FireSimGemminiPrefetchConfig extends Config(
+  new WithDefaultFireSimBridges ++
+  new WithFireSimConfigTweaks ++
+  new chipyard.GemminiPrefetchConfig)
+
+class FireSimBuckyBallRocketConfig extends Config(
+  new WithDefaultFireSimBridges ++
+  new WithFireSimConfigTweaks ++
+  new chipyard.BuckyBallRocketConfig)

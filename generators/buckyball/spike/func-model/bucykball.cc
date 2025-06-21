@@ -101,6 +101,8 @@ void buckyballFunc_t::mul_warp16(reg_t rs1, reg_t rs2) {
   auto const wr_spaddr = rs2 & ((1UL << spAddrLen) - 1);   // rs2[spAddrLen-1:0]  
   auto const iter = (rs2 >> spAddrLen) & 0x3FF;  // rs2[spAddrLen+9:spAddrLen], 10 bits
 
+  // TODO:加个assert，op1_spaddr和op2_spaddr不能属于同一个bank
+
   dprintf("BUCKYBALL: mul_warp16 - rs1=0x%08lx, rs2=0x%08lx\n", rs1, rs2);
   dprintf("BUCKYBALL: mul_warp16 - op1_spaddr=0x%08lx, op2_spaddr=0x%08lx, wr_spaddr=0x%08lx, iter=0x%02lx\n", 
           op1_spaddr, op2_spaddr, wr_spaddr, iter);
