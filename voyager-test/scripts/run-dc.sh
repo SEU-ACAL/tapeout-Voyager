@@ -50,12 +50,13 @@ source ${CYDIR}/voyager-test/scripts/env-source.sh dc
 #-------------------------------------------------------------------
 # Step0 执行build Verilator
 #-------------------------------------------------------------------
-# ${CYDIR}/voyager-test/scripts/build-verilator.sh --config ${CONFIG}
+${CYDIR}/voyager-test/scripts/build-verilator.sh --config ${CONFIG}
 
 #-------------------------------------------------------------------
 # Step1 搬运对应Config的Verilog到工作目录
 #-------------------------------------------------------------------
 DESIGN_SOURCE_DIR="${CYDIR}/sims/verilator/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
+rm -rf ${DESIGN_DIR}/*
 cp -r ${DESIGN_SOURCE_DIR}/* ${DESIGN_DIR}/
 
 #-------------------------------------------------------------------
@@ -114,11 +115,16 @@ link
 # set_input_delay -clock clk 2 [all_inputs]
 # set_output_delay -clock clk 2 [all_outputs]
 
+# set_dont_touch [get_cells -hier -filter "ref_name =~ *VecThread*"]
+# set_dont_touch [get_cells -hier -filter "ref_name =~ *BfpThread*"]
+# set_dont_touch [get_cells -hier -filter "ref_name =~ *CITU*"]
+
 # # 综合
-compile_ultra
+compile -incremental -scan
+write -format ddc -hierarchy -output $REPORT_DIR/design_compiled.ddc
 
 # 生成报告
-report_area -hierarchy > $REPORT_DIR/area.rpt
+report_area -hierarchy -nosplit > $REPORT_DIR/area.rpt
 report_timing > $REPORT_DIR/timing.rpt
 report_power -hierarchy > $REPORT_DIR/power.rpt
 
