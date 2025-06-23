@@ -167,6 +167,15 @@ class RISCVRegisterAnalyzer:
                 src = parts[2]
                 instruction.dest_reg = self.normalize_register(dest)
                 instruction.source_regs = [self.normalize_register(dest), self.normalize_register(src)]
+        elif any(x in mnemonic for x in ['c.or', 'c.and', 'c.xor', 'c.sub', 'c.addw', 'c.subw']):
+            # c.or rd, rs, c.and rd, rs, c.xor rd, rs, c.sub rd, rs, c.addw rd, rs, c.subw rd, rs
+            # 这些都是双操作数指令，第一个操作数既是源寄存器也是目标寄存器
+            parts = mnemonic.replace(',', ' ').split()
+            if len(parts) >= 3:
+                dest = parts[1]
+                src = parts[2]
+                instruction.dest_reg = self.normalize_register(dest)
+                instruction.source_regs = [self.normalize_register(dest), self.normalize_register(src)]
         elif 'c.addi16sp' in mnemonic:
             # c.addi16sp sp, imm
             instruction.dest_reg = 'x2'  # sp
