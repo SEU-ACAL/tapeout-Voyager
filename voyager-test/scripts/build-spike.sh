@@ -2,7 +2,11 @@
 
 CYDIR=$(git rev-parse --show-toplevel)
 
-cd "$CYDIR/generators/buckyball/spike/build"
+
+cd "$CYDIR/generators/buckyball/spike"
+
+mkdir -p build && cd build
+
 cmake ..
 make install
 
