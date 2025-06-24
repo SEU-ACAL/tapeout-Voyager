@@ -228,3 +228,4 @@ Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `
 - [[firesim](docs/firesim-README.md)] firesim 的简略文档，求补充.  
 - [[NPU-README](docs/NPU-README.md)] 主要关于buddy-mlir的使用.
 - [[sram_README](docs/sram_readme.md)] 主要关于sram替换的文档. 
+- [[tools_README](docs/tools_README.md)] 主要关于工具的文档. 
