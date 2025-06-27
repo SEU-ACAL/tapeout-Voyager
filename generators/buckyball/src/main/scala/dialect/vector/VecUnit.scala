@@ -52,8 +52,8 @@ class VecUnit(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
 // -----------------------------------------------------------------------------    
     val VecEX = Module(new VecEX)
     VecEX.io.lu_ex_i <> LU_EX.io.lu_ex_o
-    io.sramWrite <> VecEX.io.sramWrite
     for (i <- 0 until bbconfig.sp_banks) {
         VecEX.io.sramReadResp(i) <> io.sramRead(i).resp
+        io.sramWrite(i) <> VecEX.io.sramWrite(i)
     }
 }

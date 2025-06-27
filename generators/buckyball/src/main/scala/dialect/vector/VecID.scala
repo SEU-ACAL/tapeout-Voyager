@@ -22,31 +22,50 @@ class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
         val id_lu_o = Decoupled(new id_lu_req)
     })
     
+    val busy :: idle :: Nil = Enum(2)
     //寄存器定义
+    val state = RegInit(idle)
     val rob_id_reg = RegInit(0.U(rob_id_width.W))
-    val iteration_reg = RegInit(0.U(10.W)) 
+    val iteration_counter = RegInit(0.U(10.W))
+    val iteration = RegInit(0.U(10.W))
+    val op1_bank = RegInit(0.U(2.W))
+    val op1_bank_addr = RegInit(0.U(12.W))
+    val op2_bank_addr = RegInit(0.U(12.W))
+    val op2_bank = RegInit(0.U(2.W))
+    val wr_bank = RegInit(0.U(2.W))
+    val wr_bank_addr = RegInit(0.U(12.W))
 
-    //提取预译码的相关信号
-    val op1_bank = io.cmdReq.bits.cmd.post_decode_cmd.op1_bank
-    val op1_bank_addr = io.cmdReq.bits.cmd.post_decode_cmd.op1_bank_addr
-    val op2_bank = io.cmdReq.bits.cmd.post_decode_cmd.op2_bank
-    val op2_bank_addr = io.cmdReq.bits.cmd.post_decode_cmd.op2_bank_addr
-    val wr_bank = io.cmdReq.bits.cmd.post_decode_cmd.wr_bank
-    val wr_bank_addr = io.cmdReq.bits.cmd.post_decode_cmd.wr_bank_addr
-    val iteration = io.cmdReq.bits.cmd.post_decode_cmd.iter
-
-    //迭代计数
-    when(io.cmdReq.valid){
-        rob_id_reg := io.cmdReq.bits.rob_id
-        iteration_reg := Mux(iteration_reg === iteration, 0.U, iteration_reg + 1.U)
+    switch(state) {
+        is(idle) {
+            when(io.cmdReq.valid) {
+                iteration := io.cmdReq.bits.cmd.post_decode_cmd.iter
+                iteration_counter := 0.U
+                rob_id_reg := io.cmdReq.bits.rob_id
+                op1_bank := io.cmdReq.bits.cmd.post_decode_cmd.op1_bank
+                op1_bank_addr := io.cmdReq.bits.cmd.post_decode_cmd.op1_bank_addr
+                op2_bank := io.cmdReq.bits.cmd.post_decode_cmd.op2_bank
+                op2_bank_addr := io.cmdReq.bits.cmd.post_decode_cmd.op2_bank_addr
+                wr_bank := io.cmdReq.bits.cmd.post_decode_cmd.wr_bank
+                wr_bank_addr := io.cmdReq.bits.cmd.post_decode_cmd.wr_bank_addr
+                state := busy
+            }
+        }
+        is(busy) {
+            iteration_counter := iteration_counter + 1.U
+            when(iteration_counter === iteration) {
+                iteration_counter := 0.U
+                state := idle
+            }
+        }
     }
+   
 
     //生成ID_LU请求
-    io.id_lu_o.valid := io.cmdReq.valid
+    io.id_lu_o.valid := state === busy
     io.id_lu_o.bits.op1_bank := op1_bank
-    io.id_lu_o.bits.op1_bank_addr := op1_bank_addr + iteration_reg
+    io.id_lu_o.bits.op1_bank_addr := op1_bank_addr + iteration_counter
     io.id_lu_o.bits.op2_bank := op2_bank
-    io.id_lu_o.bits.op2_bank_addr := op2_bank_addr + iteration_reg
+    io.id_lu_o.bits.op2_bank_addr := op2_bank_addr + iteration_counter
     io.id_lu_o.bits.wr_bank := wr_bank
     io.id_lu_o.bits.wr_bank_addr := wr_bank_addr
     io.id_lu_o.bits.opcode := 1.U
@@ -54,7 +73,7 @@ class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
     io.cmdReq.ready := io.id_lu_o.ready
 
     //指令完成信号
-    val complete = iteration_reg === iteration && io.cmdReq.valid
+    val complete = (iteration_counter === iteration) && (state === busy) 
     io.cmdResp.bits.rob_id := rob_id_reg
     io.cmdResp.valid := complete
 

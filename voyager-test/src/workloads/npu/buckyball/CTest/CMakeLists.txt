@@ -34,13 +34,20 @@ set(ELF_CC "riscv64-unknown-elf-gcc")
 
 add_custom_target(buckyball-CTest-baremetal ALL
     COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_mvin_mvout-baremetal
-            ${BUCKYBALL_CTEST_DIR}/mvin_mvout.c
-    DEPENDS ${BUCKYBALL_CTEST_DIR}/mvin_mvout.c
+            ${BUCKYBALL_CTEST_DIR}/mvin_mvout.c 
+    DEPENDS ${BUCKYBALL_CTEST_DIR}/mvin_mvout.c 
     COMMENT "Building baremetal workloads for Buckyball"
     VERBATIM)
 
+# 添加新的 vecunit_matmul.c 编译目标
+add_custom_target(buckyball-vecunit-matmul-baremetal ALL
+    COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_vecunit_matmul-baremetal
+            ${BUCKYBALL_CTEST_DIR}/vecunit_matmul.c 
+    DEPENDS ${BUCKYBALL_CTEST_DIR}/vecunit_matmul.c 
+    COMMENT "Building vecunit_matmul baremetal workload for Buckyball"
+    VERBATIM)
 
 add_custom_target(buckyball-CTest ALL DEPENDS
   buckyball-CTest-baremetal
-  
+  buckyball-vecunit-matmul-baremetal
   )

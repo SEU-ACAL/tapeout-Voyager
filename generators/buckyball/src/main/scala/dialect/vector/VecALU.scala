@@ -11,7 +11,7 @@ class north  extends Bundle {
   val vector_rst = Vec(16, UInt(8.W))
 }
 
-class east  extends Bundle {
+class east extends Bundle {
   // val rob_id     = UInt(5.W)
   // val thread_id  = UInt(3.W)
   val funct     = UInt(8.W)

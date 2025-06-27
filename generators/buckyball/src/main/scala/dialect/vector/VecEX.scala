@@ -16,9 +16,9 @@ class VecEX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
     val spad_w = bbconfig.veclane * bbconfig.inputType.getWidth
 
     val io = IO(new Bundle {
-        val sramWrite = Vec(bbconfig.sp_banks, Flipped(Decoupled(new SramWriteIO(bbconfig.sp_bank_entries, spad_w, spad_w/8))))
+        val sramWrite = Vec(bbconfig.sp_banks, new SramWriteIO(bbconfig.sp_bank_entries, spad_w, spad_w/8))
         val lu_ex_i = Flipped(Decoupled(new lu_ex_req))
-        val sramReadResp = Vec(bbconfig.sp_banks, new SramReadResp(spad_w))
+        val sramReadResp = Vec(bbconfig.sp_banks, Flipped(Decoupled(new SramReadResp(spad_w))))
   })
     // 提取预译码的相关信号
     val op1_bank = io.lu_ex_i.bits.op1_bank
@@ -33,19 +33,22 @@ class VecEX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
 
     // 写回结果到SRAM
     for (i <- 0 until bbconfig.sp_banks) {
-        io.sramWrite(i).valid := false.B
-        io.sramWrite(i).bits.addr := 0.U
-        io.sramWrite(i).bits.data := 0.U
-        io.sramWrite(i).bits.mask := 0.U
+        io.sramWrite(i).en := false.B
+        io.sramWrite(i).addr := 0.U
+        io.sramWrite(i).data := 0.U
+        io.sramWrite(i).mask := VecInit(Seq.fill(spad_w / 8)(false.B))
     }
 
     when(io.lu_ex_i.valid) {
-        io.sramWrite(wr_bank).valid := true.B
-        io.sramWrite(wr_bank).bits.addr := wr_bank_addr
-        io.sramWrite(wr_bank).bits.data := io.sramReadResp(op1_bank).data + io.sramReadResp(op2_bank).data
-        io.sramWrite(wr_bank).bits.mask := Fill(spad_w/8, 1.U)
+        io.sramWrite(wr_bank).en := true.B
+        io.sramWrite(wr_bank).addr := wr_bank_addr
+        io.sramWrite(wr_bank).data := io.sramReadResp(op1_bank).bits.data + io.sramReadResp(op2_bank).bits.data
+        io.sramWrite(wr_bank).mask := VecInit(Seq.fill(spad_w / 8)(true.B)) // 假设全写入，实际应用中可能需要根据opcode调整
     }
 
     // 响应完成信号
     io.lu_ex_i.ready := true.B
+    io.sramReadResp.foreach { resp =>
+        resp.ready := true.B
+    }
 }

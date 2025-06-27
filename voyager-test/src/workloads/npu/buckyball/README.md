@@ -93,8 +93,41 @@
 </table>
 
 ---
+## CTest
+<table>
+<tr>
+    <th>测试文件</th><th>测试目的</th><th>测试步骤</th>
+</tr>
+<tr>
+    <td><a href="CTest/mvin_mvout.c">ctest_mvin_mvout</a></td>
+    <td>验证mvin和mvout指令的正确性</td>
+    <td>
+        1. 打印输入矩阵 <br>
+        2. 打印搬移前目标地址的矩阵 <br>
+        3. 使用mvin将数据从内存搬到暂存器 <br>
+        4. 使用mvout将数据从暂存器搬回输出内存 <br>
+        5. 打印搬移后目标地址的矩阵  <br>
+    </td>
+</tr>
+<tr>
+    <td><a href="CTest/vecunit_matmul.c">ctest_vecunit_matmul</a></td>
+    <td>使用VecUnit进行矩阵乘法</td>
+    <td>
+        1. 使用mvin将数据从内存搬到暂存器 <br>
+        2. 使用VecUnit进行矩阵乘法<br>
+        3. 使用mvout将数据从暂存器搬回输出内存 <br>
+    </td>
+</tr>
+</table>
 
-### 测试用例模板
+运行CTest目录下的测试代码时，请参考以下Linux命令：
+```
+./voyager-test/scripts/run-verilator.sh --debug --config BuckyBallRocketConfig ctest_vecunit_matmul
+```
+其中ctest_vecunit_matmul是 voyager-test/output/workloads/npu/buckyball/CTest目录下的bin文件名
+
+---
+## 测试用例模板
 
 添加新测试用例时，复制以下模板并竖向编辑：
 
@@ -118,7 +151,7 @@
 </tr>
 ```
 
-### 尚未解决的bug
+## 尚未解决的bug
 - [bb_dma2](Optest/bb_dma2.mlir) 非对齐写入还是有bug，当写入的目标mem地址不是16字节对齐时，移除 {aligment = 16} 会报 dma 请求地址不对齐。在bb_mvin_mvout的简单测试中，没有 {aligment = 16} 后，打印结果是正确的。目前看来带上对齐就没事，不带还是有概率出事。
 
 > **PS**: 本文档使用了自定义样式进行颜色标记。在GitHub等不支持内联CSS的环境中，颜色标记可能无法正常显示。
