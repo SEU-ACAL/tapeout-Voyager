@@ -73,10 +73,13 @@ class PostDecodeCmd(implicit bbconfig: BuckyBallConfig) extends Bundle {
   val op2_bank      = UInt(log2Up(bbconfig.sp_banks).W)
   val op2_bank_addr = UInt(log2Up(bbconfig.sp_bank_entries).W)
 
-  // 流水线控制
+  // 流水线控制字段（保留但暂时不使用）
   val pid           = UInt(8.W)   // 流水线ID
-  val pstart        = Bool() // 流水线的开始
-  val pend          = Bool() // 流水线的结束
+  val pstart        = Bool()      // 流水线的开始
+  val pend          = Bool()      // 流水线的结束
+  
+  // 原始指令的func7字段，用于区分指令类型
+  val func7         = UInt(7.W)
 }
 
 class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
@@ -115,6 +118,11 @@ class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
   val ex_default_decode = List(N,N,N,N,N,N,N,N,DADDR,DADDR,DADDR,DITER)
   val ex_decode_list = ListLookup(func7, ex_default_decode, Array(
     MATMUL_WARP16_BITPAT -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(spAddrLen+9,spAddrLen), rs2(spAddrLen-1,0), rs1(spAddrLen+9,spAddrLen)), // bb_matmul_warp16
+    
+    VECTHREAD_VMUL_BITPAT -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(spAddrLen+9,spAddrLen), rs2(spAddrLen-1,0), rs2(spAddrLen+9,spAddrLen)), // vecthread_vmul, PID=1
+    BFPTHREAD_REDUCE_BITPAT -> List(N,N,N,Y,N,Y,Y,N,rs1(spAddrLen-1,0), rs1(spAddrLen+9,spAddrLen), rs2(spAddrLen-1,0), rs2(spAddrLen+9,spAddrLen)), // bfpthread_reduce, PID=2
+    CITU0_MATMUL_BITPAT -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(spAddrLen+9,spAddrLen), rs2(spAddrLen-1,0), rs2(spAddrLen+9,spAddrLen)), // citu0_matmul, PID=3
+    CITU1_MATMUL_BITPAT -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(spAddrLen+9,spAddrLen), rs2(spAddrLen-1,0), rs2(spAddrLen+9,spAddrLen)), // citu1_matmul, PID=4
   ))
 
   io.id_rs.valid              := io.id_i.valid
@@ -129,6 +137,9 @@ class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
                                   Mux(io.id_rs.bits.is_load, ls_decode_list(0).asUInt, 0.U))
   io.id_rs.bits.pstart        := ex_decode_list(1).asBool || ls_decode_list(1).asBool 
   io.id_rs.bits.pend          := ex_decode_list(2).asBool || ls_decode_list(2).asBool
+  
+  // 设置func7字段用于指令类型区分
+  io.id_rs.bits.func7         := func7
 
   io.id_rs.bits.op1_en        := ex_decode_list(3).asBool
   io.id_rs.bits.op2_en        := ex_decode_list(4).asBool
