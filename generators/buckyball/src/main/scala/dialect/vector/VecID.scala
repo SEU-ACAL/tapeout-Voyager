@@ -52,7 +52,7 @@ class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
         }
         is(busy) {
             iteration_counter := iteration_counter + 1.U
-            when(iteration_counter === iteration) {
+            when(iteration_counter === iteration - 1.U) {
                 iteration_counter := 0.U
                 state := idle
             }
@@ -67,13 +67,15 @@ class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
     io.id_lu_o.bits.op2_bank := op2_bank
     io.id_lu_o.bits.op2_bank_addr := op2_bank_addr + iteration_counter
     io.id_lu_o.bits.wr_bank := wr_bank
-    io.id_lu_o.bits.wr_bank_addr := wr_bank_addr
+    io.id_lu_o.bits.wr_bank_addr := wr_bank_addr + iteration_counter
     io.id_lu_o.bits.opcode := 1.U
+    io.id_lu_o.bits.iter := iteration
+    io.id_lu_o.bits.thread_id := iteration_counter
 
     io.cmdReq.ready := io.id_lu_o.ready
 
     //指令完成信号
-    val complete = (iteration_counter === iteration) && (state === busy) 
+    val complete = (iteration_counter === iteration - 1.U) && (state === busy) 
     io.cmdResp.bits.rob_id := rob_id_reg
     io.cmdResp.valid := complete
 

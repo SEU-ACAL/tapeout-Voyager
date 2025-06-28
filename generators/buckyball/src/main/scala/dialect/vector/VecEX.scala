@@ -20,30 +20,67 @@ class VecEX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
         val lu_ex_i = Flipped(Decoupled(new lu_ex_req))
         val sramReadResp = Vec(bbconfig.sp_banks, Flipped(Decoupled(new SramReadResp(spad_w))))
   })
-    // 提取预译码的相关信号
+    // 提取流水线前端的信号
     val op1_bank = io.lu_ex_i.bits.op1_bank
     val op2_bank = io.lu_ex_i.bits.op2_bank
     val wr_bank = io.lu_ex_i.bits.wr_bank
-    val wr_bank_addr = io.lu_ex_i.bits.wr_bank_addr
     val opcode = io.lu_ex_i.bits.opcode
+    val iter = io.lu_ex_i.bits.iter
+    val thread_id = io.lu_ex_i.bits.thread_id
 
-    // 结果寄存器
-    val result = RegInit(0.U(spad_w.W))
+    //创建thread和PE的序列
+    implicit val threadParams: ThreadParams = new ThreadParams() 
+    val threads = Seq.fill(16)(Module(new VecThread))
+    val PEs = Seq.fill(16)(Module(new PE()))
 
+    for(i <-0 until 16) {
+        //默认thread输入
+        threads(i).io.in.valid       := false.B
+        threads(i).io.in.bits.op1    := VecInit(Seq.fill(16)(0.U(8.W)))
+        threads(i).io.in.bits.op2    := VecInit(Seq.fill(16)(0.U(8.W)))
+        threads(i).io.in.bits.opcode := 0.U
+        threads(i).io.in.bits.iter := 0.U
 
-    // 写回结果到SRAM
-    for (i <- 0 until bbconfig.sp_banks) {
+        //生成thread输入
+        when(thread_id === i.U && io.lu_ex_i.valid && 
+             io.sramReadResp(op1_bank).valid && io.sramReadResp(op2_bank).valid) {
+            threads(i).io.in.valid       := true.B
+            threads(i).io.in.bits.op1    := io.sramReadResp(op1_bank).bits.data.asTypeOf(Vec(16, UInt(8.W)))
+            threads(i).io.in.bits.op2    := io.sramReadResp(op2_bank).bits.data.asTypeOf(Vec(16, UInt(8.W)))
+            threads(i).io.in.bits.opcode := opcode
+            threads(i).io.in.bits.iter := iter
+        }
+
+        //连接PE和thread
+        PEs(i).io.north.valid := threads(i).io.out.valid
+        PEs(i).io.north.bits.vector_rst := threads(i).io.out.bits.vRst
+        PEs(i).io.north.bits.config := 0.U
+        threads(i).io.out.ready := PEs(i).io.north.ready
+    }
+
+    //PE之间的连接
+    for(i <- 1 until 16){
+        PEs(i).io.west <> PEs(i - 1).io.east
+    }
+    PEs(0).io.west.valid := true.B
+    PEs(0).io.west.bits := DontCare
+    PEs(0).io.west.bits.waddr := io.lu_ex_i.bits.wr_bank_addr
+    PEs(15).io.east.ready := true.B
+
+    //SPAD写端口默认赋值
+    for(i <- 0 until 4){
         io.sramWrite(i).en := false.B
         io.sramWrite(i).addr := 0.U
         io.sramWrite(i).data := 0.U
         io.sramWrite(i).mask := VecInit(Seq.fill(spad_w / 8)(false.B))
     }
 
-    when(io.lu_ex_i.valid) {
+    // 当PEs(15)的east输出有效时，写入SPAD
+    when(PEs(15).io.east.valid) {
         io.sramWrite(wr_bank).en := true.B
-        io.sramWrite(wr_bank).addr := wr_bank_addr
-        io.sramWrite(wr_bank).data := io.sramReadResp(op1_bank).bits.data + io.sramReadResp(op2_bank).bits.data
-        io.sramWrite(wr_bank).mask := VecInit(Seq.fill(spad_w / 8)(true.B)) // 假设全写入，实际应用中可能需要根据opcode调整
+        io.sramWrite(wr_bank).addr := PEs(15).io.east.bits.waddr
+        io.sramWrite(wr_bank).data := PEs(15).io.east.bits.vector_rst.asUInt
+        io.sramWrite(wr_bank).mask := VecInit(Seq.fill(spad_w / 8)(true.B))
     }
 
     // 响应完成信号

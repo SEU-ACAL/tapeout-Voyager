@@ -19,7 +19,7 @@ class SupportedFuncUnits(
 
 case class ThreadParams(lane: Int = 16,
                         attr: String = "base",
-                        Ops: SupportedFuncUnits = new SupportedFuncUnits(mul = true, pop = true, max = true)
+                        Ops: SupportedFuncUnits = new SupportedFuncUnits(mul = true, pop = false, max = false)
 )
 
 // there are all combination logic in threads' Operations
@@ -77,7 +77,7 @@ class tOpLoad extends Bundle {
   val op1       = Vec(16, UInt(8.W))
   val op2       = Vec(16, UInt(8.W))
   val opcode    = UInt(8.W)
-  val iter      = UInt(4.W) // 从0开始，循环1~16次
+  val iter      = UInt(9.W) // 从0开始，循环1~16次
 }
 
 class tOut extends Bundle {
@@ -125,22 +125,31 @@ class VecThread (implicit t: ThreadParams)
 //===----------------------------------------------------------------------===//
 // 每个thread 配备如下寄存器和一个选择器
 //===----------------------------------------------------------------------===//
-  val busy  = RegInit(true.B)
+  val busy  = RegInit(false.B)
   val op1   = RegInit(VecInit(Seq.fill(t.lane)(0.U(8.W))))
   val op2   = RegInit(VecInit(Seq.fill(t.lane)(0.U(8.W))))
   val opcode = RegInit(0.U(8.W))
-  val iter   = RegInit(0.U(4.W))
+  val iter   = RegInit(0.U(9.W))
   // val arbiter = Module(new Arbiter(UInt(8.W), supportedFuncUnits.supportedFuncNum))  
 
   io.in.ready := !busy
-  when (io.in.fire) {
-    op1    := io.in.bits.op1
-    op2    := io.in.bits.op2
-    opcode := io.in.bits.opcode
-    iter   := io.in.bits.iter
-    busy   := true.B
-  }.otherwise {
-    busy   := iter =/= 0.U
+  switch(busy){
+    is(true.B) {
+      when (iter === 1.U) {
+        busy := false.B
+      }.otherwise{
+        iter := iter - 1.U
+      }
+    }
+    is(false.B) {
+      when (io.in.fire) {
+        op1    := io.in.bits.op1
+        op2    := io.in.bits.op2
+        opcode := io.in.bits.opcode
+        iter   := io.in.bits.iter
+        busy   := true.B
+      }
+    }
   }
 //===----------------------------------------------------------------------===//
 // Step 1 选择计算单元
@@ -152,11 +161,14 @@ class VecThread (implicit t: ThreadParams)
   
   if (hasMul) {
     mul = Module(new MulOp())
-    when ((io.in.fire && (opcode === 1.U )) || opcode === 1.U || iter =/= 0.U) {
+    when (busy) {
       mul.io.in.valid := true.B
       mul.io.in.bits.op1 := op1(iter)
       mul.io.in.bits.op2 := op2
-      iter := iter - 1.U
+    }.otherwise {
+      mul.io.in.valid := false.B
+      mul.io.in.bits.op1 := 0.U
+      mul.io.in.bits.op2 := VecInit(Seq.fill(t.lane)(0.U(8.W)))
     }
   }
   if (hasPop) {
@@ -165,6 +177,9 @@ class VecThread (implicit t: ThreadParams)
       pop.io.in.valid := true.B
       pop.io.in.bits.op1 := op1
       iter := iter - 1.U
+    }.otherwise{
+      pop.io.in.valid := false.B
+      pop.io.in.bits.op1 := 0.U
     }
   }
   if (hasMax) {
@@ -173,6 +188,9 @@ class VecThread (implicit t: ThreadParams)
       max.io.in.valid := true.B
       max.io.in.bits.op1 := op1(iter)
       iter := iter - 1.U
+    }.otherwise {
+      max.io.in.valid := false.B
+      max.io.in.bits.op1 := 0.U
     }
   }
 //===----------------------------------------------------------------------===//

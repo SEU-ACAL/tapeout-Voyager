@@ -46,12 +46,16 @@ class VecLoadUnit(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Mod
   }
 
   //生成LU_EX请求
+  io.lu_ex_o.valid := io.id_lu_i.valid
   io.lu_ex_o.bits.op1_bank := op1_bank
   io.lu_ex_o.bits.op2_bank := op2_bank
   io.lu_ex_o.bits.wr_bank := wr_bank
   io.lu_ex_o.bits.wr_bank_addr := wr_bank_addr
   io.lu_ex_o.bits.opcode := io.id_lu_i.bits.opcode
-  io.lu_ex_o.valid := io.id_lu_i.valid
+  io.lu_ex_o.bits.iter := io.id_lu_i.bits.iter
+  io.lu_ex_o.bits.thread_id := io.id_lu_i.bits.thread_id
+
   io.id_lu_i.ready := io.lu_ex_o.ready
+
     
 }

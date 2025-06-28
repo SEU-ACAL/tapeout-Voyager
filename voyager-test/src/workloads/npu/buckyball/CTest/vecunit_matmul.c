@@ -22,8 +22,10 @@ void print_matrix(const char* name, elem_t* matrix, int rows, int cols) {
 }
 
 void init_matrix(elem_t* matrix, int rows, int cols, int seed) {
-    for (int i = 0; i < rows * cols; i++) {
-        matrix[i] = 1;  
+    for (int i = 0; i < rows; i++) {
+        for(int j = 0; j < cols; j++) {
+            matrix[i * cols + j] = (i == 0);
+        }
     }
 }
 
@@ -53,7 +55,7 @@ int main() {
     bb_mvin((uintptr_t)input_matrix, OP1_ADDR, DIM);
     bb_mvin((uintptr_t)input_matrix, OP2_ADDR, DIM);
     printf("Perform Matmul\n");
-    bb_mul_warp16(OP1_ADDR, OP2_ADDR, WR_ADDR, 15);
+    bb_mul_warp16(OP1_ADDR, OP2_ADDR, WR_ADDR, DIM);
     printf("Matmul Done\n");
     // Move back from scratchpad to output
     bb_mvout((uintptr_t)output_matrix, WR_ADDR, DIM);

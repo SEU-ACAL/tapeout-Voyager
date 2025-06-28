@@ -4,16 +4,11 @@ import chisel3._
 import chisel3.util._
 import chisel3.stage._
 class north  extends Bundle {
-  val rob_id     = UInt(5.W) // 用不上
-  val thread_id  = UInt(4.W) // 用不上
-  val scalar_rst = UInt(8.W) // 用不上
   val config     = UInt(16.W) 
   val vector_rst = Vec(16, UInt(8.W))
 }
 
 class east extends Bundle {
-  // val rob_id     = UInt(5.W)
-  // val thread_id  = UInt(3.W)
   val funct     = UInt(8.W)
   val waddr     = UInt(14.W)
   val vector_rst = Vec(16, UInt(8.W))

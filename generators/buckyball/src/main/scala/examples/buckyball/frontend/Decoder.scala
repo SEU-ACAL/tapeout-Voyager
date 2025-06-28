@@ -114,7 +114,7 @@ class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
   import EXDecodeFields._
   val ex_default_decode = List(N,N,N,N,N,N,N,N,DADDR,DADDR,DADDR,DITER)
   val ex_decode_list = ListLookup(func7, ex_default_decode, Array(
-    MATMUL_WARP16_BITPAT -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(2*spAddrLen - 1,spAddrLen), rs2(spAddrLen-1,0), rs2(2*spAddrLen - 1,spAddrLen)), // bb_matmul_warp16
+    MATMUL_WARP16_BITPAT -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(2*spAddrLen - 1,spAddrLen), rs2(spAddrLen-1,0), rs2(spAddrLen + 9,spAddrLen)), // bb_matmul_warp16
   ))
 
   io.id_rs.valid              := io.id_i.valid
