@@ -1,0 +1,4 @@
+VERSION += 1.0
+DEVICE += P2E
+BOARD += {"index": 0, "type": "FOUR_CHIP_BOARD",  "SN": "RRD00000026AFE0", "CLK": 0, "IP": "192.168.100.12"}
+

@@ -1,0 +1,379 @@
+VERSION += 1.0
+DEVICE += P2E
+
+BOARD += {"index": 0, "type": "FOUR_CHIP_BOARD", "SN": "RRD00000026AFE0", "IP":"192.168.100.10","CLK": 0}
+BOARD += {"index": 1, "type": "FOUR_CHIP_BOARD", "SN": "RRD00000026AFE0", "IP":"192.168.100.11","CLK": 0}
+BOARD += {"index": 2, "type": "FOUR_CHIP_BOARD", "SN": "RRD00000026AFE0", "IP":"192.168.100.12","CLK": 0}
+BOARD += {"index": 3, "type": "FOUR_CHIP_BOARD", "SN": "RRD00000026AFE0", "IP":"192.168.100.13","CLK": 0}
+BOARD += {"index": 4, "type": "FOUR_CHIP_BOARD", "SN": "RRD00000026AFE0", "IP":"192.168.100.14","CLK": 0}
+
+
+//////////////////////////////////////////
+//A&B
+CABLE += {"type": "PHC_CABLE_500", "connection": "(0.A.19, 0.B.17 )"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(0.A.20, 0.B.19)"}
+CABLE += {"type": "INTERCONN_CARD_H", "connection": "(0.A.2, 0.B.35 )"}
+
+//C&D
+CABLE += {"type": "PHC_CABLE_500", "connection": "(0.C.19, 0.D.17 )"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(0.C.20, 0.D.19 )"}
+CABLE += {"type": "INTERCONN_CARD_H", "connection": "(0.C.2, 0.D.35 )"}
+
+//A&C
+CABLE += {"type": "PHC_CABLE_500", "connection": "(0.A.15, 0.C.15)"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(0.A.18, 0.C.18)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.A.26, 0.C.26)"}
+
+//B&D
+CABLE += {"type": "PHC_CABLE_500", "connection": "(0.B.18, 0.D.18)"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(0.B.22, 0.D.22)"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(0.B.23, 0.D.23)"}
+
+//A&D
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(0.A.16, 0.D.21)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(0.A.17, 0.D.20)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(0.A.21, 0.D.16)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(0.A.22, 0.D.15)"}
+
+//B&C
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(0.B.15, 0.C.22)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(0.B.16, 0.C.21)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(0.B.20, 0.C.17)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(0.B.21, 0.C.16)"}
+
+//////////////////////////////////////////
+//A&B
+CABLE += {"type": "PHC_CABLE_500", "connection": "(1.A.19, 1.B.17 )"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(1.A.20, 1.B.19)"}
+CABLE += {"type": "INTERCONN_CARD_H", "connection": "(1.A.2, 1.B.35 )"}
+
+//C&D
+CABLE += {"type": "PHC_CABLE_500", "connection": "(1.C.19, 1.D.17 )"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(1.C.20, 1.D.19 )"}
+CABLE += {"type": "INTERCONN_CARD_H", "connection": "(1.C.2, 1.D.35 )"}
+
+//A&C
+CABLE += {"type": "PHC_CABLE_500", "connection": "(1.A.15, 1.C.15)"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(1.A.18, 1.C.18)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.A.26, 1.C.26)"}
+
+//B&D
+CABLE += {"type": "PHC_CABLE_500", "connection": "(1.B.18, 1.D.18)"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(1.B.22, 1.D.22)"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(1.B.23, 1.D.23)"}
+
+//A&D
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(1.A.16, 1.D.21)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(1.A.17, 1.D.20)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(1.A.21, 1.D.16)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(1.A.22, 1.D.15)"}
+
+//B&C
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(1.B.15, 1.C.22)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(1.B.16, 1.C.21)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(1.B.20, 1.C.17)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(1.B.21, 1.C.16)"}
+
+//////////////////////////////////////////
+//A&B
+CABLE += {"type": "PHC_CABLE_500", "connection": "(2.A.19, 2.B.17 )"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(2.A.20, 2.B.19)"}
+CABLE += {"type": "INTERCONN_CARD_H", "connection": "(2.A.2, 2.B.35 )"}
+
+//C&D
+CABLE += {"type": "PHC_CABLE_500", "connection": "(2.C.19, 2.D.17 )"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(2.C.20, 2.D.19 )"}
+CABLE += {"type": "INTERCONN_CARD_H", "connection": "(2.C.2, 2.D.35 )"}
+
+//A&C
+CABLE += {"type": "PHC_CABLE_500", "connection": "(2.A.15, 2.C.15)"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(2.A.18, 2.C.18)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(2.A.26, 2.C.26)"}
+
+//B&D
+CABLE += {"type": "PHC_CABLE_500", "connection": "(2.B.18, 2.D.18)"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(2.B.22, 2.D.22)"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(2.B.23, 2.D.23)"}
+
+//A&D
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(2.A.16, 2.D.21)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(2.A.17, 2.D.20)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(2.A.21, 2.D.16)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(2.A.22, 2.D.15)"}
+
+//B&C
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(2.B.15, 2.C.22)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(2.B.16, 2.C.21)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(2.B.20, 2.C.17)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(2.B.21, 2.C.16)"}
+//////////////////////////////////////////
+//A&B
+CABLE += {"type": "PHC_CABLE_500", "connection": "(3.A.19, 3.B.17 )"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(3.A.20, 3.B.19)"}
+CABLE += {"type": "INTERCONN_CARD_H", "connection": "(3.A.2, 3.B.35 )"}
+
+//C&D
+CABLE += {"type": "PHC_CABLE_500", "connection": "(3.C.19, 3.D.17 )"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(3.C.20, 3.D.19 )"}
+CABLE += {"type": "INTERCONN_CARD_H", "connection": "(3.C.2, 3.D.35 )"}
+
+//A&C
+CABLE += {"type": "PHC_CABLE_500", "connection": "(3.A.15, 3.C.15)"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(3.A.18, 3.C.18)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.A.26, 3.C.26)"}
+
+//B&D
+CABLE += {"type": "PHC_CABLE_500", "connection": "(3.B.18, 3.D.18)"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(3.B.22, 3.D.22)"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(3.B.23, 3.D.23)"}
+
+//A&D
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(3.A.16, 3.D.21)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(3.A.17, 3.D.20)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(3.A.21, 3.D.16)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(3.A.22, 3.D.15)"}
+
+
+//B&C
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(3.B.15, 3.C.22)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(3.B.16, 3.C.21)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(3.B.20, 3.C.17)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(3.B.21, 3.C.16)"}
+//////////////////////////////////////////
+//A&B
+CABLE += {"type": "PHC_CABLE_500", "connection": "(4.A.19, 4.B.17 )"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(4.A.20, 4.B.19)"}
+CABLE += {"type": "INTERCONN_CARD_H", "connection": "(4.A.2, 4.B.35 )"}
+
+//C&D
+CABLE += {"type": "PHC_CABLE_500", "connection": "(4.C.19, 4.D.17 )"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(4.C.20, 4.D.19 )"}
+CABLE += {"type": "INTERCONN_CARD_H", "connection": "(4.C.2, 4.D.35 )"}
+
+//A&C
+CABLE += {"type": "PHC_CABLE_500", "connection": "(4.A.15, 4.C.15)"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(4.A.18, 4.C.18)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(4.A.26, 4.C.26)"}
+
+//B&D
+CABLE += {"type": "PHC_CABLE_500", "connection": "(4.B.18, 4.D.18)"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(4.B.22, 4.D.22)"}
+CABLE += {"type": "PHC_CABLE_500", "connection": "(4.B.23, 4.D.23)"}
+
+//A&D
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(4.A.16, 4.D.21)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(4.A.17, 4.D.20)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(4.A.21, 4.D.16)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(4.A.22, 4.D.15)"}
+
+//B&C
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(4.B.15, 4.C.22)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(4.B.16, 4.C.21)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(4.B.20, 4.C.17)"}
+CABLE += {"type": "INTERCONN_CARD_V", "connection": "(4.B.21, 4.C.16)"}
+//////////////////////////////////////////
+
+//////////////////////////////////////////
+/////////////////////////////
+# 2Board, from Board 1.A
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.A.7, 0.A.7)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.A.8, 0.A.8)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.A.9, 0.B.25)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.A.10, 0.B.24)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.A.11, 0.C.8)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.A.12, 0.C.7)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.A.13, 0.D.24)"}
+//yidingCABLE += {"type": "PHC_CABLE_1000", "connection": "(1.A.14, 0.D.25)"}
+
+# 2Board, from Board 1.B
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.B.24, 0.A.10)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.B.25, 0.A.9)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.B.29, 0.B.29)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.B.30, 0.B.30)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.B.31, 0.C.9)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.B.32, 0.C.10)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.B.33, 0.D.30)"}
+//yidingCABLE += {"type": "PHC_CABLE_1000", "connection": "(1.B.34, 0.D.29)"}
+
+# 2Board, from Board 1.C
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.C.7, 0.A.12)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.C.8, 0.A.11)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.C.9, 0.B.31)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.C.10, 0.B.32)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.C.11, 0.C.11)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.C.12, 0.C.12)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.C.13, 0.D.32)"}
+//yidingCABLE += {"type": "PHC_CABLE_1000", "connection": "(1.C.14, 0.D.31)"}
+
+# 2Board, from Board 1.D
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.D.24, 0.A.13)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.D.25, 0.A.14)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.D.29, 0.B.34)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.D.30, 0.B.33)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.D.31, 0.C.14)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.D.32, 0.C.13)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.D.33, 0.D.33)"}
+//yidingCABLE += {"type": "PHC_CABLE_1000", "connection": "(1.D.34, 0.D.34)"}
+
+//////////////////////////////////////////
+# 2Board, from Board 0.A
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.A.23, 2.A.23)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.A.24, 2.A.24)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.A.25, 2.A.25)"}
+
+# 2Board, from Board 0.B
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.B.2, 2.B.2)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.B.6, 2.B.6)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.B.7, 2.B.7)"}
+
+# 2Board, from Board 0.C
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.C.23, 2.C.23)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.C.24, 2.C.24)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.C.25, 2.C.25)"}
+
+# 2Board, from Board 0.D
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.D.2, 2.D.2)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.D.6, 2.D.6)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.D.7, 2.D.7)"}
+//////////////////////////////////////////
+# 2Board, from Board 3.A
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.A.7, 2.A.7)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.A.8, 2.A.8)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.A.9, 2.B.25)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.A.10, 2.B.24)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.A.11, 2.C.8)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.A.12, 2.C.7)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.A.13, 2.D.24)"}
+//yidingCABLE += {"type": "PHC_CABLE_1000", "connection": "(3.A.14, 2.D.25)"}
+
+# 2Board, from Board 3.B
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.B.24, 2.A.10)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.B.25, 2.A.9)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.B.29, 2.B.29)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.B.30, 2.B.30)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.B.31, 2.C.9)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.B.32, 2.C.10)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.B.33, 2.D.30)"}
+//yidingCABLE += {"type": "PHC_CABLE_1000", "connection": "(3.B.34, 2.D.29)"}
+
+# 2Board, from Board 3.C
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.C.7, 2.A.12)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.C.8, 2.A.11)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.C.9, 2.B.31)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.C.10, 2.B.32)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.C.11, 2.C.11)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.C.12, 2.C.12)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.C.13, 2.D.32)"}
+//yidingCABLE += {"type": "PHC_CABLE_1000", "connection": "(3.C.14, 2.D.31)"}
+
+# 2Board, from Board 3.D
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.D.24, 2.A.13)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.D.25, 2.A.14)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.D.29, 2.B.34)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.D.30, 2.B.33)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.D.31, 2.C.14)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.D.32, 2.C.13)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(3.D.33, 2.D.33)"}
+//yidingCABLE += {"type": "PHC_CABLE_1000", "connection": "(3.D.34, 2.D.34)"}
+
+//////////////////////////////////////////
+# 2Board, from Board 1.A
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.A.23, 3.A.23)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.A.24, 3.A.24)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.A.25, 3.A.25)"}
+
+# 2Board, from Board 1.B
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.B.2, 3.B.2)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.B.6, 3.B.6)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.B.7, 3.B.7)"}
+
+# 2Board, from Board 1.C
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.C.23, 3.C.23)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.C.24, 3.C.24)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.C.25, 3.C.25)"}
+
+# 2Board, from Board 1.D
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.D.2, 3.D.2)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.D.6, 3.D.6)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(1.D.7, 3.D.7)"}
+//////////////////////////////////////////
+
+
+//////////////////////////////////////////
+# 2Board, from Board 0.A
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.A.27, 4.A.27)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.A.28, 4.A.28)"}
+
+
+# 2Board, from Board 0.B
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.B.8, 4.B.8)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.B.9, 4.B.9)"}
+
+
+# 2Board, from Board 0.C
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.C.27, 4.C.27)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.C.28, 4.C.28)"}
+
+# 2Board, from Board 0.D
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.D.8, 4.D.8)"}
+CABLE += {"type": "PHC_CABLE_1000", "connection": "(0.D.9, 4.D.9)"}
+
+
+//////////////////////////////////////////
+# 2Board, from Board 2.A
+//yidingCABLE += {"type": "PHC_CABLE_2000", "connection": "(2.A.29, 4.A.29)"}
+//yidingCABLE += {"type": "PHC_CABLE_2000", "connection": "(2.A.30, 4.A.30)"}
+
+
+# 2Board, from Board 2.B
+//yidingCABLE += {"type": "PHC_CABLE_2000", "connection": "(2.B.10, 4.B.10)"}
+//yidingCABLE += {"type": "PHC_CABLE_2000", "connection": "(2.B.11, 4.B.11)"}
+
+
+# 2Board, from Board 2.C
+//yidingCABLE += {"type": "PHC_CABLE_2000", "connection": "(2.C.29, 4.C.29)"}
+//yidingCABLE += {"type": "PHC_CABLE_2000", "connection": "(2.C.30, 4.C.30)"}
+
+# 2Board, from Board 2.D
+//yidingCABLE += {"type": "PHC_CABLE_2000", "connection": "(2.D.10, 4.D.10)"}
+//yidingCABLE += {"type": "PHC_CABLE_2000", "connection": "(2.D.11, 4.D.11)"}
+
+
+
+
+//////////////////////////////////////////
+
+///// DDR Cards Reserved
+
+CARD += {"type":"CAPC_16G_V1", "connector":"0.A.3"}
+CARD += {"type":"CAPC_16G_V1", "connector":"1.A.3"}
+CARD += {"type":"CAPC_16G_V1", "connector":"2.A.3"}
+CARD += {"type":"CAPC_16G_V1", "connector":"3.A.3"}
+CARD += {"type":"CAPC_16G_V1", "connector":"4.A.3"}
+
+///// GPIO Cards Reserved
+
+// CARD += {"type":"GPIO_CARD", "connector":"0.A.29"}
+// CARD += {"type":"GPIO_CARD", "connector":"1.A.29"}
+// CARD += {"type":"GPIO_CARD", "connector":"2.A.29"}
+// CARD += {"type":"GPIO_CARD", "connector":"3.A.29"}
+// CARD += {"type":"GPIO_CARD", "connector":"4.A.29"}
+
+
+///// SD Cards Reserved
+
+// CARD += {"type":"SD_CARD", "connector":"0.A.6"}
+// CARD += {"type":"SD_CARD", "connector":"1.A.6"}
+// CARD += {"type":"SD_CARD", "connector":"2.A.6"}
+// CARD += {"type":"SD_CARD", "connector":"3.A.6"}
+// CARD += {"type":"SD_CARD", "connector":"4.A.6"}
+
+///// EMMC Cards Reserved
+
+// CARD += {"type":"EMMC_CARD", "connector":"0.A.35"}
+// CARD += {"type":"EMMC_CARD", "connector":"1.A.35"}
+// CARD += {"type":"EMMC_CARD", "connector":"2.A.35"}
+// CARD += {"type":"EMMC_CARD", "connector":"3.A.35"}
+// CARD += {"type":"EMMC_CARD", "connector":"4.A.35"}
+
+////////////////////////////////////////

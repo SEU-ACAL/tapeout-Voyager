@@ -108,7 +108,7 @@ add_custom_target(build-all ALL DEPENDS
 如果需要为新加入的workload使用MEEK的检查功能，请运行add_python.py；
 
 ```
-python3 add_check_macro.py /path/to/your/main.c
+python3 ./voyager-test/scripts/add_check_macro.py /path/to/your/main.c
 ```
 
 然后在cpu的workload文件夹下面的CMakelist.txt 的cflag加入-DCHECK=1，启用check；

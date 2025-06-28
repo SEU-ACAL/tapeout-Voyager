@@ -1,0 +1,11 @@
+# P2E SSH Connection Configuration
+ssh:
+  host: "103.221.143.59"
+  port: 52123
+  username: "XXXXXXXXXXXX"
+  password: "XXXXXXXXXXXX"
+  
+# Default paths
+paths:
+  remote_base: "/home/XXXXX"
+  local_base: "."
