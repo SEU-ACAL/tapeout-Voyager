@@ -59,12 +59,18 @@ class GemminiPrefetchConfig extends Config(
 // )
 
 class OurHeterSoCConfig extends Config(
-  new chipyard.config.WithTileFrequency(100, Some(0)) ++
-  new chipyard.config.WithTileFrequency(100, Some(1)) ++
-  new chipyard.config.WithTileFrequency(100, Some(2)) ++
-  new chipyard.config.WithTileFrequency(100, Some(3)) ++
-  new chipyard.config.WithTileFrequency(100, Some(4)) ++
-  new chipyard.config.WithTileFrequency(100, Some(5)) ++
+  // new chipyard.config.WithTileFrequency(100, Some(0)) ++
+  // new chipyard.config.WithTileFrequency(100, Some(1)) ++
+  // new chipyard.config.WithTileFrequency(100, Some(2)) ++
+  // new chipyard.config.WithTileFrequency(100, Some(3)) ++
+  // new chipyard.config.WithTileFrequency(100, Some(4)) ++
+  // new chipyard.config.WithTileFrequency(100, Some(5)) ++
+  new chipyard.config.WithTileFrequency(1000, Some(0)) ++
+  new chipyard.config.WithTileFrequency(500, Some(1)) ++
+  new chipyard.config.WithTileFrequency(500, Some(2)) ++
+  new chipyard.config.WithTileFrequency(500, Some(3)) ++
+  new chipyard.config.WithTileFrequency(500, Some(4)) ++
+  new chipyard.config.WithTileFrequency(500, Some(5)) ++
   new freechips.rocketchip.guardiancouncil.WithGuardianCouncilNodes++
   // new barf.WithHellaCachePrefetcher(Seq(5), barf.SingleStridedPrefetcherParams()) ++   // strided prefetcher, sits in front of the L1D$, monitors core requests to prefetching into the L1D$
   

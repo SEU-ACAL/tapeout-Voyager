@@ -22,7 +22,7 @@ case class BuckyBallConfig(
   veclane: Int = 16,
 
   tlb_size: Int = 4,
-  rob_entries: Int = 32,  // RoB条目数量
+  rob_entries: Int = 16,  // RoB条目数量
   
   dma_maxbytes: Int = 64, // 未使用
   dma_buswidth: Int = 128,

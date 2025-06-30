@@ -39,8 +39,8 @@ set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-g++")
 file(MAKE_DIRECTORY ${OUTPUT_BIN_DIR})
 file(MAKE_DIRECTORY ${OUTPUT_BIN_DIR}/npu/native)
 file(MAKE_DIRECTORY ${RTL_BUILD_DIR}/verilator)
-file(MAKE_DIRECTORY ${RTL_BUILD_DIR}/firesim)
-file(MAKE_DIRECTORY ${RTL_BUILD_DIR}/firesim/overlay/root)
+file(MAKE_DIRECTORY ${RTL_BUILD_DIR}/marshal)
+file(MAKE_DIRECTORY ${RTL_BUILD_DIR}/marshal/overlay/root)
 
 #-------------------------------------------------------------------------------
 # set custom target
@@ -49,7 +49,7 @@ add_custom_target(create-dirs
   COMMAND mkdir -p ${OUTPUT_BIN_DIR}
   COMMAND mkdir -p ${OUTPUT_BIN_DIR}/npu/native
   COMMAND mkdir -p ${RTL_BUILD_DIR}/verilator
-  COMMAND mkdir -p ${RTL_BUILD_DIR}/firesim
+  COMMAND mkdir -p ${RTL_BUILD_DIR}/marshal
   COMMENT "Creating necessary directories"
 )
 
