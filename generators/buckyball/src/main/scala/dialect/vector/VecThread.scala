@@ -163,7 +163,7 @@ class VecThread (implicit t: ThreadParams)
     mul = Module(new MulOp())
     when (busy) {
       mul.io.in.valid := true.B
-      mul.io.in.bits.op1 := op1(iter)
+      mul.io.in.bits.op1 := op1(16.U - iter)
       mul.io.in.bits.op2 := op2
     }.otherwise {
       mul.io.in.valid := false.B
