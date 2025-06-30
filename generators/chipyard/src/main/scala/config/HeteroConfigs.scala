@@ -5,6 +5,7 @@ import freechips.rocketchip.guardiancouncil._
 import freechips.rocketchip.prci.{AsynchronousCrossing}
 import freechips.rocketchip.subsystem.{InCluster}
 import freechips.rocketchip.tile._
+import peripheral._
 
 // ---------------------
 // Heterogenous Configs
@@ -58,20 +59,19 @@ class GemminiPrefetchConfig extends Config(
 // )
 
 class OurHeterSoCConfig extends Config(
-
-  new chipyard.config.WithTileFrequency(1000, Some(0)) ++
-  new chipyard.config.WithTileFrequency(500, Some(1)) ++
-  new chipyard.config.WithTileFrequency(500, Some(2)) ++
-  new chipyard.config.WithTileFrequency(500, Some(3)) ++
-  new chipyard.config.WithTileFrequency(500, Some(4)) ++
-  new chipyard.config.WithTileFrequency(500, Some(5)) ++
+  new chipyard.config.WithTileFrequency(100, Some(0)) ++
+  new chipyard.config.WithTileFrequency(100, Some(1)) ++
+  new chipyard.config.WithTileFrequency(100, Some(2)) ++
+  new chipyard.config.WithTileFrequency(100, Some(3)) ++
+  new chipyard.config.WithTileFrequency(100, Some(4)) ++
+  new chipyard.config.WithTileFrequency(100, Some(5)) ++
   new freechips.rocketchip.guardiancouncil.WithGuardianCouncilNodes++
-  new barf.WithHellaCachePrefetcher(Seq(5), barf.SingleStridedPrefetcherParams()) ++   // strided prefetcher, sits in front of the L1D$, monitors core requests to prefetching into the L1D$
+  // new barf.WithHellaCachePrefetcher(Seq(5), barf.SingleStridedPrefetcherParams()) ++   // strided prefetcher, sits in front of the L1D$, monitors core requests to prefetching into the L1D$
   
   // new freechips.rocketchip.rocket.WithNBigNpuCores(1, nMSHRs = 16) ++ //independent Rocket for gemmini: hartid 5, with non-blocking L1D$
   // new chipyard.config.WithMultiRoCCNpu ++
   // new chipyard.config.WithMultiRoCCGemmini(5)(gemmini.GemminiConfigs.defaultConfig) ++ // put gemmini on hart-5(rocket)
-  new freechips.rocketchip.rocket.WithNBuckyBallCores(1, nMSHRs = 16) ++ //independent Rocket for gemmini: hartid 5, with non-blocking L1D$
+  new freechips.rocketchip.rocket.WithNBuckyBallCores(1) ++ //independent Rocket for gemmini: hartid 5, with non-blocking L1D$
   new chipyard.config.WithMultiRoCCBB ++
   new chipyard.config.WithMultiRoCCBuckyBall(5)(buckyball.BuckyBallConfigs.defaultConfig) ++ // put gemmini on hart-5(rocket)
   
@@ -91,6 +91,7 @@ class OurHeterSoCConfig extends Config(
   //  Crossing specifications
   new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1) ++
   new boom.meek.common.WithNLargeBooms(1) ++
+  new peripheral.WithMyPeripheral(0x10050000, 0x1000) ++
   new chipyard.config.AbstractConfig
 )
 
@@ -137,5 +138,6 @@ class BuckyBallRocketConfig extends Config(
   new chipyard.config.WithMultiRoCCBB ++
   new chipyard.config.WithMultiRoCCBuckyBall(0)(buckyball.BuckyBallConfigs.defaultConfig) ++
   new chipyard.config.WithSystemBusWidth(128) ++
+  new peripheral.WithMyPeripheral(0x10050000, 0x40) ++
   new chipyard.config.AbstractConfig
 )

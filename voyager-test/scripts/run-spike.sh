@@ -98,7 +98,7 @@ find_binary_in_dir() {
     return 1
 }
 
-for dir in cpu npu tutorial; do
+for dir in cpu npu tutorial peripheral; do
     base_dir="${CYDIR}/voyager-test/output/workloads/${dir}"
     if [ -d "${base_dir}" ]; then
         found_path=$(find_binary_in_dir "${base_dir}" "${binary}" "${default_suffix}")

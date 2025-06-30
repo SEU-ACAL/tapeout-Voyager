@@ -40,6 +40,7 @@ import testchipip.tsi.{CanHavePeripheryUARTTSI, UARTTSIIO}
 import icenet.{CanHavePeripheryIceNIC, SimNetwork, NicLoopback, NICKey, NICIOvonly}
 import chipyard.{CanHaveMasterTLMemPort, ChipyardSystem, ChipyardSystemModule}
 import chipyard.example.{CanHavePeripheryGCD}
+import peripheral.{CanHavePeripheryMyPeripheral}
 
 import scala.reflect.{ClassTag}
 
@@ -547,5 +548,13 @@ class WithGCDBusyPunchthrough extends OverrideIOBinder({
     val io_gcd_busy = IO(Output(Bool()))
     io_gcd_busy := busy
     (Seq(GCDBusyPort(() => io_gcd_busy)), Nil)
+  }.getOrElse((Nil, Nil))
+})
+
+class WithMyPeripheralPunchthrough extends OverrideIOBinder({
+  (system: CanHavePeripheryMyPeripheral) => system.myPeripheralStatus.map { status =>
+    val io_device_status = IO(Output(UInt(32.W))).suggestName("my_peripheral_status")
+    io_device_status := status
+    (Seq(MyPeripheralPort(() => io_device_status)), Nil)
   }.getOrElse((Nil, Nil))
 })

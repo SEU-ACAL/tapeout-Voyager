@@ -158,7 +158,7 @@ lazy val chipyard = (project in file("generators/chipyard"))
     dsptools, rocket_dsp_utils,
     buckyball, gemmini, icenet, tracegen, cva6, nvdla, sodor, ibex, fft_generator,
     constellation, mempress, barf, shuttle, caliptra_aes, rerocc,
-    compressacc, saturn, ara, firrtl2_bridge, vexiiriscv)
+    compressacc, saturn, ara, firrtl2_bridge, vexiiriscv, peripheral)
   .settings(libraryDependencies ++= rocketLibDeps.value)
   .settings(
     libraryDependencies ++= Seq(
@@ -244,6 +244,11 @@ lazy val sodor = (project in file("generators/riscv-sodor"))
   .settings(commonSettings)
 
 lazy val buckyball = freshProject("buckyball", file("generators/buckyball"))
+  .dependsOn(rocketchip)
+  .settings(libraryDependencies ++= rocketLibDeps.value)
+  .settings(commonSettings)
+
+lazy val peripheral = (project in file("generators/peripheral-example"))  
   .dependsOn(rocketchip)
   .settings(libraryDependencies ++= rocketLibDeps.value)
   .settings(commonSettings)

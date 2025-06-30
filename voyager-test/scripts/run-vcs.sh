@@ -3,7 +3,7 @@
 CYDIR=$(git rev-parse --show-toplevel)
 ROOT=${CYDIR}/voyager-test
 WAVEFORM=""
-WAVEFORM_DIR="${ROOT}/waveforms"
+WAVEFORM_DIR="${ROOT}/output/waveforms"
 mkdir -p "${WAVEFORM_DIR}"
 
 TIMESTAMP=$(date +%Y-%m-%d-%H-%M)
@@ -116,7 +116,7 @@ find_binary_in_dir() {
 }
 
 # 在cpu和npu及其子目录中查找二进制文件
-for dir in cpu npu template; do
+for dir in cpu npu tutorial peripheral; do
   base_dir="${CYDIR}/voyager-test/output/workloads/${dir}"
   if [ -d "${base_dir}" ]; then
     found_path=$(find_binary_in_dir "${base_dir}" "${binary}" "${default_suffix}")
