@@ -5,16 +5,19 @@
 set(LINK_FLAGS "-static -Wl,--no-dynamic-linker")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINK_FLAGS}")
 # add_compile_options(-O2 -static)
+
+set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-g++")  
+
 add_executable(hello-linux ${CPU_WORKLOAD_DIR}/hello/hello.c )
 add_executable(cpu-spmm-linux ${CPU_WORKLOAD_DIR}/spmm/spmm.c)
 add_executable(bfs-linux ${CPU_WORKLOAD_DIR}/prefetch/bfs/bfs.c)
-add_executable(hash-linux ${CPU_WORKLOAD_DIR}/prefetch/hash/hash.c)
+# add_executable(hash-linux ${CPU_WORKLOAD_DIR}/prefetch/hash/hash.c)
 
 add_custom_target(cpu-linux-build ALL DEPENDS
     hello-linux
     cpu-spmm-linux
     bfs-linux
-    hash-linux
+#     hash-linux
     COMMENT "Building linux workloads for CPU"
     VERBATIM)
 

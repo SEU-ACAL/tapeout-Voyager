@@ -9,6 +9,8 @@ set(BUDDY_LLC ${BUDDY_BINARY_DIR}/buddy-llc)
 
 set(BUCKYBALL_CTEST_DIR ${BUCKYBALL_WORKLOAD_DIR}/CTest)
 
+set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-g++")  
+
 #-------------------------------------------------------------------------------
 # build linux version workload (current not supported)
 #-------------------------------------------------------------------------------

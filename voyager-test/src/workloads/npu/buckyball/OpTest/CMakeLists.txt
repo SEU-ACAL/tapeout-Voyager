@@ -9,7 +9,7 @@ set(BUDDY_LLC ${BUDDY_BINARY_DIR}/buddy-llc)
 
 set(BUCKYBALL_OPTEST_DIR ${NPU_WORKLOAD_DIR}/buckyball/OpTest)
 
-
+set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-g++")  
 
 add_custom_command(
   OUTPUT  bb_mvin_mvout_multi-baremetal bb_mvin_mvout_single-baremetal bb_mvin_mvout-linux

@@ -273,6 +273,7 @@ int checker (int hart_id)
     printf("Perf: Total inst = %d \r\n", perf_val);
     lock_release(&uart_lock);
   }
+  ghe_initailised(0);
   while(1){
 
   }

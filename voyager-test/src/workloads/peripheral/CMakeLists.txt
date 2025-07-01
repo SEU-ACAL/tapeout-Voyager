@@ -6,8 +6,9 @@ project(peripheral C)
 set(LINK_FLAGS "-static -Wl,--no-dynamic-linker")
 set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINK_FLAGS}")
 
-add_executable(peripheral-linux ${PERIPHERAL_WORKLOAD_DIR}/peripheral.c)
+set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-g++")  
 
+add_executable(peripheral-linux ${PERIPHERAL_WORKLOAD_DIR}/peripheral.c)
 add_custom_target(peripheral-linux-build ALL DEPENDS
     peripheral-linux
     COMMENT "Building linux workloads for tutorial"

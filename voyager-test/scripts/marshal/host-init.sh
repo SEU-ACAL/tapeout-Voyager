@@ -11,7 +11,7 @@ cd $CYDIR && source env.sh
 
 echo "Building marshal workload"
 cd $CYDIR/voyager-test/build
-make -j256
+make #-j256
 
 cd $CYDIR/voyager-test/output
 mkdir -p ./marshal/overlay/root/
