@@ -71,6 +71,11 @@ class BoomVCU118Config extends Config(
   new chipyard.MegaBoomV3Config
 )
 
+class OurHeterVCU118Config extends Config(
+  new WithVCU118Tweaks ++
+  new chipyard.OurHeterSoCConfig
+)
+
 class WithFPGAFrequency(fMHz: Double) extends Config(
   new chipyard.harness.WithHarnessBinderClockFreqMHz(fMHz) ++
   new chipyard.config.WithSystemBusFrequency(fMHz) ++

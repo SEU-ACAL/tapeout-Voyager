@@ -171,6 +171,19 @@ $ verdi
 
 firesim 由`./build-setup.sh`已经安装好, 参考[教程](docs/firesim-README.md)运行(求补充)
 
+## 七、P2E
+
+首先开个P2E加速器服务器的账号，并配置好p2e_config.yaml
+
+```shell
+$ cd Voyager
+$ source env.sh
+# 记得配置p2e_config.yaml
+$ ./voyager-test/scripts/p2e/build-p2e.sh --config OurHeterVCU118Config
+$ ./voyager-test/scripts/p2e/run-p2e.sh
+```
+
+
 ## 八、后端 (DC)
 
 使用`run-dc.sh`脚本会先使用verilator自动生成对应版本的Config，之后进行DC综合. 报告和网表文件将生成在 `./voyager-test/output/dc/reports` 路径下.

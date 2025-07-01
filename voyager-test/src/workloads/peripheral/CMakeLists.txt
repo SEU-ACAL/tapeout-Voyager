@@ -8,7 +8,7 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINK_FLAGS}")
 
 set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-g++")  
 
-add_executable(peripheral-linux ${PERIPHERAL_WORKLOAD_DIR}/peripheral.c)
+add_executable(peripheral-linux ${PERIPHERAL_WORKLOAD_DIR}/peripheral-linux.c)
 add_custom_target(peripheral-linux-build ALL DEPENDS
     peripheral-linux
     COMMENT "Building linux workloads for tutorial"
@@ -23,8 +23,8 @@ set(C_FLAGS -std=c11 -g -fno-common -O2 -static
             -fno-builtin-printf -specs=htif_nano.specs)
 
 add_custom_target(peripheral-baremetal-build ALL
-    COMMAND ${ELF_CC} ${C_FLAGS} -o peripheral-baremetal ${PERIPHERAL_WORKLOAD_DIR}/peripheral.c
-    DEPENDS ${PERIPHERAL_WORKLOAD_DIR}/peripheral.c
+    COMMAND ${ELF_CC} ${C_FLAGS} -o peripheral-baremetal ${PERIPHERAL_WORKLOAD_DIR}/peripheral-baremetal.c
+    DEPENDS ${PERIPHERAL_WORKLOAD_DIR}/peripheral-baremetal.c
     COMMENT "Building baremetal workloads for tutorial"
     VERBATIM)
 
