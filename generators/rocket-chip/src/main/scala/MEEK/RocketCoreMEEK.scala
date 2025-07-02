@@ -348,7 +348,6 @@ class RocketMEEK(tile: RocketTileMeek)(implicit p: Parameters) extends CoreModul
   val lsl_req_kill      = Wire(Bool())
   
   val lsl_req_valid_csr = Wire(Bool())
-  val lsl_req_valid_csr_test = Wire(Bool())
   val lsl_resp_data_csr = Wire(UInt(xLen.W))
   val lsl_resp_replay_csr = Wire(Bool())
   val lsl_req_ready_csr = Wire(Bool())
@@ -778,8 +777,6 @@ class RocketMEEK(tile: RocketTileMeek)(implicit p: Parameters) extends CoreModul
   // val replay_wb = replay_wb_common || replay_wb_rocc || replay_wb_csr || replay_wb_vec
   // take_pc_wb := replay_wb || wb_xcpt || csr.io.eret || wb_reg_flush_pipe
 //===== GuardianCouncil Function: Start ====//
-  // val csrshadow_seq = (CSRshadows.allshadows.map(_.asUInt)).toSeq ++ Seq(CSRs.fflags.U, CSRs.fcsr.U, CSRs.frm.U)
-  val csrshadow_seq                               = Seq(CSRs.fflags.U, CSRs.fcsr.U, CSRs.frm.U)
   // Original design:
   // val wb_wxd = wb_reg_valid && wb_ctrl.wxd
   // val replay_wb_rocc = wb_reg_valid && wb_ctrl.rocc && !io.rocc.cmd.ready
@@ -790,7 +787,7 @@ class RocketMEEK(tile: RocketTileMeek)(implicit p: Parameters) extends CoreModul
   // val replay_wb_csr: Bool = wb_reg_valid && csr.io.rw_stall
   val replay_wb_rocc = wb_reg_valid && wb_ctrl.rocc && (false).B // in guardian council, rocc.cmd.ready is always ready
   val replay_wb_lsl = Mux((checker_mode === 1.U), lsl_resp_replay.asBool || lsl_resp_replay_csr.asBool , false.B)
-  val wb_csr = (wb_reg_inst(6,0) === 0x73.U) && ((wb_reg_inst(14,12) === 0x2.U) || (wb_reg_inst(14,12) === 0x1.U) || (wb_reg_inst(14,12) === 0x3.U) || (wb_reg_inst(14,12) === 0x5.U) || (wb_reg_inst(14,12) === 0x6.U) || (wb_reg_inst(14,12) === 0x7.U)) && !wb_reg_inst(31, 20).isOneOf(csrshadow_seq) && wb_reg_valid
+  val wb_csr = (wb_reg_inst(6,0) === 0x73.U) && ((wb_reg_inst(14,12) === 0x2.U) || (wb_reg_inst(14,12) === 0x1.U) || (wb_reg_inst(14,12) === 0x3.U) || (wb_reg_inst(14,12) === 0x5.U) || (wb_reg_inst(14,12) === 0x6.U) || (wb_reg_inst(14,12) === 0x7.U)) && !wb_reg_inst(31, 20).isOneOf(CSRshadows.csrshadow_seq) && wb_reg_valid
   lsl_resp_replay_csr := Mux(checker_mode.asBool, wb_csr && !lsl_req_ready_csr, false.B)
 
   /* IN GC, ROCC IS NOT A LONG-LATENCY INSTRUCTION ANY MORE */
@@ -882,12 +879,7 @@ class RocketMEEK(tile: RocketTileMeek)(implicit p: Parameters) extends CoreModul
   lsl_req_valid_csr := Mux(rf_wen, 
                        Mux(dmem_resp_valid && dmem_resp_xpu, false.B,
                        Mux(ll_wen, false.B,
-                       Mux(wb_ctrl.csr =/= CSR.N, Mux(checker_mode.asBool && wb_csr, true.B, false.B), false.B))), false.B)
-  lsl_req_valid_csr_test := Mux(rf_wen, 
-                            Mux(dmem_resp_valid && dmem_resp_xpu, false.B,
-                            Mux(ll_wen, false.B,
-                            Mux(wb_ctrl.csr =/= CSR.N, Mux(checker_mode.asBool && wb_csr && !wb_reg_inst(31, 20).isOneOf(csrshadow_seq), true.B, false.B), false.B))), false.B)  
-  dontTouch(lsl_req_valid_csr_test)          
+                       Mux(wb_ctrl.csr =/= CSR.N, Mux(checker_mode.asBool && wb_csr, true.B, false.B), false.B))), false.B)         
   dontTouch(lsl_req_valid_csr) 
   val rsu_slave = Module(new R_RSUSL(R_RSUSLParams(xLen, 32)))
   val lsl = Module(new R_LSL(R_LSLParams(255, xLen)))
@@ -1430,6 +1422,7 @@ class RocketMEEK(tile: RocketTileMeek)(implicit p: Parameters) extends CoreModul
   io.fpu.r_farf_valid := rsu_slave.io.arfs_valid_out
   io.fpu.retire := wb_valid || io.rocc.resp.valid
   io.fpu.checker_mode := checker_mode
+  io.fpu.checker_priv_mode := false.B
   io.fpu.core_trace := io.core_trace.asBool
   io.fpu.if_overtaking := icsl.io.if_overtaking
   io.fpu.if_overtaking_next_cycle := icsl.io.if_overtaking_next_cycle

@@ -59,7 +59,6 @@ class GH_BUF (val params: GH_BUF_Params)(implicit p: Parameters) extends BoomMod
   // val numPackets                                = 2
   val buffer_width                              = (2*params.xlen+8)
   val csr_addr                                  = Wire(Vec(params.core_width, UInt(12.W)))
-  val csrshadow_seq                               = Seq(CSRs.fflags.U, CSRs.fcsr.U, CSRs.frm.U)
   
   val u_buffer                                  = Seq.fill(params.core_width) {Module(new GH_FIFO(FIFOParams (params.packet_size, 32)))}
   val can_fwd                                   = WireInit(VecInit.fill(params.core_width)(false.B))
@@ -84,18 +83,18 @@ class GH_BUF (val params: GH_BUF_Params)(implicit p: Parameters) extends BoomMod
     inst_type_enc(i)                           := MuxCase(0.U, 
                                                       Array((io.commit_valids(i)&&io.commit_uops(i).uses_ldq) -> 1.U,
                                                             (io.commit_valids(i)&&io.commit_uops(i).uses_stq) -> 2.U,
-                                                            (io.commit_valids(i)&&io.commit_uops(i).is_csr&&(!(csr_addr(i)).isOneOf(csrshadow_seq))) -> 3.U
+                                                            (io.commit_valids(i)&&io.commit_uops(i).is_csr&&(!(csr_addr(i)).isOneOf(CSRshadows.csrshadow_seq))) -> 3.U
                                                             ))
                                                             
-    can_fwd(i)                                 := (io.gh_can_fwd===0.U)&&io.commit_valids(i)&&(io.commit_uops(i).uses_ldq||io.commit_uops(i).uses_stq&&(!io.commit_uops(i).is_fence)||io.commit_valids(i)&&io.commit_uops(i).is_csr&&(!(csr_addr(i)).isOneOf(csrshadow_seq)))
+    can_fwd(i)                                 := (io.gh_can_fwd===0.U)&&io.commit_valids(i)&&(io.commit_uops(i).uses_ldq||io.commit_uops(i).uses_stq&&(!io.commit_uops(i).is_fence)||io.commit_valids(i)&&io.commit_uops(i).is_csr&&(!(csr_addr(i)).isOneOf(CSRshadows.csrshadow_seq)))
     filter_inst_index(i)                       := Mux(can_fwd(i), Cat(one, io.ic_crnt_target(3,0),inst_type_enc(i)), 0.U)
     filter_packet(i)                           := MuxCase(0.U, 
                                                       Array((io.commit_valids(i)&&io.commit_uops(i).uses_ldq) -> io.alu_in(i),
                                                             (io.commit_valids(i)&&io.commit_uops(i).uses_stq&(!is_amo(i))) -> io.alu_in(i),
                                                             (io.commit_valids(i)&&io.commit_uops(i).uses_stq&(is_amo(i)))  -> Cat(io.gh_prfs_rd(i),io.alu_in(i)(63,0)),
-                                                            (io.commit_valids(i)&&io.commit_uops(i).is_csr&&(!(csr_addr(i)).isOneOf(csrshadow_seq))) -> io.gh_prfs_rd(i)
+                                                            (io.commit_valids(i)&&io.commit_uops(i).is_csr&&(!(csr_addr(i)).isOneOf(CSRshadows.csrshadow_seq))) -> io.gh_prfs_rd(i)
                                                             ))
-      Mux(io.commit_valids(i)&&io.commit_uops(i).is_csr&&(!(csr_addr(i)).isOneOf(csrshadow_seq)),io.gh_prfs_rd(i),io.alu_in(i))
+      Mux(io.commit_valids(i)&&io.commit_uops(i).is_csr&&(!(csr_addr(i)).isOneOf(CSRshadows.csrshadow_seq)),io.gh_prfs_rd(i),io.alu_in(i))
   }
 
   // Connecting buffers: Enqueue Phase

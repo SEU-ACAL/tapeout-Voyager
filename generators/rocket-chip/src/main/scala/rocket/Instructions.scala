@@ -3,7 +3,9 @@
 
 package freechips.rocketchip.rocket
 
+import chisel3._
 import chisel3.util._
+import freechips.rocketchip.util._
 
 /* make EXTENSIONS="rv_* rv64*" inst.chisel */
 
@@ -1730,6 +1732,22 @@ object CSRs {
     res.toArray
   }
 }
+object CSRshadowsindex{
+  val mstatus = 0x0
+  val mie = 0x1
+  val mtvec = 0x2
+  val mscratch = 0x3
+  val mepc = 0x4
+  val mip = 0x5
+  val sstatus = 0x6
+  val sie = 0x7
+  val sscratch = 0x8
+  val sepc = 0x9
+  val scause = 0xa
+  val stval = 0xb
+  val sip = 0xc
+}
+
 object CSRshadows{
   val mstatus = 0x300
   val mie = 0x304
@@ -1762,22 +1780,31 @@ object CSRshadows{
     res += sip
   }
 
+  val allshadows_for_filter ={
+    val res = collection.mutable.ArrayBuffer[Int]()
+    res += mstatus
+    res += mie
+    res += mtvec
+    res += mscratch
+    res += mepc
+    res += mip
+    res += sstatus
+    res += sie
+    res += sscratch
+    res += sepc
+    res += scause
+    res += stval
+    res += sip
+    res += CSRs.fcsr
+    res += CSRs.fflags
+    res += CSRs.frm
+  }
+
+  val csrshadow_seq = (CSRshadows.allshadows_for_filter.map(_.asUInt)).toSeq
+
+  val csrshadow_seq_nouse = (CSRshadows.allshadows.map(_.asUInt)).toSeq
+
   val CSRsize = allshadows.size
 
   
-}
-object CSRshadowsindex{
-  val mstatus = 0x0
-  val mie = 0x1
-  val mtvec = 0x2
-  val mscratch = 0x3
-  val mepc = 0x4
-  val mip = 0x5
-  val sstatus = 0x6
-  val sie = 0x7
-  val sscratch = 0x8
-  val sepc = 0x9
-  val scause = 0xa
-  val stval = 0xb
-  val sip = 0xc
 }

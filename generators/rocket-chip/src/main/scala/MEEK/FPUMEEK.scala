@@ -59,6 +59,7 @@ class FPUCoreIOMEEK(implicit p: Parameters) extends CoreBundle()(p) {
   val keep_clock_enabled        = Input(Bool())
   val core_trace                = Input(Bool())
   val checker_mode              = Input(Bool())
+  val checker_priv_mode         = Input(Bool())
   val if_overtaking             = Input(Bool())
   val if_overtaking_next_cycle  = Input(Bool())
   val fpu_inflight              = Output(Bool())
@@ -180,7 +181,8 @@ class FPUMEEK(cfg: FPUParams)(implicit p: Parameters) extends FPUModule()(p) {
 
   // There is one cycle delay for the F-REG's loading
   val r_cannot_load_wb = Wire(Bool())
-  r_cannot_load_wb := Mux(!io.checker_mode, false.B, Mux(retire_1cycle, false.B, true.B))
+  r_cannot_load_wb := Mux(!(io.checker_mode || io.checker_priv_mode), false.B, Mux(retire_1cycle, false.B, true.B))
+
 
   when (load_wb && !r_cannot_load_wb) {
     val wdata = recode(load_wb_data, load_wb_typeTag)
@@ -323,7 +325,7 @@ class FPUMEEK(cfg: FPUParams)(implicit p: Parameters) extends FPUModule()(p) {
   when (mem_wen) {
     when (!killm) {
       //===== GuardianCouncil Function: Start ====//
-      wen := wen >> 1 | Mux((io.checker_mode === 1.U) && io.if_overtaking_next_cycle, 0.U, memLatencyMask)
+      wen := wen >> 1 | Mux((io.checker_mode || io.checker_priv_mode) && io.if_overtaking_next_cycle, 0.U, memLatencyMask)
       //===== GuardianCouncil Function: End ====//
     }
     for (i <- 0 until maxLatency-1) {
@@ -342,7 +344,7 @@ class FPUMEEK(cfg: FPUParams)(implicit p: Parameters) extends FPUModule()(p) {
   wen_2cycle := wen_1cycle
   
   val r_cannot_wb = Wire(Bool())
-  r_cannot_wb        := Mux(!io.checker_mode, false.B,
+  r_cannot_wb        := Mux(!(io.checker_mode || io.checker_priv_mode), false.B,
                         Mux(((wen(0) === 1.U) && (wen_1cycle(1) === 0.U) && io.retire.asBool), false.B,
                         Mux(((wen(0) === 1.U) && (wen_1cycle(1) === 1.U) && (wen_2cycle(2) === 0.U) && retire_1cycle), false.B,
                         Mux(((wen(0) === 1.U) && (wen_1cycle(1) === 1.U) && (wen_2cycle(2) === 1.U) && retire_2cycle), false.B, true.B))))
@@ -401,7 +403,7 @@ class FPUMEEK(cfg: FPUParams)(implicit p: Parameters) extends FPUModule()(p) {
     val divSqrt_inValid = mem_reg_valid && (mem_ctrl.div || mem_ctrl.sqrt) && !divSqrt_inFlight
     // val divSqrt_killed = RegNext(divSqrt_inValid && killm, true.B)
     //===== GuardianCouncil Function: Start ====//
-    val divSqrt_killed = RegNext(divSqrt_inValid && killm, true.B) || (RegNext(divSqrt_inValid) && (Mux(io.checker_mode.asBool, io.if_overtaking, false.B)))
+    val divSqrt_killed = RegNext(divSqrt_inValid && killm, true.B) || (RegNext(divSqrt_inValid) && (Mux(io.checker_mode.asBool || io.checker_priv_mode, io.if_overtaking, false.B)))
     //===== GuardianCouncil Function: End ====//
     when (divSqrt_inValid) {
       divSqrt_waddr := mem_reg_inst(11,7)

@@ -122,6 +122,7 @@ class RobIo(
   val gh_effective_rob_idx                      = Input(UInt(7.W))    // Revisit: make it is generic
   val gh_effective_valid                        = Input(UInt(1.W))    // Revisit: make it is generic
   val r_next_pc                                 = Output(UInt(40.W))    // Revisit: make it is generic
+  val r_next_inst                               = Output(UInt(32.W))    // Revisit: make it is generic
   val debug_st                                  = Input(Valid(new STQEntry))
   //===== GuardianCouncil Function: End  ====//
 }
@@ -273,8 +274,10 @@ class Rob(
   val rob_head_fflags     = Wire(Vec(coreWidth, UInt(freechips.rocketchip.tile.FPConstants.FLAGS_SZ.W)))
 //===== GuardianCouncil Function: Start ====//
   val rob_head_pcs        = Wire(Vec(coreWidth, UInt(40.W)))
+  val rob_head_inst       = Wire(Vec(coreWidth, UInt(32.W)))
   io.r_next_pc           := rob_head_pcs(rob_head_lsb)
-  io.can_commit_withoutGC:= can_commit_noGC.reduce(_|_)
+  io.r_next_inst         := rob_head_inst(rob_head_lsb)
+  io.can_commit_withoutGC:= will_commit_noGC.reduce(_|_)
 //===== GuardianCouncil Function: End ====//
   val exception_thrown = Wire(Bool())
   dontTouch(io.commit)
@@ -529,6 +532,7 @@ class Rob(
     rob_head_uses_ldq(w) := rob_uop(rob_head).uses_ldq
     //===== GuardianCouncil Function: Start  ====//
     rob_head_pcs(w)      := rob_uop(rob_head).debug_pc
+    rob_head_inst(w)     := rob_uop(rob_head).debug_inst
     //===== GuardianCouncil Function: End  ====//
     //------------------------------------------------
     // Invalid entries are safe; thrown exceptions are unsafe.
