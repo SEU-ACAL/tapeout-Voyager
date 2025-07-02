@@ -115,12 +115,8 @@ link
 # set_input_delay -clock clk 2 [all_inputs]
 # set_output_delay -clock clk 2 [all_outputs]
 
-# set_dont_touch [get_cells -hier -filter "ref_name =~ *VecThread*"]
-# set_dont_touch [get_cells -hier -filter "ref_name =~ *BfpThread*"]
-# set_dont_touch [get_cells -hier -filter "ref_name =~ *CITU*"]
-
 # # 综合
-compile -incremental -scan
+compile_ultra -incremental -scan
 write -format ddc -hierarchy -output $REPORT_DIR/design_compiled.ddc
 
 # 生成报告
