@@ -18,11 +18,10 @@ help() {
   echo ""
   echo "Steps:"
   echo "  Step 1: Generate workload"
-  echo "  Step 2: Sync Config"
+  echo "  Step 2: Sync Config (includes serial port configuration)"
   echo "  Step 3: SSH connection"
   echo "  Step 4: Setup Serial on remote server"
-  echo "  Step 5: Running VDBG on remote server"
-  echo "  Step 6: Open Serial Screen on remote server"
+  echo "  Step 5: Running VDBG with integrated serial screen"
   exit 0
 }
 
@@ -88,7 +87,7 @@ SSH_USER=$(parse_yaml "username")
 SSH_PASSWORD=$(parse_yaml "password")
 REMOTE_BASE=$(parse_yaml "remote_base")
 FPGA_IP=$(parse_yaml "ip")
-WORKLOAD=$(parse_yaml "workload")
+WORKLOAD=$(parse_yaml "workload_name")
 SERIAL=$(parse_yaml "serial")
 
 # Function to check if sshpass is installed
@@ -151,6 +150,8 @@ main() {
     sed -i "s/\"IP\": \"[^\"]*\"/\"IP\": \"$FPGA_IP\"/g" hw-config.hdf
     Log "$YELLOW" "Setting workload name ($WORKLOAD) in debug_trigger.tcl"
     sed -i "s/-file [^.]*\.hex/-file ..\/image\/$WORKLOAD.hex/g" debug_trigger.tcl
+    Log "$YELLOW" "Setting serial port ($SERIAL) in run_vdbg.exp"
+    sed -i "s|send \"screen /dev/tty[0-9]*gpio 4800\\\\r\"|send \"screen $SERIAL 4800\\\\r\"|g" run_vdbg.exp
   else
     Log "$YELLOW" "Step 2 skipped"
   fi
@@ -166,8 +167,9 @@ main() {
     
     Log "$YELLOW" "Uploading files to remote server..."
     sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "mkdir -p p2e && cd p2e && mkdir -p image"
-    sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -P "$SSH_PORT" $OUTPUT_DIR/image/$WORKLOAD.hex $SSH_USER@$SSH_HOST:$REMOTE_BASE/p2e/image/$WORKLOAD.hex
     sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -P "$SSH_PORT" -r $SCRIPT_DIR/toolchain $SSH_USER@$SSH_HOST:$REMOTE_BASE/p2e
+    echo "$OUTPUT_DIR/image/${WORKLOAD}.hex"
+    sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -P "$SSH_PORT" ${OUTPUT_DIR}/image/${WORKLOAD}.hex $SSH_USER@$SSH_HOST:$REMOTE_BASE/p2e/image/${WORKLOAD}.hex
   else
     Log "$YELLOW" "Step 3 skipped"
   fi
@@ -182,18 +184,14 @@ main() {
     Log "$YELLOW" "Step 4 skipped"
   fi
 
-  # Step 5: Running VDBG on remote server
+  # Step 5: Running VDBG on remote server (in background)
   if [ $SKIP_STEPS -lt 5 ]; then
-    Log "$BLUE" "====================== Step 5: Running VDBG on remote server ======================"
-    Log "$YELLOW" "Running VDBG with debug_trigger.tcl..."
-    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cd p2e/toolchain && source setup.sh && timeout 120 ./run_vdbg.exp" 
+    Log "$BLUE" "====================== Step 5: Running VDBG on remote server (background) ======================"
+    Log "$YELLOW" "Running VDBG with debug_trigger.tcl in background..."
+    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -t -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cd p2e/toolchain && source setup.sh && ./run_vdbg.exp"
   else
     Log "$YELLOW" "Step 5 skipped"
   fi
-  
-  # Step 6: Open Serial Screen
-    Log "$BLUE" "====================== Step 6: Open Serial Screen on remote server ======================"
-    screen $SERIAL 4800
 }
 
 # Run main function

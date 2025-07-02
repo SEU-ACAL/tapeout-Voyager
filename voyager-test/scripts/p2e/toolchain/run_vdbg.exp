@@ -1,30 +1,14 @@
 #!/usr/bin/expect -f
 
-# 设置超时时间
-set timeout 60
-
 # 启动 vdbg
 spawn vdbg
 
 # 等待 vdbg 提示符
-expect "vdbg>"
+expect "vdbg> "
 
 # 执行 source debug_trigger.tcl
 send "source debug_trigger.tcl\r"
 
-# 等待执行完成，可以根据实际输出调整
-expect {
-    "100%" {
-        puts "Command executed successfully"
-        # 可以在这里添加更多命令
-        # send "exit\r"
-        # expect eof
-    }
-    timeout {
-        puts "Command execution timed out"
-        exit 1
-    }
-}
+send "screen /dev/tty10gpio 4800\r"
 
-# 保持交互式会话或退出
-interact 
+interact
