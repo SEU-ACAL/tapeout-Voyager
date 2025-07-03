@@ -1033,6 +1033,7 @@ class RocketMEEK(tile: RocketTileMeek)(implicit p: Parameters) extends CoreModul
   elu.io.lsl_resp_data := lsl_resp_data
   elu.io.wb_pc := Mux(wb_reg_valid, wb_reg_pc, 0.U)
   elu.io.wb_inst := Mux(wb_reg_valid, wb_reg_inst, 0.U)
+  elu.io.state_reset := icsl.io.state_reset
 
   // io.elu_data := Mux(io.elu_sel.asBool, rsu_slave.io.elu_cp_data, elu.io.elu_data)
   // Faking ELU data
