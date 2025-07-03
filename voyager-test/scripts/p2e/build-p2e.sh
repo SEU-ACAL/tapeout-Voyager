@@ -183,14 +183,14 @@ main() {
   # Step 4: Compiling on remote server
   if [ $SKIP_STEPS -lt 4 ]; then
     Log "$BLUE" "====================== Step 4: vsyn (on remote server) ======================"
-    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "source $REMOTE_BASE/p2e/toolchain/setup.sh && cd $REMOTE_BASE/p2e/toolchain && make vsyn"
+    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cd $REMOTE_BASE/p2e/toolchain && source ./setup.sh && make vsyn"
   else
     Log "$YELLOW" "Step 4 skipped"
   fi
 
   if [ $SKIP_STEPS -lt 5 ]; then
     Log "$BLUE" "====================== Step 5: vcom (on remote server) ======================"
-    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "source $REMOTE_BASE/p2e/toolchain/setup.sh && cd $REMOTE_BASE/p2e/toolchain && make vcom"
+    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cd $REMOTE_BASE/p2e/toolchain && source ./setup.sh && make vcom"
   else
     Log "$YELLOW" "Step 5 skipped"
   fi
@@ -198,7 +198,7 @@ main() {
   # Step 6: pnr on remote server
   if [ $SKIP_STEPS -lt 6 ]; then
     Log "$BLUE" "====================== Step 6: pnr (on remote server) ======================"
-    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "source $REMOTE_BASE/p2e/toolchain/setup.sh && cd $REMOTE_BASE/p2e/toolchain && make pnr"
+    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cd $REMOTE_BASE/p2e/toolchain && source ./setup.sh && make pnr"
   else
     Log "$YELLOW" "Step 6 skipped"
   fi

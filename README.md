@@ -173,7 +173,7 @@ firesim 由`./build-setup.sh`已经安装好, 参考[教程](docs/firesim-README
 
 ## 七、P2E
 
-首先开个P2E加速器服务器的账号，并配置好p2e_config.yaml
+首先开个P2E加速器服务器的账号，并配置好[p2e_config.yaml](./voyager-test/scripts/p2e/p2e_config.yaml)
 
 ```shell
 $ cd Voyager
@@ -183,6 +183,11 @@ $ ./voyager-test/scripts/p2e/build-p2e.sh --config OurHeterVCU118Config
 $ ./voyager-test/scripts/p2e/run-p2e.sh
 ```
 
+可以通过添加-s参数跳过部分步骤
+
+```shell
+$ ./voyager-test/scripts/p2e/run-p2e.sh -s 2 # 跳过前两步，直接去加速器上运行已有的workload和配置
+```
 
 ## 八、后端 (DC)
 
