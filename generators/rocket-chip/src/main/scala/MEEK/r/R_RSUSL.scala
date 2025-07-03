@@ -68,11 +68,11 @@ class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
   /* Loading snapshot from RSU Master */
   val arfs_ss                                     = SyncReadMem(params.numARFS+1, UInt(params.xLen.W))
   val farfs_ss                                    = SyncReadMem(params.numARFS+1, UInt(params.xLen.W))
-  //for debug
-  val arfs_ss_ECP                                 = Reg(Vec(params.numARFS, UInt(params.xLen.W)))
-  val farfs_ss_ECP                                = Reg(Vec(params.numARFS, UInt(params.xLen.W)))
-
-
+  // //for debug
+  // val arfs_ss_ECP                                 = Reg(Vec(params.numARFS, UInt(params.xLen.W)))
+  // val farfs_ss_ECP                                = Reg(Vec(params.numARFS, UInt(params.xLen.W)))
+  // val arfs_ss_ECP                                 = SyncReadMem(params.numARFS+1, UInt(params.xLen.W))
+  // val farfs_ss_ECP                                = SyncReadMem(params.numARFS+1, UInt(params.xLen.W))
   val arfs_ss_GMode                               = SyncReadMem(params.numARFS+1, UInt(params.xLen.W))
   val farfs_ss_GMode                              = SyncReadMem(params.numARFS+1, UInt(params.xLen.W))
   // val rf_shadow                                   = new RegFileshadow(32, 64)
@@ -155,15 +155,22 @@ class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
   
   
   dontTouch(has_ECP)
-  arfs_ss_ECP(0)  := 0.U
-  when(packet_valid_ECP===1.U&&(!has_ECP)&&(packet_index_ECP=/=0x20.U)){
+  // arfs_ss_ECP(0)  := 0.U
+  // when(packet_valid_ECP===1.U&&(!has_ECP)&&(packet_index_ECP=/=0x20.U)){
     
-    farfs_ss_ECP(packet_index_ECP) := packet_farfs_ECP
-    when(packet_index_ECP=/=0.U){
-      arfs_ss_ECP(packet_index_ECP) := packet_arfs_ECP
-    }
-  }
-
+  //   farfs_ss_ECP(packet_index_ECP) := packet_farfs_ECP
+  //   when(packet_index_ECP=/=0.U){
+  //     arfs_ss_ECP(packet_index_ECP) := packet_arfs_ECP
+  //   }
+  // }
+  // arfs_ss_ECP(0)  := 0.U
+  // when(packet_valid_ECP===1.U&&(!has_ECP)&&(packet_index_ECP=/=0x20.U)){
+    
+  //   farfs_ss_ECP(packet_index_ECP) := packet_farfs_ECP
+  //   when(packet_index_ECP=/=0.U){
+  //     arfs_ss_ECP(packet_index_ECP) := packet_arfs_ECP
+  //   }
+  // } 
 
   
   pcarfs_ss                                      := Mux(packet_valid.asBool && (packet_index === 0x20.U), packet_arfs(39,0), pcarfs_ss)
@@ -176,6 +183,10 @@ class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
   val arf_addr                                    = WireInit(0.U(8.W))
   val farf_addr                                   = WireInit(0.U(8.W))
 
+  // val arf_data_ECP                                = WireInit(0.U((params.xLen.W)))
+  // val farf_data_ECP                               = WireInit(0.U((params.xLen.W)))
+  // val arf_addr_ECP                                = WireInit(0.U(8.W))
+  // val farf_addr_ECP                               = WireInit(0.U(8.W))
   
   val apply_snapshot                              = RegInit(0.U(1.W))
   val apply_snapshot_memdelay                     = RegInit(0.U(1.W))
@@ -183,8 +194,8 @@ class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
   val apply_counter_memdelay                      = RegInit(0.U(8.W))
   val do_check                                    = RegInit(0.U(1.W))
   val checking_counter                            = RegInit(0.U(8.W))
-  val do_check_reg                                = RegInit(0.U(1.W))
-  do_check_reg := do_check
+  // val do_check_reg                                = RegInit(0.U(1.W))
+  // do_check_reg := do_check
   apply_snapshot_memdelay                        := apply_snapshot
   apply_counter_memdelay                         := apply_counter
   arf_addr                                       := Mux(apply_snapshot.asBool, apply_counter, 0.U)
@@ -234,88 +245,66 @@ class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
   io.rsu_status                                  := Mux(rsu_status === 0.U, 0.U, Mux(rsu_status === 1.U, 1.U, Mux(rsu_status === 3.U, Mux(io.check_done === 0.U, 1.U, 3.U), rsu_status)))
 
 
-//这里在之后需要更改，实际硬件不允许这样做，目前是为了方便调试
-  val if_check_fail                               = RegInit(false.B)
-  val debug_fail                                  = RegInit(VecInit(Seq.fill(params.numARFS)(false.B)))
-  for(i <-0 until params.numARFS){
-    when(do_check.asBool&&(!do_check_reg.asBool)&&(io.core_arfs_in(i)=/=arfs_ss_ECP(i)||io.core_farfs_in(i)=/=farfs_ss_ECP(i))){
-      if_check_fail := true.B
-      debug_fail(i) := true.B
-    }.otherwise{
-      debug_fail(i) := false.B
-      if_check_fail := false.B
-    }
-  }
+// //这里在之后需要更改，实际硬件不允许这样做，目前是为了方便调试
+//   val if_check_fail                               = RegInit(false.B)
+//   val debug_fail                                  = RegInit(VecInit(Seq.fill(params.numARFS)(false.B)))
+//   for(i <-0 until params.numARFS){
+//     when(do_check.asBool&&(!do_check_reg.asBool)&&(io.core_arfs_in(i)=/=arfs_ss_ECP(i)||io.core_farfs_in(i)=/=farfs_ss_ECP(i))){
+//       if_check_fail := true.B
+//       debug_fail(i) := true.B
+//     }.otherwise{
+//       debug_fail(i) := false.B
+//       if_check_fail := false.B
+//     }
+//   }
 
-  dontTouch(if_check_fail)
-  dontTouch(debug_fail)
-  assert((!if_check_fail),"check failure") 
+//   dontTouch(if_check_fail)
+//   dontTouch(debug_fail)
+//   assert((!if_check_fail),"check failure") 
 
-  if (GH_GlobalParams.GH_DEBUG == 1) {
-    // when ((io.core_trace.asBool) && (pcarfs_ss_delay =/= pcarfs_ss)) {
-    //   printf(midas.targetutils.SynthesizePrintf("[C%x] Paste PC [%x]\n", io.core_id, pcarfs_ss))
-    // }
-    when ((io.core_trace.asBool) && packet_valid_ECP===1.U&&(!has_ECP)&&(packet_index_ECP=/=0x20.U)) {
-      printf(midas.targetutils.SynthesizePrintf("[C%x] ECP idx[%x] arfs %x farfs %x\n", io.core_id,packet_index_ECP,packet_arfs_ECP,packet_farfs_ECP))
-    }
 
-    val fail_idx= PriorityEncoder(debug_fail)
 
-    when(do_check.asBool && (io.core_trace.asBool)) {
-      printf(midas.targetutils.SynthesizePrintf("[C%x] Check Finish %x\n", io.core_id,if_check_fail))
-    }
-    when (if_check_fail && (io.core_trace.asBool)) {
+  // // Faking ELU data
+  // val checking_counter_memdelay                   = RegInit(0.U(8.W))
+  // checking_counter_memdelay                      := checking_counter
+  
 
-      printf(midas.targetutils.SynthesizePrintf("Check FAIL C[%x] [FAIL][C_ARFS,C_FARFS,ECP_ARFS,ECP_FARFS] = \n" +
-        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
-        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
-        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
-        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
-        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
-        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
-        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"+
-        "[%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x] [%x][%x,%x,%x,%x]\n"
-        , io.core_id,debug_fail(0),io.core_arfs_in(0),io.core_farfs_in(0),arfs_ss_ECP(0),farfs_ss_ECP(0),
-        debug_fail(1),io.core_arfs_in(1),io.core_farfs_in(1),arfs_ss_ECP(1),farfs_ss_ECP(1),
-        debug_fail(2),io.core_arfs_in(2),io.core_farfs_in(2),arfs_ss_ECP(2),farfs_ss_ECP(2),
-        debug_fail(3),io.core_arfs_in(3),io.core_farfs_in(3),arfs_ss_ECP(3),farfs_ss_ECP(3),
-        debug_fail(4),io.core_arfs_in(4),io.core_farfs_in(4),arfs_ss_ECP(4),farfs_ss_ECP(4),
-        debug_fail(5),io.core_arfs_in(5),io.core_farfs_in(5),arfs_ss_ECP(5),farfs_ss_ECP(5),
-        debug_fail(6),io.core_arfs_in(6),io.core_farfs_in(6),arfs_ss_ECP(6),farfs_ss_ECP(6),
-        debug_fail(7),io.core_arfs_in(7),io.core_farfs_in(7),arfs_ss_ECP(7),farfs_ss_ECP(7),
-        debug_fail(8),io.core_arfs_in(8),io.core_farfs_in(8),arfs_ss_ECP(8),farfs_ss_ECP(8),
-        debug_fail(9),io.core_arfs_in(9),io.core_farfs_in(9),arfs_ss_ECP(9),farfs_ss_ECP(9),
-        debug_fail(10),io.core_arfs_in(10),io.core_farfs_in(10),arfs_ss_ECP(10),farfs_ss_ECP(10),
-        debug_fail(11),io.core_arfs_in(11),io.core_farfs_in(11),arfs_ss_ECP(11),farfs_ss_ECP(11),
-        debug_fail(12),io.core_arfs_in(12),io.core_farfs_in(12),arfs_ss_ECP(12),farfs_ss_ECP(12),
-        debug_fail(13),io.core_arfs_in(13),io.core_farfs_in(13),arfs_ss_ECP(13),farfs_ss_ECP(13),
-        debug_fail(14),io.core_arfs_in(14),io.core_farfs_in(14),arfs_ss_ECP(14),farfs_ss_ECP(14),
-        debug_fail(15),io.core_arfs_in(15),io.core_farfs_in(15),arfs_ss_ECP(15),farfs_ss_ECP(15),
-        debug_fail(16),io.core_arfs_in(16),io.core_farfs_in(16),arfs_ss_ECP(16),farfs_ss_ECP(16),
-        debug_fail(17),io.core_arfs_in(17),io.core_farfs_in(17),arfs_ss_ECP(17),farfs_ss_ECP(17),
-        debug_fail(18),io.core_arfs_in(18),io.core_farfs_in(18),arfs_ss_ECP(18),farfs_ss_ECP(18),
-        debug_fail(19),io.core_arfs_in(19),io.core_farfs_in(19),arfs_ss_ECP(19),farfs_ss_ECP(19),
-        debug_fail(20),io.core_arfs_in(20),io.core_farfs_in(20),arfs_ss_ECP(20),farfs_ss_ECP(20),
-        debug_fail(21),io.core_arfs_in(21),io.core_farfs_in(21),arfs_ss_ECP(21),farfs_ss_ECP(21),
-        debug_fail(22),io.core_arfs_in(22),io.core_farfs_in(22),arfs_ss_ECP(22),farfs_ss_ECP(22),
-        debug_fail(23),io.core_arfs_in(23),io.core_farfs_in(23),arfs_ss_ECP(23),farfs_ss_ECP(23),
-        debug_fail(24),io.core_arfs_in(24),io.core_farfs_in(24),arfs_ss_ECP(24),farfs_ss_ECP(24),
-        debug_fail(25),io.core_arfs_in(25),io.core_farfs_in(25),arfs_ss_ECP(25),farfs_ss_ECP(25),
-        debug_fail(26),io.core_arfs_in(26),io.core_farfs_in(26),arfs_ss_ECP(26),farfs_ss_ECP(26),
-        debug_fail(27),io.core_arfs_in(27),io.core_farfs_in(27),arfs_ss_ECP(27),farfs_ss_ECP(27),
-        debug_fail(28),io.core_arfs_in(28),io.core_farfs_in(28),arfs_ss_ECP(28),farfs_ss_ECP(28),
-        debug_fail(29),io.core_arfs_in(29),io.core_farfs_in(29),arfs_ss_ECP(29),farfs_ss_ECP(29),
-        debug_fail(30),io.core_arfs_in(30),io.core_farfs_in(30),arfs_ss_ECP(30),farfs_ss_ECP(30),
-        debug_fail(31),io.core_arfs_in(31),io.core_farfs_in(31),arfs_ss_ECP(31),farfs_ss_ECP(31)
-      ))
-      // printf(midas.targetutils.SynthesizePrintf("[C%x] Check Fail [idx %x ECP arfs %x farfs %x Checker arfs %x farfs %x]\n", io.core_id,fail_idx,arfs_ss_ECP(fail_idx),farfs_ss_ECP(fail_idx),io.core_arfs_in(fail_idx),io.core_farfs_in(fail_idx)))
-    }
-  }
+  // when (!do_check.asBool) {
+  //   do_check                                     := Mux(io.do_cp_check.asBool && !if_check_completed.asBool, 1.U, 0.U)
+  //   // checking_counter                             := Mux(io.clear_ic_status.asBool, 0.U, checking_counter)
+  //   checking_counter                             := Mux(if_check_completed.asBool, 0.U, checking_counter)
+  // } .otherwise {
+  //   do_check                                     := Mux(if_check_completed.asBool, 0.U, 1.U)
+  //   checking_counter                             := Mux(checking_counter === 0x1f.U, checking_counter, checking_counter + 1.U)
+  // }
+  // if_check_completed                             := (checking_counter_memdelay === 0x1f.U).asUInt
+  // io.if_cp_check_completed                       := if_check_completed
 
-  // Faking ELU data
+  // // io.core_hang_up                                := apply_snapshot | apply_snapshot_memdelay | io.record_context | recording_context | (do_check.asBool && !if_check_completed.asBool)
+  // io.core_hang_up                                := apply_snapshot | apply_snapshot_memdelay | io.record_context | recording_context    
+  // io.elu_cp_data                                 := 0.U
+  // io.elu_status                                  := 0.U
+  // val width_of_error_code                         = 4*params.xLen+8
+  // val u_channel                                   = Module (new GH_MemFIFO(FIFOParams((width_of_error_code), 2)))
+  // val channel_enq_valid                           = WireInit(false.B)
+  // val channel_enq_data                            = WireInit(0.U((width_of_error_code).W))
+  // val channel_deq_ready                           = WireInit(false.B)
+  // val channel_deq_data                            = WireInit(0.U((width_of_error_code).W))
+  // val channel_empty                               = WireInit(true.B)
+  // val channel_full                                = WireInit(false.B)
+
+  // u_channel.io.enq_valid                         := channel_enq_valid
+  // u_channel.io.enq_bits                          := channel_enq_data
+  // u_channel.io.deq_ready                         := channel_deq_ready
+  // channel_deq_data                               := u_channel.io.deq_bits
+  // channel_empty                                  := u_channel.io.empty
+  // channel_full                                   := u_channel.io.full
+
   val checking_counter_memdelay                   = RegInit(0.U(8.W))
   checking_counter_memdelay                      := checking_counter
   
+  if_check_completed                             := (checking_counter_memdelay === 0x1f.U).asUInt
+  io.if_cp_check_completed                       := if_check_completed
 
   when (!do_check.asBool) {
     do_check                                     := Mux(io.do_cp_check.asBool && !if_check_completed.asBool, 1.U, 0.U)
@@ -325,11 +314,11 @@ class R_RSUSL(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO {
     do_check                                     := Mux(if_check_completed.asBool, 0.U, 1.U)
     checking_counter                             := Mux(checking_counter === 0x1f.U, checking_counter, checking_counter + 1.U)
   }
-  if_check_completed                             := (checking_counter_memdelay === 0x1f.U).asUInt
-  io.if_cp_check_completed                       := if_check_completed
 
-  // io.core_hang_up                                := apply_snapshot | apply_snapshot_memdelay | io.record_context | recording_context | (do_check.asBool && !if_check_completed.asBool)
-  io.core_hang_up                                := apply_snapshot | apply_snapshot_memdelay | io.record_context | recording_context    
+  // channel_enq_valid                              := do_check.asBool && (checking_counter =/= 0.U) && !if_check_completed.asBool && ((io.core_arfs_in(checking_counter_memdelay) =/= arf_data_ECP) ||  (io.core_farfs_in(checking_counter_memdelay) =/= farf_data_ECP))
+  // channel_enq_data                               := Mux(channel_enq_valid.asBool, Cat(checking_counter_memdelay, farf_data_ECP, io.core_farfs_in(checking_counter_memdelay), arf_data_ECP, io.core_arfs_in(checking_counter_memdelay)), 0.U)
+  // channel_deq_ready                              := io.elu_cp_deq.asBool
   io.elu_cp_data                                 := 0.U
   io.elu_status                                  := 0.U
+  io.core_hang_up                                := apply_snapshot | apply_snapshot_memdelay | io.record_context | recording_context
 }

@@ -54,6 +54,8 @@ class R_ICSLIO_kernel(params: R_ICSLParams) extends Bundle {
 
   val debug_state                                = Output(UInt(3.W))
   val debug_comp                                 = Output(UInt(2.W))
+
+  val state_reset                                = Output(Bool())
 }
 
 trait HasR_ICSLIO_kernel extends BaseModule {
@@ -64,7 +66,7 @@ trait HasR_ICSLIO_kernel extends BaseModule {
 class R_ICSL_kernel (val params: R_ICSLParams) extends Module with HasR_ICSLIO_kernel {
   val fsm_reset :: fsm_nonchecking :: fsm_checking :: fsm_checking_priv :: fsm_self_xcpt :: fsm_self_xcpt_priv :: fsm_postchecking :: fsm_postchecking_priv :: Nil = Enum(8)
   val fsm_state                                  = RegInit(fsm_reset)
-
+  io.state_reset := (fsm_state === fsm_reset)
   val ic_counter_shadow                          = RegInit(0.U((params.width_of_ic-1).W))
   val ic_counter_done                            = RegInit(0.U(1.W))
   val icsl_run                                   = WireInit(0.U(1.W))
@@ -333,16 +335,16 @@ class R_ICSL_kernel (val params: R_ICSLParams) extends Module with HasR_ICSLIO_k
   debug_perf_num_st                             := Mux(io.debug_perf_reset.asBool, 0.U, debug_perf_num_st + io.st_deq)
   debug_perf_num_ld                             := Mux(io.debug_perf_reset.asBool, 0.U, debug_perf_num_ld + io.ld_deq)
 
-//   val u_channel                                  = Module(new GH_MemFIFO(FIFOParams (32, 50)))
-//   val debug_L_timer                              = RegInit(0.U(64.W))
-//   debug_L_timer                                 := Mux(fsm_state === fsm_nonchecking, 0.U, Mux(fsm_state === fsm_checking, debug_L_timer + 1.U, debug_L_timer))
-//   u_channel.io.enq_valid                        := Mux((fsm_state === fsm_postchecking) && (fsm_state_delay === fsm_checking) && ((debug_perf_howmany_checkpoints & 0x1FF.U) === 0x00.U), true.B, false.B)
-//   u_channel.io.enq_bits                         := debug_L_timer
-//   val debug_perf_sel_delay                       = RegInit(0.U(4.W))
-//   debug_perf_sel_delay                          := io.debug_perf_sel
-//   u_channel.io.deq_ready                        := (io.debug_perf_sel === 14.U) && (debug_perf_sel_delay === 15.U)
+  // val u_channel                                  = Module(new GH_MemFIFO(FIFOParams (32, 50)))
+  // val debug_L_timer                              = RegInit(0.U(64.W))
+  // debug_L_timer                                 := Mux(fsm_state === fsm_nonchecking, 0.U, Mux(fsm_state === fsm_checking, debug_L_timer + 1.U, debug_L_timer))
+  // u_channel.io.enq_valid                        := Mux((fsm_state === fsm_postchecking) && (fsm_state_delay === fsm_checking) && ((debug_perf_howmany_checkpoints & 0x1FF.U) === 0x00.U), true.B, false.B)
+  // u_channel.io.enq_bits                         := debug_L_timer
+  // val debug_perf_sel_delay                       = RegInit(0.U(4.W))
+  // debug_perf_sel_delay                          := io.debug_perf_sel
+  // u_channel.io.deq_ready                        := (io.debug_perf_sel === 14.U) && (debug_perf_sel_delay === 15.U)
 
-//   debug_L_timer_worest                          := Mux(io.debug_perf_reset.asBool, 0.U, Mux(debug_L_timer > debug_L_timer_worest, debug_L_timer, debug_L_timer_worest))
+  // debug_L_timer_worest                          := Mux(io.debug_perf_reset.asBool, 0.U, Mux(debug_L_timer > debug_L_timer_worest, debug_L_timer, debug_L_timer_worest))
 
 
   io.debug_perf_val                             := Mux(io.debug_perf_sel === 7.U, debug_perf_howmany_checkpoints, 

@@ -53,6 +53,8 @@ class R_ICSLIO(params: R_ICSLParams) extends Bundle {
   val checker_core_status                        = Output(UInt(4.W))
   val st_deq                                     = Input(UInt(1.W))
   val ld_deq                                     = Input(UInt(1.W))
+
+  val state_reset                                = Output(Bool())
 }
 
 trait HasR_ICSLIO extends BaseModule {
@@ -80,6 +82,7 @@ class R_ICSL (val params: R_ICSLParams) extends Module with HasR_ICSLIO {
 
   val fsm_reset :: fsm_nonchecking :: fsm_checking :: fsm_postchecking :: Nil = Enum(4)
   val fsm_state                                  = RegInit(fsm_reset)
+  io.state_reset := (fsm_state === fsm_reset)
   ic_counter_reg                                 := Mux(io.ic_counter=/=0.U, io.ic_counter, ic_counter_reg)
   switch (fsm_state) {
     is (fsm_reset) { // 00
@@ -223,7 +226,7 @@ class R_ICSL (val params: R_ICSLParams) extends Module with HasR_ICSLIO {
   debug_perf_num_st                             := Mux(io.debug_perf_reset.asBool, 0.U, debug_perf_num_st + io.st_deq)
   debug_perf_num_ld                             := Mux(io.debug_perf_reset.asBool, 0.U, debug_perf_num_ld + io.ld_deq)
 
-  // val u_channel                                  = Module(new GH_MemFIFO(FIFOParams (32, 50)))
+ // val u_channel                                  = Module(new GH_MemFIFO(FIFOParams (32, 50)))
   // val debug_L_timer                              = RegInit(0.U(64.W))
   // debug_L_timer                                 := Mux(fsm_state === fsm_nonchecking, 0.U, Mux(fsm_state === fsm_checking, debug_L_timer + 1.U, debug_L_timer))
   // u_channel.io.enq_valid                        := Mux((fsm_state === fsm_postchecking) && (fsm_state_delay === fsm_checking) && ((debug_perf_howmany_checkpoints & 0x1FF.U) === 0x00.U), true.B, false.B)

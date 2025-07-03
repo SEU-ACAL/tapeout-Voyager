@@ -118,13 +118,13 @@ class R_RSUSL_kernel(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO
   val if_RSU_packet_ECP                           = WireInit(0.U(1.W))
   val packet_valid_ECP                            = RegInit(0.U(1.W)) 
   val packet_index_ECP                            = RegInit(0.U(8.W))
-  // val packet_arfs_ECP                             = RegInit(0.U(params.xLen.W))
-  // val packet_farfs_ECP                            = RegInit(0.U(params.xLen.W))
+  val packet_arfs_ECP                             = RegInit(0.U(params.xLen.W))
+  val packet_farfs_ECP                            = RegInit(0.U(params.xLen.W))
   
   if_RSU_packet_ECP                              := Mux(io.arfs_if_ARFS.asBool && !io.arfs_if_CPS.asBool, 1.U, 0.U) 
   packet_valid_ECP                               := Mux(if_RSU_packet_ECP === 1.U, 1.U, 0.U)
-  // packet_arfs_ECP                                := Mux(if_RSU_packet_ECP === 1.U, io.arfs_merge(63,0), 0.U)
-  // packet_farfs_ECP                               := Mux(if_RSU_packet_ECP === 1.U, io.arfs_merge(127,64), 0.U)
+  packet_arfs_ECP                                := Mux(if_RSU_packet_ECP === 1.U, io.arfs_merge(63,0), 0.U)
+  packet_farfs_ECP                               := Mux(if_RSU_packet_ECP === 1.U, io.arfs_merge(127,64), 0.U)
   packet_index_ECP                               := Mux(if_RSU_packet_ECP === 1.U, io.arfs_index, 0.U)
   val has_ECP                                     = RegInit(false.B)
   val det_fall                                    = (!if_RSU_packet_ECP)&&RegNext(if_RSU_packet_ECP.asBool)&&(packet_index_ECP === 0x20.U)
@@ -157,6 +157,14 @@ class R_RSUSL_kernel(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO
     }
   }   
   */
+  // arfs_ss_ECP(0)  := 0.U
+  // when(packet_valid_ECP===1.U&&(!has_ECP)&&(packet_index_ECP=/=0x20.U)){
+    
+  //   farfs_ss_ECP(packet_index_ECP) := packet_farfs_ECP
+  //   when(packet_index_ECP=/=0.U){
+  //     arfs_ss_ECP(packet_index_ECP) := packet_arfs_ECP
+  //   }
+  // } 
 
   val excpt = Reg(Bool())
   val eret  = Reg(Bool())
@@ -304,33 +312,53 @@ class R_RSUSL_kernel(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO
   }
   */
 
-  // Faking ELU data
+
   val checking_counter_memdelay                   = RegInit(0.U(8.W))
   checking_counter_memdelay                      := checking_counter
   
+  if_check_completed                             := (checking_counter_memdelay === 0x1f.U).asUInt
+  io.if_cp_check_completed                       := if_check_completed
 
-  // when (!do_check.asBool) {
-  //   do_check                                     := Mux(io.do_cp_check.asBool && !if_check_completed.asBool, 1.U, 0.U)
-  //   checking_counter                             := Mux(io.clear_ic_status.asBool, 0.U, checking_counter)
-  // } .otherwise {
-  //   do_check                                     := Mux(if_check_completed.asBool, 0.U, 1.U)
-  //   checking_counter                             := Mux(checking_counter === 0x2.U, checking_counter, checking_counter + 1.U)
-  // }
   when (!do_check.asBool) {
     do_check                                     := Mux(io.do_cp_check.asBool && !if_check_completed.asBool, 1.U, 0.U)
     // checking_counter                             := Mux(io.clear_ic_status.asBool, 0.U, checking_counter)
     checking_counter                             := Mux(if_check_completed.asBool, 0.U, checking_counter)
   } .otherwise {
     do_check                                     := Mux(if_check_completed.asBool, 0.U, 1.U)
-    checking_counter                             := Mux(checking_counter === 0x19.U, checking_counter, checking_counter + 1.U)
+    checking_counter                             := Mux(checking_counter === 0x1f.U, checking_counter, checking_counter + 1.U)
   }
 
-  if_check_completed                             := (checking_counter_memdelay === 0x19.U).asUInt
-  io.if_cp_check_completed                       := if_check_completed
-
-  io.core_hang_up                                := apply_snapshot | apply_snapshot_memdelay | io.record_context | recording_context  
+  
   io.elu_cp_data                                 := 0.U
   io.elu_status                                  := 0.U
+  io.core_hang_up                                := apply_snapshot | apply_snapshot_memdelay | io.record_context | recording_context
+  // // Faking ELU data
+  // val checking_counter_memdelay                   = RegInit(0.U(8.W))
+  // checking_counter_memdelay                      := checking_counter
+  
+
+  // // when (!do_check.asBool) {
+  // //   do_check                                     := Mux(io.do_cp_check.asBool && !if_check_completed.asBool, 1.U, 0.U)
+  // //   checking_counter                             := Mux(io.clear_ic_status.asBool, 0.U, checking_counter)
+  // // } .otherwise {
+  // //   do_check                                     := Mux(if_check_completed.asBool, 0.U, 1.U)
+  // //   checking_counter                             := Mux(checking_counter === 0x2.U, checking_counter, checking_counter + 1.U)
+  // // }
+  // when (!do_check.asBool) {
+  //   do_check                                     := Mux(io.do_cp_check.asBool && !if_check_completed.asBool, 1.U, 0.U)
+  //   // checking_counter                             := Mux(io.clear_ic_status.asBool, 0.U, checking_counter)
+  //   checking_counter                             := Mux(if_check_completed.asBool, 0.U, checking_counter)
+  // } .otherwise {
+  //   do_check                                     := Mux(if_check_completed.asBool, 0.U, 1.U)
+  //   checking_counter                             := Mux(checking_counter === 0x19.U, checking_counter, checking_counter + 1.U)
+  // }
+
+  // if_check_completed                             := (checking_counter_memdelay === 0x19.U).asUInt
+  // io.if_cp_check_completed                       := if_check_completed
+
+  // io.core_hang_up                                := apply_snapshot | apply_snapshot_memdelay | io.record_context | recording_context  
+  // io.elu_cp_data                                 := 0.U
+  // io.elu_status                                  := 0.U
 
   io.debug_do_check := do_check.asBool
 }
