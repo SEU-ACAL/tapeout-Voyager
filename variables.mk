@@ -127,6 +127,18 @@ ifeq ($(SUB_PROJECT),constellation)
 	TB                ?= TestDriver
 	TOP               ?= NoC
 endif
+# For voyager_tapeout developers
+ifeq ($(SUB_PROJECT),voyager_tapeout)
+	SBT_PROJECT       ?= voyager_tapeout
+	MODEL             ?= TestHarness
+	VLOG_MODEL        ?= $(MODEL)
+	MODEL_PACKAGE     ?= chipyard.harness
+	CONFIG            ?= OurHeterTapeoutConfig
+	CONFIG_PACKAGE    ?= voyager_tapeout
+	GENERATOR_PACKAGE ?= chipyard
+	TB                ?= TestDriver
+	TOP               ?= ChipTop
+endif
 
 
 #########################################################################################

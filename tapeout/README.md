@@ -5,9 +5,10 @@
 
 ### 1. 流片代码生成
 
-1.1 顶层 IO Pad
-
-1.2 从sim代码生成流片代码
+1.1 代码生成
+```bash
+./voyager-test/scripts/build-verilator.sh --config OurHeterVerilatorConfig --project voyager_tapeout --sub-project voyager_tapeout
+```
 
 
 ### 2. SRAM 替换

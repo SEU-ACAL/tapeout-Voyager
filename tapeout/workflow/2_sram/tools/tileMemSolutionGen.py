@@ -343,7 +343,7 @@ class SRAMTilingGenerator:
         return all_solutions[0][0] if all_solutions else None
 
 
-def read_seq_mems_json(filename: str) -> List[Tuple[int, int, str]]:
+def read_seq_mems_json(filename: str) -> Tuple[List[Tuple[int, int, str]], List[Dict]]:
     """读取seq_mems.json文件"""
     try:
         with open(filename, 'r', encoding='utf-8') as f:
@@ -357,7 +357,7 @@ def read_seq_mems_json(filename: str) -> List[Tuple[int, int, str]]:
                 module_name = item['module_name']
                 sram_requirements.append((depth, width, module_name))
         
-        return sram_requirements
+        return sram_requirements, sram_data
     
     except Exception as e:
         print(f"❌ 读取文件失败: {e}")
@@ -405,13 +405,14 @@ def main():
     generator = SRAMTilingGenerator(manager)
     
     # 读取SRAM需求
-    sram_requirements = read_seq_mems_json(args.input)
+    sram_requirements, original_data = read_seq_mems_json(args.input)
     print(f"读取到 {len(sram_requirements)} 个SRAM需求")
     
     # 处理结果
     results = {
         "generation_time": datetime.now().isoformat(),
         "total_requirements": len(sram_requirements),
+        "original_data": original_data,
         "summary": {
             "successful": 0,
             "failed": 0,

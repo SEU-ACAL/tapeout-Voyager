@@ -36,9 +36,9 @@ CYDIR=$(git rev-parse --show-toplevel)
 
 WORK_DIR="${CYDIR}/voyager-test/output/dc"
 DESIGN_DIR="${CYDIR}/voyager-test/output/dc/design"
-REPORT_DIR="/home/hxm123/tapeout-Voyager/voyager-test/output/dc/reports"
+REPORT_DIR="${CYDIR}/voyager-test/output/dc/reports"
 TMP_DIR="${CYDIR}/voyager-test/output/dc/tmp"
-TCL_FILE="${CYDIR}/voyager-test/output/dc/dc_scriptv4.tcl"
+TCL_FILE="${CYDIR}/voyager-test/output/dc/dc_script.tcl"
 DB_FILE="/opt/dc/lib/TSMCHOME/SRAM_m4swbsoffg0p99v0c/"
 
 mkdir -p $WORK_DIR
@@ -137,15 +137,15 @@ set_clock_transition 0.08 [get_clocks clk3]
 
 
 compile_ultra -retime -scan 
-write -format ddc -hierarchy -output $REPORT_DIR/design_compiledv4.ddc
+write -format ddc -hierarchy -output $REPORT_DIR/design_compiled.ddc
 
 # 生成报告
-report_area -hierarchy -nosplit > $REPORT_DIR/area_500v4.rpt
-report_timing > $REPORT_DIR/timing_500v4.rpt    
-report_power -hierarchy > $REPORT_DIR/power_500v4.rpt
+report_area -hierarchy -nosplit > $REPORT_DIR/area.rpt
+report_timing > $REPORT_DIR/timing.rpt    
+report_power -hierarchy > $REPORT_DIR/power.rpt
 
 # 保存网表
-write -format verilog -output $REPORT_DIR/netlist_500v4.v
+write -format verilog -output $REPORT_DIR/netlist.v
 
 # 退出
 exit

@@ -35,21 +35,42 @@ def extract_sram_statistics(solution_data: Dict[str, Any]) -> List[Dict[str, Any
         target_bits = sram_result.get('target_bits', 0)
         target_capacity = sram_result.get('target_capacity_bits', target_words * target_bits)
         
+        # 获取实例数量（从原始seq_mems.json中获取）
+        instance_count = 0
+        total_target_capacity_kb = 0
+        total_actual_capacity_kb = 0
+        
+        # 从原始数据中查找该模块的实例数量
+        for original_item in solution_data.get('original_data', []):
+            if original_item.get('module_name') == module_name:
+                hierarchy = original_item.get('hierarchy', [])
+                instance_count = len(hierarchy)
+                # 计算总目标容量 (KB)
+                total_target_capacity_kb = round((target_capacity * instance_count) / (8 * 1024), 2)
+                break
+        
         solution = sram_result.get('solution')
         
         stat_row = {
             '模块名称': module_name,
+            '实例数量': instance_count,
+            '总目标容量(KB)': total_target_capacity_kb,
             '目标规格': f"{target_words}W×{target_bits}B",
             '目标容量(bits)': target_capacity,
             '有解决方案': sram_result.get('has_solution', '否'),
         }
         
         if solution:
+            # 计算总实际容量 (KB)
+            actual_capacity = solution.get('actual_capacity_bits', 0)
+            total_actual_capacity_kb = round((actual_capacity * instance_count) / (8 * 1024), 2)
+            
             # 拼接方案信息
             stat_row.update({
+                '总实际容量(KB)': total_actual_capacity_kb,
                 '拼接类型': solution.get('tiling_type', ''),
                 '实际规格': f"{solution.get('achieved_words', 0)}W×{solution.get('achieved_bits', 0)}B",
-                '实际容量(bits)': solution.get('actual_capacity_bits', 0),
+                '实际容量(bits)': actual_capacity,
                 '效率(%)': solution.get('efficiency_percent', 0),
                 '冗余容量(bits)': solution.get('redundancy_bits', 0),
             })
@@ -82,6 +103,7 @@ def extract_sram_statistics(solution_data: Dict[str, Any]) -> List[Dict[str, Any
         else:
             # 无解的情况
             stat_row.update({
+                '总实际容量(KB)': 0,
                 '拼接类型': '无解决方案',
                 '实际规格': 'N/A',
                 '实际容量(bits)': 0,
