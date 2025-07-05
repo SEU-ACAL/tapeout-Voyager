@@ -112,7 +112,7 @@ class SimpleStreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, dataWidth: I
     val tlb_q = Module(new Queue(new TLBundleAWithInfo, 1, pipe=true))
     tlb_q.io.enq <> untranslated_a
 
-    io.tlb.req.valid := tlb_q.io.deq.valid
+    io.tlb.req.valid := tlb_q.io.deq.fire
     io.tlb.req.bits := DontCare
     io.tlb.req.bits.tlb_req.vaddr := tlb_q.io.deq.bits.vaddr
     io.tlb.req.bits.tlb_req.passthrough := false.B

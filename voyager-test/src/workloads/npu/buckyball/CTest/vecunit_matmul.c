@@ -194,14 +194,13 @@ int main() {
     
     // 这里定义要运行的测试序号（1-8）
     // 修改这个数组来选择要运行的测试用例
-    // 注意：目前只能一次进行一个测试样例，多个会出问题
-    const int test_selection[] = {4}; 
+    const int test_selection[] = {1,2,3,4,5,6,7,8}; 
     const int num_selected = sizeof(test_selection)/sizeof(test_selection[0]);
     
     // 创建测试函数数组
     TestFunction tests[] = {
-        test_ones,               // 测试1
-        test_identity_random,    // 测试2
+        test_ones,                // 测试1
+        test_identity_random,     // 测试2
         test_row_col_vector,      // 测试3
         test_col_row_vector,      // 测试4
         test_random1,             // 测试5
