@@ -67,6 +67,7 @@ FOR RTL SIMULATION
         sinks(i).reset := ResetStretcher(clocks(0), asyncReset, 20).asAsyncReset
       } else {
         // WARNING: THIS IS FOR RTL SIMULATION ONLY
+        // sinks(i).clock := mux.io.clockOut
         sinks(i).clock := clocks(0)
         sinks(i).reset := asyncReset
       }

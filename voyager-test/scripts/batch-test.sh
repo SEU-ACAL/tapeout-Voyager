@@ -32,7 +32,7 @@ MEEK_CONFIGS=("VoyagerVerilatorConfig")
 MEEK_TESTS=("hello")
 
 # 全量测试套件配置
-SOC_CONFIGS=("VoyagerVerilatorConfig")
+SOC_CONFIGS=("OurHeterSoCConfig")
 SOC_TESTS=("hello" 
             "bb_mvin_mvout_multi")
 
