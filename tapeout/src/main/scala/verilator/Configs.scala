@@ -5,7 +5,7 @@ import freechips.rocketchip.guardiancouncil._
 import freechips.rocketchip.prci.{AsynchronousCrossing}
 import freechips.rocketchip.subsystem.{InCluster}
 import freechips.rocketchip.tile._
-import peripheral._
+import voyager_tapeout.custom.device.peripheral_npu._
 
 class VoyagerVerilatorHarnessConfig extends Config(
   new chipyard.config.WithTileFrequency(100, Some(0)) ++
@@ -35,6 +35,10 @@ class VoyagerVerilatorHarnessConfig extends Config(
   //  Crossing specifications+-
   new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1) ++
   new boom.meek.common.WithNLargeBooms(1) ++
-  new peripheral.WithMyPeripheral(0x10050000, 0x1000) ++
+
+  // NPUPeripheral
+  new voyager_tapeout.custom.iobinders.WithPeripheralNPUPunchthrough ++
+  new voyager_tapeout.custom.device.peripheral_npu.WithNPUPeripheral(0x10050000, 0x1000) ++
+  
   new chipyard.config.AbstractConfig
 )
