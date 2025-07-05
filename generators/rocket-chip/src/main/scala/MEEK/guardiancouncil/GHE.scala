@@ -133,7 +133,7 @@ class GHEImp(outer: GHE)(implicit p: Parameters) extends LazyRoCCMEEKModuleImp(o
                                     Array(doCheck             -> Cat(zeros_channel_status, channel_status_wire), 
                                           doCheckBigStatus    -> ghe_status_reg,
                                           doCheckAgg          -> Cat(zeros_62bits, io.agg_buffer_full, zeros_1bit),
-                                          doBigCheckComp      -> Cat(bigComp_reg, rs1_val(15, 0)),
+                                          doBigCheckComp      -> Cat(bigComp_reg, rs1_val(15, 0)),//注意这个值
                                           doBigCheckIni       -> Cat(bigInialised),
                                           doGHTBufferCheck    -> Cat(zeros_62bits, io.ght_buffer_status),
                                           doCheckCritial      -> Cat(zeros_62bits, ght_critial_reg(1,0)),

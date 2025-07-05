@@ -70,7 +70,7 @@ add_custom_target(sync-bin
 add_dependencies(gemmini-native create-dirs)
 add_dependencies(buckyball-OpTest build-compiler) # 属于 npu-build 的子目录，由于依赖需要直接指定
 
-add_dependencies(sync-bin cpu-build npu-build tutorial-build peripheral-build)
+add_dependencies(sync-bin cpu-build npu-build pll-build tutorial-build peripheral-build)
 add_custom_target(build-all ALL 
   DEPENDS sync-bin
 )

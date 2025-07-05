@@ -11,12 +11,14 @@ set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-g++")
 add_executable(hello-linux ${CPU_WORKLOAD_DIR}/hello/hello.c )
 add_executable(cpu-spmm-linux ${CPU_WORKLOAD_DIR}/spmm/spmm.c)
 add_executable(bfs-linux ${CPU_WORKLOAD_DIR}/prefetch/bfs/bfs.c)
+# add_executable(pll-linux ${CPU_WORKLOAD_DIR}/pll/pll.c)
 # add_executable(hash-linux ${CPU_WORKLOAD_DIR}/prefetch/hash/hash.c)
 
 add_custom_target(cpu-linux-build ALL DEPENDS
     hello-linux
     cpu-spmm-linux
     bfs-linux
+    # pll-linux
 #     hash-linux
     COMMENT "Building linux workloads for CPU"
     VERBATIM)
@@ -49,7 +51,10 @@ add_custom_target(cpu-baremetal-build ALL
             ${CPU_WORKLOAD_DIR}/prefetch/bfs/bfs.c ${CPU_WORKLOAD_DIR}/meeklib/meek.c 
     COMMAND ${ELF_CC} ${C_FLAGS} -o hash-baremetal
             ${CPU_WORKLOAD_DIR}/prefetch/hash/hash.c ${CPU_WORKLOAD_DIR}/meeklib/meek.c 
+    # COMMAND ${ELF_CC} ${C_FLAGS} -o pll-baremetal
+    #         ${CPU_WORKLOAD_DIR}/pll/pll.c ${CPU_WORKLOAD_DIR}/meeklib/meek.c 
     DEPENDS ${CPU_WORKLOAD_DIR}/hello/hello.c
+            # ${CPU_WORKLOAD_DIR}/pll/pll.c
             ${CPU_WORKLOAD_DIR}/prefetch/bfs/bfs.c 
             ${CPU_WORKLOAD_DIR}/prefetch/hash/hash.c ${CPU_WORKLOAD_DIR}/meeklib/meek.c 
     COMMENT "Building baremetal workloads for CPU"
