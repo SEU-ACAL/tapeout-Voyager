@@ -33,6 +33,7 @@ class DualRocketConfig extends Config(
 //   new chipyard.config.AbstractConfig
 // )
 
+
 class MEEKConfig extends Config(
 
   new chipyard.config.WithTileFrequency(500, Some(0)) ++
@@ -41,13 +42,13 @@ class MEEKConfig extends Config(
   new chipyard.config.WithTileFrequency(500, Some(3)) ++
   new chipyard.config.WithTileFrequency(500, Some(4)) ++
   new freechips.rocketchip.guardiancouncil.WithGuardianCouncilNodes++
-  // new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
-  // AsynchronousCrossing().depth,
-  // AsynchronousCrossing().sourceSync) ++
-  // // Frequency specifications
-  // // // new chipyard.config.WithTileFrequency(1000.0) ++        // Matches the maximum frequency of U540
-  // new chipyard.clocking.WithClockGroupsCombinedByName(("uncore",Seq("sbus", "mbus", "pbus", "fbus", "cbus", "obus", "implicit", "clock_tap"),Nil),
-  //                                                     ("boom",Seq("tile_0"),Nil),
+  new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
+  AsynchronousCrossing().depth,
+  AsynchronousCrossing().sourceSync) ++
+  // Frequency specifications
+  // // new chipyard.config.WithTileFrequency(1000.0) ++        // Matches the maximum frequency of U540
+  // new chipyard.clocking.WithClockGroupsCombinedByName(("uncore",Seq("sbus", "mbus", "pbus", "fbus", "cbus", "obus","tile_0","implicit", "clock_tap"),Nil),
+  //                                                     // ("boom",Seq("tile_0"),Nil),
   //                                                     ("rockettileMeek",Seq("tile_1","tile_2","tile_3","tile_4"),Nil)
   //                                                     )++
   // new freechips.rocketchip.guardiancouncil.WithGHE ++

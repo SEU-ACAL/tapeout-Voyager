@@ -14,60 +14,11 @@ import freechips.rocketchip.guardiancouncil._
 // import boom.common.{BoomTile}
 import freechips.rocketchip.util._
 
-case class GHMParams(
-  number_of_little_cores: Int,
-  width_GH_packet: Int
-)
-
-
-class GHMIO(params: GHMParams) extends Bundle {
-  val ghm_clock                                  = Input(Vec(params.number_of_little_cores+1,Bool()))
-  val ghm_reset                                  = Input(Vec(params.number_of_little_cores+1,Bool()))
-
-  // val ghm_icsl_ack_in                            = Input(UInt((params.number_of_little_cores).W))
-  // val ghm_big_checker_switch                     = Input(UInt((params.number_of_little_cores).W))
-  val ghm_packet_in                              = Input(UInt((params.width_GH_packet*GH_GlobalParams.GH_TOTAL_PACKETS).W))
-  val ghm_packet_dest                            = Input(UInt((params.number_of_little_cores*2).W))
-  val ghm_status_in                              = Input(UInt(32.W))
-  val ghm_packet_outs                            = Output(Vec(params.number_of_little_cores, UInt((params.width_GH_packet*GH_GlobalParams.GH_TOTAL_PACKETS+1).W)))
-  val ghm_status_outs                            = Output(Vec(params.number_of_little_cores, UInt(32.W)))
-  val ghe_event_in                               = Input(Vec(params.number_of_little_cores, UInt(6.W)))
-  val clear_ic_status                            = Input(Vec(params.number_of_little_cores, UInt(1.W)))
-  // val ghm_big_complete                           = Output(Vec(params.number_of_little_cores, Bool()))
-
-  // val ghm_big_complete                           = I(Vec(params.number_of_little_cores, Bool()))//from big
-  val clear_ic_status_tomain                     = Output(UInt(GH_GlobalParams.GH_NUM_CORES.W))
-  // val if_big_complete_req                        = Output(UInt((GH_GlobalParams.GH_NUM_CORES-1).W))
-  // val if_big_complete_ack                        = Input(UInt((GH_GlobalParams.GH_NUM_CORES-1).W))
-  val bigcore_hang                               = Output(UInt(1.W))
-  val bigcore_comp                               = Output(UInt(3.W))
-  val debug_bp                                   = Output(UInt(2.W))
-  val ic_counter                                 = Input(UInt((16*GH_GlobalParams.GH_NUM_CORES).W))
-  val debug_maincore_status                      = Input(UInt(4.W))
-  val icsl_counter                               = Output(Vec(params.number_of_little_cores, UInt(20.W)))
-  val ghe_revent_in                              = Input(Vec(params.number_of_little_cores, UInt(1.W)))
-  // val ghm_icsl_ack_out                           = Output(Vec(params.number_of_little_cores, Bool()))
-  // val ghm_if_big_complete                        = Input(Vec(params.number_of_little_cores, Bool()))
-  // val ghm_big_switch_out                         = Output(Vec(params.number_of_little_cores, Bool()))
-  val ghm_cdc_empty_out                          = Output(Vec(params.number_of_little_cores, Bool()))
-  val icsl_na                                    = Output(UInt((GH_GlobalParams.GH_NUM_CORES).W))
-
-  val debug_gcounter                             = Output(UInt(64.W))
-  // val if_agg_free                                = Input(UInt(1.W))
-  val core_r_arfs_in                             = Input(UInt((params.width_GH_packet+8+8).W))
-  val core_r_arfs_c                              = Output(Vec(params.number_of_little_cores, UInt((params.width_GH_packet+8).W)))
-
-}
-
-trait HasGHMIO extends BaseModule {
-  val params: GHMParams
-  val io = IO(new GHMIO(params))
-}
 
 //==========================================================
 // Implementations
 //==========================================================
-class GHM (val params: GHMParams)(implicit p: Parameters) extends LazyModule
+class GHM_normal (val params: GHMParams)(implicit p: Parameters) extends LazyModule
 {
     // Creating nodes for connections.
     val bigcore_hang_SRNode                        = BundleBridgeSource[UInt](Some(() => UInt(1.W)))
@@ -104,9 +55,9 @@ class GHM (val params: GHMParams)(implicit p: Parameters) extends LazyModule
     // val clear_ic_status_tomainSRNodes              = Seq[BundleBridgeSource[UInt]]()
     // val icsl_naSRNodes                             = Seq[BundleBridgeSource[UInt]]()
     val debug_gcounter_SRNode                      = BundleBridgeSource[UInt](Some(() => UInt(64.W)))
-    lazy val module = new GHMImpl(params)(this)
+    lazy val module = new GHM_normalImpl(params)(this)
 }
-class GHMImpl(val params: GHMParams)(outer: GHM) extends LazyModuleImp(outer) {
+class GHM_normalImpl(val params: GHMParams)(outer: GHM_normal) extends LazyModuleImp(outer) {
     val ghm_clock                                  = Wire(Vec(params.number_of_little_cores+1,Bool()))
     val ghm_reset                                  = Wire(Vec(params.number_of_little_cores+1,Bool()))
 
@@ -140,9 +91,9 @@ class GHMImpl(val params: GHMParams)(outer: GHM) extends LazyModuleImp(outer) {
     ic_counter                    := outer.ic_counter_SKNode.bundle
     debug_maincore_status         := outer.debug_maincore_status_SKNode.bundle
     for (i <- 0 to params.number_of_little_cores) {
-      ghm_clock(i)                        :=outer.ghm_clock_in_SKNodes(i).bundle.asBool
-      ghm_reset(i)                        :=outer.ghm_reset_in_SKNodes(i).bundle.asBool
-      if (i == 0) { // The big core
+        ghm_clock(i)                        :=outer.ghm_clock_in_SKNodes(i).bundle.asBool
+        ghm_reset(i)                        :=outer.ghm_reset_in_SKNodes(i).bundle.asBool
+        if (i == 0) { // The big core
         // GHE is not connected to the big core
         outer.ghm_ghe_packet_out_SRNodes(i).bundle    := 0.U 
         outer.core_r_arfs_c_SRNodes(i).bundle         := 0.U
@@ -150,7 +101,7 @@ class GHMImpl(val params: GHMParams)(outer: GHM) extends LazyModuleImp(outer) {
         outer.clear_ic_status_tomainSRNodes(i).bundle := clear_ic_status_tomain
         outer.icsl_naSRNodes(i).bundle                := icsl_na
         outer.icsl_out_SRNodes(i).bundle              := 0.U
-      } else {// -1 big core
+        } else {// -1 big core
         outer.ghm_ghe_packet_out_SRNodes(i).bundle    := ghm_packet_outs(i-1)
         outer.core_r_arfs_c_SRNodes(i).bundle         := core_r_arfs_c(i-1)
         outer.ghm_ghe_status_out_SRNodes(i).bundle    := ghm_status_outs(i-1)
@@ -161,8 +112,7 @@ class GHMImpl(val params: GHMParams)(outer: GHM) extends LazyModuleImp(outer) {
         ghe_event_in(i-1)                             := outer.ghm_ghe_event_in_SKNodes(i).bundle
         ghe_revent_in(i-1)                            := outer.ghm_ghe_revent_in_SKNodes(i).bundle
         clear_ic_status(i-1)                          := outer.clear_ic_status_SkNodes(i).bundle
-        
-      }
+        }
     }
 
     outer.bigcore_hang_SRNode.bundle                  := bigcore_hang
@@ -191,17 +141,17 @@ class GHMImpl(val params: GHMParams)(outer: GHM) extends LazyModuleImp(outer) {
     dontTouch(arfs_ecp_dest)
     dontTouch(packet_dest)
     for(i<- 0 until GH_GlobalParams.GH_TOTAL_PACKETS){
-      packet_dest(i)                              := ghm_packet_in((i+1)*params.width_GH_packet-1, (i+1)*params.width_GH_packet-8)(6,3)
+        packet_dest(i)                              := ghm_packet_in((i+1)*params.width_GH_packet-1, (i+1)*params.width_GH_packet-8)(6,3)
     }
 //==========================================================
-// Multi Bits CDC
+// Multi Bits 1:1 fifo
 //==========================================================
 
 
-    val u_data_cdc                                      = Seq.fill(params.number_of_little_cores) {Module(new AsyncQueue(UInt((params.width_GH_packet*GH_GlobalParams.GH_TOTAL_PACKETS).W),AsyncQueueParams (8,2)))}
-    val u_arfs_cdc                                      = Seq.fill(params.number_of_little_cores) {Module(new AsyncQueue(UInt((params.width_GH_packet+8).W),AsyncQueueParams (8,2)))}//留8个余量防止写入太快
-    val u_l2b_ctrl_cdc                                  = Seq.fill(params.number_of_little_cores) {Module(new AsyncQueue(UInt(9.W),AsyncQueueParams (64,2)))}
-    val u_b2l_ctrl_cdc                                  = Seq.fill(params.number_of_little_cores) {Module(new AsyncQueue(UInt((22).W),AsyncQueueParams (64,2)))}//早晚会满
+    val u_data_cdc                                      = Seq.fill(params.number_of_little_cores) {Module(new Queue(UInt((params.width_GH_packet*GH_GlobalParams.GH_TOTAL_PACKETS).W),8))}
+    val u_arfs_cdc                                      = Seq.fill(params.number_of_little_cores) {Module(new Queue(UInt((params.width_GH_packet+8).W), (8)))}//留8个余量防止写入太快
+    // val u_l2b_ctrl_cdc                                  = Seq.fill(params.number_of_little_cores) {Module(new Queue(UInt(9.W), 64))}
+    // val u_b2l_ctrl_cdc                                  = Seq.fill(params.number_of_little_cores) {Module(new Queue(UInt((22).W), 4))}//早晚会满
 
     val l_wctrl = WireInit(VecInit(Seq.fill(params.number_of_little_cores)(0.U(8.W))))
     val b_rctrl = WireInit(VecInit(Seq.fill(params.number_of_little_cores)(0.U(8.W))))
@@ -218,60 +168,48 @@ class GHMImpl(val params: GHMParams)(outer: GHM) extends LazyModuleImp(outer) {
       }.reduce(_|_)
       dontTouch(if_data_en)
       //data  
-      u_data_cdc(i).io.enq_clock := ghm_clock(0).asClock
-      u_data_cdc(i).io.enq_reset := ghm_reset(0)
-      u_data_cdc(i).io.deq_clock := ghm_clock(i+1).asClock
-      u_data_cdc(i).io.deq_reset := ghm_reset(i+1)
 
-      u_data_cdc(i).io.enq.valid := if_data_en
-      u_data_cdc(i).io.enq.bits  := ghm_packet_in
-      data_cdc_ready(i)          := ghe_event_in(i)(4)&(!ghe_event_in(i)(0))
-      u_data_cdc(i).io.deq.ready := data_cdc_ready(i)
-      packet_out_wires(i)        := Mux(u_data_cdc(i).io.deq.fire,u_data_cdc(i).io.deq.bits,0.U)
-      cdc_busy(i)                := (!u_data_cdc(i).io.enq.ready)
-      cdc_empty(i)               := (!u_data_cdc(i).io.deq.valid)
+    //   u_data_cdc(i).io.deq_clock := ghm_clock(i+1).asClock
+    //   u_data_cdc(i).io.deq_reset := ghm_reset(i+1)
+
+        u_data_cdc(i).io.enq.valid := if_data_en
+        u_data_cdc(i).io.enq.bits  := ghm_packet_in
+        data_cdc_ready(i)          := ghe_event_in(i)(4)&(!ghe_event_in(i)(0))
+        u_data_cdc(i).io.deq.ready := data_cdc_ready(i)
+        packet_out_wires(i)        := Mux(u_data_cdc(i).io.deq.fire,u_data_cdc(i).io.deq.bits,0.U)
+        cdc_busy(i)                := (!u_data_cdc(i).io.enq.ready)
+        cdc_empty(i)               := (!u_data_cdc(i).io.deq.valid)
 
 
-      //arfs 
-      u_arfs_cdc(i).io.deq_clock := ghm_clock(i+1).asClock
-      u_arfs_cdc(i).io.deq_reset := ghm_reset(i+1)
 
-      u_arfs_cdc(i).io.enq_clock := ghm_clock(0).asClock
-      u_arfs_cdc(i).io.enq_reset := ghm_reset(0)
-      u_arfs_cdc(i).io.enq.valid := arfs_dest===(i+1).U||arfs_ecp_dest===(i+1).U
-      u_arfs_cdc(i).io.enq.bits  := core_r_arfs_in
-      u_arfs_cdc(i).io.deq.ready := true.B
-      core_r_arfs_c(i)        := Mux(u_arfs_cdc(i).io.deq.fire,u_arfs_cdc(i).io.deq.bits,0.U)
 
-      arfs_cdc_busy(i)          := (!u_arfs_cdc(i).io.enq.ready)
-      dontTouch(u_arfs_cdc(i).io.enq.ready)
+        u_arfs_cdc(i).io.enq.valid := arfs_dest===(i+1).U||arfs_ecp_dest===(i+1).U
+        u_arfs_cdc(i).io.enq.bits  := core_r_arfs_in
+        u_arfs_cdc(i).io.deq.ready := true.B
+        core_r_arfs_c(i)        := Mux(u_arfs_cdc(i).io.deq.fire,u_arfs_cdc(i).io.deq.bits,0.U)
+
+        arfs_cdc_busy(i)          := (!u_arfs_cdc(i).io.enq.ready)
+        dontTouch(u_arfs_cdc(i).io.enq.ready)
       //little to big CDC
-      l_wctrl(i)                     := Cat(clear_ic_status(i),ghe_revent_in(i),ghe_event_in(i))
-      u_l2b_ctrl_cdc(i).io.deq_clock := ghm_clock(0).asClock
-      u_l2b_ctrl_cdc(i).io.deq_reset := ghm_reset(0)
-      u_l2b_ctrl_cdc(i).io.enq_clock := ghm_clock(i+1).asClock
-      u_l2b_ctrl_cdc(i).io.enq_reset := ghm_reset(i+1)
-      u_l2b_ctrl_cdc(i).io.enq.valid := clear_ic_status(i)|ghe_revent_in(i)|ghe_event_in(i)=/=0.U
-      u_l2b_ctrl_cdc(i).io.enq.bits  := l_wctrl(i)
-      u_l2b_ctrl_cdc(i).io.deq.ready := true.B
-      dontTouch(u_l2b_ctrl_cdc(i).io.enq.ready)
-      b_rctrl(i)                     := Mux(u_l2b_ctrl_cdc(i).io.deq.fire,u_l2b_ctrl_cdc(i).io.deq.bits,0.U)
-      
+        l_wctrl(i)                     := Cat(clear_ic_status(i),ghe_revent_in(i),ghe_event_in(i))
+
+        // u_l2b_ctrl_cdc(i).io.enq.valid := clear_ic_status(i)|ghe_revent_in(i)|ghe_event_in(i)=/=0.U
+        // u_l2b_ctrl_cdc(i).io.enq.bits  := l_wctrl(i)
+        // u_l2b_ctrl_cdc(i).io.deq.ready := true.B
+        // dontTouch(u_l2b_ctrl_cdc(i).io.enq.ready)
+        b_rctrl(i)                     := l_wctrl(i)
       //big to little CDC
 
-      b_wctrl(i)                     := Cat(ic_counter((i+2)*16-1,(i+1)*16),ghm_status_in(31),ghm_status_in(4,0))
-      u_b2l_ctrl_cdc(i).io.deq_clock := ghm_clock(i+1).asClock
-      u_b2l_ctrl_cdc(i).io.deq_reset := ghm_reset(i+1)
-      u_b2l_ctrl_cdc(i).io.enq_clock := ghm_clock(0).asClock
-      u_b2l_ctrl_cdc(i).io.enq_reset := ghm_reset(0)
-      u_b2l_ctrl_cdc(i).io.enq.valid := ghm_status_in(31)|ghm_status_in(4,0)=/=0.U|ic_counter((i+2)*16-1,(i+1)*16)=/=0.U
-      u_b2l_ctrl_cdc(i).io.enq.bits  := b_wctrl(i)
-      u_b2l_ctrl_cdc(i).io.deq.ready := true.B
-      l_rctrl(i)                     := Mux(u_b2l_ctrl_cdc(i).io.deq.fire,u_b2l_ctrl_cdc(i).io.deq.bits,0.U)
+        b_wctrl(i)                     := Cat(ic_counter((i+2)*16-1,(i+1)*16),ghm_status_in(31),ghm_status_in(4,0))
+
+        // u_b2l_ctrl_cdc(i).io.enq.valid := ghm_status_in(31)|ghm_status_in(4,0)=/=0.U|ic_counter((i+2)*16-1,(i+1)*16)=/=0.U
+        // u_b2l_ctrl_cdc(i).io.enq.bits  := b_wctrl(i)
+        // u_b2l_ctrl_cdc(i).io.deq.ready := true.B
+        l_rctrl(i)                     := b_wctrl(i)
       // when(u_b2l_ctrl_cdc(i).io.enq.valid&&(!u_b2l_ctrl_cdc(i).io.enq.ready)){
       //   printf(midas.targetutils.SynthesizePrintf("Big core to little core ctrl CDC FIFO IS FULL!!! ghm_status %x ic_cnt %x\n",io.ghm_status_in,io.ic_counter))
       // }
-      dontTouch(u_b2l_ctrl_cdc(i).io.enq.ready)
+        // dontTouch(u_b2l_ctrl_cdc(i).io.enq.ready)
     }
     dontTouch(l_wctrl)
     dontTouch(b_wctrl)
@@ -303,10 +241,10 @@ class GHMImpl(val params: GHMParams)(outer: GHM) extends LazyModuleImp(outer) {
 
     val if_cdc_empty                               = cdc_empty.reduce(_&_)//这个信号不知道会不会出问题？
     val if_no_inflight_packets                     = WireInit(VecInit((0 until params.number_of_little_cores).map{i=>cdc_filter_empty(i) & cdc_empty(i) } )) 
-    big_bp := u_b2l_ctrl_cdc.map({i=>i.io.enq.ready}).reduce(_&_)
-    little_bp := u_l2b_ctrl_cdc.map({i=>i.io.enq.ready}).reduce(_&_)
+    // big_bp := u_b2l_ctrl_cdc.map({i=>i.io.enq.ready}).reduce(_&_)
+    // little_bp := u_l2b_ctrl_cdc.map({i=>i.io.enq.ready}).reduce(_&_)
     //need CDC
-    dontTouch(big_bp)
+    // dontTouch(big_bp)
     clear_ic_status_tomain                     := Cat(Cat(cdc_clear_ic_status.reverse), zero)//小核心到大核心//1bit 会延迟2个周期
     // io.if_big_complete_req                        := Cat(cdc_if_big_complete.reverse)
 
@@ -349,87 +287,87 @@ class GHMImpl(val params: GHMParams)(outer: GHM) extends LazyModuleImp(outer) {
     icsl_na                                   := Cat(Cat(cdc_ghe_revent.reverse), zero)//小->大 1bit
 }
 
-case class GHMCoreLocated(loc: HierarchicalLocation) extends Field[Option[GHMParams]](None)
+// case class GHMCoreLocated(loc: HierarchicalLocation) extends Field[Option[GHMParams]](None)
 
-object GHMCore {
-// def attach(params: BootROMParams, subsystem: BaseSubsystem with HasHierarchicalElements with HasTileInputConstants, where: TLBusWrapperLocation)
-  def attach(params: GHMParams, subsystem: BaseSubsystem with HasHierarchicalElements with HasTileInputConstants with HasGHnodes, where: TLBusWrapperLocation)(implicit p: Parameters):GHM_normal= {
+// object GHMCore {
+// // def attach(params: BootROMParams, subsystem: BaseSubsystem with HasHierarchicalElements with HasTileInputConstants, where: TLBusWrapperLocation)
+//   def attach(params: GHMParams, subsystem: BaseSubsystem with HasHierarchicalElements with HasTileInputConstants with HasGHnodes, where: TLBusWrapperLocation)(implicit p: Parameters):GHM= {
     
-    val number_of_ghes                             = subsystem.tile_ghe_packet_in_EPNodes.size
-    println("#### Jessica #### Tieing off GHM **Nodes**, core number:", number_of_ghes,"...!!")
+//     val number_of_ghes                             = subsystem.tile_ghe_packet_in_EPNodes.size
+//     println("#### Jessica #### Tieing off GHM **Nodes**, core number:", number_of_ghes,"...!!")
 
 
-    val bus = subsystem.locateTLBusWrapper(where)
-    val GHMDomainWrapper = bus.generateSynchronousDomain("GHM").suggestName("ghm_domain")
+//     val bus = subsystem.locateTLBusWrapper(where)
+//     val GHMDomainWrapper = bus.generateSynchronousDomain("GHM").suggestName("ghm_domain")
 
 
     
-    val ghm = GHMDomainWrapper {
-      LazyModule (new GHM_normal (GHMParams (params.number_of_little_cores, params.width_GH_packet)))
-    }
+//     val ghm = GHMDomainWrapper {
+//       LazyModule (new GHM (GHMParams (params.number_of_little_cores, params.width_GH_packet)))
+//     }
 
-    ghm.core_r_arfs_in_SKNode                         := subsystem.tile_core_r_arfs_EPNode
-    ghm.ghm_ght_packet_in_SKNode                      := subsystem.tile_ght_packet_out_EPNode
-    ghm.ic_counter_SKNode                             := subsystem.tile_ic_counter_out_EPNode
-    ghm.debug_maincore_status_SKNode                  := subsystem.debug_maincore_status_out_EPNode
-    ghm.ghm_ght_packet_dest_SKNode                    := subsystem.tile_ght_packet_dest_EPNode
-    ghm.ghm_ght_status_in_SKNode                      := subsystem.tile_ght_status_out_EPNode
-
-
-
-    // 2. 批量连接节点
-    for (i <- 0 until number_of_ghes) {
-      if(i<=params.number_of_little_cores){
-        subsystem.tile_ghe_packet_in_EPNodes(i)         := ghm.ghm_ghe_packet_out_SRNodes(i)
-        subsystem.core_r_arfs_c_EPNodes(i)              := ghm.core_r_arfs_c_SRNodes(i)
-        subsystem.tile_icsl_counter_in_EPNodes(i)       := ghm.icsl_out_SRNodes(i)
-        subsystem.tile_ghe_status_in_EPNodes(i)         := ghm.ghm_ghe_status_out_SRNodes(i)
-        ghm.ghm_ghe_event_in_SKNodes(i)                 := subsystem.tile_ghe_event_out_EPNodes(i)
-        ghm.ghm_clock_in_SKNodes(i)                     := subsystem.tile_clock_EPNodes(i)
-        ghm.ghm_reset_in_SKNodes(i)                     := subsystem.tile_reset_EPNodes(i)
-        subsystem.cdc_empty_tocheckerEPNodes(i)         := ghm.ghm_cdc_empty_out_SKNodes(i)
-        ghm.ghm_ghe_revent_in_SKNodes(i)                := subsystem.tile_ghe_revent_out_EPNodes(i)
-        ghm.clear_ic_status_SkNodes(i)                  := subsystem.tile_clear_ic_status_out_EPNodes(i)
-        subsystem.clear_ic_status_tomainEPNodes(i)      := ghm.clear_ic_status_tomainSRNodes(i)
-        subsystem.icsl_naEPNodes(i)                     := ghm.icsl_naSRNodes(i)
-      }
-      // else{
-      //   val useless_ghm_ghe_packet_out_SRNodes   = (BundleBridgeSource[UInt]())
-      //   val useless_core_r_arfs_c_SRNodes        = (BundleBridgeSource[UInt]())
-      //   val useless_icsl_out_SRNodes             = (BundleBridgeSource[UInt]())
-      //   val useless_ghm_ghe_status_out_SRNodes   = (BundleBridgeSource[UInt]())
-      //   val useless_ghm_ghe_event_in_SKNodes     = (BundleBridgeSink[UInt]())
-      //   val useless_ghm_clock_in_SKNodes         = (BundleBridgeSink[Clock]())
-      //   val useless_ghm_reset_in_SKNodes         = (BundleBridgeSink[Bool]())
-      //   val useless_ghm_cdc_empty_out_SKNodes    = (BundleBridgeSource[Bool]())
-      //   val useless_ghm_ghe_revent_in_SKNodes    = (BundleBridgeSink[UInt]())
-      //   val useless_clear_ic_status_SkNodes      = (BundleBridgeSink[UInt]())
-      //   val useless_clear_ic_status_tomainSRNodes= (BundleBridgeSource[UInt]())
-      //   val useless_icsl_naSRNodes               = (BundleBridgeSource[UInt]())
-      //   subsystem.tile_ghe_packet_in_EPNodes(i)         := useless_ghm_ghe_packet_out_SRNodes
-      //   subsystem.core_r_arfs_c_EPNodes(i)              := useless_core_r_arfs_c_SRNodes
-      //   subsystem.tile_icsl_counter_in_EPNodes(i)       := useless_icsl_out_SRNodes
-      //   subsystem.tile_ghe_status_in_EPNodes(i)         := useless_ghm_ghe_status_out_SRNodes
-      //   subsystem.cdc_empty_tocheckerEPNodes(i)         := useless_ghm_cdc_empty_out_SKNodes
-      //   subsystem.clear_ic_status_tomainEPNodes(i)      := useless_clear_ic_status_tomainSRNodes
-      //   subsystem.icsl_naEPNodes(i)                     := useless_icsl_naSRNodes
-      //   useless_ghm_ghe_event_in_SKNodes                := subsystem.tile_ghe_event_out_EPNodes(i)
-      //   useless_ghm_clock_in_SKNodes                    := subsystem.tile_clock_EPNodes(i)
-      //   useless_ghm_reset_in_SKNodes                    := subsystem.tile_reset_EPNodes(i)
-      //   useless_ghm_ghe_revent_in_SKNodes               := subsystem.tile_ghe_revent_out_EPNodes(i)
-      //   useless_clear_ic_status_SkNodes                 := subsystem.tile_clear_ic_status_out_EPNodes(i)
-
-      // }
-    }
-
-    subsystem.tile_bigcore_comp_EPNode            := ghm.bigcore_comp_SRNode
-    subsystem.tile_bigcore_hang_EPNode            := ghm.bigcore_hang_SRNode
-    subsystem.tile_debug_bp_EPNode                := ghm.debug_bp_SRNode
+//     ghm.core_r_arfs_in_SKNode                         := subsystem.tile_core_r_arfs_EPNode
+//     ghm.ghm_ght_packet_in_SKNode                      := subsystem.tile_ght_packet_out_EPNode
+//     ghm.ic_counter_SKNode                             := subsystem.tile_ic_counter_out_EPNode
+//     ghm.debug_maincore_status_SKNode                  := subsystem.debug_maincore_status_out_EPNode
+//     ghm.ghm_ght_packet_dest_SKNode                    := subsystem.tile_ght_packet_dest_EPNode
+//     ghm.ghm_ght_status_in_SKNode                      := subsystem.tile_ght_status_out_EPNode
 
 
-    subsystem.tile_debug_gcounter_EPNode          := ghm.debug_gcounter_SRNode
 
-    ghm
+//     // 2. 批量连接节点
+//     for (i <- 0 until number_of_ghes) {
+//       if(i<=params.number_of_little_cores){
+//         subsystem.tile_ghe_packet_in_EPNodes(i)         := ghm.ghm_ghe_packet_out_SRNodes(i)
+//         subsystem.core_r_arfs_c_EPNodes(i)              := ghm.core_r_arfs_c_SRNodes(i)
+//         subsystem.tile_icsl_counter_in_EPNodes(i)       := ghm.icsl_out_SRNodes(i)
+//         subsystem.tile_ghe_status_in_EPNodes(i)         := ghm.ghm_ghe_status_out_SRNodes(i)
+//         ghm.ghm_ghe_event_in_SKNodes(i)                 := subsystem.tile_ghe_event_out_EPNodes(i)
+//         ghm.ghm_clock_in_SKNodes(i)                     := subsystem.tile_clock_EPNodes(i)
+//         ghm.ghm_reset_in_SKNodes(i)                     := subsystem.tile_reset_EPNodes(i)
+//         subsystem.cdc_empty_tocheckerEPNodes(i)         := ghm.ghm_cdc_empty_out_SKNodes(i)
+//         ghm.ghm_ghe_revent_in_SKNodes(i)                := subsystem.tile_ghe_revent_out_EPNodes(i)
+//         ghm.clear_ic_status_SkNodes(i)                  := subsystem.tile_clear_ic_status_out_EPNodes(i)
+//         subsystem.clear_ic_status_tomainEPNodes(i)      := ghm.clear_ic_status_tomainSRNodes(i)
+//         subsystem.icsl_naEPNodes(i)                     := ghm.icsl_naSRNodes(i)
+//       }
+//       // else{
+//       //   val useless_ghm_ghe_packet_out_SRNodes   = (BundleBridgeSource[UInt]())
+//       //   val useless_core_r_arfs_c_SRNodes        = (BundleBridgeSource[UInt]())
+//       //   val useless_icsl_out_SRNodes             = (BundleBridgeSource[UInt]())
+//       //   val useless_ghm_ghe_status_out_SRNodes   = (BundleBridgeSource[UInt]())
+//       //   val useless_ghm_ghe_event_in_SKNodes     = (BundleBridgeSink[UInt]())
+//       //   val useless_ghm_clock_in_SKNodes         = (BundleBridgeSink[Clock]())
+//       //   val useless_ghm_reset_in_SKNodes         = (BundleBridgeSink[Bool]())
+//       //   val useless_ghm_cdc_empty_out_SKNodes    = (BundleBridgeSource[Bool]())
+//       //   val useless_ghm_ghe_revent_in_SKNodes    = (BundleBridgeSink[UInt]())
+//       //   val useless_clear_ic_status_SkNodes      = (BundleBridgeSink[UInt]())
+//       //   val useless_clear_ic_status_tomainSRNodes= (BundleBridgeSource[UInt]())
+//       //   val useless_icsl_naSRNodes               = (BundleBridgeSource[UInt]())
+//       //   subsystem.tile_ghe_packet_in_EPNodes(i)         := useless_ghm_ghe_packet_out_SRNodes
+//       //   subsystem.core_r_arfs_c_EPNodes(i)              := useless_core_r_arfs_c_SRNodes
+//       //   subsystem.tile_icsl_counter_in_EPNodes(i)       := useless_icsl_out_SRNodes
+//       //   subsystem.tile_ghe_status_in_EPNodes(i)         := useless_ghm_ghe_status_out_SRNodes
+//       //   subsystem.cdc_empty_tocheckerEPNodes(i)         := useless_ghm_cdc_empty_out_SKNodes
+//       //   subsystem.clear_ic_status_tomainEPNodes(i)      := useless_clear_ic_status_tomainSRNodes
+//       //   subsystem.icsl_naEPNodes(i)                     := useless_icsl_naSRNodes
+//       //   useless_ghm_ghe_event_in_SKNodes                := subsystem.tile_ghe_event_out_EPNodes(i)
+//       //   useless_ghm_clock_in_SKNodes                    := subsystem.tile_clock_EPNodes(i)
+//       //   useless_ghm_reset_in_SKNodes                    := subsystem.tile_reset_EPNodes(i)
+//       //   useless_ghm_ghe_revent_in_SKNodes               := subsystem.tile_ghe_revent_out_EPNodes(i)
+//       //   useless_clear_ic_status_SkNodes                 := subsystem.tile_clear_ic_status_out_EPNodes(i)
 
-  }
-}
+//       // }
+//     }
+
+//     subsystem.tile_bigcore_comp_EPNode            := ghm.bigcore_comp_SRNode
+//     subsystem.tile_bigcore_hang_EPNode            := ghm.bigcore_hang_SRNode
+//     subsystem.tile_debug_bp_EPNode                := ghm.debug_bp_SRNode
+
+
+//     subsystem.tile_debug_gcounter_EPNode          := ghm.debug_gcounter_SRNode
+
+//     ghm
+
+//   }
+// }

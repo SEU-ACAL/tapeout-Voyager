@@ -341,7 +341,7 @@ void rCleanup (void){
 
 	
 	uint64_t status;
-  	while (ght_get_initialisation() != 0) {
+  	while ((ght_get_status()>>15) != 3) {
 
   	}
 
