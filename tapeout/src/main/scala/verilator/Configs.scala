@@ -24,9 +24,9 @@ class VoyagerVerilatorHarnessConfig extends Config(
   new chipyard.config.WithMultiSingleRoCCGHE(0, 1, 2, 3, 4) ++ //put custom RoCC on hart0-4 for custom0 ISA extension ++
   new freechips.rocketchip.subsystem.WithInclusiveCache(capacityKB = 256) ++ //256KB L2Cache
   new chipyard.config.WithSystemBusWidth(128) ++
-  new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
-  AsynchronousCrossing().depth,
-  AsynchronousCrossing().sourceSync) ++
+  // new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
+  // AsynchronousCrossing().depth,
+  // AsynchronousCrossing().sourceSync) ++
   // Frequency specifications
   new chipyard.clocking.WithClockGroupsCombinedByName(("uncore",Seq("sbus", "mbus", "pbus", "fbus", "cbus", "obus", "implicit", "clock_tap"),Nil),
                                                       ("boom",Seq("tile_0"),Nil),//大核
