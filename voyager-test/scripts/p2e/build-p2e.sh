@@ -5,6 +5,29 @@
 
 set -e
 
+# Default values
+SKIP_STEPS=0
+CONFIG="RocketConfig"
+
+# Help function
+help() {
+  echo "Usage: $0 [OPTIONS]"
+  echo ""
+  echo "Options:"
+  echo "  -c, --config CONFIG  指定配置 (默认: RocketConfig)"
+  echo "  -s, --skip NUMBER    跳过前几步 (例如: -s 2 从第3步开始)"
+  echo "  -h, --help           显示帮助信息"
+  echo ""
+  echo "Steps:"
+  echo "  Step 1: Building bitstream"
+  echo "  Step 2: Integrating XEPIC"
+  echo "  Step 3: SSH connection"
+  echo "  Step 4: vsyn (on remote server)"
+  echo "  Step 5: vcom (on remote server)"
+  echo "  Step 6: pnr (on remote server)"
+  exit 0
+}
+
 while [ $# -gt 0 ] ; do
   case $1 in
     -c|--config)
@@ -15,6 +38,18 @@ while [ $# -gt 0 ] ; do
         echo "错误: -c 或 --config 选项需要一个参数"
         help
       fi
+      ;;
+    -s|--skip)
+      if [[ -n $2 && $2 =~ ^[0-9]+$ ]]; then
+        SKIP_STEPS="$2"
+        shift
+      else
+        echo "错误: -s 或 --skip 选项需要一个数字参数"
+        help
+      fi
+      ;;
+    -h|--help)
+      help
       ;;
     *)
       echo "未知选项: $1"
@@ -63,7 +98,7 @@ SSH_PORT=$(parse_yaml "port")
 SSH_USER=$(parse_yaml "username")
 SSH_PASSWORD=$(parse_yaml "password")
 REMOTE_BASE=$(parse_yaml "remote_base")
-
+FPGA_IP=$(parse_yaml "ip")
 
 # Function to check if sshpass is installed
 check_sshpass() {
@@ -104,46 +139,69 @@ test_connection() {
 # Main execution
 main() {
   # Step 1: Build bitstream
-  Log "$BLUE" "====================== Step 1: Building bitstream ======================"
-  cd $CYDIR/fpga
-  make SUB_PROJECT=vcu118 CONFIG=$CONFIG bitstream || true
-  mkdir -p $OUTPUT_DIR
-  rm -rf $OUTPUT_DIR/gen-collateral
-  cp -r $CYDIR/fpga/generated-src/chipyard.fpga.vcu118.VCU118FPGATestHarness.$CONFIG/gen-collateral $OUTPUT_DIR/
-  
-  # Step 2: integerate
-  Log "$BLUE" "====================== Step 2: Integrating XEPIC ======================"
-  # mkdir -p $OUTPUT_DIR/integerate
-  cd $SCRIPT_DIR/toolchain
-  ./integrate.sh 
-  ./update_filelist.sh 
-  
-
-  # Step 3: Check if sshpass is available
-  Log "$BLUE" "====================== Step 3: SSH connection ======================"
-  check_sshpass
-  if ! test_connection; then
-    Log "$RED" "Connection test failed. Please check your configuration."
-    exit 1
+  if [ $SKIP_STEPS -lt 1 ]; then
+    Log "$BLUE" "====================== Step 1: Building bitstream ======================"
+    cd $CYDIR/fpga
+    make SUB_PROJECT=vcu118 CONFIG=$CONFIG bitstream || true
+    mkdir -p $OUTPUT_DIR
+    rm -rf $OUTPUT_DIR/gen-collateral
+    cp -r $CYDIR/fpga/generated-src/chipyard.fpga.vcu118.VCU118FPGATestHarness.$CONFIG/gen-collateral $OUTPUT_DIR/
+  else
+    Log "$YELLOW" "Step 1 skipped"
   fi
   
-  Log "$YELLOW" "Uploading files to remote server..."
-  sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "mkdir -p p2e && cd p2e && rm -rf "
-  sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -P "$SSH_PORT" -r $OUTPUT_DIR $SSH_USER@$SSH_HOST:$REMOTE_BASE
-  sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -P "$SSH_PORT" -r $SCRIPT_DIR/toolchain $SSH_USER@$SSH_HOST:$REMOTE_BASE/p2e
+  # Step 2: Integrating XEPIC
+  if [ $SKIP_STEPS -lt 2 ]; then
+    Log "$BLUE" "====================== Step 2: Integrating XEPIC ======================"
+    cd $SCRIPT_DIR/toolchain
+    ./integrate.sh 
+    ./update_filelist.sh 
+    cd $SCRIPT_DIR/toolchain
+    Log "$YELLOW" "Syncing FPGA IP ($FPGA_IP) to hw-config.hdf..."
+    sed -i "s/\"IP\": \"[^\"]*\"/\"IP\": \"$FPGA_IP\"/g" hw-config.hdf
+  else
+    Log "$YELLOW" "Step 2 skipped"
+  fi
+
+  # Step 3: SSH connection and upload
+  if [ $SKIP_STEPS -lt 3 ]; then
+    Log "$BLUE" "====================== Step 3: SSH connection ======================"
+    check_sshpass
+    if ! test_connection; then
+      Log "$RED" "Connection test failed. Please check your configuration."
+      exit 1
+    fi
+    
+    Log "$YELLOW" "Uploading files to remote server..."
+    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "mkdir -p p2e && cd p2e && rm -rf "
+    sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -P "$SSH_PORT" -r $OUTPUT_DIR $SSH_USER@$SSH_HOST:$REMOTE_BASE
+    sshpass -p "$SSH_PASSWORD" scp -o StrictHostKeyChecking=no -P "$SSH_PORT" -r $SCRIPT_DIR/toolchain $SSH_USER@$SSH_HOST:$REMOTE_BASE/p2e
+  else
+    Log "$YELLOW" "Step 3 skipped"
+  fi
   
-  # Step 4: Test connection first
-  Log "$BLUE" "====================== Step 4: Compiling on remote server ======================"
-  sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "source $REMOTE_BASE/p2e/toolchain/setup.sh && cd $REMOTE_BASE/p2e/toolchain && make vsyn && make vcom && make pnr"
-  
-  # # Start interactive SSH session
-  # Log "$YELLOW" "Starting interactive SSH session..."
-  # Log "$YELLOW" "Use 'exit' to return to local shell"
-  # echo ""
-  
-  # sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST"
-  
-  # Log "$GREEN" "SSH session ended."
+  # Step 4: Compiling on remote server
+  if [ $SKIP_STEPS -lt 4 ]; then
+    Log "$BLUE" "====================== Step 4: vsyn (on remote server) ======================"
+    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cd $REMOTE_BASE/p2e/toolchain && source ./setup.sh && make vsyn"
+  else
+    Log "$YELLOW" "Step 4 skipped"
+  fi
+
+  if [ $SKIP_STEPS -lt 5 ]; then
+    Log "$BLUE" "====================== Step 5: vcom (on remote server) ======================"
+    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cd $REMOTE_BASE/p2e/toolchain && source ./setup.sh && make vcom"
+  else
+    Log "$YELLOW" "Step 5 skipped"
+  fi
+
+  # Step 6: pnr on remote server
+  if [ $SKIP_STEPS -lt 6 ]; then
+    Log "$BLUE" "====================== Step 6: pnr (on remote server) ======================"
+    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cd $REMOTE_BASE/p2e/toolchain && source ./setup.sh && make pnr"
+  else
+    Log "$YELLOW" "Step 6 skipped"
+  fi
 }
 
 # Run main function

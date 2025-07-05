@@ -1,0 +1,12 @@
+{
+  "name": "npm-demo-server",
+  "version": "1.0.0",
+  "description": "Simple Express static server for NPM demo",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.18.2"
+  }
+} 

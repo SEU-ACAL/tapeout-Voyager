@@ -50,7 +50,7 @@ source ${CYDIR}/voyager-test/scripts/env-source.sh dc
 #-------------------------------------------------------------------
 # Step0 执行build Verilator
 #-------------------------------------------------------------------
-${CYDIR}/voyager-test/scripts/build-verilator.sh --config ${CONFIG}
+# ${CYDIR}/voyager-test/scripts/build-verilator.sh --config ${CONFIG}
 
 #-------------------------------------------------------------------
 # Step1 搬运对应Config的Verilog到工作目录
@@ -110,22 +110,38 @@ set current_design "$TOP_MODULE"
 # 链接设计
 link
 
-# 设置约束
-# create_clock -name clk -period 10 [get_ports clk]
-# set_input_delay -clock clk 2 [all_inputs]
-# set_output_delay -clock clk 2 [all_outputs]
+create_clock -name clk1 -period 2 [get_ports clock_uncore]
+create_clock -name clk2 -period 2 [get_ports clock_boom]
+create_clock -name clk3 -period 2 [get_ports clock_rockettile]
 
-# set_dont_touch [get_cells -hier -filter "ref_name =~ *VecThread*"]
-# set_dont_touch [get_cells -hier -filter "ref_name =~ *BfpThread*"]
-# set_dont_touch [get_cells -hier -filter "ref_name =~ *CITU*"]
+set_clock_uncertainty 0.6 [get_clocks clock_uncore]
+set_clock_uncertainty 0.6 [get_clocks clock_boom]
+set_clock_uncertainty 0.6 [get_clocks clock_rockettile]
 
-# # 综合
-compile -incremental -scan
+set_input_delay 1.2 -clock clk1  [remove_from_collection [all_inputs] [get_ports clock_uncore] [get_ports clock_boom] [get_ports clock_rockettile] ]
+set_output_delay 0.6 -clock clk1 [all_outputs]
+
+#同频同相位
+
+set_clock_equivalence clk1 clk2 clk3
+
+#输出负载 
+
+set_load 0.08 [all_outputs]
+
+set_input_transition 0.2 [remove_from_collection [all_inputs] [get_ports clock_uncore] [get_ports clock_boom] [get_ports clock_rockettile] ]
+
+set_clock_transition 0.08 [get_clocks clk1]
+set_clock_transition 0.08 [get_clocks clk2]
+set_clock_transition 0.08 [get_clocks clk3]
+
+
+compile_ultra -retime -scan 
 write -format ddc -hierarchy -output $REPORT_DIR/design_compiled.ddc
 
 # 生成报告
 report_area -hierarchy -nosplit > $REPORT_DIR/area.rpt
-report_timing > $REPORT_DIR/timing.rpt
+report_timing > $REPORT_DIR/timing.rpt    
 report_power -hierarchy > $REPORT_DIR/power.rpt
 
 # 保存网表
