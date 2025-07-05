@@ -68,7 +68,7 @@ class WithPLLSelectorDividerClockGenerator(enable: Boolean = true) extends Overr
         o.reset := reset_wire
       }
 
-      (Seq(ClockPort(() => clock_io, 100), ResetPort(() => reset_io)), clockIOCell ++ resetIOCell)
+      (Seq(ClockPort(() => clock_io, 500), ResetPort(() => reset_io)), clockIOCell ++ resetIOCell)
     }
   }
 })

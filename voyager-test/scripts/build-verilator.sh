@@ -9,12 +9,16 @@ help() {
   echo "  --fst                启用 FST 波形"
   echo "  -j <num>             指定并行任务数 (默认: 128)"
   echo "  -c, --config <config> 指定配置参数"
+  echo "  -p, --project <project> 指定 SBT 项目 (默认: chipyard)"
+  echo "  -s, --sub-project <sub> 指定子项目 (如: voyager_tapeout)"
   exit 0
 }
 
 show_help=0
 debug=""
 j="256"
+SBT_PROJECT="chipyard"
+SUB_PROJECT=""
 
 # CYDIR表示chipyard的路径
 CYDIR=$(git rev-parse --show-toplevel)
@@ -49,6 +53,24 @@ while [ $# -gt 0 ] ; do
         help
       fi
       ;;
+    -p|--project)
+      if [[ -n $2 && $2 != -* ]]; then
+        SBT_PROJECT="$2"
+        shift
+      else
+        echo "错误: -p 或 --project 选项需要一个参数"
+        help
+      fi
+      ;;
+    -s|--sub-project)
+      if [[ -n $2 && $2 != -* ]]; then
+        SUB_PROJECT="$2"
+        shift
+      else
+        echo "错误: -s 或 --sub-project 选项需要一个参数"
+        help
+      fi
+      ;;
     *)
       echo "未知选项: $1"
       help
@@ -74,7 +96,12 @@ if [ "$debug" == "debug" ]; then
 fi
 
 cd ${CYDIR}/sims/verilator/ || { echo "Cannot enter the directory: ${CYDIR}/sims/verilator/"; exit 1; }
-make -j$j ${debug} CONFIG=$CONFIG USE_FST=$USE_FST || { echo "[Build verilator Failed!]==================="; exit 1; }
+make -j$j ${debug} CONFIG=$CONFIG \
+  USE_FST=$USE_FST \
+  SBT_PROJECT=$SBT_PROJECT \
+  $([ -n "$SUB_PROJECT" ] && echo "SUB_PROJECT=$SUB_PROJECT") \
+  || { echo "[Build verilator Failed!]==================="; exit 1; }
+
 # 编译成功了才会搬过来
 mkdir -p ${CYDIR}/voyager-test/output/verilator
 cp ${CYDIR}/sims/verilator/simulator-chipyard.harness-${CONFIG}${DEBUG_POSTFIX} ${CYDIR}/voyager-test/output/verilator

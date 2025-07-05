@@ -30,6 +30,8 @@ class R_ELUIO(params: R_ELUParams) extends Bundle {
   val elu_data = Output(UInt((2*params.xLen+3*params.wAddr).W))
   val elu_status = Output(UInt(1.W))
 
+  val state_reset  = Input(Bool())
+
   val core_trace = Input(UInt(1.W))
 }
 
@@ -101,28 +103,30 @@ class R_ELU (val params: R_ELUParams) extends Module with HasR_ELUIO {
                                           )
                                           
   // Revisit: ELU does not handle overflow, as it should rarely happen
-  val u_channel               = Module (new GH_MemFIFO(FIFOParams((2*params.xLen+3*params.wAddr), params.nEntries)))
-  val channel_enq_valid       = WireInit(false.B)
-  val channel_enq_data        = WireInit(0.U((2*params.xLen+3*params.wAddr).W))
-  val channel_deq_ready       = WireInit(false.B)
-  val channel_deq_data        = WireInit(0.U((2*params.xLen+3*params.wAddr).W))
-  val channel_empty           = WireInit(true.B)
-  val channel_full            = WireInit(false.B)
-  val channel_nearfull        = WireInit(0.U(1.W))
+  val ELU_LOG                 = RegInit(0.U((2*params.xLen+3*params.wAddr).W))
+  ELU_LOG                    := Mux(io.state_reset, 0.U, Mux((err_ld | err_st).asBool, err_log, ELU_LOG))
+  // val u_channel               = Module (new GH_MemFIFO(FIFOParams((2*params.xLen+3*params.wAddr), params.nEntries)))
+  // val channel_enq_valid       = WireInit(false.B)
+  // val channel_enq_data        = WireInit(0.U((2*params.xLen+3*params.wAddr).W))
+  // val channel_deq_ready       = WireInit(false.B)
+  // val channel_deq_data        = WireInit(0.U((2*params.xLen+3*params.wAddr).W))
+  // val channel_empty           = WireInit(true.B)
+  // val channel_full            = WireInit(false.B)
+  // val channel_nearfull        = WireInit(0.U(1.W))
 
-  u_channel.io.enq_valid     := channel_enq_valid
-  u_channel.io.enq_bits      := channel_enq_data
-  u_channel.io.deq_ready     := channel_deq_ready
-  channel_deq_data           := u_channel.io.deq_bits
-  channel_empty              := u_channel.io.empty
-  channel_full               := u_channel.io.full
-  channel_nearfull           := u_channel.io.status_threeslots
+  // u_channel.io.enq_valid     := channel_enq_valid
+  // u_channel.io.enq_bits      := channel_enq_data
+  // u_channel.io.deq_ready     := channel_deq_ready
+  // channel_deq_data           := u_channel.io.deq_bits
+  // channel_empty              := u_channel.io.empty
+  // channel_full               := u_channel.io.full
+  // channel_nearfull           := u_channel.io.status_threeslots
 
-  channel_enq_valid          := err_ld | err_st
-  channel_enq_data           := err_log
-  channel_deq_ready          := io.elu_deq
-  io.elu_data                := channel_deq_data
-  io.elu_status              := ~channel_empty
+  // channel_enq_valid          := err_ld | err_st
+  // channel_enq_data           := err_log
+  // channel_deq_ready          := io.elu_deq
+  io.elu_data                := ELU_LOG
+  io.elu_status              := (!(ELU_LOG === 0.U)).asUInt
   
 
   // Faking ELU data 

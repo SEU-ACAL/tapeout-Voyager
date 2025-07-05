@@ -59,12 +59,12 @@ class GemminiPrefetchConfig extends Config(
 // )
 
 class OurHeterSoCConfig extends Config(
-  new chipyard.config.WithTileFrequency(100, Some(0)) ++
-  new chipyard.config.WithTileFrequency(100, Some(1)) ++
-  new chipyard.config.WithTileFrequency(100, Some(2)) ++
-  new chipyard.config.WithTileFrequency(100, Some(3)) ++
-  new chipyard.config.WithTileFrequency(100, Some(4)) ++
-  new chipyard.config.WithTileFrequency(100, Some(5)) ++
+  new chipyard.config.WithTileFrequency(500, Some(0)) ++
+  new chipyard.config.WithTileFrequency(500, Some(1)) ++
+  new chipyard.config.WithTileFrequency(500, Some(2)) ++
+  new chipyard.config.WithTileFrequency(500, Some(3)) ++
+  new chipyard.config.WithTileFrequency(500, Some(4)) ++
+  new chipyard.config.WithTileFrequency(500, Some(5)) ++
   // new chipyard.config.WithTileFrequency(1000, Some(0)) ++
   // new chipyard.config.WithTileFrequency(500, Some(1)) ++
   // new chipyard.config.WithTileFrequency(500, Some(2)) ++
@@ -88,12 +88,12 @@ class OurHeterSoCConfig extends Config(
   new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
   AsynchronousCrossing().depth,
   AsynchronousCrossing().sourceSync) ++
-  // Frequency specifications
-  new chipyard.clocking.WithClockGroupsCombinedByName(("uncore",Seq("sbus", "mbus", "pbus", "fbus", "cbus", "obus", "implicit", "clock_tap"),Nil),
-                                                      ("boom",Seq("tile_0"),Nil),//大核
-                                                      ("rockettile",Seq("tile_1","tile_2","tile_3","tile_4","tile_5"),Nil)//meek小核
-                                                      // ("gemini",Seq("tile_5"),Nil)
-                                                      )++
+  // // Frequency specifications
+  // new chipyard.clocking.WithClockGroupsCombinedByName(("uncore",Seq("sbus", "mbus", "pbus", "fbus", "cbus", "obus", "implicit", "clock_tap"),Nil),
+  //                                                     ("boom",Seq("tile_0"),Nil),//大核
+  //                                                     ("rockettile",Seq("tile_1","tile_2","tile_3","tile_4","tile_5"),Nil)//meek小核
+  //                                                     // ("gemini",Seq("tile_5"),Nil)
+  //                                                     )++
   //  Crossing specifications
   new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1) ++
   new boom.meek.common.WithNLargeBooms(1) ++

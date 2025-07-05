@@ -1,0 +1,9 @@
+package voyager_tapeout
+
+import org.chipsalliance.cde.config.Config
+import chipyard._
+import voyager_tapeout.chip.VoyagerChipHarnessConfig
+import voyager_tapeout.verilator.VoyagerVerilatorHarnessConfig
+
+class VoyagerChipConfig extends VoyagerChipHarnessConfig
+class VoyagerVerilatorConfig extends VoyagerVerilatorHarnessConfig

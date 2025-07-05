@@ -16,9 +16,8 @@ export PATH=$HPE_HOME/tools/xwave/bin:$PATH
 export RLM_LICENSE=5053@192.168.99.15
 export LM_LICENSE_FILE=/home/tools/vivado/license.lic
 
-# 自动获取当前脚本所在目录和名称
-script_dir=$(dirname "$0")
-script_dir=$(cd "$script_dir" && pwd)
+# source目录是执行目录，所以记得跳到 setup.sh 的同级目录进行source
+script_dir=$(pwd)
 script_name=$(basename "$script_dir")
 export VSRC_PATH=$script_dir/../gen-collateral
 

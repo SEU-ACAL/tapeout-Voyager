@@ -178,7 +178,7 @@ main() {
   if [ $SKIP_STEPS -lt 4 ]; then
     Log "$BLUE" "====================== Step 4: Setup Serial on remote server ======================"
     Log "$YELLOW" "Modifying default_div in .design_info file..."
-    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cd p2e/toolchain && sed -i 's/\"default_div\" : [0-9]*/\"default_div\" : 15/g' .design_info"
+    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cd $REMOTE_BASE/p2e/toolchain && sed -i 's/\"default_div\" : [0-9]*/\"default_div\" : 15/g' .design_info"
     Log "$GREEN" "✓ Set Baud Rate to 4800"
   else
     Log "$YELLOW" "Step 4 skipped"
@@ -188,7 +188,7 @@ main() {
   if [ $SKIP_STEPS -lt 5 ]; then
     Log "$BLUE" "====================== Step 5: Running VDBG on remote server (background) ======================"
     Log "$YELLOW" "Running VDBG with debug_trigger.tcl in background..."
-    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -t -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cd p2e/toolchain && source setup.sh && ./run_vdbg.exp"
+    sshpass -p "$SSH_PASSWORD" ssh -o StrictHostKeyChecking=no -t -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "cd $REMOTE_BASE/p2e/toolchain && source ./setup.sh && ./run_vdbg.exp"
   else
     Log "$YELLOW" "Step 5 skipped"
   fi

@@ -33,9 +33,10 @@ class DualRocketConfig extends Config(
 //   new chipyard.config.AbstractConfig
 // )
 
+
 class MEEKConfig extends Config(
 
-  new chipyard.config.WithTileFrequency(1000, Some(0)) ++
+  new chipyard.config.WithTileFrequency(500, Some(0)) ++
   new chipyard.config.WithTileFrequency(500, Some(1)) ++
   new chipyard.config.WithTileFrequency(500, Some(2)) ++
   new chipyard.config.WithTileFrequency(500, Some(3)) ++
@@ -46,10 +47,10 @@ class MEEKConfig extends Config(
   AsynchronousCrossing().sourceSync) ++
   // Frequency specifications
   // // new chipyard.config.WithTileFrequency(1000.0) ++        // Matches the maximum frequency of U540
-  new chipyard.clocking.WithClockGroupsCombinedByName(("uncore",Seq("sbus", "mbus", "pbus", "fbus", "cbus", "obus", "implicit", "clock_tap"),Nil),
-                                                      ("boom",Seq("tile_0"),Nil),
-                                                      ("rockettileMeek",Seq("tile_1","tile_2","tile_3","tile_4"),Nil)
-                                                      )++
+  // new chipyard.clocking.WithClockGroupsCombinedByName(("uncore",Seq("sbus", "mbus", "pbus", "fbus", "cbus", "obus","tile_0","implicit", "clock_tap"),Nil),
+  //                                                     // ("boom",Seq("tile_0"),Nil),
+  //                                                     ("rockettileMeek",Seq("tile_1","tile_2","tile_3","tile_4"),Nil)
+  //                                                     )++
   // new freechips.rocketchip.guardiancouncil.WithGHE ++
   new chipyard.config.WithMultiRoCCMEEK ++
   new chipyard.config.WithMultiSingleRoCCGHE(0, 1, 2, 3, 4) ++ //put custom RoCC on hart0-4 for custom0 ISA extension ++

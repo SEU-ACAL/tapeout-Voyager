@@ -128,7 +128,7 @@ class AbstractConfig extends Config(
 
   // ChipTop clock IO/PLL/Divider/Mux settings
   new chipyard.clocking.WithClockTapIOCells ++                      /** Default generate a clock tapio */
-  new chipyard.clocking.WithPassthroughClockGenerator ++
+  new chipyard.clocking.WithPLLSelectorDividerClockGenerator(enable=false) ++
 
   // DigitalTop-internal clocking settings
   new freechips.rocketchip.subsystem.WithDontDriveBusClocksFromSBus ++  /** leave the bus clocks undriven by sbus */
@@ -137,12 +137,12 @@ class AbstractConfig extends Config(
     Seq("sbus", "mbus", "pbus", "fbus", "cbus", "obus", "implicit", "clock_tap"),
     Seq("tile"))) ++
 
-  new chipyard.config.WithPeripheryBusFrequency(1000.0) ++           /** Default 500 MHz pbus */
-  new chipyard.config.WithMemoryBusFrequency(1000.0) ++              /** Default 500 MHz mbus */
-  new chipyard.config.WithControlBusFrequency(1000.0) ++             /** Default 500 MHz cbus */
-  new chipyard.config.WithSystemBusFrequency(1000.0) ++              /** Default 500 MHz sbus */
-  new chipyard.config.WithFrontBusFrequency(1000.0) ++               /** Default 500 MHz fbus */
-  new chipyard.config.WithOffchipBusFrequency(1000.0) ++             /** Default 500 MHz obus */
+  new chipyard.config.WithPeripheryBusFrequency(500.0) ++           /** Default 500 MHz pbus */
+  new chipyard.config.WithMemoryBusFrequency(500.0) ++              /** Default 500 MHz mbus */
+  new chipyard.config.WithControlBusFrequency(500.0) ++             /** Default 500 MHz cbus */
+  new chipyard.config.WithSystemBusFrequency(500.0) ++              /** Default 500 MHz sbus */
+  new chipyard.config.WithFrontBusFrequency(500.0) ++               /** Default 500 MHz fbus */
+  new chipyard.config.WithOffchipBusFrequency(500.0) ++             /** Default 500 MHz obus */
   new chipyard.config.WithInheritBusFrequencyAssignments ++         /** Unspecified clocks within a bus will receive the bus frequency if set */
   new chipyard.config.WithNoSubsystemClockIO ++                     /** drive the subsystem diplomatic clocks from ChipTop instead of using implicit clocks */
 

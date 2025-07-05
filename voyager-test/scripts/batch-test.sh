@@ -28,7 +28,7 @@ NPU_TESTS=("template"
            "template")
 
 # MEEK测试套件配置
-MEEK_CONFIGS=("OurHeterSoCConfig")
+MEEK_CONFIGS=("VoyagerVerilatorConfig")
 MEEK_TESTS=("hello")
 
 # 全量测试套件配置
@@ -39,7 +39,7 @@ SOC_TESTS=("hello"
 # 对比测试配置映射 (RTL配置 -> Spike扩展)
 declare -A DIFFTEST_CONFIG_MAP
 DIFFTEST_CONFIG_MAP["BuckyBallRocketConfig"]="buckyballFunc"
-DIFFTEST_CONFIG_MAP["OurHeterSoCConfig"]="gemmini"
+DIFFTEST_CONFIG_MAP["VoyagerVerilatorConfig"]="gemmini"
 DIFFTEST_CONFIG_MAP["GemminiRocketConfig"]="gemmini"
 
 help() {
@@ -81,8 +81,9 @@ build_config() {
   local config=$1
   
   log_info "构建配置: $config (debug模式)"
-  ${SCRIPT_DIR}/build-verilator.sh --debug --config $config
-  
+  ${SCRIPT_DIR}/build-verilator.sh --debug --config $config \
+    $([ $config = VoyagerVerilatorConfig ] && echo "--project voyager_tapeout --sub-project voyager_tapeout") 
+
   if [ $? -eq 0 ]; then
     log_success "配置 $config 构建成功"
     return 0
