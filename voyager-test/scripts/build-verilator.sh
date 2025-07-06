@@ -90,6 +90,14 @@ if [ -z "$CONFIG" ]; then
   help
 fi
 
+# 检查是否需要清理缓存
+CACHE_DIR="${CYDIR}/.classpath_cache"
+
+# 当使用voyager_tapeout项目时，自动清理缓存以避免配置冲突
+if [ "$SBT_PROJECT" = "voyager_tapeout" ] ; then
+  rm -rf "$CACHE_DIR"
+fi
+
 DEBUG_POSTFIX=""
 if [ "$debug" == "debug" ]; then
   DEBUG_POSTFIX="-debug"
