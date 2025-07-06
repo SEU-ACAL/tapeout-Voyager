@@ -29,61 +29,33 @@ import tracegen.{TraceGenSystemModuleImp}
 
 import chipyard.iocell._
 
-import voyager_tapeout.custom.device.peripheral_npu.{CanHavePeripheryNPU, PeripheralNPUPunchthroughIO}
-import voyager_tapeout.custom.iobinders.Port
+import voyager_tapeout.custom.device.peripheral_npu.{CanHavePeripheryNPU, PeripheralNPUIOCell}
+import chipyard.iobinders.IOCellKey
 
 import scala.reflect.{ClassTag}
 
-object IOBinderTypes {
-  type IOBinderTuple = (Seq[Port[_]], Seq[IOCell])
-  type IOBinderFunction = (Boolean, => Any) => ModuleValue[IOBinderTuple]
-}
-import IOBinderTypes._
+// Use chipyard's IOBinder infrastructure
+import chipyard.iobinders.{OverrideIOBinder}
+import chipyard.iobinders.IOBinderTypes.IOBinderTuple
 
-// System for instantiating binders based
-// on the scala type of the Target (_not_ its IO). This avoids needing to
-// duplicate harnesses (essentially test harnesses) for each target.
+// Import our custom Port types
+import voyager_tapeout.custom.iobinders.{PeripheralNPUPort}
 
-// IOBinders is map between string representations of traits to the desired
-// IO connection behavior for tops matching that trait. We use strings to enable
-// composition and overriding of IOBinders, much like how normal Keys in the config
-// system are used/ At elaboration, the testharness traverses this set of functions,
-// and functions which match the type of the DigitalTop are evaluated.
-
-// You can add your own binder by adding a new (key, fn) pair, typically by using
-// the OverrideIOBinder or ComposeIOBinder macros
-case object IOBinders extends Field[Map[String, Seq[IOBinderFunction]]](
-  Map[String, Seq[IOBinderFunction]]().withDefaultValue(Nil)
-)
-
-class IOBinder[T](composer: Seq[IOBinderFunction] => Seq[IOBinderFunction])(implicit tag: ClassTag[T]) extends Config((site, here, up) => {
-  case IOBinders => {
-    val upMap = up(IOBinders)
-    upMap + (tag.runtimeClass.toString -> composer(upMap(tag.runtimeClass.toString)))
+class WithPeripheralNPUIOCell extends OverrideIOBinder({
+  (system: CanHavePeripheryNPU) => {
+    system.NpuChipTopIO.map({ p =>
+      val sys = system.asInstanceOf[BaseSubsystem]
+      val (port, cells) = IOCell.generateIOFromSignal(p.getWrappedValue, "peripheralNpuIOCellPin", sys.p(IOCellKey), abstractResetAsAsync = true)
+      
+      // Input pins: from IOCell (external) to NPU peripheral (internal)
+      p.getWrappedValue.npu_pin1 := port.npu_pin1  
+      p.getWrappedValue.npu_pin3 := port.npu_pin3
+      
+      // Output pins: from NPU peripheral (internal) to IOCell (external)
+      port.npu_pin2 := p.getWrappedValue.npu_pin2
+      port.npu_pin4 := p.getWrappedValue.npu_pin4
+      
+      (Seq(PeripheralNPUPort(() => port)), cells)
+    }).getOrElse((Nil, Nil))
   }
-})
-
-class ConcreteIOBinder[T](composes: Boolean, fn: T => IOBinderTuple)(implicit tag: ClassTag[T]) extends IOBinder[T](
-  up => (if (composes) up else Nil) ++ Seq(((_, t) => { InModuleBody {
-    t match {
-      case system: T => fn(system)
-      case _ => (Nil, Nil)
-    }
-  }}): IOBinderFunction)
-)
-
-// The "Override" binders override any previous IOBinders (lazy or concrete) defined on the same trait.
-// The "Compose" binders do not override previously defined IOBinders on the same trait
-// The default IOBinders evaluate only in the concrete "ModuleImp" phase of elaboration
-// The "Lazy" IOBinders evaluate in the LazyModule phase, but can also generate hardware through InModuleBody
-
-class OverrideIOBinder[T](fn: T => IOBinderTuple)(implicit tag: ClassTag[T]) extends ConcreteIOBinder[T](false, fn)
-class ComposeIOBinder[T](fn: T => IOBinderTuple)(implicit tag: ClassTag[T]) extends ConcreteIOBinder[T](true, fn)
-
-class WithPeripheralNPUPunchthrough extends OverrideIOBinder({
-  (system: CanHavePeripheryNPU) => system.npuPeripheralIO.map { npu =>
-    val io_device_npu = IO(new PeripheralNPUPunchthroughIO).suggestName("npu_peripheral")
-    io_device_npu <> npu
-    (Seq(PeripheralNPUPort(() => io_device_npu)), Nil)
-  }.getOrElse((Nil, Nil))
 })

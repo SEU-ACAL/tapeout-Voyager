@@ -75,8 +75,8 @@ class PostDecodeCmd(implicit bbconfig: BuckyBallConfig) extends Bundle {
 
   // 流水线控制
   val pid           = UInt(8.W)   // 流水线ID
-  val pstart        = Bool() // 流水线的开始
-  val pend          = Bool() // 流水线的结束
+  val pstart        = Bool()      // 流水线的开始
+  val pend          = Bool()      // 流水线的结束
 }
 
 class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {

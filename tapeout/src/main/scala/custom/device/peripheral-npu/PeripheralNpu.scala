@@ -20,19 +20,11 @@ case class PeripheralNPUParams(
 
 case object PeripheralNPUKey extends Field[Option[PeripheralNPUParams]](None)
 
-// IO trait for the NPU peripheral
-class PeripheralNPUPBusIO extends Bundle {
-  val ctrl     = Output(UInt(32.W))    
-  val status   = Input(UInt(32.W))  
-  val data_in  = Output(UInt(32.W)) 
-  val data_out = Input(UInt(32.W)) 
-}
-
-class PeripheralNPUPunchthroughIO extends Bundle {
-  val npu_pin1 = Input(UInt(32.W))
-  val npu_pin2 = Output(UInt(32.W))
-  val npu_pin3 = Input(UInt(32.W))
-  val npu_pin4 = Output(UInt(32.W))
+class PeripheralNPUIOCell extends Bundle {
+  val npu_pin1 = Input(Bool())
+  val npu_pin2 = Output(Bool())
+  val npu_pin3 = Input(Bool())
+  val npu_pin4 = Output(Bool())
 }
 
 class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends ClockSinkDomain(ClockSinkParameters())(p) {
@@ -46,7 +38,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
   override lazy val module = new PeripheralNPUModuleImp(this)
   
   class PeripheralNPUModuleImp(outer: PeripheralNPU) extends Impl {
-    val io = IO(new PeripheralNPUPBusIO)
+    val io = IO(new PeripheralNPUIOCell) // to chiptop
     
     withClockAndReset(clock, reset) {
       val ctrl_reg     = RegInit(0.U(32.W))
@@ -54,11 +46,17 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
       val data_in_reg  = RegInit(0.U(32.W))
       val data_out_reg = RegInit(0.U(32.W))
       
-      io.ctrl      := ctrl_reg
-      io.data_in   := data_in_reg
-      status_reg   := io.status
-      data_out_reg := io.data_out
       
+      val npu_pin1_reg = RegInit(0.U(1.W))
+      val npu_pin3_reg = RegInit(0.U(1.W))
+      npu_pin1_reg := io.npu_pin1
+      npu_pin3_reg := io.npu_pin3
+      
+      // 输出引脚从内部逻辑驱动
+      io.npu_pin2 := data_out_reg(0)
+      io.npu_pin4 := data_out_reg(1)
+      
+      // pbus接口连接：不需要额外顶层接口连接，直接在regmap中处理
       outer.regnode.regmap(
         0x00 -> Seq(RegField(32, ctrl_reg, RegFieldDesc("ctrl", "NPU Control register"))),
         0x04 -> Seq(RegField.r(32, status_reg, RegFieldDesc("status", "NPU Status register (read-only)"))),
@@ -71,7 +69,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
 
 // Trait to add the NPU device to the subsystem
 trait CanHavePeripheryNPU { this: BaseSubsystem =>
-  private val portName = "npu-peripheral"
+  private val portName = "peripheralNpuPBusPort"
   private val pbus = locateTLBusWrapper(PBUS)
   
   val npuPeripheral = p(PeripheralNPUKey).map { params =>
@@ -89,18 +87,16 @@ trait CanHavePeripheryNPU { this: BaseSubsystem =>
   }
   
   // Expose NPU signals for IOBinder
-  val npuPeripheralIO = p(PeripheralNPUKey) match {
+  val NpuChipTopIO = p(PeripheralNPUKey) match {
     case Some(params) => {
       val npuIO = InModuleBody {
-        val npu = IO(new PeripheralNPUPunchthroughIO).suggestName("npu_peripheral")
-        npuPeripheral.map { device =>
-          npu <> device.module.io
-        }.getOrElse {
-          npu.npu_pin1 := 0.U
-          npu.npu_pin2 := 0.U
-          npu.npu_pin3 := 0.U
-          npu.npu_pin4 := 0.U
-        }
+        val npu = IO(new PeripheralNPUIOCell).suggestName("peripheralNpuIOCellPin")
+          npuPeripheral.map { device =>
+            npu <> device.module.io
+      }.getOrElse {
+        npu.npu_pin2 := false.B
+        npu.npu_pin4 := false.B
+      }
         npu
       }
       Some(npuIO)
@@ -109,23 +105,4 @@ trait CanHavePeripheryNPU { this: BaseSubsystem =>
   }
 }
 
-// Mixin for the module implementation
-trait CanHavePeripheryNPUModuleImp extends LazyModuleImp {
-  val outer: CanHavePeripheryNPU
-  
-  // Expose NPU device if needed
-  val npuPeripheralOpt = outer.npuPeripheral.map { device =>
-    device
-  }
-}
 
-// Config fragment to enable the NPU device
-class WithNPUPeripheral(
-  address: BigInt = 0x10050000,
-  size: BigInt = 0x40
-) extends Config((site, here, up) => {
-  case PeripheralNPUKey => Some(PeripheralNPUParams(
-    address = address,
-    size = size
-  ))
-})

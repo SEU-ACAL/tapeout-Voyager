@@ -335,6 +335,7 @@ lazy val chipyard_fpga = (project in file("./fpga"))
 lazy val voyager_tapeout = (project in file("./tapeout"))
   .dependsOn(chipyard, fpga_shells, testchipip)
   .settings(commonSettings)
+  .settings(chiselSettings)
 
 // Components of FireSim
 

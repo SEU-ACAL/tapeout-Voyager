@@ -101,7 +101,7 @@ $ ./voyager-test/scripts/run-spike.sh --ext=buckyballFunc bb_mvin_mvout
 $ cd Voyager
 $ ./voyager-test/scripts/build-verilator.sh --config RocketConfig # Build 单独Rocket
 $ ./voyager-test/scripts/build-verilator.sh --config GemminiRocketConfig # Build 单独Gemmini
-$ ./voyager-test/scripts/build-verilator.sh --config OurHeterSoCConfig --debug # Build 六核版, 并开启调试
+$ ./voyager-test/scripts/build-verilator.sh --config OurHeterSoCConfig --debug # Build 六核版, 并开启调试 # 暂时屏蔽该Config
 ```
 
 Verilator编译出的可执行文件会被自动拷贝到 `voyager-test/output/verilator` 路径下
@@ -144,7 +144,7 @@ $ ./voyager-test/scripts/batch-test.sh --soc-test # 运行soc测试配置
 $ cd Voyager
 $ ./voyager-test/scripts/build-vcs.sh --config RocketConfig 
 $ ./voyager-test/scripts/build-vcs.sh --config GemminiRocketConfig 
-$ ./voyager-test/scripts/build-vcs.sh --config OurHeterSoCConfig --debug 
+$ ./voyager-test/scripts/build-vcs.sh --config OurHeterSoCConfig --debug  # 暂时屏蔽该Config
 ```
 
 VCS编译出的可执行文件会被自动拷贝到 `voyager-test/output/vcs` 路径下
