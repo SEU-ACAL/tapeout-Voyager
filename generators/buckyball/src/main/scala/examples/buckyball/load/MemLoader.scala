@@ -79,7 +79,7 @@ class MemLoader(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
 
   // 流式写入SRAM - 每收到一个响应就立即写入
   // 计算当前写入的bank和地址
-  val current_bank_addr = wr_bank_addr_reg + resp_count
+  val current_bank_addr = wr_bank_addr_reg + io.dmaResp.bits.addrcounter // 使用DMA响应中的地址计数器
   val target_bank = wr_bank_reg  // 所有响应都写入同一个bank
   val target_row = current_bank_addr
   

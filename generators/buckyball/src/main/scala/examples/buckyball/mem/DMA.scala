@@ -26,6 +26,7 @@ class SimpleReadRequest()(implicit p: Parameters) extends CoreBundle {
 class SimpleReadResponse(dataWidth: Int) extends Bundle {
   val data = UInt(dataWidth.W)
   val last = Bool()
+  val addrcounter = UInt(4.W)
 }
 
 class SimpleWriteRequest(dataWidth: Int)(implicit p: Parameters) extends CoreBundle {
@@ -82,7 +83,7 @@ class SimpleStreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, dataWidth: I
 
     val xactBusy_fire = WireInit(false.B)
     val xactBusy_add = Mux(xactBusy_fire, (1.U << xactId).asUInt, 0.U)
-    val xactBusy_remove = ~Mux(tl.d.fire, (1.U << tl.d.bits.source).asUInt, 0.U)
+    val xactBusy_remove = ~Mux(tl.d.fire && !tl.a.valid, (1.U << tl.d.bits.source).asUInt, 0.U)
     xactBusy := (xactBusy | xactBusy_add) & xactBusy_remove.asUInt
 
     // TileLink 请求构造 - 回到单beat请求以避免地址对齐问题
@@ -132,6 +133,7 @@ class SimpleStreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, dataWidth: I
     // 响应处理
     io.resp.valid := tl.d.valid
     io.resp.bits.data := tl.d.bits.data
+    io.resp.bits.addrcounter := tl.d.bits.source(3,0) // 使用source作为地址计数器
     // 修正last信号：使用已接收字节数计算
     val resp_bytes_end = bytesReceived + beatBytes.U  // 接收当前beat后的总字节数
     io.resp.bits.last := edge.last(tl.d) && (resp_bytes_end >= req.len)
