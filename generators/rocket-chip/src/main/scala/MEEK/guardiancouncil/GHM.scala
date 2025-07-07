@@ -353,7 +353,7 @@ case class GHMCoreLocated(loc: HierarchicalLocation) extends Field[Option[GHMPar
 
 object GHMCore {
 // def attach(params: BootROMParams, subsystem: BaseSubsystem with HasHierarchicalElements with HasTileInputConstants, where: TLBusWrapperLocation)
-  def attach(params: GHMParams, subsystem: BaseSubsystem with HasHierarchicalElements with HasTileInputConstants with HasGHnodes, where: TLBusWrapperLocation)(implicit p: Parameters):GHM_normal= {
+  def attach(params: GHMParams, subsystem: BaseSubsystem with HasHierarchicalElements with HasTileInputConstants with HasGHnodes, where: TLBusWrapperLocation)(implicit p: Parameters):GHM= {
     
     val number_of_ghes                             = subsystem.tile_ghe_packet_in_EPNodes.size
     println("#### Jessica #### Tieing off GHM **Nodes**, core number:", number_of_ghes,"...!!")
@@ -365,7 +365,7 @@ object GHMCore {
 
     
     val ghm = GHMDomainWrapper {
-      LazyModule (new GHM_normal (GHMParams (params.number_of_little_cores, params.width_GH_packet)))
+      LazyModule (new GHM (GHMParams (params.number_of_little_cores, params.width_GH_packet)))
     }
 
     ghm.core_r_arfs_in_SKNode                         := subsystem.tile_core_r_arfs_EPNode

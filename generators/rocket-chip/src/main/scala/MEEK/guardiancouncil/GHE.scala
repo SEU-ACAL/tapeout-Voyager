@@ -69,6 +69,7 @@ class GHEImp(outer: GHE)(implicit p: Parameters) extends LazyRoCCMEEKModuleImp(o
     val doGHT_Cfg               = (cmd.fire && (funct === 0x6.U) && ((rs2_val === 2.U) || (rs2_val === 3.U) || (rs2_val === 4.U)))
     val doGetCsrPerf            = (cmd.fire && (funct === 0x55.U))
     val doGHTBufferCheck        = (cmd.fire && (funct === 0x8.U))
+    val doTrapDebug             = (cmd.fire && (funct === 0x91.U||(funct === 0x90.U)))
     // val doCheckM_PPN            = (cmd.fire && (funct === 0x17.U))
     // val doCheckM_SysMode        = (cmd.fire && (funct === 0x18.U))
     val bigComp                 = io.bigcore_comp (1,0)//ghm传入
@@ -112,6 +113,7 @@ class GHEImp(outer: GHE)(implicit p: Parameters) extends LazyRoCCMEEKModuleImp(o
     val has_monitor_target      = RegInit(0.U(1.W))
     val num_activated_cores     = RegInit(0.U(8.W))
 
+    val ghe_trap_debug          = RegInit(false.B)
     
     // Check status
     // 0b01: empty
@@ -151,12 +153,15 @@ class GHEImp(outer: GHE)(implicit p: Parameters) extends LazyRoCCMEEKModuleImp(o
       ghe_event_reg            := (funct & 0x0F.U);
     }
 
+    when(doTrapDebug){
+      ghe_trap_debug          := (funct & 0x0F.U);
+    }
     when (doSorR) {
       s_or_r                   := rs1_val(1,0)
     }
 
     when (doInitialised){
-      // printf(midas.targetutils.SynthesizePrintf("Littel Init state %d\n",(funct )))
+      printf(midas.targetutils.SynthesizePrintf("Littel Init state %d\n",(funct )))
       ghe_initialised_reg      := (funct & 0x0F.U);
     }
 
@@ -170,11 +175,11 @@ class GHEImp(outer: GHE)(implicit p: Parameters) extends LazyRoCCMEEKModuleImp(o
       }
     }
     when(doInitialised&&(funct&0x0F.U)===0x01.U){
-      // printf(midas.targetutils.SynthesizePrintf("Ghe State Empty\n"))
+      printf(midas.targetutils.SynthesizePrintf("Ghe State Empty\n"))
       ghe_status_reg             := 0.U 
     }
     .elsewhen(ghe_status_in===0x2.U){
-      // printf(midas.targetutils.SynthesizePrintf("Ghe State %d\n",ghe_status_in))
+      printf(midas.targetutils.SynthesizePrintf("Ghe State %d\n",ghe_status_in))
       ghe_status_reg             := ghe_status_in
     }
     
@@ -229,7 +234,8 @@ class GHEImp(outer: GHE)(implicit p: Parameters) extends LazyRoCCMEEKModuleImp(o
 
     val hit_satp_ppn            = (ght_monitor_satp_ppn === io.ght_satp_ppn)
     val hit_privi               = (ght_monitor_sys_mode === io.ght_sys_mode)
-    io.if_correct_process      := Mux((define_monitor_target === 1.U), 1.U, (hit_satp_ppn & hit_privi & has_monitor_target))
+
+    io.if_correct_process      := Mux((define_monitor_target === 1.U), 1.U, (!ghe_trap_debug)&(hit_satp_ppn & hit_privi & has_monitor_target))
 
     io.ght_cfg_out             := Mux(doGHT_Cfg, rs1_val(31,0), 0.U) 
     io.ght_cfg_valid           := Mux(doGHT_Cfg, 1.U, 0.U)
@@ -260,9 +266,9 @@ class GHEImp(outer: GHE)(implicit p: Parameters) extends LazyRoCCMEEKModuleImp(o
 
     /* Core Trace */
     val core_trace              = RegInit(0.U(2.W))
-    // when(doCoreTrace){
-    //   printf(midas.targetutils.SynthesizePrintf("Start Trace %x\n",rs1_val(1,0)))
-    // }
+    when(doCoreTrace){
+      printf(midas.targetutils.SynthesizePrintf("Start Trace %x\n",rs1_val(1,0)))
+    }
     core_trace                 := Mux(doCoreTrace, rs1_val(1,0), core_trace)
     io.core_trace_out          := core_trace
     /* Context Record */ 

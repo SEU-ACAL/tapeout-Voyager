@@ -229,6 +229,7 @@ int checker (int hart_id)
   while (ghe_checkght_status() != 0x02){
   }
 
+  // ghe_initailised(0);
   ghe_release();
   ght_unset_satp_priv();
   if(1){
@@ -341,9 +342,8 @@ void rCleanup (void){
 
 	
 	uint64_t status;
-  	while ((ght_get_status()>>15) != 3) {
-
-  	}
+	while (ght_get_initialisation() != 0){
+ 	}
 
 
 

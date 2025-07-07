@@ -248,14 +248,17 @@ class R_IC (val params: R_ICParams) extends Module with HasR_ICIO {
 
   //给出回应
   io.ic_counter(0):=0.U
-  //4周期一传输，然后自动上寄存器
-  val cdc_cnt = RegInit(0.U(2.W))
-  ///////////////////////////////
-  cdc_cnt := cdc_cnt+1.U
-  for (i <- 0 until params.totalnumber_of_cores - 1) {
-    // ic_check_speed(i)         :=Mux(io.if_big_complete_req(i).asBool, true.B,Mux((ic_counter(i+1) &0x8000.U)=/=0.U,false.B,ic_check_speed(i)))
-    // io.if_big_complete_ack(i) := ic_check_speed(i)&&((ic_counter(i+1) &0x8000.U)=/=0.U)
-    io.ic_counter(i+1)        := Mux(cdc_cnt===3.U,ic_counter(i+1),0.U)
+  if(GH_GlobalParams.IF_CDC_OPEN){
+    val cdc_cnt = RegInit(0.U(2.W))
+    ///////////////////////////////
+    cdc_cnt := cdc_cnt+1.U
+    for (i <- 0 until params.totalnumber_of_cores - 1) {
+      // ic_check_speed(i)         :=Mux(io.if_big_complete_req(i).asBool, true.B,Mux((ic_counter(i+1) &0x8000.U)=/=0.U,false.B,ic_check_speed(i)))
+      // io.if_big_complete_ack(i) := ic_check_speed(i)&&((ic_counter(i+1) &0x8000.U)=/=0.U)
+      io.ic_counter(i+1)        := Mux(cdc_cnt===3.U,ic_counter(i+1),0.U)
+    }
+  }else{
+    io.ic_counter(i+1)        := ic_counter(i+1)
   }
 
   // dontTouch(ic_check_speed)
