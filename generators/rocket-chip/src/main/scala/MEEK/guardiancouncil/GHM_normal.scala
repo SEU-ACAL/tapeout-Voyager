@@ -25,7 +25,7 @@ class GHM_normal (val params: GHMParams)(implicit p: Parameters) extends LazyMod
     val bigcore_comp_SRNode                        = BundleBridgeSource[UInt](Some(() => UInt(3.W)))
     val debug_bp_SRNode                            = BundleBridgeSource[UInt](Some(() => UInt(2.W)))
     val ghm_ght_packet_in_SKNode                   = BundleBridgeSink[UInt](Some(() => UInt((GH_GlobalParams.GH_TOTAL_PACKETS*params.width_GH_packet).W)))
-    val core_r_arfs_in_SKNode                      = BundleBridgeSink[UInt](Some(() => UInt((params.width_GH_packet+8+8).W)))
+    val core_r_arfs_in_SKNode                      = BundleBridgeSink[UInt](Some(() => UInt((params.width_GH_packet+8+8+1).W)))
     val ic_counter_SKNode                          = BundleBridgeSink[UInt](Some(() => UInt((16*GH_GlobalParams.GH_NUM_CORES).W)))
     val debug_maincore_status_SKNode               = BundleBridgeSink[UInt](Some(() => UInt(4.W)))
     val ghm_ght_packet_dest_SKNode                 = BundleBridgeSink[UInt](Some(() => UInt(32.W)))
@@ -80,8 +80,8 @@ class GHM_normalImpl(val params: GHMParams)(outer: GHM_normal) extends LazyModul
     val ghm_cdc_empty_out                          = Wire(Vec(params.number_of_little_cores, Bool()))
     val icsl_na                                    = Wire(UInt((GH_GlobalParams.GH_NUM_CORES).W))
     val debug_gcounter                             = Wire(UInt(64.W))
-    val core_r_arfs_in                             = Wire(UInt((params.width_GH_packet+8+8).W))
-    val core_r_arfs_c                              = Wire(Vec(params.number_of_little_cores, UInt((params.width_GH_packet+8).W)))
+    val core_r_arfs_in                             = Wire(UInt((params.width_GH_packet+8+8+1).W))
+    val core_r_arfs_c                              = Wire(Vec(params.number_of_little_cores, UInt((params.width_GH_packet+8+1).W)))
 
     core_r_arfs_in                := outer.core_r_arfs_in_SKNode.bundle   
     ghm_packet_in                 := outer.ghm_ght_packet_in_SKNode.bundle
@@ -132,8 +132,8 @@ class GHM_normalImpl(val params: GHMParams)(outer: GHM_normal) extends LazyModul
 
     // packet_dest                                   := io.ghm_packet_dest(params.number_of_little_cores-1, 0)
     val packet_dest                                = WireInit(VecInit(Seq.fill(GH_GlobalParams.GH_TOTAL_PACKETS)(0.U(4.W))))
-    val arfs_pidx                                  = WireInit(core_r_arfs_in(params.width_GH_packet+7, params.width_GH_packet))
-    val arfs_ecp_idx                               = WireInit(core_r_arfs_in(params.width_GH_packet+15, params.width_GH_packet+8))
+    val arfs_pidx                                  = WireInit(core_r_arfs_in(params.width_GH_packet+7+1, params.width_GH_packet+1))
+    val arfs_ecp_idx                               = WireInit(core_r_arfs_in(params.width_GH_packet+15+1, params.width_GH_packet+8+1))
 
     val arfs_dest                                  = arfs_pidx(5, 3)
     val arfs_ecp_dest                              = arfs_ecp_idx(5, 3)
@@ -149,7 +149,7 @@ class GHM_normalImpl(val params: GHMParams)(outer: GHM_normal) extends LazyModul
 
 
     val u_data_cdc                                      = Seq.fill(params.number_of_little_cores) {Module(new Queue(UInt((params.width_GH_packet*GH_GlobalParams.GH_TOTAL_PACKETS).W),8))}
-    val u_arfs_cdc                                      = Seq.fill(params.number_of_little_cores) {Module(new Queue(UInt((params.width_GH_packet+8).W), (8)))}//留8个余量防止写入太快
+    val u_arfs_cdc                                      = Seq.fill(params.number_of_little_cores) {Module(new Queue(UInt((params.width_GH_packet+8+1).W), (8)))}//留8个余量防止写入太快
     // val u_l2b_ctrl_cdc                                  = Seq.fill(params.number_of_little_cores) {Module(new Queue(UInt(9.W), 64))}
     // val u_b2l_ctrl_cdc                                  = Seq.fill(params.number_of_little_cores) {Module(new Queue(UInt((22).W), 4))}//早晚会满
 

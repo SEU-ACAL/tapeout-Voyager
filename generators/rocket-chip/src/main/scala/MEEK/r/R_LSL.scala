@@ -176,7 +176,7 @@ CSR ENQ logic
 /*
 CSR DEQ logic
 */
-  val csr_deq_data                = RegInit(VecInit.fill(GH_GlobalParams.GH_TOTAL_PACKETS)(0.U(params.xLen.W)))
+  val csr_deq_data                = WireInit(VecInit.fill(GH_GlobalParams.GH_TOTAL_PACKETS)(0.U(params.xLen.W)))
   val csr_deq_valid               = WireInit(VecInit.fill(GH_GlobalParams.GH_TOTAL_PACKETS)(false.B))
   val csr_lsl_empty               = WireInit(VecInit.fill(GH_GlobalParams.GH_TOTAL_PACKETS)(true.B))
   val csr_out_packet              = WireInit(Mux1H(csr_deq_valid,csr_deq_data))

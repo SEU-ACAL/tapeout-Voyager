@@ -833,7 +833,7 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   val self_xcpt_flag = RegInit(0.U(32.W))
   val self_eret_flag = RegInit(0.U(32.W))
   val Has_traped   = RegInit(false.B)
-  val priv_status  = Reg(UInt(2.W))
+  val priv_status  = RegInit(0.U(2.W))
   val check_priv   = RegInit(0.U(2.W))
   val check_ret_priv = RegInit(0.U(2.W))
   val arfs_is_CSR  = (io.packet_arfs(135+1) === 0x01.U) && (io.packet_arfs(138+1, 136+1) === 0x07.U)
