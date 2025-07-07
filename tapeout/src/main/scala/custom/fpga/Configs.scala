@@ -1,4 +1,4 @@
-package voyager_tapeout.chip
+package voyager_tapeout.custom.fpga
 
 import sys.process._
 
@@ -19,7 +19,7 @@ import testchipip.serdes.{SerialTLKey}
 
 import chipyard._
 import chipyard.harness._
-import voyager_tapeout.chip.{WithJTAG, WithSPISDCard, WithUART}
+import voyager_tapeout.custom.fpga.{WithJTAG, WithSPISDCard, WithUART}
 
 class WithDefaultPeripherals extends Config((site, here, up) => {
   case PeripheryUARTKey => List(UARTParams(address = BigInt(0x64000000L)))
@@ -69,8 +69,3 @@ class WithFPGAFrequency(fMHz: Double) extends Config(
   new chipyard.config.WithFrontBusFrequency(fMHz) ++
   new chipyard.config.WithMemoryBusFrequency(fMHz)
 )
-
-class VoyagerChipHarnessConfig extends Config(
-  new WithChipHarnessTweaks ++
-  new chipyard.OurHeterSoCConfig
-) 

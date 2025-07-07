@@ -142,7 +142,7 @@ main() {
   if [ $SKIP_STEPS -lt 1 ]; then
     Log "$BLUE" "====================== Step 1: Building bitstream ======================"
     cd $CYDIR/fpga
-    make SUB_PROJECT=vcu118 CONFIG=$CONFIG bitstream || true
+    make SUB_PROJECT=vcu118 CONFIG=$CONFIG || true
     mkdir -p $OUTPUT_DIR
     rm -rf $OUTPUT_DIR/gen-collateral
     cp -r $CYDIR/fpga/generated-src/chipyard.fpga.vcu118.VCU118FPGATestHarness.$CONFIG/gen-collateral $OUTPUT_DIR/

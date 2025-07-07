@@ -1,4 +1,4 @@
-package voyager_tapeout.chip
+package voyager_tapeout.custom.fpga
 
 import chisel3._
 import chisel3.experimental.{BaseModule}
@@ -12,7 +12,7 @@ import sifive.blocks.devices.spi.{HasPeripherySPI, SPIPortIO}
 import chipyard._
 import chipyard.harness._
 import chipyard.iobinders._
-import voyager_tapeout.chip.VCU118FPGATestHarnessImp
+import voyager_tapeout.custom.fpga.VCU118FPGATestHarnessImp
 
 /*** UART ***/
 class WithUART extends HarnessBinder({

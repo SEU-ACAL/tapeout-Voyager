@@ -38,7 +38,7 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   val rob_id_reg = RegInit(0.U(rob_id_width.W))
   val mem_addr_reg = Reg(UInt(bbconfig.memAddrLen.W))
   val iter_reg = Reg(UInt(10.W))
-  val sram_count = Reg(UInt(log2Up(16).W))
+  val sram_count = Reg(UInt(log2Up(32).W))
   
   // 缓存解码好的bank信息
   val rd_bank_reg = Reg(UInt(log2Up(bbconfig.sp_banks).W))

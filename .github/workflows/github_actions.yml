@@ -159,7 +159,7 @@ jobs:
           chipyard_exec
           echo "🚀 Running DC Evaluation..."
           echo "Triggered by commit: ${{ github.event.head_commit.message }}"
-          ./voyager-test/scripts/run-dc.sh --config VoyagerVerilatorConfig 
+          ./voyager-test/scripts/run-dc.sh --config VoyagerChipConfig 
 
 
 # ============== 测试结束 ==================

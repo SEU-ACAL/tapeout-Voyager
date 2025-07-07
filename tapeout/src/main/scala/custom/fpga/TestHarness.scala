@@ -1,4 +1,4 @@
-package voyager_tapeout.chip
+package voyager_tapeout.custom.fpga
 
 import chisel3._
 
@@ -18,7 +18,7 @@ import sifive.blocks.devices.spi.{PeripherySPIKey, SPIPortIO}
 
 import chipyard._
 import chipyard.harness._
-import voyager_tapeout.chip.{DDR2VCU118ShellPlacer, SysClock2VCU118ShellPlacer}
+import voyager_tapeout.custom.fpga.{DDR2VCU118ShellPlacer, SysClock2VCU118ShellPlacer}
 
 class VCU118FPGATestHarness(override implicit val p: Parameters) extends VCU118ShellBasicOverlays {
 
