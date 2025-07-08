@@ -112,7 +112,7 @@ def run_pytest(args=None, use_allure=False):
       if use_allure:
         # 生成 Allure 报告
         allure_results_dir = reports_dir / "allure-results"
-        allure_report_dir = reports_dir / f"git_commit"
+        allure_report_dir = reports_dir / f"{git_commit}"
         current_report_dir = reports_dir / "allure"
         
         print("Generating Allure report...")
@@ -154,18 +154,18 @@ def run_pytest(args=None, use_allure=False):
           #   pass
         else:
           print("Failed to generate Allure report")
-      else:
-        # 默认 HTML 报告
-        default_report = reports_dir / "report.html"
-        versioned_report = reports_dir / f"report-{git_commit}.html"
+      # else:
+      #   # 默认 HTML 报告
+      #   default_report = reports_dir / "report.html"
+      #   versioned_report = reports_dir / f"report-{git_commit}.html"
         
-        if default_report.exists():
-          shutil.copy2(default_report, versioned_report)
-          print(f"Generated reports:")
-          print(f"  - {default_report}")
-          print(f"  - {versioned_report}")
-        else:
-          print("Warning: Default report.html not found")
+      #   if default_report.exists():
+      #     shutil.copy2(default_report, versioned_report)
+      #     print(f"Generated reports:")
+      #     print(f"  - {default_report}")
+      #     print(f"  - {versioned_report}")
+      #   else:
+      #     print("Warning: Default report.html not found")
     
     return result.returncode
   except KeyboardInterrupt:
