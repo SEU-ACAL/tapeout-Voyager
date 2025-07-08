@@ -78,7 +78,7 @@ jobs:
           source ~/.zshrc
           chipyard_exec
           cd voyager-test/scripts/sardine
-          python -m pytest -m smoke -s -v -n auto
+          python run_tests.py --allure -m smoke
       - run: echo "🍏 Lint-and-Test is ${{ job.status }}."
         # 如果检查失败，强制回退分支
       - name: Revert Bad Commit

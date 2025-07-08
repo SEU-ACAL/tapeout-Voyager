@@ -25,9 +25,8 @@ def test_verilator_hello(script_runner, caplog):
   if result['stderr']:
     logging.info(f"  stderr: {result['stderr']}")
 
-  # 检查脚本是否成功执行（不一定是0，可能是其他成功状态）
   assert "Test is now completed:" in result["stdout"], "Mismatch the expected output" # 这里检查输出中是否含有xxx，否则认定为失败
-  assert result["returncode"] in [0, 1], f"Script failed with unexpected return code: {result['returncode']}"
+  assert result["returncode"] in [0, 1], f"Script failed with unexpected return code: {result['returncode']}" # 检查脚本是否成功执行（不一定是0，可能是其他成功状态）
   logging.info("Verilator hello test completed") 
 
 @pytest.mark.verilator  
@@ -45,9 +44,8 @@ def test_verilator_bb_mvin_mvout(script_runner, caplog):
   if result['stderr']:
     logging.info(f"  stderr: {result['stderr']}")
 
-  # 检查脚本是否成功执行（不一定是0，可能是其他成功状态）
   assert "32 33 34 35 36 37 38 39 40 41 42 43 44 45 46 47" in result["stdout"], "Mismatch the expected output" # 这里检查输出中是否含有xxx，否则认定为失败
-  assert result["returncode"] in [0, 1], f"Script failed with unexpected return code: {result['returncode']}"
+  assert result["returncode"] in [0, 1], f"Script failed with unexpected return code: {result['returncode']}" # 检查脚本是否成功执行（不一定是0，可能是其他成功状态）
   logging.info("Verilator bb_mvin_mvout_multi test completed") 
 
 # @pytest.mark.verilator  

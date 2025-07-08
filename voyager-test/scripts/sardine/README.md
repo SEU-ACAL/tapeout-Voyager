@@ -96,6 +96,6 @@ reports/
 
 ### 查看测试结果
 
-1. **HTML报告**（推荐）: 在浏览器中打开 `http://服务器ip:3000/report.html`
+1. **HTML报告**（推荐）: 在浏览器中打开 `http://服务器ip:3000` 查看最近一次报告，完整报告位于 http://服务器ip:3000/{commit}, 例如 http://服务器ip:3000/f34ddb98
 2. **控制台输出**: 直接显示在终端（包括所有print语句）
 3. **XML报告**: `reports/junit.xml` （用于CI集成）
