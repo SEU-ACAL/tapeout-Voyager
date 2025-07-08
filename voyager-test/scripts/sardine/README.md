@@ -16,7 +16,7 @@ sardine/
 ## 安装依赖
 
 ```bash
-pip install pytest
+pip install -r requirements.txt
 ```
 
 ## 运行测试
