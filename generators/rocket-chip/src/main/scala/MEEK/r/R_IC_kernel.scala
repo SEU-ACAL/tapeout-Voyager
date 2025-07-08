@@ -264,7 +264,9 @@ class R_IC_kernel (val params: R_ICParams) extends Module with HasR_ICIO_kernel 
       io.ic_counter(i+1)        := Mux(cdc_cnt===3.U,ic_counter(i+1),0.U)
     }
   }else{
-    io.ic_counter(i+1)        := ic_counter(i+1)
+    for (i <- 0 until params.totalnumber_of_cores - 1) {
+      io.ic_counter(i+1)        := ic_counter(i+1)
+    }
   }
 
   // dontTouch(ic_check_speed)

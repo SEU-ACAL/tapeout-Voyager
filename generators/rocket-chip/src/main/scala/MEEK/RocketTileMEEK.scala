@@ -149,7 +149,7 @@ class RocketTileMeekModuleImp(outer: RocketTileMeek) extends BaseTileModuleImp(o
     with HasICacheFrontendModule {
   Annotated.params(this, outer.rocketParams)
 
-  val core = Module(new RocketMEEK(outer)(outer.p))
+  val core = Module(new RocketMEEK_kernel(outer)(outer.p))
   outer.vector_unit.foreach { v =>
     core.io.vector.get <> v.module.io.core
     v.module.io.tlb <> outer.dcache.module.io.tlb_port
@@ -181,6 +181,7 @@ class RocketTileMeekModuleImp(outer: RocketTileMeek) extends BaseTileModuleImp(o
   val arfs_if_CPS = Mux(ptype_rcu.asBool && (arfs_index (6, 3) === outer.rocketParams.tileId.U), 1.U, 0.U)
   val packet_rcu = Mux((ptype_rcu), arfs_in, 0.U)
 
+  dontTouch(arfs_index)
   // val icsl_ack          = outer.icsl_ack_tocheckerSKNode.bundle
   // dontTouch(icsl_ack)//for debug
   // core.io.icsl_ack := icsl_ack
