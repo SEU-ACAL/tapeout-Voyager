@@ -17,7 +17,7 @@ def test_verilator_hello(script_runner, caplog):
   caplog.set_level(logging.INFO)
   
   logging.info("Testing Verilator hello script...")
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "hello", "--debug"], timeout=None)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerChipConfig", "hello", "--debug"], timeout=None)
   
   logging.info(f"Return code: {result['returncode']}")
   logging.info("Script output:")
@@ -36,7 +36,7 @@ def test_verilator_bb(script_runner, caplog):
   caplog.set_level(logging.INFO)
   
   logging.info("Testing Verilator bb_mvin_mvout script...")
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "bb_mvin_mvout", "--debug"], timeout=None)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerChipConfig", "bb_mvin_mvout", "--debug"], timeout=None)
   
   logging.info(f"Return code: {result['returncode']}")
   logging.info("Script output:")
