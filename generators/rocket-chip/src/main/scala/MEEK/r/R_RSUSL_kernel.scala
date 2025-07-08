@@ -247,11 +247,11 @@ class R_RSUSL_kernel(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO
     }
   
     when ((io.core_trace.asBool) && (packet_valid_ECP.asBool) && (packet_index_ECP === 0x20.U)) {
-      // printf(midas.targetutils.SynthesizePrintf("[C%x-CPE] = [%x]\n", io.core_id, packet_arfs_ECP))
+      printf(midas.targetutils.SynthesizePrintf("[C%x-CPE] = [%x]\n", io.core_id, packet_arfs_ECP))
     }
 
   }
- 
+
   io.pcarf_out                                   := pcarfs_ss
   io.fcsr_out                                    := Mux(((apply_snapshot_memdelay === 1.U) && (apply_counter_memdelay === 0x20.U)), farf_data, 0.U)
   io.pfarf_valid_out                             := Mux(((apply_snapshot_memdelay === 1.U) && (apply_counter_memdelay === 0x20.U)), 1.U, 0.U)

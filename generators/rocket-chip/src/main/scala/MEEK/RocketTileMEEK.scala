@@ -176,7 +176,7 @@ class RocketTileMeekModuleImp(outer: RocketTileMeek) extends BaseTileModuleImp(o
   
   //arfs 是固定的
   val arfs_in = outer.core_r_arfs_c_SKNode.map(_.bundle).getOrElse(0.U((2*GH_GlobalParams.GH_WIDITH_PERF+1).W))
-  val arfs_index = arfs_in (143, 136)
+  val arfs_index = arfs_in (143+1, 136+1)
   val ptype_rcu = Mux(s_or_r.asBool && ((arfs_index(2,0) === 7.U)), true.B, false.B)
   val arfs_if_CPS = Mux(ptype_rcu.asBool && (arfs_index (6, 3) === outer.rocketParams.tileId.U), 1.U, 0.U)
   val packet_rcu = Mux((ptype_rcu), arfs_in, 0.U)

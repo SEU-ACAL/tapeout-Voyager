@@ -1653,6 +1653,9 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
   //===== GuardianCouncil Function: End   ====//
   assert (!(csr.io.singleStep), "[core] single-step is unsupported.")
 
+  val numARFS                                     = 32
+  val rsu_master = Module(new R_RSU_kernel(R_RSUParams(xLen, numARFS, 1)))
+  val ic_master = Module(new R_IC_kernel(R_ICParams(GH_GlobalParams.GH_NUM_CORES, 16)))
 
   //-------------------------------------------------------------
   // **** Flush Pipeline ****
@@ -1712,24 +1715,56 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
         }
       }
 
-      when (rob.io.commit.arch_valids(w)) {
-        printf("%d 0x%x ",
-          priv,
-          Sext(rob.io.commit.uops(w).debug_pc(vaddrBits-1,0), xLen))
-        printf_inst(rob.io.commit.uops(w))
-        when (rob.io.commit.uops(w).dst_rtype === RT_FIX && rob.io.commit.uops(w).ldst =/= 0.U) {
-          printf(" x%d 0x%x\n",
+      // when (rob.io.commit.arch_valids(w)) {
+      //   printf("%d 0x%x ",
+      //     priv,
+      //     Sext(rob.io.commit.uops(w).debug_pc(vaddrBits-1,0), xLen))
+      //   printf_inst(rob.io.commit.uops(w))
+      //   when (rob.io.commit.uops(w).dst_rtype === RT_FIX && rob.io.commit.uops(w).ldst =/= 0.U) {
+      //     printf(" x%d 0x%x\n",
+      //       rob.io.commit.uops(w).ldst,
+      //       rob.io.commit.debug_wdata(w))
+      //   } .elsewhen (rob.io.commit.uops(w).dst_rtype === RT_FLT) {
+      //     printf(" f%d 0x%x\n",
+      //       rob.io.commit.uops(w).ldst,
+      //       rob.io.commit.debug_wdata(w))
+      //   } .otherwise {
+      //     printf("\n")
+      //   }
+      // }
+      when (rob.io.commit.arch_valids(w)&&io.ic_trace.asBool) {
+           midas.targetutils.SynthesizePrintf(printf("C%d: 0x%x (0x%x) r%d 0x%x r%d 0x%x d%d 0x%x\n",
+            io.hartid,
+            Sext(rob.io.commit.uops(w).debug_pc(vaddrBits-1,0), xLen), rob.io.commit.uops(w).debug_inst,
+            rob.io.commit.uops(w).lrs1, rob.io.commit.debug_rs1(w),
+            rob.io.commit.uops(w).lrs2, rob.io.commit.debug_rs2(w),
             rob.io.commit.uops(w).ldst,
-            rob.io.commit.debug_wdata(w))
-        } .elsewhen (rob.io.commit.uops(w).dst_rtype === RT_FLT) {
-          printf(" f%d 0x%x\n",
-            rob.io.commit.uops(w).ldst,
-            rob.io.commit.debug_wdata(w))
-        } .otherwise {
-          printf("\n")
+            rob.io.commit.debug_wdata(w)))
+          // printf_inst(rob.io.commit.uops(w))
         }
-      }
     }
+    when(io.ic_trace.asBool){
+      midas.targetutils.SynthesizePrintf(printf("C%d: p:%d v:%d%d%d%d " +
+          "sl:%d%d%d xpt:%d ca:%x ct:%x%x%x%x na:%d%d%d%d sa:%d%d%d%d tg:%x sta:%d cr:%x ss:%d%d xpt:%d%d%d " +
+          "fl:%d %d %x\n",
+            io.hartid,
+            RegNext(csr.io.status.prv), rob.io.commit.arch_valids(3), rob.io.commit.arch_valids(2), rob.io.commit.arch_valids(1), rob.io.commit.arch_valids(0),
+            rsu_stall, ic_stall, io.gh_stall, csr.io.r_exception, csr.io.trace(0).cause,
+            ic_master.io.ic_counter(1), ic_master.io.ic_counter(2), ic_master.io.ic_counter(3), ic_master.io.ic_counter(4), 
+            ic_master.io.icsl_na(1), ic_master.io.icsl_na(2), ic_master.io.icsl_na(3), ic_master.io.icsl_na(4), 
+            ic_master.io.ic_status(1), ic_master.io.ic_status(2), ic_master.io.ic_status(3), ic_master.io.ic_status(4),
+            ic_master.io.crnt_target,
+            ic_master.io.state, ic_master.io.ctrl, ic_master.io.if_dosnap, ic_master.io.if_dosnap_priv, ic_master.io.mode_switch, ic_master.io.mode_ret, ic_master.io.excp_mode,
+            rob.io.flush.valid, rob.io.flush.bits.flush_typ, csr.io.evec))
+
+      midas.targetutils.SynthesizePrintf(printf("C%d: prs:%d%d " +
+            "rw:%d %x %x %x arf:%x %x " +
+            "npc:%x dst:%x cp:%x icr:%d\n",
+            io.hartid, io.if_correct_process, satp_ppn_switch,
+            csr_exe_unit.io.iresp.valid, csr.io.rw.addr, csr.io.rw.cmd, csr.io.rw.wdata, rsu_master.io.arfs_index(0), rsu_master.io.arfs_pidx(0),
+            rob.io.r_next_pc, ic_master.io.shared_CP_CFG, ic_incr))
+    }
+  
   } else if (BRANCH_PRINTF) {
     val debug_ghist = RegInit(0.U(globalHistoryLength.W))
     when (rob.io.flush.valid && FlushTypes.useCsrEvec(rob.io.flush.bits.flush_typ)) {
@@ -1851,7 +1886,6 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
     io.ifu.debug_ftq_idx := DontCare
   }
 //===== GuardianCouncil Function: Start ====//
-  val numARFS                                     = 32
   val pcarf                                       = RegInit(0.U(40.W))
   val arfs                                        = Reg(Vec(numARFS, UInt(xLen.W)))
   val farfs                                       = Reg(Vec(numARFS, UInt(xLen.W)))
@@ -1904,49 +1938,48 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
     }
   }
 
-  if (GH_GlobalParams.GH_DEBUG == 1) {
-    val debug_instruction_counter = RegInit(0.U(64.W))
-    val ic_trace_reg = RegInit(0.U(1.W))
-    ic_trace_reg := io.ic_trace
+  // if (GH_GlobalParams.GH_DEBUG == 1) {
+  //   val debug_instruction_counter = RegInit(0.U(64.W))
+  //   val ic_trace_reg = RegInit(0.U(1.W))
+  //   ic_trace_reg := io.ic_trace
 
-    when ((io.ic_trace === 1.U) && (ic_trace_reg === 0.U)){
-      debug_instruction_counter := 0.U
-    }
-    when ((ic_incr =/= 0.U) && (io.ic_trace.asBool) && io.if_correct_process.asBool) {
-      debug_instruction_counter := debug_instruction_counter + ic_incr
-    }
+  //   when ((io.ic_trace === 1.U) && (ic_trace_reg === 0.U)){
+  //     debug_instruction_counter := 0.U
+  //   }
+  //   when ((ic_incr =/= 0.U) && (io.ic_trace.asBool) && io.if_correct_process.asBool) {
+  //     debug_instruction_counter := debug_instruction_counter + ic_incr
+  //   }
 
-    // when ((io.ic_trace === 0.U) && (ic_trace_reg === 1.U)){
-    //   printf(midas.targetutils.SynthesizePrintf("Debug_IC=[0x%x]\n", debug_instruction_counter))
-    // } .otherwise {
-    //   when (((debug_instruction_counter & 0x3FFF.U) === 0.U) && (io.ic_trace.asBool)){
-    //     printf(midas.targetutils.SynthesizePrintf("Debug_IC=[0x%x]\n", debug_instruction_counter))
-    //   }
-    // }
-    for (w <- 0 until coreWidth) {
-      val priv = RegNext(csr.io.status.prv) // erets change the privilege. Get the old one
+  //   // when ((io.ic_trace === 0.U) && (ic_trace_reg === 1.U)){
+  //   //   printf(midas.targetutils.SynthesizePrintf("Debug_IC=[0x%x]\n", debug_instruction_counter))
+  //   // } .otherwise {
+  //   //   when (((debug_instruction_counter & 0x3FFF.U) === 0.U) && (io.ic_trace.asBool)){
+  //   //     printf(midas.targetutils.SynthesizePrintf("Debug_IC=[0x%x]\n", debug_instruction_counter))
+  //   //   }
+  //   // }
+  //   for (w <- 0 until coreWidth) {
+  //     val priv = RegNext(csr.io.status.prv) // erets change the privilege. Get the old one
 
-      // io.trace.insns(w).priv       := RegNext(Cat(RegNext(csr.io.status.debug), csr.io.status.prv))
-      // // Can determine if it is an interrupt or not based on the MSB of the cause
-      // io.trace.insns(w).exception  := RegNext(rob.io.com_xcpt.valid && !rob.io.com_xcpt.bits.cause(xLen - 1)) && (w == 0).B
-      // io.trace.insns(w).interrupt  := RegNext(rob.io.com_xcpt.valid && rob.io.com_xcpt.bits.cause(xLen - 1)) && (w == 0).B
-      // io.trace.insns(w).cause      := RegNext(rob.io.com_xcpt.bits.cause)
-      // io.trace.insns(w).tval       := RegNext(csr.io.tval)
-      when (rob.io.commit.arch_valids(w)&&io.ic_trace.asBool) {
-        printf(midas.targetutils.SynthesizePrintf("Boom Priv %d syscall[%x] Exception[%x] Interrupt[%x] cause[%x] tval [%x] PC[0x%x] INST[0x%x] W[%x %x idx %x][arfs r%x ]\n",
-          priv,r_syscall,rob.io.com_xcpt.valid && !rob.io.com_xcpt.bits.cause(xLen - 1) && (w == 0).B,(rob.io.com_xcpt.valid && rob.io.com_xcpt.bits.cause(xLen - 1)) && (w == 0).B,
-          rob.io.com_xcpt.bits.cause,csr.io.tval,
-          Sext(rob.io.commit.uops(w).debug_pc(vaddrBits-1,0), xLen),Mux(rob.io.commit.uops(w).is_rvc,rob.io.commit.uops(w).debug_inst(15,0),rob.io.commit.uops(w).debug_inst),
-          rob.io.commit.uops(w).dst_rtype === RT_FIX&& rob.io.commit.uops(w).ldst =/= 0.U,rob.io.commit.uops(w).dst_rtype === RT_FLT,rob.io.commit.uops(w).ldst,rob.io.commit.debug_wdata(w)))
-      }
-    }
-  }
+  //     // io.trace.insns(w).priv       := RegNext(Cat(RegNext(csr.io.status.debug), csr.io.status.prv))
+  //     // // Can determine if it is an interrupt or not based on the MSB of the cause
+  //     // io.trace.insns(w).exception  := RegNext(rob.io.com_xcpt.valid && !rob.io.com_xcpt.bits.cause(xLen - 1)) && (w == 0).B
+  //     // io.trace.insns(w).interrupt  := RegNext(rob.io.com_xcpt.valid && rob.io.com_xcpt.bits.cause(xLen - 1)) && (w == 0).B
+  //     // io.trace.insns(w).cause      := RegNext(rob.io.com_xcpt.bits.cause)
+  //     // io.trace.insns(w).tval       := RegNext(csr.io.tval)
+  //     when (rob.io.commit.arch_valids(w)&&io.ic_trace.asBool) {
+  //       printf(midas.targetutils.SynthesizePrintf("Boom Priv %d syscall[%x] Exception[%x] Interrupt[%x] cause[%x] tval [%x] PC[0x%x] INST[0x%x] W[%x %x idx %x][arfs r%x ]\n",
+  //         priv,r_syscall,rob.io.com_xcpt.valid && !rob.io.com_xcpt.bits.cause(xLen - 1) && (w == 0).B,(rob.io.com_xcpt.valid && rob.io.com_xcpt.bits.cause(xLen - 1)) && (w == 0).B,
+  //         rob.io.com_xcpt.bits.cause,csr.io.tval,
+  //         Sext(rob.io.commit.uops(w).debug_pc(vaddrBits-1,0), xLen),Mux(rob.io.commit.uops(w).is_rvc,rob.io.commit.uops(w).debug_inst(15,0),rob.io.commit.uops(w).debug_inst),
+  //         rob.io.commit.uops(w).dst_rtype === RT_FIX&& rob.io.commit.uops(w).ldst =/= 0.U,rob.io.commit.uops(w).dst_rtype === RT_FLT,rob.io.commit.uops(w).ldst,rob.io.commit.debug_wdata(w)))
+  //     }
+  //   }
+  // }
 
   
 
   /* R Features */
-  val rsu_master = Module(new R_RSU_kernel(R_RSUParams(xLen, numARFS, 1)))
-  val ic_master = Module(new R_IC_kernel(R_ICParams(GH_GlobalParams.GH_NUM_CORES, 16)))
+  
 
   val little_status1 = freechips.rocketchip.util.WideCounter(32)
   val little_status2 = freechips.rocketchip.util.WideCounter(32)
@@ -1976,11 +2009,11 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
   r_syscall                                       := Mux((ic_incr =/= 0.U) && (r_exception_record.asBool || csr.io.r_exception.asBool), true.B, false.B)
   
   val exception_mode_test                         = RegInit(false.B)
-  when(csr.io.trace(0).exception){
-    exception_mode_test := true.B
-  }.elsewhen(if_mret_or_sret.reduce(_ || _)){
-    exception_mode_test := false.B
-  }
+  // when(csr.io.trace(0).exception){
+  //   exception_mode_test := true.B
+  // }.elsewhen(if_mret_or_sret.reduce(_ || _)){
+  //   exception_mode_test := false.B
+  // }
 
   ic_master.io.ic_run_isax                        := io.icctrl(0)
   ic_master.io.ic_exit_isax                       := io.icctrl(1)

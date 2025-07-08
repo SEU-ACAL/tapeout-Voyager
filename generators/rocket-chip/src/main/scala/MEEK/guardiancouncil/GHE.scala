@@ -160,8 +160,11 @@ class GHEImp(outer: GHE)(implicit p: Parameters) extends LazyRoCCMEEKModuleImp(o
       s_or_r                   := rs1_val(1,0)
     }
 
+    when(doBigCheckIni){
+      // printf(midas.targetutils.SynthesizePrintf("Big Init state %d\n",(io.bigcore_comp(2,0) )))
+    }
     when (doInitialised){
-      printf(midas.targetutils.SynthesizePrintf("Littel Init state %d\n",(funct )))
+      // printf(midas.targetutils.SynthesizePrintf("Littel Init state %d\n",(funct )))
       ghe_initialised_reg      := (funct & 0x0F.U);
     }
 
@@ -175,11 +178,11 @@ class GHEImp(outer: GHE)(implicit p: Parameters) extends LazyRoCCMEEKModuleImp(o
       }
     }
     when(doInitialised&&(funct&0x0F.U)===0x01.U){
-      printf(midas.targetutils.SynthesizePrintf("Ghe State Empty\n"))
+      // printf(midas.targetutils.SynthesizePrintf("Ghe State Empty\n"))
       ghe_status_reg             := 0.U 
     }
     .elsewhen(ghe_status_in===0x2.U){
-      printf(midas.targetutils.SynthesizePrintf("Ghe State %d\n",ghe_status_in))
+      // printf(midas.targetutils.SynthesizePrintf("Ghe State %d\n",ghe_status_in))
       ghe_status_reg             := ghe_status_in
     }
     
@@ -267,7 +270,7 @@ class GHEImp(outer: GHE)(implicit p: Parameters) extends LazyRoCCMEEKModuleImp(o
     /* Core Trace */
     val core_trace              = RegInit(0.U(2.W))
     when(doCoreTrace){
-      printf(midas.targetutils.SynthesizePrintf("Start Trace %x\n",rs1_val(1,0)))
+      // printf(midas.targetutils.SynthesizePrintf("Start Trace %x\n",rs1_val(1,0)))
     }
     core_trace                 := Mux(doCoreTrace, rs1_val(1,0), core_trace)
     io.core_trace_out          := core_trace

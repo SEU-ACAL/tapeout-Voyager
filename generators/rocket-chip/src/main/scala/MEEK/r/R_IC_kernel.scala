@@ -284,15 +284,15 @@ class R_IC_kernel (val params: R_ICParams) extends Module with HasR_ICIO_kernel 
     for (i <- 0 until params.totalnumber_of_cores) {
       debug_clear_status(i) := clear_ic_status(i).asBool
     }
-    // when(debug_clear_status.reduce(_|_)&& (io.ic_trace.asBool)){
-    //   printf(midas.targetutils.SynthesizePrintf("fsm_state[%x] Little Finish[%x %x %x %x]\n", fsm_state,clear_ic_status(1),clear_ic_status(2),clear_ic_status(3),clear_ic_status(4)))
-    // }
-    // when ((fsm_state_delay =/= fsm_state) && (io.ic_trace.asBool)) {
-    //   printf(midas.targetutils.SynthesizePrintf("fsm_state=[%x]\n", fsm_state))
-    // }
-    // when(fsm_state_delay===fsm_check&&fsm_state===fsm_postcheck&&io.core_trace.asBool){
-    //   printf(midas.targetutils.SynthesizePrintf("Boom: Finish[%x] Waiting Little Finish=[v %x cnt %x v %x cnt %x v %x cnt %x v %x cnt %x ]\n",crnt_target,ic_status(1),ic_counter(1),ic_status(2),ic_counter(2),ic_status(3),ic_counter(3),ic_status(4),ic_counter(4) ))
-    // }
+    when(debug_clear_status.reduce(_|_)&& (io.ic_trace.asBool)){
+      printf(midas.targetutils.SynthesizePrintf("fsm_state[%x] Little Finish[%x %x %x %x]\n", fsm_state,clear_ic_status(1),clear_ic_status(2),clear_ic_status(3),clear_ic_status(4)))
+    }
+    when ((fsm_state_delay =/= fsm_state) && (io.ic_trace.asBool)) {
+      printf(midas.targetutils.SynthesizePrintf("fsm_state=[%x]\n", fsm_state))
+    }
+    when(fsm_state_delay===fsm_check&&fsm_state===fsm_postcheck&&io.core_trace.asBool){
+      printf(midas.targetutils.SynthesizePrintf("Boom: Finish[%x] Waiting Little Finish=[v %x cnt %x v %x cnt %x v %x cnt %x v %x cnt %x ]\n",crnt_target,ic_status(1),ic_counter(1),ic_status(2),ic_counter(2),ic_status(3),ic_counter(3),ic_status(4),ic_counter(4) ))
+    }
     // when(io.core_trace.asBool&&if_cooled&&(fsm_state===fsm_cooling)) {
     //   printf(midas.targetutils.SynthesizePrintf("Big Sch Result=[%x] old Result=[%x]\n", nxt_target,old_crnt_target))
     // }
