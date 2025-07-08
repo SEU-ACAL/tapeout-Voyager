@@ -2015,7 +2015,7 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
   ic_master.io.ic_threshold                       := GH_GlobalParams.GH_TOTAL_INSTS.U
   ic_master.io.ic_incr                            := ic_incr
   ic_master.io.mode_ret                           := RegNext(if_mret_or_sret.reduce(_ || _))
-  ic_master.io.excp_mode                          := exception_mode_test
+  ic_master.io.excp_mode                          := exception_mode
   ic_master.io.mode_switch                        := mode_switch
   ic_master.io.interrupt                          := csr.io.trace(0).exception && csr.io.trace(0).interrupt
   ic_master.io.satp_switch                        := satp_ppn_switch
@@ -2056,7 +2056,7 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
     rsu_master.io.arfs_in(i)                      := arfs(i)
     rsu_master.io.farfs_in(i)                     := farfs(i)
   }
-  rsu_master.io.excpt_mode                        := exception_mode_test.asUInt
+  rsu_master.io.excpt_mode                        := exception_mode.asUInt
   rsu_master.io.priv                              := csr.io.status.prv
   rsu_master.io.pcarf_in                          := rob.io.r_next_pc
   rsu_master.io.fcsr_in                           := csr.io.fcsr_read

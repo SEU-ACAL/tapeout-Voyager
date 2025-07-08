@@ -963,7 +963,7 @@ class CSRFileMEEK_kernel(
       reg_mstatus.mie := false.B
       new_prv := PRV.M.U
     }
-  }.elsewhen(io.check_exception && io.check_priv === 1.U){ //只是为了verilator实验，实际boot linux，这里应该切到S-mode
+  }.elsewhen(io.check_exception && io.check_priv === PRV.M.U){ 
     reg_mstatus.v := false.B
     reg_mstatus.mpv := reg_mstatus.v
     reg_mstatus.gva := io.gva
@@ -975,7 +975,33 @@ class CSRFileMEEK_kernel(
     reg_mstatus.mpp := trimPrivilege(reg_mstatus.prv)
     reg_mstatus.mie := false.B
     new_prv := PRV.M.U
+  }.elsewhen(io.check_exception && io.check_priv === PRV.S.U){ 
+    reg_mstatus.v := false.B
+    reg_hstatus.spvp := Mux(reg_mstatus.v, reg_mstatus.prv(0),reg_hstatus.spvp)
+    reg_hstatus.gva := io.gva
+    reg_hstatus.spv := reg_mstatus.v
+    reg_sepc := epc
+    reg_scause := cause
+    reg_stval := tval
+    reg_htval := io.htval
+    reg_mstatus.spie := reg_mstatus.sie
+    reg_mstatus.spp := reg_mstatus.prv
+    reg_mstatus.sie := false.B
+    new_prv := PRV.S.U
   }
+  // .elsewhen(io.check_exception && io.check_priv === 1.U){ //for verilator，实际boot linux，这里应该切到S-mode
+  //   reg_mstatus.v := false.B
+  //   reg_mstatus.mpv := reg_mstatus.v
+  //   reg_mstatus.gva := io.gva
+  //   reg_mepc := epc
+  //   reg_mcause := cause
+  //   reg_mtval := tval
+  //   reg_mtval2 := io.htval
+  //   reg_mstatus.mpie := reg_mstatus.mie
+  //   reg_mstatus.mpp := trimPrivilege(reg_mstatus.prv)
+  //   reg_mstatus.mie := false.B
+  //   new_prv := PRV.M.U
+  // }
   
   // .elsewhen(io.check_exception && io.check_priv === PRV.M.U){ //只是为了verilator实验，实际boot linux，这里应该切到S-mode
   //   reg_mstatus.v := false.B
@@ -1071,8 +1097,9 @@ class CSRFileMEEK_kernel(
       reg_mstatus.mprv := false.B
     }
   }.elsewhen(io.check_priv_ret){
-      val ret_prv = WireInit(UInt(), DontCare)
-
+    val crnt_priv = reg_mstatus.prv
+    val ret_prv = WireInit(UInt(), DontCare)
+    when(crnt_priv === PRV.M.U){
       reg_mstatus.mie := reg_mstatus.mpie
       reg_mstatus.mpie := true.B
       reg_mstatus.mpp := legalizePrivilege(PRV.U.U)
@@ -1080,29 +1107,56 @@ class CSRFileMEEK_kernel(
       ret_prv := reg_mstatus.mpp
       reg_mstatus.v := usingHypervisor.B && reg_mstatus.mpv && reg_mstatus.mpp <= PRV.S.U
       io.evec := io.check_epc
-      pre_ret_prv := reg_mstatus.prv
-
-      new_prv := ret_prv
-      when (usingUser.B && ret_prv <= PRV.S.U) {
-        reg_mstatus.mprv := false.B
-      }
-
-      when(io.check_ret_priv === 0.U && shadow_status === 3.U){
-        if(tileId != 0){
-          // 1. 将寄存器值转换为 MStatus 类型的 Wire（可修改）
-          val mstatus_wire = Wire(new MStatus())
-          mstatus_wire := reg_shadow.getOrElse(VecInit(Seq.fill(CSRshadows.CSRsize)(1.U)))(CSRshadowsindex.mstatus).asTypeOf(mstatus_wire)
-          mstatus_wire.mie  := mstatus_wire.mpie
-          mstatus_wire.mpie := true.B
-          mstatus_wire.mpp  := legalizePrivilege(PRV.U.U)
-          mstatus_wire.mpv  := false.B
-          when (usingUser.B && ret_prv <= PRV.S.U) {
-            mstatus_wire.mprv := false.B
-          }
-          reg_shadow.get(CSRshadowsindex.mstatus) := mstatus_wire.asUInt
-        }
-      }
+    }.elsewhen(crnt_priv === PRV.S.U){
+      reg_mstatus.sie := reg_mstatus.spie
+      reg_mstatus.spie := true.B
+      reg_mstatus.spp := PRV.U.U
+      ret_prv := reg_mstatus.spp
+      reg_mstatus.v := usingHypervisor.B && reg_hstatus.spv
+      io.evec := io.check_epc
+      reg_hstatus.spv := false.B
     }
+    io.evec := io.check_epc
+    pre_ret_prv := reg_mstatus.prv
+    new_prv := ret_prv
+    when (usingUser.B && ret_prv <= PRV.S.U) {
+      reg_mstatus.mprv := false.B
+    }
+  }
+  //for verilator
+  // .elsewhen(io.check_priv_ret){
+  //     val ret_prv = WireInit(UInt(), DontCare)
+
+  //     reg_mstatus.mie := reg_mstatus.mpie
+  //     reg_mstatus.mpie := true.B
+  //     reg_mstatus.mpp := legalizePrivilege(PRV.U.U)
+  //     reg_mstatus.mpv := false.B
+  //     ret_prv := reg_mstatus.mpp
+  //     reg_mstatus.v := usingHypervisor.B && reg_mstatus.mpv && reg_mstatus.mpp <= PRV.S.U
+  //     io.evec := io.check_epc
+  //     pre_ret_prv := reg_mstatus.prv
+
+  //     new_prv := ret_prv
+  //     when (usingUser.B && ret_prv <= PRV.S.U) {
+  //       reg_mstatus.mprv := false.B
+  //     }
+
+  //     when(io.check_ret_priv === 0.U && shadow_status === 3.U){
+  //       if(tileId != 0){
+  //         // 1. 将寄存器值转换为 MStatus 类型的 Wire（可修改）
+  //         val mstatus_wire = Wire(new MStatus())
+  //         mstatus_wire := reg_shadow.getOrElse(VecInit(Seq.fill(CSRshadows.CSRsize)(1.U)))(CSRshadowsindex.mstatus).asTypeOf(mstatus_wire)
+  //         mstatus_wire.mie  := mstatus_wire.mpie
+  //         mstatus_wire.mpie := true.B
+  //         mstatus_wire.mpp  := legalizePrivilege(PRV.U.U)
+  //         mstatus_wire.mpv  := false.B
+  //         when (usingUser.B && ret_prv <= PRV.S.U) {
+  //           mstatus_wire.mprv := false.B
+  //         }
+  //         reg_shadow.get(CSRshadowsindex.mstatus) := mstatus_wire.asUInt
+  //       }
+  //     }
+  //   }
   
   // .elsewhen(io.check_priv_ret){
   //   val crnt_priv = reg_mstatus.prv
