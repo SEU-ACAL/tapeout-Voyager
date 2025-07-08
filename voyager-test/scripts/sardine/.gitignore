@@ -1,0 +1,13 @@
+# 临时文件
+work/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+
+# 测试缓存
+.pytest_cache/
+.coverage
+
+reports

@@ -39,6 +39,7 @@ class VoyagerVerilatorHarnessConfig extends Config(
   // new chipyard.config.AbstractConfig
 )
 class VoyagerVerilatorConfig extends Config(
+  new voyager_tapeout.custom.fpga.WithSPISDCard ++
   new voyager_tapeout.custom.harness.WithCustomChipTop ++
   new voyager_tapeout.custom.harness.WithCustomIOCells ++
   new voyager_tapeout.custom.WithCustomDigitalTop ++
