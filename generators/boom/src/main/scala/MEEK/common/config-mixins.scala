@@ -175,7 +175,7 @@ class WithNMediumBooms(n: Int = 1) extends Config(
  * 3-wide BOOM. Try to match the Cortex-A15.
  */
 class WithNLargeBooms(n: Int = 1) extends Config(
-  new WithAsynchronousBoomTiles++
+  // new WithAsynchronousBoomTiles++
   new WithTAGELBPD ++ // Default to TAGE-L BPD
   new WithNBoomPerfCounters(29)++//后面选择性去除
   new Config((site, here, up) => {
