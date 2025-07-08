@@ -211,7 +211,7 @@ make -j256
 ### 5.4 Verilator
 ```
 ./voyager-test/scripts/build-verilator.sh --config BuckyBallRocketConfig --debug
-./voyager-test/scripts/run-verilator.sh --config BuckyBallRocketConfig --debug  /home/hxm123/tapeout-Voyager/voyager-test/output/workloads/npu/buckyball/CTest/ctest_bbfp_matmul-baremetal
+./voyager-test/scripts/run-verilator.sh --config BuckyBallRocketConfig --debug  
 ```
 
 
