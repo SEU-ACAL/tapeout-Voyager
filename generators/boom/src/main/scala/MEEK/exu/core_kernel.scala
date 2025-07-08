@@ -1743,11 +1743,11 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
           // printf_inst(rob.io.commit.uops(w))
         }
     }
-    midas.targetutils.SynthesizePrintf(printf("C%d: p:%d v:%d%d%d%d " +
+    midas.targetutils.SynthesizePrintf(printf("C%d: p:%d v:%d%d%d " +
          "sl:%d%d%d xpt:%d ca:%x ct:%x%x%x%x na:%d%d%d%d sa:%d%d%d%d tg:%x sta:%d cr:%x ss:%d%d xpt:%d%d%d " +
          "fl:%d %d %x\n",
           io.hartid,
-          RegNext(csr.io.status.prv), rob.io.commit.arch_valids(3), rob.io.commit.arch_valids(2), rob.io.commit.arch_valids(1), rob.io.commit.arch_valids(0),
+          RegNext(csr.io.status.prv), rob.io.commit.arch_valids(2), rob.io.commit.arch_valids(1), rob.io.commit.arch_valids(0),
           rsu_stall, ic_stall, io.gh_stall, csr.io.r_exception, csr.io.trace(0).cause,
           ic_master.io.ic_counter(1), ic_master.io.ic_counter(2), ic_master.io.ic_counter(3), ic_master.io.ic_counter(4), 
           ic_master.io.icsl_na(1), ic_master.io.icsl_na(2), ic_master.io.icsl_na(3), ic_master.io.icsl_na(4), 
@@ -1756,12 +1756,6 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
           ic_master.io.state, ic_master.io.ctrl, ic_master.io.if_dosnap, ic_master.io.if_dosnap_priv, ic_master.io.mode_switch, ic_master.io.mode_ret, ic_master.io.excp_mode,
           rob.io.flush.valid, rob.io.flush.bits.flush_typ, csr.io.evec))
 
-    midas.targetutils.SynthesizePrintf(printf("C%d: prs:%d%d " +
-          "rw:%d %x %x %x arf:%x %x " +
-          "npc:%x dst:%x cp:%x icr:%d\n",
-          io.hartid, io.if_correct_process, satp_ppn_switch,
-          csr_exe_unit.io.iresp.valid, csr.io.rw.addr, csr.io.rw.cmd, csr.io.rw.wdata, rsu_master.io.arfs_index(0), rsu_master.io.arfs_pidx(0),
-          rob.io.r_next_pc, ic_master.io.shared_CP_CFG, ic_incr))
   } else if (BRANCH_PRINTF) {
     val debug_ghist = RegInit(0.U(globalHistoryLength.W))
     when (rob.io.flush.valid && FlushTypes.useCsrEvec(rob.io.flush.bits.flush_typ)) {
@@ -2021,7 +2015,7 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
   ic_master.io.ic_threshold                       := GH_GlobalParams.GH_TOTAL_INSTS.U
   ic_master.io.ic_incr                            := ic_incr
   ic_master.io.mode_ret                           := RegNext(if_mret_or_sret.reduce(_ || _))
-  ic_master.io.excp_mode                          := exception_mode_test
+  ic_master.io.excp_mode                          := exception_mode
   ic_master.io.mode_switch                        := mode_switch
   ic_master.io.interrupt                          := csr.io.trace(0).exception && csr.io.trace(0).interrupt
   ic_master.io.satp_switch                        := satp_ppn_switch
@@ -2062,7 +2056,7 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
     rsu_master.io.arfs_in(i)                      := arfs(i)
     rsu_master.io.farfs_in(i)                     := farfs(i)
   }
-  rsu_master.io.excpt_mode                        := exception_mode_test.asUInt
+  rsu_master.io.excpt_mode                        := exception_mode.asUInt
   rsu_master.io.priv                              := csr.io.status.prv
   rsu_master.io.pcarf_in                          := rob.io.r_next_pc
   rsu_master.io.fcsr_in                           := csr.io.fcsr_read
@@ -2115,6 +2109,12 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
   io.commit_uops                                  := rob.io.commit.uops
   // io.if_big_complete_ack                           := ic_master.io.if_big_complete_ack
   //===== GuardianCouncil Function: End ====//
+  midas.targetutils.SynthesizePrintf(printf("C%d: prs:%d%d " +
+          "rw:%d %x %x %x arf:%x %x " +
+          "npc:%x cp:%x icr:%x\n",
+          io.hartid, io.if_correct_process, satp_ppn_switch,
+          csr_exe_unit.io.iresp.valid, csr.io.rw.addr, csr.io.rw.cmd, csr.io.rw.wdata, rsu_master.io.arfs_index(0), rsu_master.io.arfs_pidx(0),
+          rob.io.r_next_pc, ic_master.io.shared_CP_CFG, ic_incr))
 }
 
 

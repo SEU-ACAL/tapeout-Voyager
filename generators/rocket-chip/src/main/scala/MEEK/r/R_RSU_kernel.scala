@@ -138,7 +138,7 @@ class R_RSU_kernel(val params: R_RSUParams) extends Module with HasR_RSUIO_kerne
     }
     pcarf_ss                                   := io.pcarf_in
     fcsr_ss                                    := io.fcsr_in
-    crt_priv                                   := io.excpt_mode
+    crt_priv                                   := io.priv
   }
 
 

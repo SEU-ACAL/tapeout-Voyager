@@ -100,7 +100,7 @@ case class BoomCoreParams(
   trace: Boolean = false,
 
   /* debug stuff */
-  enableCommitLogPrintf: Boolean = false,
+  enableCommitLogPrintf: Boolean = true,
   enableBranchPrintf: Boolean = false,
   enableMemtracePrintf: Boolean = false
 
