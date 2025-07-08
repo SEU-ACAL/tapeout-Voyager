@@ -1,24 +1,23 @@
-package dialect.vector
+package dialect.bbfp
 
-package dialect.vector
 import chisel3._
 import chisel3.util._
 import chisel3.stage._
 import org.chipsalliance.cde.config.Parameters
 
-import dialect.vector._
+import dialect.bbfp._
 import buckyball.frontend.rs.{ReservationStationIssue, ReservationStationComplete, BuckyBallCmd}
 import buckyball.mem.{SramReadIO, SramWriteIO}
 import buckyball.BuckyBallConfig
 
-class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
+class BBFP_ID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
     val rob_id_width = log2Up(bbconfig.rob_entries)
     val spad_w = bbconfig.veclane * bbconfig.inputType.getWidth
 
     val io = IO(new Bundle{
         val cmdReq = Flipped(Decoupled(new ReservationStationIssue(new BuckyBallCmd, rob_id_width)))
         val cmdResp = Decoupled(new ReservationStationComplete(rob_id_width))
-        
+        val is_matmul_ws  = Output(Bool())
         val id_lu_o = Decoupled(new id_lu_req)
     })
     
@@ -34,10 +33,11 @@ class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
     val op2_bank = RegInit(0.U(2.W))
     val wr_bank = RegInit(0.U(2.W))
     val wr_bank_addr = RegInit(0.U(12.W))
-
+    // val pe_ex_finish = io.pe_ex_finish
+    io.is_matmul_ws := false.B
     switch(state) {
         is(idle) {
-            when(io.cmdReq.valid) {
+            when(io.cmdReq.valid && io.cmdReq.bits.cmd.post_decode_cmd.is_bbfp) {
                 iteration := io.cmdReq.bits.cmd.post_decode_cmd.iter
                 iteration_counter := 0.U
                 rob_id_reg := io.cmdReq.bits.rob_id
@@ -48,6 +48,20 @@ class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
                 wr_bank := io.cmdReq.bits.cmd.post_decode_cmd.wr_bank
                 wr_bank_addr := io.cmdReq.bits.cmd.post_decode_cmd.wr_bank_addr
                 state := busy
+                io.is_matmul_ws := false.B
+            }
+            when(io.cmdReq.valid && io.cmdReq.bits.cmd.post_decode_cmd.is_matmul_ws){
+                iteration := io.cmdReq.bits.cmd.post_decode_cmd.iter
+                iteration_counter := 0.U
+                rob_id_reg := io.cmdReq.bits.rob_id
+                op1_bank := DontCare
+                op1_bank_addr := DontCare
+                op2_bank := io.cmdReq.bits.cmd.post_decode_cmd.op2_bank
+                op2_bank_addr := io.cmdReq.bits.cmd.post_decode_cmd.op2_bank_addr
+                wr_bank := io.cmdReq.bits.cmd.post_decode_cmd.wr_bank
+                wr_bank_addr := io.cmdReq.bits.cmd.post_decode_cmd.wr_bank_addr
+                state := busy
+                io.is_matmul_ws := true.B
             }
         }
         is(busy) {
@@ -55,11 +69,9 @@ class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
             when(iteration_counter === iteration - 1.U) {
                 iteration_counter := 0.U
                 state := idle
-            }
+        }
         }
     }
-   
-
     //生成ID_LU请求
     io.id_lu_o.valid := state === busy
     io.id_lu_o.bits.op1_bank := op1_bank
@@ -76,7 +88,16 @@ class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
 
     //指令完成信号
     val complete = (iteration_counter === iteration - 1.U) && (state === busy) 
+    
+    // 将complete信号打10拍
+    val complete_delay = RegInit(VecInit(Seq.fill(10)(false.B)))
+    complete_delay(0) := complete
+    for (i <- 1 until 10) {
+        complete_delay(i) := complete_delay(i-1)
+    }
+    val complete_10clk = complete_delay(9)
+    
     io.cmdResp.bits.rob_id := rob_id_reg
-    io.cmdResp.valid := complete
+    io.cmdResp.valid := complete_10clk
 
 }

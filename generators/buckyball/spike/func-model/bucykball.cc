@@ -1,8 +1,10 @@
 #include "buckyball.h"
+#include "buckyball_params.h"
 #include <cstdio>
 #include <riscv/mmu.h>
 #include <riscv/trap.h>
 #include <iostream>
+#include <cassert>
 
 using namespace std;
 
@@ -132,6 +134,57 @@ void buckyballFunc_t::mul_warp16(reg_t rs1, reg_t rs2) {
   }
 }
 
+// Matrix multiplication using warp16 pattern
+void buckyballFunc_t::bbfp_mul(reg_t rs1, reg_t rs2) {
+  auto const op1_spaddr = rs1 & ((1UL << spAddrLen) - 1);  // rs1[spAddrLen-1:0]
+  auto const op2_spaddr = (rs1 >> spAddrLen) & ((1UL << spAddrLen) - 1);  // rs1[2*spAddrLen-1:spAddrLen]
+  auto const wr_spaddr = rs2 & ((1UL << spAddrLen) - 1);   // rs2[spAddrLen-1:0]  
+  auto const iter = (rs2 >> spAddrLen) & 0x3FF;  // rs2[spAddrLen+9:spAddrLen], 10 bits
+  // scratchpad 行数
+  size_t spad_rows = buckyball_state.spad.size();
+
+  // // 检查起始行号和迭代次数是否合法
+  // assert(op1_spaddr + iter <= spad_rows && "op1_spaddr越界");
+  // assert(op2_spaddr + iter <= spad_rows && "op2_spaddr越界");
+  // assert(wr_spaddr + iter <= spad_rows && "wr_spaddr越界");
+
+  // TODO:加个assert，op1_spaddr和op2_spaddr不能属于同一个bank
+
+  dprintf("BUCKYBALL: bbfp_mul - rs1=0x%08lx, rs2=0x%08lx\n", rs1, rs2);
+  dprintf("BUCKYBALL: bbfp_mul - op1_spaddr=0x%08lx, op2_spaddr=0x%08lx, wr_spaddr=0x%08lx, iter=0x%02lx\n", 
+          op1_spaddr, op2_spaddr, wr_spaddr, iter);
+  dprintf("BBFP_MUl_Test\n");
+
+  // Perform matrix multiplication for specified iterations
+  for (size_t i = 0; i < iter; ++i) {
+    // For each iteration, compute one row of result matrix
+    const size_t result_row = wr_spaddr + i;
+    const size_t op1_row = op1_spaddr + i;
+    const size_t op2_row = op2_spaddr + i;
+    elem_t share_exp_a = buckyball_state.spad.at(op1_row).at(0);
+    elem_t share_exp_b = buckyball_state.spad.at(op2_row).at(0);
+    // Initialize result row to zero
+    for (size_t col = 0; col < DIM; ++col) {
+      buckyball_state.spad.at(result_row).at(col) = 0;
+    }
+    
+    elem_t sum_exp = share_exp_a + share_exp_b;
+    buckyball_state.spad.at(result_row).at(0) = sum_exp;
+    // Compute dot product for each column of result
+    for (size_t col = 1; col < DIM; ++col) {
+      elem_t sum = 0;
+      for (size_t k = 1; k < DIM; ++k) {
+        // op1[i][k] * op2[k][col]
+        elem_t a = buckyball_state.spad.at(op1_row).at(k);
+        elem_t b = buckyball_state.spad.at(op2_row).at(k);
+        sum += a * b;
+      }
+      buckyball_state.spad.at(result_row).at(col) = sum;
+    }
+  }
+}
+
+
 reg_t buckyballFunc_t::CUSTOMFN(XCUSTOM_ACC)(rocc_insn_t insn, reg_t xs1, reg_t xs2) {
   if (!buckyball_state.resetted) {
     reset();
@@ -145,7 +198,10 @@ reg_t buckyballFunc_t::CUSTOMFN(XCUSTOM_ACC)(rocc_insn_t insn, reg_t xs1, reg_t 
     mul_warp16(xs1, xs2);
   } else if (insn.funct == flush_funct) {
     dprintf("BUCKYBALL: flush\n");
-  } else {
+  } else if (insn.funct == bbfp_mul_funct) {
+    bbfp_mul(xs1, xs2);
+  }
+  else {
     dprintf("BUCKYBALL: encountered unknown instruction with funct: %d\n", insn.funct);
     illegal_instruction();
   }
@@ -209,7 +265,14 @@ std::vector<disasm_insn_t*> buckyballFunc_t::get_disasms() {
     ROCC_OPCODE3 | (32 << 25), 
     ROCC_OPCODE_MASK | (0x7F << 25), 
     {&buckyball_rs1, &buckyball_rs2}));
-  
+
+  // BBFP_MATMUL instruction (funct = 26)
+
+  insns.push_back(new disasm_insn_t("bb_bbfp_mul", 
+    ROCC_OPCODE3 | (26 << 25), 
+    ROCC_OPCODE_MASK | (0x7F << 25), 
+    {&buckyball_rs1, &buckyball_rs2}));
+
   // FLUSH instruction (funct = 7) - no operands needed
   insns.push_back(new disasm_insn_t("bb_flush", 
     ROCC_OPCODE3 | (7 << 25), 

@@ -31,6 +31,8 @@ class FP32Format extends DataFormat {
   override def name: String = "FP32"
 }
 
+
+
 // 数据格式工厂
 object DataFormatFactory {
   def create(formatType: String): DataFormat = formatType.toUpperCase match {
