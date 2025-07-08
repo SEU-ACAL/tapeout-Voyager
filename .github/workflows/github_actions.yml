@@ -50,7 +50,7 @@ jobs:
           echo "🍏 Please Do Pre-commit Before Commit!!!" 
 
   Lint-and-Test:
-    name: Compile Lint and Base Test
+    name: Compile Lint and Smoke Test
     runs-on: fpga
     needs: Pre-commit-check
     steps:
@@ -71,8 +71,15 @@ jobs:
         run: |
           source ~/.zshrc
           chipyard_exec
-          ./voyager-test/scripts/batch-test.sh --soc-test
-      - run: echo "🍏 Verilator build test is ${{ job.status }}."
+          ./voyager-test/scripts/build-verilator.sh --config VoyagerChipConfig --project voyager_tapeout --sub-project voyager_tapeout --debug
+      - name: Smoke Test
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          cd voyager-test/scripts/sardine
+          python -m pytest -m smoke -s -v -n auto
+      - run: echo "🍏 Lint-and-Test is ${{ job.status }}."
         # 如果检查失败，强制回退分支
       - name: Revert Bad Commit
         if: failure()
@@ -88,78 +95,78 @@ jobs:
 
   # ============== 专用测试 ==================
   # NPU测试: 匹配到[npu-test]才会执行
-  NPU-Specific-Test:
-    name: NPU Specific Test
-    runs-on: fpga
-    needs: Lint-and-Test
-    if: contains(github.event.head_commit.message, '[npu-test]') 
-    steps:
-      - name: Run NPU Specific Test
-        shell: zsh {0}
-        run: |
-          source ~/.zshrc
-          chipyard_exec
-          echo "🚀 Running NPU Specific Test..."
-          echo "Triggered by commit: ${{ github.event.head_commit.message }}"
-          ./voyager-test/scripts/batch-test.sh --npu-test
-      - run: echo "🍏 NPU Specific Test is ${{ job.status }}."
-      # 如果检查失败，强制回退分支
-      - name: Revert Bad Commit
-        if: failure()
-        shell: zsh {0}
-        run: |
-          source ~/.zshrc
-          chipyard_exec
-          setproxy
-          git reset --hard HEAD~1
-          git push --force origin ${{ github.ref }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # NPU-Specific-Test:
+  #   name: NPU Specific Test
+  #   runs-on: fpga
+  #   needs: Lint-and-Test
+  #   if: contains(github.event.head_commit.message, '[npu-test]') 
+  #   steps:
+  #     - name: Run NPU Specific Test
+  #       shell: zsh {0}
+  #       run: |
+  #         source ~/.zshrc
+  #         chipyard_exec
+  #         echo "🚀 Running NPU Specific Test..."
+  #         echo "Triggered by commit: ${{ github.event.head_commit.message }}"
+  #         ./voyager-test/scripts/batch-test.sh --npu-test
+  #     - run: echo "🍏 NPU Specific Test is ${{ job.status }}."
+  #     # 如果检查失败，强制回退分支
+  #     - name: Revert Bad Commit
+  #       if: failure()
+  #       shell: zsh {0}
+  #       run: |
+  #         source ~/.zshrc
+  #         chipyard_exec
+  #         setproxy
+  #         git reset --hard HEAD~1
+  #         git push --force origin ${{ github.ref }}
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # Meek测试: 匹配到[meek-test]才会执行
-  Meek-Specific-Test:
-    name: Meek Specific Test
-    runs-on: fpga
-    needs: Lint-and-Test
-    if: contains(github.event.head_commit.message, '[meek-test]') 
-    steps:
-      - name: Run Meek Specific Test
-        shell: zsh {0}
-        run: |
-          source ~/.zshrc
-          chipyard_exec
-          echo "🚀 Running Meek Specific Test..."
-          echo "Triggered by commit: ${{ github.event.head_commit.message }}"
-          ./voyager-test/scripts/batch-test.sh --meek-test
-      - run: echo "🍏 Meek Specific Test is ${{ job.status }}."
-      # 如果检查失败，强制回退分支
-      - name: Revert Bad Commit
-        if: failure()
-        shell: zsh {0}
-        run: |
-          source ~/.zshrc
-          chipyard_exec
-          setproxy
-          git reset --hard HEAD~1
-          git push --force origin ${{ github.ref }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  # # Meek测试: 匹配到[meek-test]才会执行
+  # Meek-Specific-Test:
+  #   name: Meek Specific Test
+  #   runs-on: fpga
+  #   needs: Lint-and-Test
+  #   if: contains(github.event.head_commit.message, '[meek-test]') 
+  #   steps:
+  #     - name: Run Meek Specific Test
+  #       shell: zsh {0}
+  #       run: |
+  #         source ~/.zshrc
+  #         chipyard_exec
+  #         echo "🚀 Running Meek Specific Test..."
+  #         echo "Triggered by commit: ${{ github.event.head_commit.message }}"
+  #         ./voyager-test/scripts/batch-test.sh --meek-test
+  #     - run: echo "🍏 Meek Specific Test is ${{ job.status }}."
+  #     # 如果检查失败，强制回退分支
+  #     - name: Revert Bad Commit
+  #       if: failure()
+  #       shell: zsh {0}
+  #       run: |
+  #         source ~/.zshrc
+  #         chipyard_exec
+  #         setproxy
+  #         git reset --hard HEAD~1
+  #         git push --force origin ${{ github.ref }}
+  #       env:
+  #         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-  # DC 测试: 匹配到[dc-eval]才会执行，失败不会退回
-  DC-Evaluation:
-    name: DC Area Evaluation
-    runs-on: fpga
-    needs: Lint-and-Test
-    if: contains(github.event.head_commit.message, '[dc-eval]')
-    steps:
-      - name: Run DC Evaluation
-        shell: zsh {0}
-        run: |
-          source ~/.zshrc
-          chipyard_exec
-          echo "🚀 Running DC Evaluation..."
-          echo "Triggered by commit: ${{ github.event.head_commit.message }}"
-          ./voyager-test/scripts/run-dc.sh --config VoyagerChipConfig 
+  # # DC 测试: 匹配到[dc-eval]才会执行，失败不会退回
+  # DC-Evaluation:
+  #   name: DC Area Evaluation
+  #   runs-on: fpga
+  #   needs: Lint-and-Test
+  #   if: contains(github.event.head_commit.message, '[dc-eval]')
+  #   steps:
+  #     - name: Run DC Evaluation
+  #       shell: zsh {0}
+  #       run: |
+  #         source ~/.zshrc
+  #         chipyard_exec
+  #         echo "🚀 Running DC Evaluation..."
+  #         echo "Triggered by commit: ${{ github.event.head_commit.message }}"
+  #         ./voyager-test/scripts/run-dc.sh --config VoyagerChipConfig 
 
 
 # ============== 测试结束 ==================

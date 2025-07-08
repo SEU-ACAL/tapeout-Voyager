@@ -12,3 +12,7 @@ cd ${CYDIR}/voyager-test
 mkdir -p build && cd build 
 cmake ..
 make
+
+
+# install requirements for sardine
+pip install -r ${CYDIR}/voyager-test/scripts/sardine/requirements.txt
