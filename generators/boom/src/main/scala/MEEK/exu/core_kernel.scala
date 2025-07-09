@@ -2024,7 +2024,7 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
   ic_master.io.ic_threshold                       := GH_GlobalParams.GH_TOTAL_INSTS.U
   ic_master.io.ic_incr                            := ic_incr
   ic_master.io.mode_ret                           := RegNext(if_mret_or_sret.reduce(_ || _))
-  ic_master.io.excp_mode                          := exception_mode_test
+  ic_master.io.excp_mode                          := exception_mode
   ic_master.io.mode_switch                        := mode_switch
   ic_master.io.interrupt                          := csr.io.trace(0).exception && csr.io.trace(0).interrupt
   ic_master.io.satp_switch                        := satp_ppn_switch
@@ -2065,7 +2065,7 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
     rsu_master.io.arfs_in(i)                      := arfs(i)
     rsu_master.io.farfs_in(i)                     := farfs(i)
   }
-  rsu_master.io.excpt_mode                        := exception_mode_test.asUInt
+  rsu_master.io.excpt_mode                        := exception_mode.asUInt
   rsu_master.io.priv                              := csr.io.status.prv
   rsu_master.io.pcarf_in                          := rob.io.r_next_pc
   rsu_master.io.fcsr_in                           := csr.io.fcsr_read
@@ -2118,6 +2118,12 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
   io.commit_uops                                  := rob.io.commit.uops
   // io.if_big_complete_ack                           := ic_master.io.if_big_complete_ack
   //===== GuardianCouncil Function: End ====//
+  midas.targetutils.SynthesizePrintf(printf("C%d: prs:%d%d " +
+          "rw:%d %x %x %x arf:%x %x " +
+          "npc:%x cp:%x icr:%x\n",
+          io.hartid, io.if_correct_process, satp_ppn_switch,
+          csr_exe_unit.io.iresp.valid, csr.io.rw.addr, csr.io.rw.cmd, csr.io.rw.wdata, rsu_master.io.arfs_index(0), rsu_master.io.arfs_pidx(0),
+          rob.io.r_next_pc, ic_master.io.shared_CP_CFG, ic_incr))
 }
 
 

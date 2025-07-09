@@ -1588,7 +1588,7 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   }
   else {
     when (csr.io.trace(0).valid) {
-      printf("C%d: %d [%d] pc=[%x] W[r%d=%x][%d] R[r%d=%x] R[r%d=%x] inst=[%x] DASM(%x)\n",
+      midas.targetutils.SynthesizePrintf(printf("C%d: %d [%d] pc=[%x] W[r%d=%x][%d] R[r%d=%x] R[r%d=%x] inst=[%x] DASM(%x)\n",
          io.hartid, coreMonitorBundle.timer, coreMonitorBundle.valid,
          coreMonitorBundle.pc,
          Mux(wb_ctrl.wxd || wb_ctrl.wfd, coreMonitorBundle.wrdst, 0.U),
@@ -1598,34 +1598,64 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
          Mux(wb_ctrl.rxs1 || wb_ctrl.rfs1, coreMonitorBundle.rd0val, 0.U),
          Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1src, 0.U),
          Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1val, 0.U),
-         coreMonitorBundle.inst, coreMonitorBundle.inst)
+         coreMonitorBundle.inst, coreMonitorBundle.inst))
     }
   }
-  if (GH_GlobalParams.GH_DEBUG == 1) {
-    when (io.core_trace.asBool&&coreMonitorBundle.valid) {
-      printf(midas.targetutils.SynthesizePrintf("C%d: %d [%d] pc=[%x] W[r%d=%x][%d] R[r%d=%x] R[r%d=%x] inst=[%x] priv[%x] cause[%x]\n",
-         io.hartid, coreMonitorBundle.timer, coreMonitorBundle.valid,
-         coreMonitorBundle.pc,
-         Mux(wb_ctrl.wxd || wb_ctrl.wfd, coreMonitorBundle.wrdst, 0.U),
-         Mux(coreMonitorBundle.wrenx, coreMonitorBundle.wrdata, 0.U),
-         coreMonitorBundle.wrenx,
-         Mux(wb_ctrl.rxs1 || wb_ctrl.rfs1, coreMonitorBundle.rd0src, 0.U),
-         Mux(wb_ctrl.rxs1 || wb_ctrl.rfs1, coreMonitorBundle.rd0val, 0.U),
-         Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1src, 0.U),
-         Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1val, 0.U),
-         coreMonitorBundle.inst, coreMonitorBundle.priv_mode,csr.io.trace(0).cause))
-    }
+  // if (GH_GlobalParams.GH_DEBUG == 1) {
+  //   when (io.core_trace.asBool&&coreMonitorBundle.valid) {
+  //     printf(midas.targetutils.SynthesizePrintf("C%d: %d [%d] pc=[%x] W[r%d=%x][%d] R[r%d=%x] R[r%d=%x] inst=[%x] priv[%x] cause[%x]\n",
+  //        io.hartid, coreMonitorBundle.timer, coreMonitorBundle.valid,
+  //        coreMonitorBundle.pc,
+  //        Mux(wb_ctrl.wxd || wb_ctrl.wfd, coreMonitorBundle.wrdst, 0.U),
+  //        Mux(coreMonitorBundle.wrenx, coreMonitorBundle.wrdata, 0.U),
+  //        coreMonitorBundle.wrenx,
+  //        Mux(wb_ctrl.rxs1 || wb_ctrl.rfs1, coreMonitorBundle.rd0src, 0.U),
+  //        Mux(wb_ctrl.rxs1 || wb_ctrl.rfs1, coreMonitorBundle.rd0val, 0.U),
+  //        Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1src, 0.U),
+  //        Mux(wb_ctrl.rxs2 || wb_ctrl.rfs2, coreMonitorBundle.rd1val, 0.U),
+  //        coreMonitorBundle.inst, coreMonitorBundle.priv_mode,csr.io.trace(0).cause))
+  //   }
 
-    when (io.core_trace.asBool&&(lsl.io.m_st_valid.reduce(_||_)|| lsl.io.m_ld_valid.reduce(_||_)) ) {
-      printf(midas.targetutils.SynthesizePrintf("C%d: %d [idx0 %d idx1 %d]  " +
-        "MEM[data0 -> %x data1 -> %x addr0 -> %x addr1 -> %x] W[%d %d] R[%d %d]" +
-        "CSR[data0 -> %x data1 -> %x ][%d %d]\n",
-         io.hartid,coreMonitorBundle.timer,lsl_index(0)(6,3),lsl_index(1)(6,3),lsl.io.m_ldst_data(0),lsl.io.m_ldst_data(1),lsl.io.m_ldst_addr(0),lsl.io.m_ldst_addr(1),
-         lsl.io.m_st_valid(0),lsl.io.m_st_valid(1),lsl.io.m_ld_valid(0),lsl.io.m_ld_valid(1),
-         lsl.io.m_csr_data(0),lsl.io.m_csr_data(1),
-         lsl.io.m_csr_valid(0),lsl.io.m_csr_valid(1)))
-    }
+  //   when (io.core_trace.asBool&&(lsl.io.m_st_valid.reduce(_||_)|| lsl.io.m_ld_valid.reduce(_||_)) ) {
+  //     printf(midas.targetutils.SynthesizePrintf("C%d: %d [idx0 %d idx1 %d]  " +
+  //       "MEM[data0 -> %x data1 -> %x addr0 -> %x addr1 -> %x] W[%d %d] R[%d %d]" +
+  //       "CSR[data0 -> %x data1 -> %x ][%d %d]\n",
+  //        io.hartid,coreMonitorBundle.timer,lsl_index(0)(6,3),lsl_index(1)(6,3),lsl.io.m_ldst_data(0),lsl.io.m_ldst_data(1),lsl.io.m_ldst_addr(0),lsl.io.m_ldst_addr(1),
+  //        lsl.io.m_st_valid(0),lsl.io.m_st_valid(1),lsl.io.m_ld_valid(0),lsl.io.m_ld_valid(1),
+  //        lsl.io.m_csr_data(0),lsl.io.m_csr_data(1),
+  //        lsl.io.m_csr_valid(0),lsl.io.m_csr_valid(1)))
+  //   }
+  // }
+  val ex_trace_inst  = (if(usingCompressed) Cat(Mux(ex_reg_raw_inst(1, 0).andR, ex_reg_inst >> 16, 0.U), ex_reg_raw_inst(15, 0)) else ex_reg_inst)
+  midas.targetutils.SynthesizePrintf(printf("C%d: p:%d xpt:%d%d%d ca:%x c:%d%d " +
+    "kil:%d sta:%d%d%d rpl:%d%d %d ot:%d " +
+    "e_v:%d e_pc:%x e_ist:%x m_v:%d wr_v:%d " +
+    "iq:%d iqc:%x csr:%d%d %x%x\n",
+    io.hartid, RegNext(csr.io.status.prv), csr.io.trace(0).exception, csr.io.eret, csr.io.eret_nocall, csr.io.trace(0).cause, checker_mode, checker_priv_mode, 
+    ctrl_killd, ctrl_stalld, icsl.io.icsl_stalld, rsu_slave.io.core_hang_up.asBool, replay_wb, wb_r_replay, icsl_if_ret_special_pc, icsl_if_overtaking,
+    ex_reg_valid, ex_reg_pc, ex_trace_inst, mem_reg_valid, wb_reg_valid,
+    io.imem.req.valid, io.imem.req.bits.pc, lsl_index(0)(2,0), lsl_index(1)(2,0), lsl.io.m_csr_data(0), lsl.io.m_csr_data(1)
+  ))
+
+  when(lsl.io.req_valid || lsl.io.resp_valid || lsl.io.vec_enq_valid(0) || lsl.io.vec_enq_valid(1) || wb_csr){
+    midas.targetutils.SynthesizePrintf(printf("C%d: ptr:%d qv:%d%d rv:%d adr:%x dt:%x %x enq:%d%d %x%x\n",
+      io.hartid, lsl.io.lsl_deq_ptr, lsl.io.req_valid, wb_csr, lsl.io.resp_valid, lsl.io.resp_addr, lsl.io.resp_data, lsl_resp_data_csr, lsl.io.vec_enq_valid(0), lsl.io.vec_enq_valid(1), lsl.io.vec_enq_data(0), lsl.io.vec_enq_data(1)
+    ))
   }
+  
+
+  midas.targetutils.SynthesizePrintf(printf("C%d: prs:%d chk:%d %d fg:%d %d " +
+    "sta:%x cnt:%x %x " +
+    "cpl:%d comp:%d rsu_s:%x%x " +
+    "cxp:%d%d crt:%d rpc:%x cpr:%d xpm:%d " +
+    "csr:%d%d%d%d %d arf:%d %d npc:%x\n",
+    io.hartid, io.if_correct_process, rsu_slave.io.debug_do_check, icsl.io.debug_check_done, self_xcpt_flag ,self_eret_flag,
+    icsl.io.debug_state, icsl.io.ic_counter, icsl.io.debug_sl_counter, 
+    icsl.io.if_check_completed, icsl.io.debug_comp, rsu_slave.io.rsu_status, rsu_slave.io.debug_rsustatus,
+    check_exception, check_exception_rise, check_privret, csr.io.evec, check_priv, excpt_mode, 
+    io.arfs_if_CPS, arfs_is_CSR, priv_cps_done, priv_status, csr.io.shadow_idx, arfs_is_ARFS, rsu_slave.io.arfs_index, rsu_pc
+  ))
+
   // CoreMonitorBundle for late latency writes
   val xrfWriteBundle = Wire(new CoreMonitorBundle(xLen, fLen))
 
