@@ -90,7 +90,9 @@ class AbstractConfig extends Config(
   new freechips.rocketchip.subsystem.WithJtagDTM ++                 /** set the debug module to expose a JTAG port */
 
   // Boot Select Pins
-  new testchipip.boot.WithCustomBootPin ++                          /** add a custom-boot-pin to support pin-driven boot address */
+  new testchipip.boot.WithCustomBootPin(testchipip.boot.CustomBootPinParams(
+    customBootAddress = 0x00000001L
+  )) ++                          /** add a custom-boot-pin to support pin-driven boot address */
   new testchipip.boot.WithBootAddrReg ++                            /** add a boot-addr-reg for configurable boot address */
 
 
