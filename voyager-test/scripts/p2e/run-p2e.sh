@@ -134,7 +134,8 @@ main() {
     cd $SCRIPT_DIR/../marshal
     Log "$YELLOW" "Generating workload..."
     ./marshal -v -d build $WORKLOAD.json  
-    cp ${CYDIR}/software/firemarshal/images/firechip/${WORKLOAD}/${WORKLOAD}-bin-nodisk $OUTPUT_DIR/image/
+    ./marshal -v -d install -t prototype $WORKLOAD.json
+    cp ${CYDIR}/software/firemarshal/images/prototype/${WORKLOAD}/${WORKLOAD}-bin-nodisk $OUTPUT_DIR/image/
     cd $OUTPUT_DIR/image
     Log "$YELLOW" "Converting image to hex... (This may take a while)"
     python3 $SCRIPT_DIR/toolchain/elf2hex.py $OUTPUT_DIR/image/$WORKLOAD-bin-nodisk $OUTPUT_DIR/image/$WORKLOAD.hex --remap-to-zero 

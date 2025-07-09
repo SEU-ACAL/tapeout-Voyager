@@ -173,6 +173,8 @@ firesim 由`./build-setup.sh`已经安装好, 参考[教程](docs/firesim-README
 
 ## 七、P2E
 
+**7.1 P2E 运行测试**
+
 首先开个P2E加速器服务器的账号，并配置好[p2e_config.yaml](./voyager-test/scripts/p2e/p2e_config.yaml)
 
 ```shell
@@ -188,6 +190,10 @@ $ ./voyager-test/scripts/p2e/run-p2e.sh
 ```shell
 $ ./voyager-test/scripts/p2e/run-p2e.sh -s 2 # 跳过前两步，直接去加速器上运行已有的workload和配置
 ```
+
+**7.2 自定义 P2E 测试用例**
+
+如果你要新建自定义的.json文件规定的测试，在`voyager-test/scripts/marshal/`中的`workload_name`和文件夹名应一致，然后运行`build-p2e.sh`和`run-p2e.sh`即可。
 
 ## 八、后端 (DC)
 

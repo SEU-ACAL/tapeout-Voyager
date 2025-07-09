@@ -141,11 +141,11 @@ main() {
   # Step 1: Build bitstream
   if [ $SKIP_STEPS -lt 1 ]; then
     Log "$BLUE" "====================== Step 1: Building bitstream ======================"
-    cd $CYDIR/fpga
-    make SUB_PROJECT=vcu118 CONFIG=$CONFIG || true
+    cd $CYDIR/tapeout
+    make SUB_PROJECT=voyager_tapeout CONFIG=$CONFIG bitstream || true
     mkdir -p $OUTPUT_DIR
     rm -rf $OUTPUT_DIR/gen-collateral
-    cp -r $CYDIR/fpga/generated-src/chipyard.fpga.vcu118.VCU118FPGATestHarness.$CONFIG/gen-collateral $OUTPUT_DIR/
+    cp -r $CYDIR/tapeout/generated-src/voyager_tapeout.custom.fpga.VCU118FPGATestHarness.$CONFIG/gen-collateral $OUTPUT_DIR/
   else
     Log "$YELLOW" "Step 1 skipped"
   fi

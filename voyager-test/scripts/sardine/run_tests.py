@@ -12,16 +12,18 @@ import webbrowser
 
 
 def get_git_commit():
-  """Get current git commit hash."""
+  """Get current git commit hash (first 7 characters)."""
   try:
     result = subprocess.run(
-      ["git", "rev-parse", "--short", "HEAD"],
+      ["git", "rev-parse", "HEAD"],
       capture_output=True,
       text=True,
       cwd=Path(__file__).parent
     )
     if result.returncode == 0:
-      return result.stdout.strip()
+      # 获取完整的commit hash并取前7位
+      full_hash = result.stdout.strip()
+      return full_hash[:7] if len(full_hash) >= 7 else full_hash
   except Exception:
     pass
   return "unknown"
@@ -142,30 +144,9 @@ def run_pytest(args=None, use_allure=False):
           print(f"  - {allure_report_dir} (versioned HTML report)")
           if current_result.returncode == 0:
             print(f"  - {current_report_dir} (current HTML report)")
-          
-          # 询问是否打开报告
-          # try:
-          #   response = input("Open Allure report in browser? (y/n): ").lower().strip()
-          #   if response in ['y', 'yes']:
-          #     index_html = allure_report_dir / "index.html"
-          #     if index_html.exists():
-          #       webbrowser.open(f"file://{index_html.absolute()}")
-          # except KeyboardInterrupt:
-          #   pass
         else:
           print("Failed to generate Allure report")
-      # else:
-      #   # 默认 HTML 报告
-      #   default_report = reports_dir / "report.html"
-      #   versioned_report = reports_dir / f"report-{git_commit}.html"
-        
-      #   if default_report.exists():
-      #     shutil.copy2(default_report, versioned_report)
-      #     print(f"Generated reports:")
-      #     print(f"  - {default_report}")
-      #     print(f"  - {versioned_report}")
-      #   else:
-      #     print("Warning: Default report.html not found")
+
     
     return result.returncode
   except KeyboardInterrupt:

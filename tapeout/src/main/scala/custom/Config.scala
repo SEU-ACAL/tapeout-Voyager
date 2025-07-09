@@ -9,12 +9,12 @@ import freechips.rocketchip.prci.{AsynchronousCrossing}
 import voyager_tapeout.custom.fpga.WithChipHarnessTweaks
 
 class OurHeterSoCConfig extends Config(
-  new chipyard.config.WithTileFrequency(1000, Some(0)) ++
-  new chipyard.config.WithTileFrequency(1000, Some(1)) ++
-  new chipyard.config.WithTileFrequency(1000, Some(2)) ++
-  new chipyard.config.WithTileFrequency(1000, Some(3)) ++
-  new chipyard.config.WithTileFrequency(1000, Some(4)) ++
-  new chipyard.config.WithTileFrequency(1000, Some(5)) ++
+  new chipyard.config.WithTileFrequency(100, Some(0)) ++
+  new chipyard.config.WithTileFrequency(100, Some(1)) ++
+  new chipyard.config.WithTileFrequency(100, Some(2)) ++
+  new chipyard.config.WithTileFrequency(100, Some(3)) ++
+  new chipyard.config.WithTileFrequency(100, Some(4)) ++
+  new chipyard.config.WithTileFrequency(100, Some(5)) ++
   new freechips.rocketchip.guardiancouncil.WithGuardianCouncilNodes++
 
   new freechips.rocketchip.rocket.WithNBuckyBallCores(1) ++ //independent Rocket for buckyball: hartid 5
