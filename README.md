@@ -1,4 +1,4 @@
-# 仓库开发手册
+# 仓库开发手册 [![Voyager CI](https://github.com/SEU-ACAL/tapeout-Voyager/actions/workflows/github_actions.yml/badge.svg)](https://github.com/SEU-ACAL/tapeout-Voyager/actions/workflows/github_actions.yml)
 
 ## 零、安装 mosh
 针对网络波动问题（如在火车上写代码），建议使用MIT开发的mosh：https://mosh.org/
@@ -243,14 +243,14 @@ Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `
 - [soc-test] 触发soc测试配置。
 - [dc-eval] 触发DC综合。 -->
 
-**9.3 commit 格式**
+<!-- **9.3 commit 格式**
 
 commit 格式为：
 
 ```
 XXXXXXXXX(你本身的commit message) need test: (从以下的tag中选择一个或多个)
 [verilator-test] [p2e-test-with-rebuild] [p2e-test-wo-rebuild]
-```
+``` -->
 
 ## 十、文档目录
 

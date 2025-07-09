@@ -5,6 +5,11 @@ on:
     branches:
       - dev
 jobs:
+  Get-Test-Tags:
+    runs-on: ubuntu-latest
+    steps:
+    - run: |
+        echo "Choose Test Tags from [verilator-test] [p2e-test-with-rebuild] [p2e-test-wo-rebuild] This is just a test, will not turely be used ${{ github.event.inputs.tags }}"
   Code-Pull:
     name: Code Pull
     runs-on: fpga

@@ -7,10 +7,10 @@ repos:
         language: script
         pass_filenames: false  # 确保 hook 只运行一次
         files: .*
-      - id: check-commit-message
-        name: Check Commit Message Format
-        entry: scripts/check-commit-message.sh
-        language: script
-        stages: [commit-msg]
-        pass_filenames: true
+      # - id: check-commit-message
+      #   name: Check Commit Message Format
+      #   entry: scripts/check-commit-message.sh
+      #   language: script
+      #   stages: [commit-msg]
+      #   pass_filenames: true
 
