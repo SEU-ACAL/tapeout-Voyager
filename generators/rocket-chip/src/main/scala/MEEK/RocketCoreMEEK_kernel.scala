@@ -930,7 +930,7 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   icsl.io.if_correct_process := io.if_correct_process
   checker_mode := icsl.io.icsl_checkermode
   checker_priv_mode := icsl.io.icsl_checkerpriv_mode
-  io.clear_ic_status := icsl.io.clear_ic_status
+  io.clear_ic_status := RegNext(icsl.io.clear_ic_status)
   icsl_if_overtaking := (icsl.io.if_overtaking | rsu_slave.io.core_hang_up) & !r_exception_record
   icsl_if_ret_special_pc := icsl.io.if_ret_special_pc
   if_overtaking_next_cycle := icsl.io.if_overtaking_next_cycle
@@ -941,6 +941,14 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   icsl.io.if_check_privrun := RegNext(check_exception_rise)
   icsl.io.self_xcpt := csr.io.trace(0).exception
   icsl.io.self_ret  := csr.io.eret_nocall
+
+  //for debug
+  val clear_flag = RegInit(false.B)
+  when(io.clear_ic_status.asBool){
+    clear_flag := true.B
+  }.elsewhen(checker_mode.asBool || checker_priv_mode.asBool){
+    clear_flag := false.B
+  }
 
   val zeros_3bits = WireInit(0.U(3.W))
 
@@ -1650,12 +1658,12 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
     "sta:%x cnt:%x %x " +
     "cpl:%d comp:%d rsu_s:%x%x " +
     "cxp:%d%d crt:%d rpc:%x cpr:%d xpm:%d " +
-    "csr:%d%d%d%d %d arf:%d %d npc:%x\n",
+    "csr:%d%d%d%d %d arf:%d %d npc:%x clr:%d%d\n",
     io.hartid, io.if_correct_process, rsu_slave.io.debug_do_check, icsl.io.debug_check_done, self_xcpt_flag ,self_eret_flag,
     icsl.io.debug_state, icsl.io.ic_counter, icsl.io.debug_sl_counter, 
     icsl.io.if_check_completed, icsl.io.debug_comp, rsu_slave.io.rsu_status, rsu_slave.io.debug_rsustatus,
     check_exception, check_exception_rise, check_privret, csr.io.evec, check_priv, excpt_mode, 
-    io.arfs_if_CPS, arfs_is_CSR, priv_cps_done, priv_status, csr.io.shadow_idx, arfs_is_ARFS, rsu_slave.io.arfs_index, rsu_pc
+    io.arfs_if_CPS, arfs_is_CSR, priv_cps_done, priv_status, csr.io.shadow_idx, arfs_is_ARFS, rsu_slave.io.arfs_index, rsu_pc, io.clear_ic_status, clear_flag.asUInt
   ))
 
   // CoreMonitorBundle for late latency writes
