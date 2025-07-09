@@ -101,7 +101,7 @@ jobs:
   Smoke-Test:
     name: Smoke Test
     runs-on: fpga
-    needs: Build-Verilator && Build-Workloads
+    needs: [Build-Verilator, Build-Workloads]
     steps:
       - name: Smoke Test
         shell: zsh {0}
@@ -203,6 +203,6 @@ jobs:
   Update-Repository:
     name: Update Repository
     runs-on: fpga
-    needs: Lint-and-Test
+    needs: Smoke-Test
     steps:
       - run: echo "🎉 Good Job! This ${{ github.event_name }} will be updated to ${{ github.ref }}."
