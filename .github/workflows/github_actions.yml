@@ -49,8 +49,8 @@ jobs:
           git push --force origin ${{ github.ref }}
           echo "🍏 Please Do Pre-commit Before Commit!!!" 
 
-  Lint-and-Test:
-    name: Compile Lint and Smoke Test
+  Build-Workloads:
+    name: Build Workloads
     runs-on: fpga
     needs: Pre-commit-check
     steps:
@@ -65,21 +65,28 @@ jobs:
           mkdir -p build && cd build
           cmake ..
           make build-all
-      - run: echo "🍏 Workloads build test is ${{ job.status }}."
+      - run: echo "🍏 Workloads build is ${{ job.status }}."
+      - name: Revert Bad Commit
+        if: failure()
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          setproxy
+          git reset --hard HEAD~1
+          git push --force origin ${{ github.ref }}
+  
+  Build-Verilator:
+    name: Build Verilator
+    runs-on: fpga
+    needs: Pre-commit-check
+    steps:
       - name: Build Verilator
         shell: zsh {0}
         run: |
           source ~/.zshrc
           chipyard_exec
           ./voyager-test/scripts/build-verilator.sh --config VoyagerVerilatorConfig --project voyager_tapeout --sub-project voyager_tapeout --debug
-      - name: Smoke Test
-        shell: zsh {0}
-        run: |
-          source ~/.zshrc
-          chipyard_exec
-          cd voyager-test/scripts/sardine
-          python run_tests.py --allure -m smoke
-      - run: echo "🍏 Lint-and-Test is ${{ job.status }}."
         # 如果检查失败，强制回退分支
       - name: Revert Bad Commit
         if: failure()
@@ -90,8 +97,30 @@ jobs:
           setproxy
           git reset --hard HEAD~1
           git push --force origin ${{ github.ref }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+  Smoke-Test:
+    name: Smoke Test
+    runs-on: fpga
+    needs: Build-Verilator && Build-Workloads
+    steps:
+      - name: Smoke Test
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          cd voyager-test/scripts/sardine
+          python run_tests.py --allure -m smoke
+      - run: echo "🍏 Smoke Test is ${{ job.status }}."
+        # 如果检查失败，强制回退分支
+      - name: Revert Bad Commit
+        if: failure()
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          setproxy
+          git reset --hard HEAD~1
+          git push --force origin ${{ github.ref }}
 
   # ============== 专用测试 ==================
   # NPU测试: 匹配到[npu-test]才会执行

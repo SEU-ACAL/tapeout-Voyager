@@ -234,15 +234,23 @@ Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `
 - gemmini/src
 - bar-fetchers/src: 存放预取器代码
 
-
-**9.3 专用测试**
+<!-- **9.3 专用测试**
 
 为了尽可能增大CI的覆盖范围，可以通过在commit message中包含特定的tag，来触发特定的测试；测试用例在batch-test.sh中自行添加即可。
 
 - [npu-test] 触发NPU相关测试。
 - [meek-test] 触发Meek相关测试。
 - [soc-test] 触发soc测试配置。
-- [dc-eval] 触发DC综合。
+- [dc-eval] 触发DC综合。 -->
+
+**9.3 commit 格式**
+
+commit 格式为：
+
+```
+XXXXXXXXX(你本身的commit message) need test: (从以下的tag中选择一个或多个)
+[verilator-test] [p2e-test-with-rebuild] [p2e-test-wo-rebuild]
+```
 
 ## 十、文档目录
 
