@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.experimental.{BaseModule}
 
 import org.chipsalliance.diplomacy.nodes.{HeterogeneousBag}
-import freechips.rocketchip.tilelink.{TLBundle}
+import freechips.rocketchip.tilelink.{TLBundle, TLBuffer}
 
 import sifive.blocks.devices.uart.{UARTPortIO}
 import sifive.blocks.devices.spi.{HasPeripherySPI, SPIPortIO}
@@ -12,6 +12,11 @@ import sifive.blocks.devices.spi.{HasPeripherySPI, SPIPortIO}
 import chipyard._
 import chipyard.harness._
 import chipyard.iobinders._
+import testchipip.serdes._
+import testchipip.tsi._
+import freechips.rocketchip.diplomacy.LazyModule
+import freechips.rocketchip.diplomacy._
+
 
 /*** UART ***/
 class WithUART extends HarnessBinder({
@@ -37,6 +42,7 @@ class WithDDRMem extends HarnessBinder({
   }
 })
 
+
 class WithJTAG extends HarnessBinder({
   case (th: VCU118FPGATestHarnessImp, port: JTAGPort, chipId: Int) => {
     val jtag_io = th.vcu118Outer.jtagPlacedOverlay.overlayOutput.jtag.getWrappedValue
@@ -50,3 +56,7 @@ class WithJTAG extends HarnessBinder({
 
   }
 })
+
+
+
+

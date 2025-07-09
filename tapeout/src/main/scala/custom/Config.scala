@@ -6,7 +6,9 @@ import freechips.rocketchip.guardiancouncil._
 import voyager_tapeout.custom.device.peripheral_npu.PeripheralNPUParams
 import freechips.rocketchip.prci.{AsynchronousCrossing}
 
-import voyager_tapeout.custom.fpga.WithChipHarnessTweaks
+import testchipip.soc.{OBUS}
+import freechips.rocketchip.subsystem.{MBUS, SBUS}
+
 
 class OurHeterSoCConfig extends Config(
   new chipyard.config.WithTileFrequency(100, Some(0)) ++

@@ -19,7 +19,7 @@ import sifive.blocks.devices.timer._
 
 import testchipip._
 
-import chipyard.{ExtTLMem}
+import chipyard.{ExtTLMem,ExtSerialMem}
 
 /**
   * Config fragment for adding a BootROM to the SoC
@@ -141,6 +141,13 @@ class WithTLBackingMemory extends Config((site, here, up) => {
   case ExtMem => None // disable AXI backing memory
   case ExtTLMem => up(ExtMem, site) // enable TL backing memory
 })
+
+class WithSerialBackingMemory extends Config((site, here, up) => {
+  case ExtMem => None // disable AXI backing memory
+  case ExtSerialMem => up(ExtMem, site) // enable TL backing memory
+})
+
+
 
 class WithExtMemIdBits(n: Int) extends Config((site, here, up) => {
   case ExtMem => up(ExtMem, site).map(x => x.copy(master = x.master.copy(idBits = n)))
