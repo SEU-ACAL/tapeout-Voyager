@@ -874,8 +874,9 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
     excpt_mode := false.B
   }
   // rsu_slave.io.id_raddr := VecInit(id_raddr)
-  rsu_slave.io.excpt := csr.io.trace(0).exception
-  rsu_slave.io.eret  := csr.io.eret
+  // just for verilator
+  // rsu_slave.io.excpt := csr.io.trace(0).exception
+  // rsu_slave.io.eret  := csr.io.eret
   rsu_slave.io.arfs_if_CPS := io.arfs_if_CPS
   rsu_slave.io.arfs_if_ARFS := Mux(arfs_is_ARFS, 1.U, 0.U)
   rsu_slave.io.arfs_index := Mux(arfs_is_ARFS, io.packet_arfs(134-1, 128), 0.U)
@@ -912,10 +913,11 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   rsu_slave.io.core_id := io.hartid
   icsl.io.core_id := io.hartid
 
-  rsu_slave.io.rf_wen := rf_wen
-  rsu_slave.io.rf_waddr := rf_waddr
-  rsu_slave.io.rf_wdata := rf_wdata
-  rsu_slave.io.checker_mode := checker_mode.asBool || checker_priv_mode.asBool
+  // just for verilator
+  // rsu_slave.io.rf_wen := rf_wen
+  // rsu_slave.io.rf_waddr := rf_waddr
+  // rsu_slave.io.rf_wdata := rf_wdata
+  // rsu_slave.io.checker_mode := checker_mode.asBool || checker_priv_mode.asBool
   // Instantiate ICSL
   val r_exception_record = RegInit(0.U(1.W))
   r_exception_record := Mux(csr.io.r_exception.asBool, 1.U, Mux(csr.io.trace(0).valid && !csr.io.trace(0).exception && r_exception_record.asBool, 0.U, r_exception_record))
@@ -1047,17 +1049,17 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   }
 
  /*just for verilator simulation*/
-  val start_check = RegInit(false.B)
-  when(checker_mode.asBool || checker_priv_mode.asBool){
-    start_check := true.B
-  }.elsewhen(rsu_slave.io.store_from_checker.asBool){
-    start_check := false.B
-  }
-  when(start_check && RegNext(csr.io.trace(0).exception)){
-    rf.write(2.U, rsu_slave.io.rf_sp)
-  }.elsewhen(start_check && RegNext(csr.io.eret) && (checker_mode.asBool || checker_priv_mode.asBool)){
-    rf.write(2.U, rsu_slave.io.rf_sp)
-  }
+  // val start_check = RegInit(false.B)
+  // when(checker_mode.asBool || checker_priv_mode.asBool){
+  //   start_check := true.B
+  // }.elsewhen(rsu_slave.io.store_from_checker.asBool){
+  //   start_check := false.B
+  // }
+  // when(start_check && RegNext(csr.io.trace(0).exception)){
+  //   rf.write(2.U, rsu_slave.io.rf_sp)
+  // }.elsewhen(start_check && RegNext(csr.io.eret) && (checker_mode.asBool || checker_priv_mode.asBool)){
+  //   rf.write(2.U, rsu_slave.io.rf_sp)
+  // }
   /*just for verilator simulation*/
 
   dontTouch(rf_wen_rsu)
