@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tags:
-        description: 'Test scenario tags. Now this is just a test, will not turely be used' 
+        description: 'Test scenario tags.' 
         required: true
         default: 'verilator-test'
 
@@ -16,7 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - run: |
-        echo "Choose Test Tags from [verilator-test] [p2e-test-with-rebuild] [p2e-test-wo-rebuild]  ${{ github.event.inputs.tags }}"
+        echo "Test scenario tags: ${{ github.event.inputs.tags }}"
+  
   Code-Pull:
     name: Code Pull
     runs-on: fpga
