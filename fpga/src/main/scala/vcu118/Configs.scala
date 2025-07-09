@@ -52,7 +52,7 @@ class WithChipLikeVCU118Tweaks extends Config(
   new WithUART ++
   new WithSPISDCard ++
   // new WithDDRMem ++
-  new WithVCU118SerialTL2DDR++
+  // new WithVCU118SerialTL2DDR++
   new WithJTAG ++
   // other configuration
   new WithDefaultPeripherals ++
@@ -73,7 +73,7 @@ class WithVCU118Tweaks extends Config(
   new WithUART ++
   new WithSPISDCard ++
   // new WithDDRMSSem ++
-  new WithVCU118SerialTL2DDR++
+  // new WithVCU118SerialTL2DDR++
   new WithJTAG ++
   // other configuration
   new WithDefaultPeripherals ++
