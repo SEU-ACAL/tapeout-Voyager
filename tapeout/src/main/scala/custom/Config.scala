@@ -6,8 +6,9 @@ import freechips.rocketchip.guardiancouncil._
 import voyager_tapeout.custom.device.peripheral_npu.PeripheralNPUParams
 import freechips.rocketchip.prci.{AsynchronousCrossing}
 
+import voyager_tapeout.custom.fpga.WithChipHarnessTweaks
 
-class VoyagerVerilatorHarnessConfig extends Config(
+class OurHeterSoCConfig extends Config(
   new chipyard.config.WithTileFrequency(1000, Some(0)) ++
   new chipyard.config.WithTileFrequency(1000, Some(1)) ++
   new chipyard.config.WithTileFrequency(1000, Some(2)) ++
@@ -34,13 +35,7 @@ class VoyagerVerilatorHarnessConfig extends Config(
   // NPUPeripheral
   new voyager_tapeout.custom.harness.WithPeripheralNPUPin ++ // 连接harness和npu到chiptop的pin
   new voyager_tapeout.custom.iobinders.WithPeripheralNPUIOCell ++ // 连接npu和chiptop的pin
-  new voyager_tapeout.custom.device.peripheral_npu.WithNPUPeripheral(voyager_tapeout.custom.device.peripheral_npu.PeripheralNPUParams(0x10050000, 0x1000))   // 连接npu和pbus的pin
+  new voyager_tapeout.custom.device.peripheral_npu.WithNPUPeripheral()   // 连接npu和pbus的pin
   
   // new chipyard.config.AbstractConfig
 )
-class VoyagerVerilatorConfig extends Config(
-  new voyager_tapeout.custom.harness.WithCustomChipTop ++
-  new voyager_tapeout.custom.harness.WithCustomIOCells ++
-  new voyager_tapeout.custom.WithCustomDigitalTop ++
-  new VoyagerVerilatorHarnessConfig ++
-  new chipyard.config.AbstractConfig)

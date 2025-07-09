@@ -2,6 +2,7 @@ build/
 output/
 log/
 waveforms/
+__pycache__/
 
 *.o
 log.*

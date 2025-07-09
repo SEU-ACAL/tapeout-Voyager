@@ -10,10 +10,9 @@ import chipyard.harness.{HasHarnessInstantiators, HarnessBinder}
 
 // Import our custom NPU types
 import voyager_tapeout.custom.iobinders.{PeripheralNPUPort}
-// import chipyard.iobinders.PeripheralNPUPort
 import voyager_tapeout.custom.device.peripheral_npu.{PeripheralNPUIOCell}
-// import chipyard.iobinders.PeripheralNPUIOCell
 import voyager_tapeout.custom.harness.HasCustomHarnessInstantiators
+
 class WithPeripheralNPUPin extends HarnessBinder({
   case (th: HasHarnessInstantiators, port: PeripheralNPUPort, chipId: Int) => {
     // Drive NPU input pins from the test harness
