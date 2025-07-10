@@ -2115,12 +2115,12 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
   io.commit_uops                                  := rob.io.commit.uops
   // io.if_big_complete_ack                           := ic_master.io.if_big_complete_ack
   //===== GuardianCouncil Function: End ====//
-  // midas.targetutils.SynthesizePrintf(printf("C%d: prs:%d%d " +
-  //         "rw:%d %x %x %x arf:%x %x " +
-  //         "npc:%x cp:%x icr:%x\n",
-  //         io.hartid, io.if_correct_process, satp_ppn_switch,
-  //         csr_exe_unit.io.iresp.valid, csr.io.rw.addr, csr.io.rw.cmd, csr.io.rw.wdata, rsu_master.io.arfs_index(0), rsu_master.io.arfs_pidx(0),
-  //         rob.io.r_next_pc, ic_master.io.shared_CP_CFG, ic_incr))
+  midas.targetutils.SynthesizePrintf(printf("C%d: prs:%d%d " +
+          "rw:%d %x %x %x arf:%x %x %x " +
+          "npc:%x cp:%x icr:%x\n",
+          io.hartid, io.if_correct_process, satp_ppn_switch,
+          csr_exe_unit.io.iresp.valid, csr.io.rw.addr, csr.io.rw.cmd, csr.io.rw.wdata, rsu_master.io.arfs_index(0), rsu_master.io.arfs_pidx(0), rsu_master.io.arfs_ecp_dest,
+          rob.io.r_next_pc, ic_master.io.shared_CP_CFG, ic_incr))
 }
 
 
