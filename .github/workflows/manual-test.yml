@@ -52,4 +52,4 @@ jobs:
           ./voyager-test/scripts/build-verilator.sh --config VoyagerVerilatorConfig --project voyager_tapeout --sub-project voyager_tapeout --debug
       
       - name: Test completed
-        run: echo "Manual test completed with status: ${{ job.status }}"
+        run: echo "Manual test completed with status ${{ job.status }}" 
