@@ -38,7 +38,7 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   val rob_id_reg = RegInit(0.U(rob_id_width.W))
   val mem_addr_reg = Reg(UInt(bbconfig.memAddrLen.W))
   val iter_reg = Reg(UInt(10.W))
-  val sram_count = Reg(UInt(log2Up(32).W))
+  val sram_count = Reg(UInt(10.W))
   
   // 缓存解码好的bank信息
   val rd_bank_reg = Reg(UInt(log2Up(bbconfig.sp_banks).W))
@@ -135,6 +135,10 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   val has_remaining_data = buffer_valid_bytes > 0.U && is_last_iter
   val final_send = has_remaining_data && !sram_resp_valid
   
+  // 添加一个标志来跟踪是否所有数据都已处理完成
+  val all_iterations_complete = (sram_count >= iter_reg && iter_reg > 0.U) || (iter_reg === 0.U)
+  val all_data_sent = all_iterations_complete && buffer_valid_bytes === 0.U
+  
   // 生成mask
   val send_mask = Wire(UInt(align_bytes.W))
   when (buffer_valid_bytes === 0.U && addr_offset =/= 0.U) {
@@ -152,14 +156,41 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
     send_mask := ~0.U(align_bytes.W)  // 0xFFFF
   }
   
-  io.dmaReq.valid := (should_send || final_send) && (state === s_sram_req || state === s_dma_wait)
-  io.dmaReq.bits.vaddr := Mux(final_send, buffer_start_addr, send_addr)
-  io.dmaReq.bits.data := Mux(final_send, data_buffer, merged_data)
-  io.dmaReq.bits.len := align_bytes.U
-  io.dmaReq.bits.mask := Mux(final_send, (1.U << buffer_valid_bytes) - 1.U, send_mask)
-  io.dmaReq.bits.status := 0.U.asTypeOf(new MStatus)
+  // DMA请求信号控制逻辑 - 只有在DMA ready时才能更新
+  val dma_req_valid_reg = RegInit(false.B)
+  val dma_req_vaddr_reg = RegInit(0.U(bbconfig.memAddrLen.W))
+  val dma_req_data_reg = RegInit(0.U((align_bytes * 8).W))
+  val dma_req_len_reg = RegInit(0.U(8.W))
+  val dma_req_mask_reg = RegInit(0.U(align_bytes.W))
+  val dma_req_status_reg = RegInit(0.U.asTypeOf(new MStatus))
+  
+  // 计算DMA请求信号
+  val dma_req_valid_next = (should_send || final_send) && (state === s_sram_req || state === s_dma_wait)
+  val dma_req_vaddr_next = Mux(final_send, buffer_start_addr, send_addr)
+  val dma_req_data_next = Mux(final_send, data_buffer, merged_data)
+  val dma_req_len_next = align_bytes.U
+  val dma_req_mask_next = Mux(final_send, (1.U << buffer_valid_bytes) - 1.U, send_mask)
+  val dma_req_status_next = 0.U.asTypeOf(new MStatus)
+  
+  // 只有在DMA ready时才更新寄存器
+  when (io.dmaReq.ready) {
+    dma_req_valid_reg := dma_req_valid_next
+    dma_req_vaddr_reg := dma_req_vaddr_next
+    dma_req_data_reg := dma_req_data_next
+    dma_req_len_reg := dma_req_len_next
+    dma_req_mask_reg := dma_req_mask_next
+    dma_req_status_reg := dma_req_status_next
+  }
+  
+  // 连接到DMA接口
+  io.dmaReq.valid := dma_req_valid_reg
+  io.dmaReq.bits.vaddr := dma_req_vaddr_reg
+  io.dmaReq.bits.data := dma_req_data_reg
+  io.dmaReq.bits.len := dma_req_len_reg
+  io.dmaReq.bits.mask := dma_req_mask_reg
+  io.dmaReq.bits.status := dma_req_status_reg
 
-  // 连接SRAM响应ready信号
+  // 连接SRAM响应ready信号 - 基于DMA ready状态
   io.sramRead.foreach(_.resp.ready := io.dmaReq.ready && (state === s_sram_req || state === s_dma_wait))
 
   // 状态转换和计数器更新
@@ -187,15 +218,23 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
     }.elsewhen (final_send) {
       // 发送了最后的剩余数据，清空缓存
       buffer_valid_bytes := 0.U
+    }.otherwise {
+      // 对齐情况下，如果之前有缓存数据被合并发送了，需要清空缓存
+      when (buffer_valid_bytes > 0.U && can_send_full_line && sram_resp_valid) {
+        buffer_valid_bytes := 0.U
+      }
     }
     
-    // 检查是否完成所有迭代
+    // 修复状态转换逻辑
     when (final_send) {
       // final_send 完成后才回到 idle
       state := s_idle
+    }.elsewhen (all_data_sent) {
+      // 所有数据都已发送完成
+      state := s_idle
     }.elsewhen (sram_count + 1.U >= iter_reg && iter_reg > 0.U) {
       // 迭代结束，但可能还有缓存数据需要发送
-      when (buffer_valid_bytes > 0.U && addr_offset =/= 0.U) {
+      when (buffer_valid_bytes > 0.U) {
         state := s_dma_wait  // 保持状态，等待 final_send
       }.otherwise {
         state := s_idle
@@ -210,11 +249,21 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   // 等待DMA真正完成
   io.dmaResp.ready := true.B
 
-  // 发送完成信号
-  io.cmdResp.valid := io.dmaReq.fire && (
-    (iter_reg === 0.U) || (sram_count + 1.U >= iter_reg)
-  )
+  // 修复完成信号逻辑 - 只有在真正完成所有数据传输后才发出完成信号
+  val task_complete = RegInit(false.B)
+  when (io.cmdReq.fire && io.cmdReq.bits.cmd.post_decode_cmd.is_store) {
+    task_complete := false.B
+  }.elsewhen (io.dmaReq.fire && (final_send || all_data_sent)) {
+    task_complete := true.B
+  }
+  
+  io.cmdResp.valid := task_complete && (state === s_idle)
   io.cmdResp.bits.rob_id := rob_id_reg
+  
+  // 发送完成信号后重置标志
+  when (io.cmdResp.fire) {
+    task_complete := false.B
+  }
 }
 
 class MemStorerSisyphus(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Sisyphus {

@@ -8,11 +8,14 @@ import java.rmi.server.UID
 import scala.collection.Stepper.UnboxingIntStepper
 
 class R_RSUSLIO_kernel(params: R_RSUSLParams) extends Bundle {
-  val rf_sp = Output(UInt(params.xLen.W))
-  val rf_wen = Input(Bool())
-  val rf_waddr = Input(UInt(5.W))
-  val rf_wdata = Input(UInt(params.xLen.W))
-  val checker_mode = Input(Bool())
+  // just for verilator
+  // val rf_sp = Output(UInt(params.xLen.W))
+  // val rf_wen = Input(Bool())
+  // val rf_waddr = Input(UInt(5.W))
+  // val rf_wdata = Input(UInt(params.xLen.W))
+  // val checker_mode = Input(Bool())
+  // val excpt      = Input(Bool())
+  // val eret       = Input(Bool())
 
   val arfs_out = Output(UInt(params.xLen.W))
   val farfs_out = Output(UInt(params.xLen.W))
@@ -26,8 +29,7 @@ class R_RSUSLIO_kernel(params: R_RSUSLParams) extends Bundle {
 
   val check_done = Input(UInt(1.W))
   val check_priv = Input(UInt(2.W))
-  val excpt      = Input(Bool())
-  val eret       = Input(Bool())
+  
 
   val arfs_merge = Input(UInt((params.xLen*2).W))
   val arfs_index = Input(UInt(8.W))
@@ -141,9 +143,10 @@ class R_RSUSL_kernel(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO
       }
     }
     */
-  }.elsewhen(io.checker_mode && io.rf_wen && io.rf_waddr === 2.U){
-    arfs_ss.write(io.rf_waddr, io.rf_wdata)
-  } 
+  }
+  // .elsewhen(io.checker_mode && io.rf_wen && io.rf_waddr === 2.U){
+  //   arfs_ss.write(io.rf_waddr, io.rf_wdata)
+  // } 
   
   /*
   when (packet_valid_ECP === 1.U) {
@@ -166,12 +169,13 @@ class R_RSUSL_kernel(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO
   //   }
   // } 
 
-  val excpt = Reg(Bool())
-  val eret  = Reg(Bool())
-  excpt := io.excpt
-  eret  := io.eret
+  // just for verilator
+  // val excpt = Reg(Bool())
+  // val eret  = Reg(Bool())
+  // excpt := io.excpt
+  // eret  := io.eret
   
-  io.rf_sp := Mux(excpt, arfs_ss_GMode.read(2.U, io.excpt), Mux(eret, arfs_ss.read(2.U, io.eret), 0.U))
+  // io.rf_sp := Mux(excpt, arfs_ss_GMode.read(2.U, io.excpt), Mux(eret, arfs_ss.read(2.U, io.eret), 0.U))
   
 
   pcarfs_ss                                      := Mux(packet_valid.asBool && (packet_index === 0x20.U), packet_arfs(39,0), pcarfs_ss)
@@ -242,13 +246,13 @@ class R_RSUSL_kernel(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO
   pcarfs_ss_delay                                := pcarfs_ss
 
   if (GH_GlobalParams.GH_DEBUG == 1) {
-    when ((io.core_trace.asBool) && (pcarfs_ss_delay =/= pcarfs_ss)) {
-      printf(midas.targetutils.SynthesizePrintf("[C%x-CPS] = [%x]\n", io.core_id, pcarfs_ss))
-    }
+    // when ((io.core_trace.asBool) && (pcarfs_ss_delay =/= pcarfs_ss)) {
+    //   printf(midas.targetutils.SynthesizePrintf("[C%x-CPS] = [%x]\n", io.core_id, pcarfs_ss))
+    // }
   
-    when ((io.core_trace.asBool) && (packet_valid_ECP.asBool) && (packet_index_ECP === 0x20.U)) {
-      printf(midas.targetutils.SynthesizePrintf("[C%x-CPE] = [%x]\n", io.core_id, packet_arfs_ECP))
-    }
+    // when ((io.core_trace.asBool) && (packet_valid_ECP.asBool) && (packet_index_ECP === 0x20.U)) {
+    //   printf(midas.targetutils.SynthesizePrintf("[C%x-CPE] = [%x]\n", io.core_id, packet_arfs_ECP))
+    // }
 
   }
 

@@ -5,7 +5,7 @@ import freechips.rocketchip.diplomacy.LazyModule
 import freechips.rocketchip.guardiancouncil._
 import voyager_tapeout.custom.device.peripheral_npu.PeripheralNPUParams
 import freechips.rocketchip.prci.{AsynchronousCrossing}
-
+import voyager_tapeout.custom.fpga.WithSystemModifications
 
 class VoyagerVerilatorHarnessConfig extends Config(
   new chipyard.config.WithTileFrequency(1000, Some(0)) ++
@@ -24,9 +24,9 @@ class VoyagerVerilatorHarnessConfig extends Config(
   new chipyard.config.WithMultiSingleRoCCGHE(0, 1, 2, 3, 4) ++ //put custom RoCC on hart0-4 for custom0 ISA extension ++
   new freechips.rocketchip.subsystem.WithInclusiveCache(capacityKB = 256) ++ //256KB L2Cache
   new chipyard.config.WithSystemBusWidth(128) ++
-  new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
-    AsynchronousCrossing().depth,
-    AsynchronousCrossing().sourceSync) ++
+  // new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
+  //   AsynchronousCrossing().depth,
+  //   AsynchronousCrossing().sourceSync) ++
   //  Crossing specifications+-
   new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1) ++
   new boom.meek.common.WithNLargeBooms(1) ++
@@ -34,13 +34,16 @@ class VoyagerVerilatorHarnessConfig extends Config(
   // NPUPeripheral
   new voyager_tapeout.custom.harness.WithPeripheralNPUPin ++ // 连接harness和npu到chiptop的pin
   new voyager_tapeout.custom.iobinders.WithPeripheralNPUIOCell ++ // 连接npu和chiptop的pin
-  new voyager_tapeout.custom.device.peripheral_npu.WithNPUPeripheral(voyager_tapeout.custom.device.peripheral_npu.PeripheralNPUParams(0x10050000, 0x1000))   // 连接npu和pbus的pin
-  
+  new voyager_tapeout.custom.device.peripheral_npu.WithNPUPeripheral(voyager_tapeout.custom.device.peripheral_npu.PeripheralNPUParams(0x10050000, 0x1000))++   // 连接npu和pbus的pin
+  //GPIO
+  new chipyard.config.WithGPIO //目前只能在verilator使用，firesim用不了
   // new chipyard.config.AbstractConfig
 )
 class VoyagerVerilatorConfig extends Config(
   new voyager_tapeout.custom.harness.WithCustomChipTop ++
   new voyager_tapeout.custom.harness.WithCustomIOCells ++
+  
   new voyager_tapeout.custom.WithCustomDigitalTop ++
+  new WithSystemModifications ++ //use sdbootloader and custom boot
   new VoyagerVerilatorHarnessConfig ++
   new chipyard.config.AbstractConfig)

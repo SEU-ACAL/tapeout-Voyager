@@ -67,6 +67,7 @@ class AbstractConfig extends Config(
   //   Set up External Memory and IO Devices
   // ================================================
   // External memory section
+
   new testchipip.serdes.WithSerialTL(Seq(                           /** add a serial-tilelink interface */
     testchipip.serdes.SerialTLParams(
       client = Some(testchipip.serdes.SerialTLClientParams(totalIdBits=4)), // serial-tilelink interface will master the FBUS, and support 4 idBits
@@ -79,7 +80,7 @@ class AbstractConfig extends Config(
 
   // MMIO device section
   new chipyard.config.WithUART ++                                  /** add a UART */
-
+  //                                  /** add a GPIO */
 
   // ================================================
   //   Set up Debug/Bringup/Testing Features
@@ -90,7 +91,9 @@ class AbstractConfig extends Config(
   new freechips.rocketchip.subsystem.WithJtagDTM ++                 /** set the debug module to expose a JTAG port */
 
   // Boot Select Pins
-  new testchipip.boot.WithCustomBootPin ++                          /** add a custom-boot-pin to support pin-driven boot address */
+    new testchipip.boot.WithCustomBootPin(testchipip.boot.CustomBootPinParams(
+    customBootAddress = 0x00000001L
+  )) ++                          /** add a custom-boot-pin to support skip sdcard loading*/
   new testchipip.boot.WithBootAddrReg ++                            /** add a boot-addr-reg for configurable boot address */
 
 

@@ -50,21 +50,15 @@ class GemminiPrefetchConfig extends Config(
   new chipyard.config.AbstractConfig
 )
 
-// class OurMutiCoreConfig extends Config(
-//   new freechips.rocketchip.rocket.WithNBigCores(4) ++ //Rocket for Boom:hartid 1-4
-//   new boom.v3.common.WithNLargeBooms(1) ++ //Boom:hartid 0
-//   new chipyard.config.WithMultiRoCC ++
-//   new chipyard.config.WithMultiSingleRoCCExample(0, 1, 2, 3, 4) ++ //put custom RoCC on hart0-4 for custom0 ISA extension
-//   new freechips.rocketchip.rocket.WithL1DCacheNonblocking(0)
-// )
+
 // will be replaced by VoyagerChipConfig
 class OurHeterSoCConfig extends Config(
-  new chipyard.config.WithTileFrequency(500, Some(0)) ++
-  new chipyard.config.WithTileFrequency(500, Some(1)) ++
-  new chipyard.config.WithTileFrequency(500, Some(2)) ++
-  new chipyard.config.WithTileFrequency(500, Some(3)) ++
-  new chipyard.config.WithTileFrequency(500, Some(4)) ++
-  new chipyard.config.WithTileFrequency(500, Some(5)) ++
+  new chipyard.config.WithTileFrequency(1000, Some(0)) ++
+  new chipyard.config.WithTileFrequency(1000, Some(1)) ++
+  new chipyard.config.WithTileFrequency(1000, Some(2)) ++
+  new chipyard.config.WithTileFrequency(1000, Some(3)) ++
+  new chipyard.config.WithTileFrequency(1000, Some(4)) ++
+  new chipyard.config.WithTileFrequency(1000, Some(5)) ++
   // new chipyard.config.WithTileFrequency(1000, Some(0)) ++
   // new chipyard.config.WithTileFrequency(500, Some(1)) ++
   // new chipyard.config.WithTileFrequency(500, Some(2)) ++
@@ -85,9 +79,9 @@ class OurHeterSoCConfig extends Config(
   new chipyard.config.WithMultiSingleRoCCGHE(0, 1, 2, 3, 4) ++ //put custom RoCC on hart0-4 for custom0 ISA extension ++
   new freechips.rocketchip.subsystem.WithInclusiveCache(capacityKB = 256) ++ //256KB L2Cache
   new chipyard.config.WithSystemBusWidth(128) ++
-  new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
-  AsynchronousCrossing().depth,
-  AsynchronousCrossing().sourceSync) ++
+  // new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
+  // AsynchronousCrossing().depth,
+  // AsynchronousCrossing().sourceSync) ++
   // // Frequency specifications
   // new chipyard.clocking.WithClockGroupsCombinedByName(("uncore",Seq("sbus", "mbus", "pbus", "fbus", "cbus", "obus", "implicit", "clock_tap"),Nil),
   //                                                     ("boom",Seq("tile_0"),Nil),//大核

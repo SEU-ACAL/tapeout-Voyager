@@ -215,9 +215,9 @@ class R_ICSL_kernel (val params: R_ICSLParams) extends Module with HasR_ICSLIO_k
   if (GH_GlobalParams.GH_DEBUG == 1) {
     val ic_counter_shadow_delay                  = RegInit(0.U((params.width_of_ic-1).W))
     // ic_counter_shadow_delay                     := ic_counter_shadow
-    when ((fsm_state_delay =/= fsm_state) && (io.core_trace.asBool)) {
-      printf(midas.targetutils.SynthesizePrintf("C%d:fsm_state=[%x]\n", io.core_id, fsm_state))
-    }
+    // when ((fsm_state_delay =/= fsm_state) && (io.core_trace.asBool)) {
+    //   printf(midas.targetutils.SynthesizePrintf("C%d:fsm_state=[%x]\n", io.core_id, fsm_state))
+    // }
   }
 
   

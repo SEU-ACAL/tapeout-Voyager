@@ -874,8 +874,9 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
     excpt_mode := false.B
   }
   // rsu_slave.io.id_raddr := VecInit(id_raddr)
-  rsu_slave.io.excpt := csr.io.trace(0).exception
-  rsu_slave.io.eret  := csr.io.eret
+  // just for verilator
+  // rsu_slave.io.excpt := csr.io.trace(0).exception
+  // rsu_slave.io.eret  := csr.io.eret
   rsu_slave.io.arfs_if_CPS := io.arfs_if_CPS
   rsu_slave.io.arfs_if_ARFS := Mux(arfs_is_ARFS, 1.U, 0.U)
   rsu_slave.io.arfs_index := Mux(arfs_is_ARFS, io.packet_arfs(134-1, 128), 0.U)
@@ -912,10 +913,11 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   rsu_slave.io.core_id := io.hartid
   icsl.io.core_id := io.hartid
 
-  rsu_slave.io.rf_wen := rf_wen
-  rsu_slave.io.rf_waddr := rf_waddr
-  rsu_slave.io.rf_wdata := rf_wdata
-  rsu_slave.io.checker_mode := checker_mode.asBool || checker_priv_mode.asBool
+  // just for verilator
+  // rsu_slave.io.rf_wen := rf_wen
+  // rsu_slave.io.rf_waddr := rf_waddr
+  // rsu_slave.io.rf_wdata := rf_wdata
+  // rsu_slave.io.checker_mode := checker_mode.asBool || checker_priv_mode.asBool
   // Instantiate ICSL
   val r_exception_record = RegInit(0.U(1.W))
   r_exception_record := Mux(csr.io.r_exception.asBool, 1.U, Mux(csr.io.trace(0).valid && !csr.io.trace(0).exception && r_exception_record.asBool, 0.U, r_exception_record))
@@ -1047,17 +1049,17 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   }
 
  /*just for verilator simulation*/
-  val start_check = RegInit(false.B)
-  when(checker_mode.asBool || checker_priv_mode.asBool){
-    start_check := true.B
-  }.elsewhen(rsu_slave.io.store_from_checker.asBool){
-    start_check := false.B
-  }
-  when(start_check && RegNext(csr.io.trace(0).exception)){
-    rf.write(2.U, rsu_slave.io.rf_sp)
-  }.elsewhen(start_check && RegNext(csr.io.eret) && (checker_mode.asBool || checker_priv_mode.asBool)){
-    rf.write(2.U, rsu_slave.io.rf_sp)
-  }
+  // val start_check = RegInit(false.B)
+  // when(checker_mode.asBool || checker_priv_mode.asBool){
+  //   start_check := true.B
+  // }.elsewhen(rsu_slave.io.store_from_checker.asBool){
+  //   start_check := false.B
+  // }
+  // when(start_check && RegNext(csr.io.trace(0).exception)){
+  //   rf.write(2.U, rsu_slave.io.rf_sp)
+  // }.elsewhen(start_check && RegNext(csr.io.eret) && (checker_mode.asBool || checker_priv_mode.asBool)){
+  //   rf.write(2.U, rsu_slave.io.rf_sp)
+  // }
   /*just for verilator simulation*/
 
   dontTouch(rf_wen_rsu)
@@ -1627,34 +1629,38 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   //   }
   // }
   val ex_trace_inst  = (if(usingCompressed) Cat(Mux(ex_reg_raw_inst(1, 0).andR, ex_reg_inst >> 16, 0.U), ex_reg_raw_inst(15, 0)) else ex_reg_inst)
-  midas.targetutils.SynthesizePrintf(printf("C%d: p:%d xpt:%d%d%d ca:%x c:%d%d " +
-    "kil:%d sta:%d%d%d rpl:%d%d %d ot:%d " +
-    "e_v:%d e_pc:%x e_ist:%x m_v:%d wr_v:%d " +
-    "iq:%d iqc:%x csr:%d%d %x%x\n",
-    io.hartid, RegNext(csr.io.status.prv), csr.io.trace(0).exception, csr.io.eret, csr.io.eret_nocall, csr.io.trace(0).cause, checker_mode, checker_priv_mode, 
-    ctrl_killd, ctrl_stalld, icsl.io.icsl_stalld, rsu_slave.io.core_hang_up.asBool, replay_wb, wb_r_replay, icsl_if_ret_special_pc, icsl_if_overtaking,
-    ex_reg_valid, ex_reg_pc, ex_trace_inst, mem_reg_valid, wb_reg_valid,
-    io.imem.req.valid, io.imem.req.bits.pc, lsl_index(0)(2,0), lsl_index(1)(2,0), lsl.io.m_csr_data(0), lsl.io.m_csr_data(1)
-  ))
+  when(io.core_trace.asBool&&csr.io.trace(0).valid){
+    midas.targetutils.SynthesizePrintf(printf("C%d: p:%d xpt:%d%d%d ca:%x c:%d%d " +
+      "kil:%d sta:%d%d%d rpl:%d%d %d ot:%d " +
+      "e_v:%d e_pc:%x e_ist:%x m_v:%d wr_v:%d " +
+      "iq:%d iqc:%x csr:%d%d %x%x\n",
+      io.hartid, RegNext(csr.io.status.prv), csr.io.trace(0).exception, csr.io.eret, csr.io.eret_nocall, csr.io.trace(0).cause, checker_mode, checker_priv_mode, 
+      ctrl_killd, ctrl_stalld, icsl.io.icsl_stalld, rsu_slave.io.core_hang_up.asBool, replay_wb, wb_r_replay, icsl_if_ret_special_pc, icsl_if_overtaking,
+      ex_reg_valid, ex_reg_pc, ex_trace_inst, mem_reg_valid, wb_reg_valid,
+      io.imem.req.valid, io.imem.req.bits.pc, lsl_index(0)(2,0), lsl_index(1)(2,0), lsl.io.m_csr_data(0), lsl.io.m_csr_data(1)
+    ))
+    midas.targetutils.SynthesizePrintf(printf("C%d: prs:%d chk:%d %d fg:%d %d " +
+      "sta:%x cnt:%x %x " +
+      "cpl:%d comp:%d rsu_s:%x%x " +
+      "cxp:%d%d crt:%d rpc:%x cpr:%d xpm:%d " +
+      "csr:%d%d%d%d %d arf:%d %d npc:%x\n",
+      io.hartid, io.if_correct_process, rsu_slave.io.debug_do_check, icsl.io.debug_check_done, self_xcpt_flag ,self_eret_flag,
+      icsl.io.debug_state, icsl.io.ic_counter, icsl.io.debug_sl_counter, 
+      icsl.io.if_check_completed, icsl.io.debug_comp, rsu_slave.io.rsu_status, rsu_slave.io.debug_rsustatus,
+      check_exception, check_exception_rise, check_privret, csr.io.evec, check_priv, excpt_mode, 
+      io.arfs_if_CPS, arfs_is_CSR, priv_cps_done, priv_status, csr.io.shadow_idx, arfs_is_ARFS, rsu_slave.io.arfs_index, rsu_pc
+    ))
+  }
 
-  when(lsl.io.req_valid || lsl.io.resp_valid || lsl.io.vec_enq_valid(0) || lsl.io.vec_enq_valid(1) || wb_csr){
+
+  when((lsl.io.req_valid || lsl.io.resp_valid || lsl.io.vec_enq_valid(0) || lsl.io.vec_enq_valid(1) || wb_csr)&&io.core_trace.asBool){
     midas.targetutils.SynthesizePrintf(printf("C%d: ptr:%d qv:%d%d rv:%d adr:%x dt:%x %x enq:%d%d %x%x\n",
       io.hartid, lsl.io.lsl_deq_ptr, lsl.io.req_valid, wb_csr, lsl.io.resp_valid, lsl.io.resp_addr, lsl.io.resp_data, lsl_resp_data_csr, lsl.io.vec_enq_valid(0), lsl.io.vec_enq_valid(1), lsl.io.vec_enq_data(0), lsl.io.vec_enq_data(1)
     ))
   }
   
 
-  midas.targetutils.SynthesizePrintf(printf("C%d: prs:%d chk:%d %d fg:%d %d " +
-    "sta:%x cnt:%x %x " +
-    "cpl:%d comp:%d rsu_s:%x%x " +
-    "cxp:%d%d crt:%d rpc:%x cpr:%d xpm:%d " +
-    "csr:%d%d%d%d %d arf:%d %d npc:%x\n",
-    io.hartid, io.if_correct_process, rsu_slave.io.debug_do_check, icsl.io.debug_check_done, self_xcpt_flag ,self_eret_flag,
-    icsl.io.debug_state, icsl.io.ic_counter, icsl.io.debug_sl_counter, 
-    icsl.io.if_check_completed, icsl.io.debug_comp, rsu_slave.io.rsu_status, rsu_slave.io.debug_rsustatus,
-    check_exception, check_exception_rise, check_privret, csr.io.evec, check_priv, excpt_mode, 
-    io.arfs_if_CPS, arfs_is_CSR, priv_cps_done, priv_status, csr.io.shadow_idx, arfs_is_ARFS, rsu_slave.io.arfs_index, rsu_pc
-  ))
+
 
   // CoreMonitorBundle for late latency writes
   val xrfWriteBundle = Wire(new CoreMonitorBundle(xLen, fLen))

@@ -35,6 +35,7 @@ class FireSimAnalogIOCell extends RawModule with AnalogIOCell with Unsupported {
 }
 class FireSimDigitalGPIOCell extends RawModule with DigitalGPIOCell with Unsupported {
   val io = IO(new DigitalGPIOCellBundle)
+  
 }
 class FireSimDigitalInIOCell extends RawModule with DigitalInIOCell {
   val io = IO(new DigitalInIOCellBundle)
@@ -141,6 +142,13 @@ class WithSuccessBridge extends HarnessBinder({
   }
 })
 
+// class WithGPIOBridge extends HarnessBinder({
+//   case (th: FireSim, port: GPIOPinsPort, chipId: Int) => {
+//     // 连接GPIO到桥接器
+//     GPIOBridge(th.harnessBinderClock, (port.io), th.harnessBinderReset.asBool)(th.p)
+//   }
+// })
+
 // Shorthand to register all of the provided bridges above
 class WithDefaultFireSimBridges extends Config(
   new WithTSIBridgeAndHarnessRAMOverSerialTL ++
@@ -149,6 +157,7 @@ class WithDefaultFireSimBridges extends Config(
   new WithUARTBridge ++
   new WithBlockDeviceBridge ++
   new WithFASEDBridge ++
+  // new WithGPIOBridge ++
   new WithFireSimMultiCycleRegfile ++
   new WithFireSimFAME5 ++
   new WithTracerVBridge ++
@@ -162,6 +171,7 @@ class WithDefaultMMIOOnlyFireSimBridges extends Config(
   new WithUARTBridge ++
   new WithBlockDeviceBridge ++
   new WithFASEDBridge ++
+  // new WithGPIOBridge ++
   new WithFireSimMultiCycleRegfile ++
   new WithFireSimFAME5 ++
   new WithFireSimIOCellModels
