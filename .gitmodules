@@ -154,3 +154,6 @@
 [submodule "tools/buddy-mlir"]
 	path = tools/buddy-mlir
 	url = https://github.com/SEU-ACAL/tapeout-Compiler.git
+[submodule "voyager-test/src/workloads/embench/embench-iot"]
+	path = voyager-test/src/workloads/embench/embench-iot
+	url = https://github.com/embench/embench-iot.git

@@ -12,7 +12,8 @@ on:
         default: 'verilator-test'
 
 jobs:
-  Get-Test-Tags:
+  Manually-CI-Test:
+    name: Manually CI Test
     runs-on: ubuntu-latest
     steps:
     - run: |
@@ -78,10 +79,6 @@ jobs:
           mkdir -p build && cd build
           cmake ..
           make build-all
-          cd ../../software/embench/embench-iot
-          git apply --ignore-whitespace ../embench.patch
-          cd ..
-          ./build.sh
       - run: echo "🍏 Workloads build is ${{ job.status }}."
       - name: Revert Bad Commit
         if: failure()

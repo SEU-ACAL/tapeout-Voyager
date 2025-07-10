@@ -151,8 +151,8 @@ main() {
     sed -i "s/\"IP\": \"[^\"]*\"/\"IP\": \"$FPGA_IP\"/g" hw-config.hdf
     Log "$YELLOW" "Setting workload name ($WORKLOAD) in debug_trigger.tcl"
     sed -i "s/-file [^.]*\.hex/-file ..\/image\/$WORKLOAD.hex/g" debug_trigger.tcl
-    Log "$YELLOW" "Setting serial port ($SERIAL) in run_vdbg.exp"
-    sed -i "s|send \"screen /dev/tty[0-9]*gpio 4800\\\\r\"|send \"screen $SERIAL 4800\\\\r\"|g" run_vdbg.exp
+    Log "$YELLOW" "Setting serial port ($SERIAL) in screen_setup.sh"
+    sed -i "s|send \"/dev/tty[0-9]*gpio 4800\\\\r\"|send \"$SERIAL 4800\\\\r\"|g" screen_setup.sh
   else
     Log "$YELLOW" "Step 2 skipped"
   fi
