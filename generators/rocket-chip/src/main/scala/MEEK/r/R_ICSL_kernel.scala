@@ -231,7 +231,7 @@ class R_ICSL_kernel (val params: R_ICSLParams) extends Module with HasR_ICSLIO_k
   val complete_delay = RegNext(complete)
   val complete_rise = complete && !complete_delay
 
-  io.if_check_done := check_done_for_ret
+  io.if_check_done := check_done
   io.debug_check_done := Cat(check_done_for_ret, check_done)
   // io.if_check_privret := io.if_correct_process.asBool && RegNext(((io.new_commit.asBool && ((sl_counter + 1.U) >= (ic_counter_shadow)))) || (complete_rise)) && 
   //                        ic_counter_done.asBool && ((fsm_state === fsm_checking_priv) || (fsm_state === fsm_postchecking_priv)) && !(io.returned_to_special_address_valid.asBool) && !io.excpt_mode

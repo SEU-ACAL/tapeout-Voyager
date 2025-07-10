@@ -136,32 +136,57 @@ class GH_MemFIFO(val params: FIFOParams) extends Module with HasFIFOIO {
   val debug_fcounter            = RegInit(0.U(64.W))
   val debug_fdcounter           = RegInit(0.U(64.W))
 
-  when ((io.enq_valid && !fullReg) && (io.deq_ready && !emptyReg)) {
-    mem.write                     (writePtr, io.enq_bits)
-    emptyReg                   := false.B
-    fullReg                    := false.B
-    incrWrite                  := true.B
-    incrRead                   := true.B
-    num_contentReg             := num_contentReg
-    debug_fcounter             := debug_fcounter + 1.U
-    debug_fdcounter            := debug_fdcounter + 1.U
-  }
+  // when ((io.enq_valid && !fullReg) && (io.deq_ready && !emptyReg)) {
+  //   mem.write                     (writePtr, io.enq_bits)
+  //   emptyReg                   := false.B
+  //   fullReg                    := false.B
+  //   incrWrite                  := true.B
+  //   incrRead                   := true.B
+  //   num_contentReg             := num_contentReg
+  //   debug_fcounter             := debug_fcounter + 1.U
+  //   debug_fdcounter            := debug_fdcounter + 1.U
+  // }
 
-  when ((io.enq_valid && !fullReg) && !(io.deq_ready && !emptyReg)){
-    mem.write                     (writePtr, io.enq_bits)
-    emptyReg                   := false.B
-    fullReg                    := nextWrite === readPtr
-    incrWrite                  := true.B
-    num_contentReg             := num_contentReg + 1.U
-    debug_fcounter             := debug_fcounter + 1.U
-  }
+  // when ((io.enq_valid && !fullReg) && !(io.deq_ready && !emptyReg)){
+  //   mem.write                     (writePtr, io.enq_bits)
+  //   emptyReg                   := false.B
+  //   fullReg                    := nextWrite === readPtr
+  //   incrWrite                  := true.B
+  //   num_contentReg             := num_contentReg + 1.U
+  //   debug_fcounter             := debug_fcounter + 1.U
+  // }
     
-  when (!(io.enq_valid && !fullReg) && (io.deq_ready && !emptyReg)) {
-    emptyReg                   := nextRead === writePtr
-    fullReg                    := false.B
-    incrRead                   := true.B
-    num_contentReg             := num_contentReg - 1.U
-    debug_fdcounter            := debug_fdcounter + 1.U
+  // when (!(io.enq_valid && !fullReg) && (io.deq_ready && !emptyReg)) {
+  //   emptyReg                   := nextRead === writePtr
+  //   fullReg                    := false.B
+  //   incrRead                   := true.B
+  //   num_contentReg             := num_contentReg - 1.U
+  //   debug_fdcounter            := debug_fdcounter + 1.U
+  // }
+  // 优先写操作
+  when (io.enq_valid && !fullReg) {
+    mem.write(writePtr, io.enq_bits)
+    emptyReg := false.B
+    fullReg := nextWrite === readPtr && !(io.deq_ready && !emptyReg)
+    incrWrite := true.B
+    when (io.deq_ready && !emptyReg) {
+      // 同时写和读，指针都移动，内容不变
+      incrRead := true.B
+      num_contentReg := num_contentReg
+      debug_fcounter := debug_fcounter + 1.U
+      debug_fdcounter := debug_fdcounter + 1.U
+    }.otherwise {
+      // 只写
+      num_contentReg := num_contentReg + 1.U
+      debug_fcounter := debug_fcounter + 1.U
+    }
+  }.elsewhen(io.deq_ready && !emptyReg) {
+    // 只读
+    emptyReg := nextRead === writePtr
+    fullReg := false.B
+    incrRead := true.B
+    num_contentReg := num_contentReg - 1.U
+    debug_fdcounter := debug_fdcounter + 1.U
   }
   
   io.status_fiveslots          := Mux(num_contentReg >= ((params.depth).U - 5.U),

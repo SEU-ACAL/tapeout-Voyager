@@ -132,7 +132,8 @@ class R_RSUSL_kernel(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO
   val det_fall                                    = (!if_RSU_packet_ECP)&&RegNext(if_RSU_packet_ECP.asBool)&&(packet_index_ECP === 0x20.U)
   has_ECP                                        := Mux(if_RSU_packet===1.U,false.B,Mux(det_fall,true.B,has_ECP))
 
-  when (packet_valid === 1.U) {
+  val rfs_ss_wen = (packet_valid === 1.U)
+  when (rfs_ss_wen) {
     arfs_ss.write(packet_index, packet_arfs)
     farfs_ss.write(packet_index, packet_farfs)
     /*
@@ -204,8 +205,8 @@ class R_RSUSL_kernel(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO
   apply_counter_memdelay                         := apply_counter
   arf_addr                                       := Mux(apply_snapshot.asBool, apply_counter, 0.U)
   farf_addr                                      := Mux(apply_snapshot.asBool, apply_counter, 0.U)
-  arf_data                                       := Mux(!io.store_from_checker, arfs_ss.read(arf_addr, apply_snapshot.asBool), arfs_ss_GMode.read(arf_addr, apply_snapshot.asBool))
-  farf_data                                      := Mux(!io.store_from_checker, farfs_ss.read(farf_addr, apply_snapshot.asBool), farfs_ss_GMode.read(arf_addr, apply_snapshot.asBool))
+  arf_data                                       := Mux(!io.store_from_checker, arfs_ss.read(arf_addr, apply_snapshot.asBool && !rfs_ss_wen), arfs_ss_GMode.read(arf_addr, apply_snapshot.asBool && !recording_context))
+  farf_data                                      := Mux(!io.store_from_checker, farfs_ss.read(farf_addr, apply_snapshot.asBool && !rfs_ss_wen), farfs_ss_GMode.read(arf_addr, apply_snapshot.asBool && !recording_context))
 
   // arf_addr_ECP                                   := Mux(do_check.asBool, checking_counter, 0.U)
   // farf_addr_ECP                                  := Mux(do_check.asBool, checking_counter, 0.U)

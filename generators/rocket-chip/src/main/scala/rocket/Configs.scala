@@ -65,8 +65,8 @@ class WithMEEKCores(
         divEarlyOut = true))),
       dcache = Some(DCacheParams(
         rowBits = site(SystemBusKey).beatBits,
-        nSets = 16,
-        nWays = 2,
+        nSets = 32,
+        nWays = 4,
         nTLBSets = 1,
         nTLBWays = 4,
         nMSHRs = 0,
