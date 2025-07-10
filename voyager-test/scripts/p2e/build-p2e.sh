@@ -156,6 +156,8 @@ main() {
     cd $SCRIPT_DIR/toolchain
     ./integrate.sh 
     ./update_filelist.sh 
+    chmod +x change_gpio.sh
+    ./change_gpio.sh
     cd $SCRIPT_DIR/toolchain
     Log "$YELLOW" "Syncing FPGA IP ($FPGA_IP) to hw-config.hdf..."
     sed -i "s/\"IP\": \"[^\"]*\"/\"IP\": \"$FPGA_IP\"/g" hw-config.hdf
