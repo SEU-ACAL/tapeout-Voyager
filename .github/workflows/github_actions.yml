@@ -78,7 +78,7 @@ jobs:
           mkdir -p build && cd build
           cmake ..
           make build-all
-          cd .../software/embench/embench-iot
+          cd ../../software/embench/embench-iot
           git apply --ignore-whitespace ../embench.patch
           cd ..
           ./build.sh
