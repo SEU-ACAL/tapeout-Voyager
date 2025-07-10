@@ -14,7 +14,7 @@ on:
 jobs:
   Manually-CI-Test:
     name: Manually CI Test
-    runs-on: ubuntu-latest
+    runs-on: fpga
     steps:
     - run: |
         echo "Test scenario tags: ${{ github.event.inputs.tags }}"
@@ -103,7 +103,7 @@ jobs:
   Build-Verilator:
     name: Build Verilator
     runs-on: fpga
-    needs: Pre-commit-check
+    needs: Build-Workloads
     steps:
       - name: Build Verilator
         shell: zsh {0}
@@ -125,7 +125,7 @@ jobs:
   Smoke-Test:
     name: Smoke Test
     runs-on: fpga
-    needs: [Build-Verilator, Build-Workloads]
+    needs: Build-Verilator
     steps:
       - name: Smoke Test
         shell: zsh {0}
