@@ -109,43 +109,42 @@ def run_pytest(args=None, use_allure=False):
   try:
     result = subprocess.run(cmd, cwd=script_dir)
     
-    # 如果测试成功运行，处理报告
-    if result.returncode == 0:
-      if use_allure:
-        # 生成 Allure 报告
-        allure_results_dir = reports_dir / "allure-results"
-        allure_report_dir = reports_dir / f"{git_commit}"
-        current_report_dir = reports_dir / "allure"
-        
-        print("Generating Allure report...")
-        
-        # 生成版本化的报告
-        allure_cmd = [
+    # 无论测试成功还是失败，都处理报告
+    if use_allure:
+      # 生成 Allure 报告
+      allure_results_dir = reports_dir / "allure-results"
+      allure_report_dir = reports_dir / f"{git_commit}"
+      current_report_dir = reports_dir / "allure"
+      
+      print("Generating Allure report...")
+      
+      # 生成版本化的报告
+      allure_cmd = [
+        "allure", "generate", 
+        str(allure_results_dir), 
+        "-o", str(allure_report_dir),
+        "--clean"
+      ]
+      
+      allure_result = subprocess.run(allure_cmd, cwd=script_dir)
+      if allure_result.returncode == 0:
+        # 生成当前运行的报告（保存在 allure 目录）
+        current_cmd = [
           "allure", "generate", 
           str(allure_results_dir), 
-          "-o", str(allure_report_dir),
+          "-o", str(current_report_dir),
           "--clean"
         ]
         
-        allure_result = subprocess.run(allure_cmd, cwd=script_dir)
-        if allure_result.returncode == 0:
-          # 生成当前运行的报告（保存在 allure 目录）
-          current_cmd = [
-            "allure", "generate", 
-            str(allure_results_dir), 
-            "-o", str(current_report_dir),
-            "--clean"
-          ]
-          
-          current_result = subprocess.run(current_cmd, cwd=script_dir)
-          
-          print(f"Generated Allure reports:")
-          print(f"  - {allure_results_dir} (raw results)")
-          print(f"  - {allure_report_dir} (versioned HTML report)")
-          if current_result.returncode == 0:
-            print(f"  - {current_report_dir} (current HTML report)")
-        else:
-          print("Failed to generate Allure report")
+        current_result = subprocess.run(current_cmd, cwd=script_dir)
+        
+        print(f"Generated Allure reports:")
+        print(f"  - {allure_results_dir} (raw results)")
+        print(f"  - {allure_report_dir} (versioned HTML report)")
+        if current_result.returncode == 0:
+          print(f"  - {current_report_dir} (current HTML report)")
+      else:
+        print("Failed to generate Allure report")
 
     
     return result.returncode

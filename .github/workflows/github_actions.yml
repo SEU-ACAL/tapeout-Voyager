@@ -18,6 +18,16 @@ jobs:
     steps:
     - run: |
         echo "Test scenario tags: ${{ github.event.inputs.tags }}"
+      if: contains(github.event.inputs.tags, 'embench-test')
+      steps:
+        - name: Run Embench Test
+          shell: zsh {0}
+          run: |
+            source ~/.zshrc
+            chipyard_exec
+            cd voyager-test/scripts/sardine
+            python run_tests.py --allure -m embench
+    - run: echo "🍏 Manually-CI-Test is ${{ job.status }}."
   
   Code-Pull:
     name: Code Pull
