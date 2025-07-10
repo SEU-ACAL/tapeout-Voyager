@@ -43,6 +43,24 @@ while [ $# -gt 0 ] ; do
         help
       fi
       ;;
+    -p|--project)
+      if [[ -n $2 && $2 != -* ]]; then
+        SBT_PROJECT="$2"
+        shift
+      else
+        echo "错误: -p 或 --project 选项需要一个参数"
+        help
+      fi
+      ;;
+    -s|--sub-project)
+      if [[ -n $2 && $2 != -* ]]; then
+        SUB_PROJECT="$2"
+        shift
+      else
+        echo "错误: -s 或 --sub-project 选项需要一个参数"
+        help
+      fi
+      ;;
     *)
       echo "未知选项: $1"
       help
@@ -61,6 +79,13 @@ if [ -z "$CONFIG" ]; then
   echo "ERROR: CONFIG 参数未指定。请使用 -c 或 --config 选项提供配置。"
   help
 fi
+# 检查是否需要清理缓存
+CACHE_DIR="${CYDIR}/.classpath_cache"
+
+# 当使用voyager_tapeout项目时，自动清理缓存以避免配置冲突
+if [ "$SBT_PROJECT" = "voyager_tapeout" ] ; then
+  rm -rf "$CACHE_DIR"
+fi
 
 DASH_DEBUG_POSTFIX=""
 POINT_DEBUG_POSTFIX=""
@@ -74,7 +99,11 @@ CYDIR=$(git rev-parse --show-toplevel)
 source ${CYDIR}/voyager-test/scripts/env-source.sh vcs
 
 cd ${CYDIR}/sims/vcs/ || { echo "Cannot enter the directory: ${CYDIR}/sims/vcs/"; exit 1; }
-make -j$j ${debug} CONFIG=${CONFIG} || { echo "[Build vcs Failed!]==================="; exit 1; }
+make -j$j ${debug} CONFIG=$CONFIG \
+  USE_FST=$USE_FST \
+  SBT_PROJECT=$SBT_PROJECT \
+  $([ -n "$SUB_PROJECT" ] && echo "SUB_PROJECT=$SUB_PROJECT") \
+  || { echo "[Build VCS Failed!]==================="; exit 1; } 
 mkdir -p ${CYDIR}/voyager-test/output/vcs
 cp ${CYDIR}/sims/vcs/simv-chipyard.harness-${CONFIG}${DASH_DEBUG_POSTFIX} ${CYDIR}/voyager-test/output/vcs/
 # cp ${CYDIR}/sims/vcs/simv-chipyard.harness-${CONFIG}${DEBUG_POSTFIX}.daidir/ ${CYDIR}/voyager-test/output/vcs/ -r

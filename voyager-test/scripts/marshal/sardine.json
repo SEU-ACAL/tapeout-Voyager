@@ -1,0 +1,9 @@
+{
+  "name" : "sardine",
+  "workdir" : ".",
+  "base" : "voyager-br-base.json",
+  "overlay" : "../../../output/marshal/overlay",
+  "host-init" : "./sardine/host-init.sh",
+  "rootfs-size" : "16GiB",
+  "spike-args" : "--extension=BuckyballFunc"
+}

@@ -930,7 +930,7 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   icsl.io.if_correct_process := io.if_correct_process
   checker_mode := icsl.io.icsl_checkermode
   checker_priv_mode := icsl.io.icsl_checkerpriv_mode
-  io.clear_ic_status := icsl.io.clear_ic_status
+  io.clear_ic_status := RegNext(icsl.io.clear_ic_status)
   icsl_if_overtaking := (icsl.io.if_overtaking | rsu_slave.io.core_hang_up) & !r_exception_record
   icsl_if_ret_special_pc := icsl.io.if_ret_special_pc
   if_overtaking_next_cycle := icsl.io.if_overtaking_next_cycle
@@ -941,6 +941,14 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   icsl.io.if_check_privrun := RegNext(check_exception_rise)
   icsl.io.self_xcpt := csr.io.trace(0).exception
   icsl.io.self_ret  := csr.io.eret_nocall
+
+  //for debug
+  val clear_flag = RegInit(false.B)
+  when(io.clear_ic_status.asBool){
+    clear_flag := true.B
+  }.elsewhen(checker_mode.asBool || checker_priv_mode.asBool){
+    clear_flag := false.B
+  }
 
   val zeros_3bits = WireInit(0.U(3.W))
 
@@ -1659,7 +1667,6 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
     ))
   }
   
-
 
 
   // CoreMonitorBundle for late latency writes

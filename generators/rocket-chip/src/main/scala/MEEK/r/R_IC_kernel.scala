@@ -44,7 +44,7 @@ class R_ICIO_kernel(params: R_ICParams) extends Bundle {
 
   //debug signal
   val debug_perf_reset                           = Input(UInt((1.W)))
-  val debug_perf_sel                             = Input(UInt(3.W))
+  val debug_perf_sel                             = Input(UInt(4.W))
   val debug_perf_val                             = Output(UInt(64.W))
   val debug_maincore_status                      = Output(UInt(4.W))
   val debug_perf_nocore                          = Output(Bool())
@@ -52,6 +52,11 @@ class R_ICIO_kernel(params: R_ICParams) extends Bundle {
   val state                                      = Output(UInt(3.W))
 
   val shared_CP_CFG                              = Output(UInt(13.W))
+
+  val new_commit                                 = Input(Bool())
+  val new_commit_cnt                             = Input(UInt(3.W))
+  val debug_perf_rsu_stall                       = Input(Bool())
+  val debug_perf_gh_stall                        = Input(Bool())
 }
 
 trait HasR_ICIO_kernel extends BaseModule {
@@ -327,26 +332,42 @@ class R_IC_kernel (val params: R_ICParams) extends Module with HasR_ICIO_kernel 
     nocore_available                             = Mux(i.U<io.num_of_checker,nocore_available & ic_status(i),nocore_available)
   }
   io.debug_perf_nocore                          := nocore_available.asBool&&(io.if_pipeline_stall.asBool)
+
   val debug_perf_CCounter                        = RegInit(0.U(GH_GlobalParams.GH_WIDITH_PERF.W))
+  val debug_perf_InstCounter                     = RegInit(0.U(GH_GlobalParams.GH_WIDITH_PERF.W))
   val debug_perf_BCounter                        = RegInit(0.U(GH_GlobalParams.GH_WIDITH_PERF.W))
   val debug_perf_SchState                        = RegInit(0.U(GH_GlobalParams.GH_WIDITH_PERF.W))
   val debug_perf_CheckState                      = RegInit(0.U(GH_GlobalParams.GH_WIDITH_PERF.W))
   val debug_perf_OtherThread                     = RegInit(0.U(GH_GlobalParams.GH_WIDITH_PERF.W))
   val debug_perf_SchState_Allbusy                = RegInit(0.U(GH_GlobalParams.GH_WIDITH_PERF.W))
   val debug_perf_SchState_OT                     = RegInit(0.U(GH_GlobalParams.GH_WIDITH_PERF.W))
-
+  val debug_perf_rsu_stall                       = RegInit(0.U(GH_GlobalParams.GH_WIDITH_PERF.W))
+  val debug_perf_gh_stall                        = RegInit(0.U(GH_GlobalParams.GH_WIDITH_PERF.W))
+  val debug_perf_kernel_instcnt                  = RegInit(0.U(GH_GlobalParams.GH_WIDITH_PERF.W))
+  val debug_perf_excep_cnt                       = RegInit(0.U(GH_GlobalParams.GH_WIDITH_PERF.W))
+  val debug_perf_interr                          = RegInit(0.U(GH_GlobalParams.GH_WIDITH_PERF.W))
+  val debug_perf_stall_interr                    = RegInit(0.U(GH_GlobalParams.GH_WIDITH_PERF.W))
+  val debug_perf_stall_excpt                     = RegInit(0.U(GH_GlobalParams.GH_WIDITH_PERF.W))
 
 
   val if_blocked_bySched                         = WireInit(false.B)
   if_blocked_bySched                            := ((fsm_state === fsm_sch) && io.if_correct_process.asBool) && ic_status(sch_result).asBool
 
   debug_perf_CCounter                           := Mux(io.debug_perf_reset.asBool, 0.U, debug_perf_CCounter + 1.U)
-  debug_perf_BCounter                           := Mux(io.debug_perf_reset.asBool, 0.U, Mux(if_blocked_bySched && !nocore_available.asBool, debug_perf_BCounter + 1.U, debug_perf_BCounter))
+  debug_perf_InstCounter                        := Mux(io.debug_perf_reset.asBool, 0.U, Mux(io.new_commit, debug_perf_InstCounter + io.new_commit_cnt, debug_perf_InstCounter))
+  debug_perf_BCounter                           := Mux(io.debug_perf_reset.asBool, 0.U, Mux((if_pipeline_stall & io.if_correct_process).asBool, debug_perf_BCounter + 1.U, debug_perf_BCounter))
   debug_perf_SchState_Allbusy                   := Mux(io.debug_perf_reset.asBool, 0.U, Mux(if_blocked_bySched && nocore_available.asBool, debug_perf_SchState_Allbusy + 1.U, debug_perf_SchState_Allbusy))
   debug_perf_SchState                           := Mux(io.debug_perf_reset.asBool, 0.U, Mux(fsm_state === fsm_sch, debug_perf_SchState + 1.U, debug_perf_SchState))
   debug_perf_CheckState                         := Mux(io.debug_perf_reset.asBool, 0.U, Mux(fsm_state === fsm_check, debug_perf_CheckState + 1.U, debug_perf_CheckState))
   debug_perf_OtherThread                        := Mux(io.debug_perf_reset.asBool, 0.U, Mux((fsm_state === fsm_sch) && (!io.if_correct_process.asBool), debug_perf_OtherThread + 1.U, debug_perf_OtherThread))
   debug_perf_SchState_OT                        := Mux(io.debug_perf_reset.asBool, 0.U, Mux(!io.if_correct_process.asBool, debug_perf_SchState_OT + 1.U, debug_perf_SchState_OT))
+  debug_perf_rsu_stall                          := Mux(io.debug_perf_reset.asBool, 0.U, Mux(io.debug_perf_rsu_stall && io.if_correct_process.asBool, debug_perf_rsu_stall + 1.U, debug_perf_rsu_stall))
+  debug_perf_gh_stall                           := Mux(io.debug_perf_reset.asBool, 0.U, Mux(io.debug_perf_gh_stall && io.if_correct_process.asBool, debug_perf_gh_stall + 1.U, debug_perf_gh_stall))
+  debug_perf_kernel_instcnt                     := Mux(io.debug_perf_reset.asBool, 0.U, Mux(io.new_commit && io.excp_mode, debug_perf_kernel_instcnt + io.new_commit_cnt, debug_perf_kernel_instcnt))
+  debug_perf_excep_cnt                          := Mux(io.debug_perf_reset.asBool, 0.U, Mux(io.mode_switch, debug_perf_excep_cnt + 1.U, debug_perf_excep_cnt))
+  debug_perf_interr                             := Mux(io.debug_perf_reset.asBool, 0.U, Mux(io.interrupt, debug_perf_interr + 1.U, debug_perf_interr))
+  debug_perf_stall_excpt                        := Mux(io.debug_perf_reset.asBool, 0.U, Mux(io.mode_switch && io.if_correct_process.asBool && (if_pipeline_stall.asBool || io.debug_perf_rsu_stall || io.debug_perf_gh_stall), debug_perf_stall_excpt + 1.U, debug_perf_stall_excpt))
+  debug_perf_stall_interr                       := Mux(io.debug_perf_reset.asBool, 0.U, Mux(io.interrupt && io.if_correct_process.asBool && (if_pipeline_stall.asBool || io.debug_perf_rsu_stall || io.debug_perf_gh_stall), debug_perf_stall_interr + 1.U, debug_perf_stall_interr))
 
 
   io.debug_perf_val                             := Mux(io.debug_perf_sel === 7.U, debug_perf_CCounter, 
@@ -355,7 +376,15 @@ class R_IC_kernel (val params: R_ICParams) extends Module with HasR_ICIO_kernel 
                                                    Mux(io.debug_perf_sel === 3.U, debug_perf_CheckState,
                                                    Mux(io.debug_perf_sel === 4.U, debug_perf_OtherThread, 
                                                    Mux(io.debug_perf_sel === 5.U, debug_perf_SchState_Allbusy, 
-                                                   Mux(io.debug_perf_sel === 6.U, debug_perf_SchState_OT, 0.U)))))))
+                                                   Mux(io.debug_perf_sel === 6.U, debug_perf_SchState_OT, 
+                                                   Mux(io.debug_perf_sel === 8.U, debug_perf_rsu_stall, 
+                                                   Mux(io.debug_perf_sel === 9.U, debug_perf_gh_stall, 
+                                                   Mux(io.debug_perf_sel === 10.U, debug_perf_InstCounter, 
+                                                   Mux(io.debug_perf_sel === 11.U, debug_perf_kernel_instcnt, 
+                                                   Mux(io.debug_perf_sel === 12.U, debug_perf_excep_cnt, 
+                                                   Mux(io.debug_perf_sel === 13.U, debug_perf_interr, 
+                                                   Mux(io.debug_perf_sel === 14.U, debug_perf_stall_excpt, 
+                                                   Mux(io.debug_perf_sel === 15.U, debug_perf_stall_interr, 0.U)))))))))))))))
 
   io.debug_maincore_status                      := Mux(!io.if_correct_process.asBool, 3.U,
                                                    Mux(fsm_state === fsm_sch, 1.U,

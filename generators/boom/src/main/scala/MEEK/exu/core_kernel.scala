@@ -99,7 +99,7 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
     val core_trace = Input(UInt(1.W))
     val debug_maincore_status = Output(UInt(4.W))
     val ic_trace = Input(UInt(1.W))
-    val debug_perf_ctrl = Input(UInt(4.W))
+    val debug_perf_ctrl = Input(UInt(5.W))
     val debug_perf_val = Output(UInt(64.W))
     val shared_CP_CFG = Output(UInt(13.W))
     val arfs_ecp_dest = Output(UInt(8.W))
@@ -2023,6 +2023,10 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
   ic_master.io.satp_switch                        := satp_ppn_switch
   ic_master.io.if_next_pc_can_ignore              := if_next_is_ecall || if_next_is_eret || if_next_is_wfi
   ic_master.io.if_next_pc_is_wfi                  := if_next_is_wfi
+  ic_master.io.new_commit                         := rob.io.commit.arch_valids.reduce(_ || _)
+  ic_master.io.new_commit_cnt                     := PopCount(rob.io.commit.arch_valids)
+  ic_master.io.debug_perf_rsu_stall               := rsu_stall
+  ic_master.io.debug_perf_gh_stall                := io.gh_stall
 
 
   ic_stall                                        := ic_master.io.if_pipeline_stall
@@ -2041,8 +2045,8 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
   io.ic_crnt_target                               := ic_master.io.crnt_target
   for (i <-0 until GH_GlobalParams.GH_NUM_CORES){
     io.ic_counter(i)                              := ic_master.io.ic_counter(i)
-    ic_master.io.clear_ic_status(i)               := io.clear_ic_status_tomain(i)
-    ic_master.io.icsl_na(i)                       := io.icsl_na(i)
+    ic_master.io.clear_ic_status(i)               := RegNext(io.clear_ic_status_tomain(i))
+    ic_master.io.icsl_na(i)                       := RegNext(io.icsl_na(i))
   }
   ic_master.io.if_correct_process                 := io.if_correct_process
   ic_master.io.ic_trace                           := io.ic_trace
@@ -2102,7 +2106,7 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
   io.rsu_merging                                  := rsu_master.io.rsu_merging
   io.rsu_merging_valid                            := rsu_master.io.rsu_merging_valid
   io.debug_perf_val                               := ic_master.io.debug_perf_val
-  ic_master.io.debug_perf_sel                     := io.debug_perf_ctrl(3,1)
+  ic_master.io.debug_perf_sel                     := io.debug_perf_ctrl(4,1)
   ic_master.io.debug_perf_reset                   := io.debug_perf_ctrl(0)
   io.shared_CP_CFG                                := ic_master.io.shared_CP_CFG
 

@@ -85,7 +85,7 @@ class CustomChipTop(implicit p: Parameters) extends ChipTop with HasIOBinders {
             // Standard output cell, no special handling needed
           }
           case c: GenericDigitalGPIOCell => {
-            c.io.i := false.B
+            // c.io.i := false.B
           }
           case c => {
             require(false, s"Unsupported iocell type ${c.getClass} in interface $interface")

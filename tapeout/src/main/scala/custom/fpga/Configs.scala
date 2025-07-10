@@ -19,7 +19,6 @@ import testchipip.serdes.{SerialTLKey}
 
 import chipyard._
 import chipyard.harness._
-import voyager_tapeout.custom.fpga.{WithJTAG, WithSPISDCard, WithUART}
 
 class WithDefaultPeripherals extends Config((site, here, up) => {
   case PeripheryUARTKey => List(UARTParams(address = BigInt(0x64000000L)))
@@ -44,13 +43,14 @@ class WithSystemModifications extends Config((site, here, up) => {
 class WithChipHarnessTweaks extends Config(
   // clocking
   new chipyard.harness.WithAbsoluteFreqHarnessClockInstantiator ++
-  new chipyard.clocking.WithPassthroughClockGenerator ++
+  // new chipyard.clocking.WithPassthroughClockGenerator ++
+  new chipyard.clocking.WithPLLSelectorDividerClockGenerator(enable=true) ++
   new chipyard.config.WithUniformBusFrequencies(100) ++
   new WithFPGAFrequency(100) ++ // default 100MHz freq
   // harness binders
   new WithUART ++
   new WithSPISDCard ++
-  // new WithDDRMem ++
+  new WithDDRMem ++
   new WithJTAG ++
   // other configuration
   new WithDefaultPeripherals ++

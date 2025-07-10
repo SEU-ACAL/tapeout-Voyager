@@ -43,8 +43,7 @@ class HarnessBinder[T <: HasHarnessInstantiators, S <: Port[_]](
 
 class WithGPIOTiedOff extends HarnessBinder({
   case (th: HasHarnessInstantiators, port: GPIOPort, chipId: Int) => {
-    port.io <> AnalogConst(0)
-
+    port.io <> AnalogConst(7)
   }
 })
 

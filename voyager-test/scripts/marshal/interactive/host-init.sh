@@ -14,5 +14,6 @@ cd $CYDIR/voyager-test/build
 make #-j256
 
 cd $CYDIR/voyager-test/output
+rm -rf ./marshal/overlay/root/
 mkdir -p ./marshal/overlay/root/
 cp -r ./workloads/* ./marshal/overlay/root/

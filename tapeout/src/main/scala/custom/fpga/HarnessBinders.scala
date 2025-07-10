@@ -29,14 +29,14 @@ class WithSPISDCard extends HarnessBinder({
 })
 
 /*** Experimental DDR ***/
-// class WithDDRMem extends HarnessBinder({
-//   case (th: VCU118FPGATestHarnessImp, port: TLMemPort, chipId: Int) => {
-//     val bundles = th.vcu118Outer.ddrClient.out.map(_._1)
-//     val ddrClientBundle = Wire(new HeterogeneousBag(bundles.map(_.cloneType)))
-//     bundles.zip(ddrClientBundle).foreach { case (bundle, io) => bundle <> io }
-//     ddrClientBundle <> port.io
-//   }
-// })
+class WithDDRMem extends HarnessBinder({
+  case (th: VCU118FPGATestHarnessImp, port: TLMemPort, chipId: Int) => {
+    val bundles = th.vcu118Outer.ddrClient.out.map(_._1)
+    val ddrClientBundle = Wire(new HeterogeneousBag(bundles.map(_.cloneType)))
+    bundles.zip(ddrClientBundle).foreach { case (bundle, io) => bundle <> io }
+    ddrClientBundle <> port.io
+  }
+})
 
 class WithJTAG extends HarnessBinder({
   case (th: VCU118FPGATestHarnessImp, port: JTAGPort, chipId: Int) => {

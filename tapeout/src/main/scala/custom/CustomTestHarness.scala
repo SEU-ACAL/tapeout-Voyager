@@ -6,4 +6,4 @@ import org.chipsalliance.cde.config.{Parameters, Config}
 import voyager_tapeout.custom.harness.{CustomTestHarness, WithCustomChipTop}
 
 // 导出自定义TestHarness，以便外部使用
-class VoyagerCustomTestHarness(implicit p: Parameters) extends CustomTestHarness
+// class VoyagerCustomTestHarness(implicit p: Parameters) extends CustomTestHarness

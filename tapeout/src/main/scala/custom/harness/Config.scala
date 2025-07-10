@@ -5,6 +5,6 @@ import org.chipsalliance.cde.config.{Config}
 import chipyard.harness._
 
 
-class CustomHarnessTweaks extends Config(
-  new WithSimAXIMMIO 
-)
+// class CustomHarnessTweaks extends Config(
+//   new WithSimAXIMMIO 
+// )

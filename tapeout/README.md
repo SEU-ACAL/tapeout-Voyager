@@ -7,7 +7,8 @@
 
 1.1 代码生成
 ```bash
-./voyager-test/scripts/build-verilator.sh --config VoyagerChipConfig --project voyager_tapeout --sub-project voyager_tapeout
+# verilator仿真代码
+./voyager-test/scripts/build-verilator.sh --config VoyagerVerilatorConfig --project voyager_tapeout --sub-project voyager_tapeout
 ```
 
 

@@ -7,9 +7,7 @@ import org.chipsalliance.cde.config.{Field, Parameters, Config}
 import freechips.rocketchip.util.{ResetCatchAndSync, DontTouch}
 import chipyard.stage.phases.TargetDirKey
 import chipyard.harness.{ApplyHarnessBinders, ApplyMultiHarnessBinders}
-// import voyager_tapeout.custom.iobinders.HasChipyardPorts
 import chipyard.iobinders.HasChipyardPorts
-
 
 trait HasCustomHarnessInstantiators extends chipyard.harness.HasHarnessInstantiators {
   // 继承原有的抽象成员

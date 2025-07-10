@@ -1,4 +1,4 @@
-# 仓库开发手册
+# 仓库开发手册 [![Voyager CI](https://github.com/SEU-ACAL/tapeout-Voyager/actions/workflows/github_actions.yml/badge.svg)](https://github.com/SEU-ACAL/tapeout-Voyager/actions/workflows/github_actions.yml)
 
 ## 零、安装 mosh
 针对网络波动问题（如在火车上写代码），建议使用MIT开发的mosh：https://mosh.org/
@@ -173,6 +173,8 @@ firesim 由`./build-setup.sh`已经安装好, 参考[教程](docs/firesim-README
 
 ## 七、P2E
 
+**7.1 P2E 运行测试**
+
 首先开个P2E加速器服务器的账号，并配置好[p2e_config.yaml](./voyager-test/scripts/p2e/p2e_config.yaml)
 
 ```shell
@@ -188,6 +190,10 @@ $ ./voyager-test/scripts/p2e/run-p2e.sh
 ```shell
 $ ./voyager-test/scripts/p2e/run-p2e.sh -s 2 # 跳过前两步，直接去加速器上运行已有的workload和配置
 ```
+
+**7.2 自定义 P2E 测试用例**
+
+如果你要新建自定义的.json文件规定的测试，在`voyager-test/scripts/marshal/`中的`workload_name`和文件夹名应一致，然后运行`build-p2e.sh`和`run-p2e.sh`即可。
 
 ## 八、后端 (DC)
 
@@ -228,15 +234,23 @@ Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `
 - gemmini/src
 - bar-fetchers/src: 存放预取器代码
 
-
-**9.3 专用测试**
+<!-- **9.3 专用测试**
 
 为了尽可能增大CI的覆盖范围，可以通过在commit message中包含特定的tag，来触发特定的测试；测试用例在batch-test.sh中自行添加即可。
 
 - [npu-test] 触发NPU相关测试。
 - [meek-test] 触发Meek相关测试。
 - [soc-test] 触发soc测试配置。
-- [dc-eval] 触发DC综合。
+- [dc-eval] 触发DC综合。 -->
+
+<!-- **9.3 commit 格式**
+
+commit 格式为：
+
+```
+XXXXXXXXX(你本身的commit message) need test: (从以下的tag中选择一个或多个)
+[verilator-test] [p2e-test-with-rebuild] [p2e-test-wo-rebuild]
+``` -->
 
 ## 十、文档目录
 

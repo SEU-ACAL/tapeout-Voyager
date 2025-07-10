@@ -91,9 +91,9 @@ class AbstractConfig extends Config(
   new freechips.rocketchip.subsystem.WithJtagDTM ++                 /** set the debug module to expose a JTAG port */
 
   // Boot Select Pins
-    new testchipip.boot.WithCustomBootPin(testchipip.boot.CustomBootPinParams(
+  new testchipip.boot.WithCustomBootPin(testchipip.boot.CustomBootPinParams(
     customBootAddress = 0x00000001L
-  )) ++                          /** add a custom-boot-pin to support skip sdcard loading*/
+  )) ++                          /** add a custom-boot-pin to support pin-driven boot address */
   new testchipip.boot.WithBootAddrReg ++                            /** add a boot-addr-reg for configurable boot address */
 
 
@@ -131,7 +131,7 @@ class AbstractConfig extends Config(
 
   // ChipTop clock IO/PLL/Divider/Mux settings
   new chipyard.clocking.WithClockTapIOCells ++                      /** Default generate a clock tapio */
-  new chipyard.clocking.WithPLLSelectorDividerClockGenerator(enable=false) ++
+  new chipyard.clocking.WithPassthroughClockGenerator ++
 
   // DigitalTop-internal clocking settings
   new freechips.rocketchip.subsystem.WithDontDriveBusClocksFromSBus ++  /** leave the bus clocks undriven by sbus */
@@ -152,7 +152,7 @@ class AbstractConfig extends Config(
   // reset
 
   // power
-
+  new chipyard.config.WithGPIO(width=12)  ++
 
   // ==================================
   //   Base Settings
