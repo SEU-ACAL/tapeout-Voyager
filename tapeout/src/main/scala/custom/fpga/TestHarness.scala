@@ -151,8 +151,5 @@ class VCU118FPGATestHarnessImp(_outer: VCU118FPGATestHarness) extends LazyRawMod
   childClock := fpgaClock
   childReset := fpgaResetSigned
 
-  // childClock := referenceClock
-  // childReset := referenceReset
-
   instantiateChipTops()
 }

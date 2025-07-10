@@ -36,15 +36,34 @@ class WithSystemModifications extends Config((site, here, up) => {
     p.copy(hang = 0x10000, contentFileName = s"./fpga/src/main/resources/vcu118/sdboot/build/sdboot.bin")
   }
   case ExtMem => up(ExtMem, site).map(x => x.copy(master = x.master.copy(size = site(VCU118DDRSize)))) // set extmem to DDR size
-  case SerialTLKey => Nil // remove serialized tl port
 })
+
 
 // DOC include start: AbstractVCU118 and Rocket
 class WithChipHarnessTweaks extends Config(
   // clocking
   new chipyard.harness.WithAbsoluteFreqHarnessClockInstantiator ++
-  // new chipyard.clocking.WithPassthroughClockGenerator ++
-  new chipyard.clocking.WithPLLSelectorDividerClockGenerator(enable=true) ++
+  new voyager_tapeout.custom.iobinders.WithVoyagerPLLSelectorDividerClockGenerator++
+  new chipyard.config.WithUniformBusFrequencies(100) ++
+  new WithFPGAFrequency(100) ++ // default 100MHz freq
+  // harness binders
+  new WithUART ++
+  new WithSPISDCard ++
+  // new WithDDRMem ++
+  new WithJTAG ++
+  new WithSerialTL2DDR++
+  // other configuration
+  new WithDefaultPeripherals ++
+  new WithSystemModifications ++ // setup busses, use sdboot bootrom, setup ext. mem. size
+  new testchipip.serdes.WithNoSerialTLClient++
+  new testchipip.serdes.WithSerialTLMem(size = BigInt("80000000",16)) ++ // 8 GB of off-chip memory
+  new freechips.rocketchip.subsystem.WithoutTLMonitors 
+)
+
+class WithChipTLMemHarnessTweaks extends Config(
+  // clocking
+  new chipyard.harness.WithAbsoluteFreqHarnessClockInstantiator ++
+  new voyager_tapeout.custom.iobinders.WithVoyagerPLLSelectorDividerClockGenerator++
   new chipyard.config.WithUniformBusFrequencies(100) ++
   new WithFPGAFrequency(100) ++ // default 100MHz freq
   // harness binders
@@ -54,11 +73,12 @@ class WithChipHarnessTweaks extends Config(
   new WithJTAG ++
   // other configuration
   new WithDefaultPeripherals ++
-  new chipyard.config.WithTLBackingMemory ++ // use TL backing memory
   new WithSystemModifications ++ // setup busses, use sdboot bootrom, setup ext. mem. size
-  new freechips.rocketchip.subsystem.WithoutTLMonitors ++
-  new freechips.rocketchip.subsystem.WithNMemoryChannels(1)
+  new chipyard.config.WithTLBackingMemory ++ // use TL backing memory
+  new testchipip.serdes.WithNoSerialTL++ // 8 GB of off-chip memory
+  new freechips.rocketchip.subsystem.WithoutTLMonitors 
 )
+
 
 
 class WithFPGAFrequency(fMHz: Double) extends Config(

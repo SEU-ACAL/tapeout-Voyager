@@ -140,6 +140,7 @@ class WithJTAGDTMKey(idcodeVersion: Int = 2, partNum: Int = 0x000, manufId: Int 
 class WithTLBackingMemory extends Config((site, here, up) => {
   case ExtMem => None // disable AXI backing memory
   case ExtTLMem => up(ExtMem, site) // enable TL backing memory
+  case ExtSerialMem => up(ExtMem, site) // enable TL backing memory
 })
 
 class WithSerialBackingMemory extends Config((site, here, up) => {

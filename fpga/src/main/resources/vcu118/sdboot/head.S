@@ -56,7 +56,7 @@ clock_delay2:
   bne t1, t2, skip_sd_load // If value != 0x00000001, skip SD loading
 
   // Normal SD card loading path
-  call main
+//  call main
   j continue_boot
   
 skip_sd_load:

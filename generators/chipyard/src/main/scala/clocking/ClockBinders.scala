@@ -47,7 +47,7 @@ class WithPLLSelectorDividerClockGenerator(enable: Boolean = true) extends Overr
     pllCtrlSink := pllCtrl.ctrlNode
 
     InModuleBody {
-      val clock_wire = Wire(Input(Clock()))
+      val clock_wire = Wire(Input(Clock())) // 连接digitaltop
       val reset_wire = Wire(Input(AsyncReset()))
       val (clock_io, clockIOCell) = IOCell.generateIOFromSignal(clock_wire, "clock", p(IOCellKey))
       val (reset_io, resetIOCell) = IOCell.generateIOFromSignal(reset_wire, "reset", p(IOCellKey))
@@ -72,6 +72,8 @@ class WithPLLSelectorDividerClockGenerator(enable: Boolean = true) extends Overr
     }
   }
 })
+
+
 
 // This passes all clocks through to the TestHarness
 class WithPassthroughClockGenerator extends OverrideLazyIOBinder({

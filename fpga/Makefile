@@ -17,20 +17,6 @@ sim_name := none
 SUB_PROJECT ?= vcu118
 
 
-ifeq ($(SUB_PROJECT),voyager_tapeout)
-	SBT_PROJECT       ?= voyager_tapeout
-	MODEL             ?= VCU118FPGATestHarness
-	VLOG_MODEL        ?= VCU118FPGATestHarness
-	MODEL_PACKAGE     ?= voyager_tapeout.custom.fpga
-	CONFIG            ?= RocketVCU118Config
-	CONFIG_PACKAGE    ?= voyager_tapeout.custom.fpga
-	GENERATOR_PACKAGE ?= chipyard
-	TB                ?= none # unused
-	TOP               ?= ChipTop
-	BOARD             ?= vcu118
-	FPGA_BRAND        ?= xilinx
-endif
-
 ifeq ($(SUB_PROJECT),vc707)
 	SBT_PROJECT       ?= chipyard_fpga
 	MODEL             ?= VC707FPGATestHarness

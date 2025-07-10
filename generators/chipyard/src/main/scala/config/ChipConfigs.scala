@@ -55,6 +55,7 @@ class ChipLikeRocketConfig extends Config(
 
 
 class MyChipConfig extends Config(
+  new boom.v3.common.WithNLargeBooms(1) ++                 // Add 1 boom core
   new freechips.rocketchip.rocket.WithNHugeCores(1) ++                      // 1 RocketTile
   // new testchipip.serdes.WithSerialTLMem(size = BigInt("80000000",16))++
   new testchipip.serdes.WithSerialTL(Seq(testchipip.serdes.SerialTLParams(              // 1 serial tilelink port

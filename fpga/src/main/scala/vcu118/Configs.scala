@@ -41,26 +41,25 @@ class WithSystemModifications extends Config((site, here, up) => {
 
 
 // DOC include start: AbstractVCU118 and Rocket
-class WithChipLikeVCU118Tweaks extends Config(
-  // clocking
-  new chipyard.harness.WithAllClocksFromHarnessClockInstantiator ++
-  new chipyard.clocking.WithPassthroughClockGenerator ++
-  new chipyard.config.WithUniformBusFrequencies(100) ++
-  new chipyard.config.WithTileFrequency(100.0) ++ // Set tile frequency to 100MHz
-  new WithFPGAFrequency(100) ++ // default 100MHz freq
-  // harness binders
-  new WithUART ++
-  new WithSPISDCard ++
-  // new WithDDRMem ++
-  // new WithVCU118SerialTL2DDR++
-  new WithJTAG ++
-  // other configuration
-  new WithDefaultPeripherals ++
-  // new chipyard.config.WithTLBackingMemory ++ // use TL backing memory
-  new WithSystemModifications ++ // setup busses, use sdboot bootrom, setup ext. mem. size
-  new freechips.rocketchip.subsystem.WithoutTLMonitors 
-  // new freechips.rocketchip.subsystem.WithNMemoryChannels(1)
-)
+// class WithChipLikeVCU118Tweaks extends Config(
+//   // clocking
+//   new chipyard.harness.WithAllClocksFromHarnessClockInstantiator ++
+//   new chipyard.config.WithUniformBusFrequencies(100) ++
+//   new chipyard.config.WithTileFrequency(100.0) ++ // Set tile frequency to 100MHz
+//   new WithFPGAFrequency(100) ++ // default 100MHz freq
+//   // harness binders
+//   new WithUART ++
+//   new WithSPISDCard ++
+//   // new WithDDRMem ++
+//   new WithVCU118SerialTL2DDR++
+//   new WithJTAG ++
+//   // other configuration
+//   new WithDefaultPeripherals ++
+//   // new chipyard.config.WithTLBackingMemory ++ // use TL backing memory
+//   new WithSystemModifications ++ // setup busses, use sdboot bootrom, setup ext. mem. size
+//   new freechips.rocketchip.subsystem.WithoutTLMonitors 
+//   // new freechips.rocketchip.subsystem.WithNMemoryChannels(1)
+// )
 
 class WithVCU118Tweaks extends Config(
   // clocking
@@ -90,10 +89,10 @@ class RocketVCU118Config extends Config(
   new chipyard.RocketConfig
 )
 
-class ChipLikeVCU118Config extends Config(
-  new WithChipLikeVCU118Tweaks  ++
-  new chipyard.MyChipConfig
-)
+// class ChipLikeVCU119Config extends Config(
+//   new WithChipLikeVCU118Tweaks  ++
+//   new chipyard.MyChipConfig
+// )
 
 
 

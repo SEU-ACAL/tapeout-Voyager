@@ -37,9 +37,16 @@ class OurHeterSoCConfig extends Config(
   // NPUPeripheral
   new voyager_tapeout.custom.harness.WithPeripheralNPUPin ++ // 连接harness和npu到chiptop的pin
   new voyager_tapeout.custom.iobinders.WithPeripheralNPUIOCell ++ // 连接npu和chiptop的pin
-  new voyager_tapeout.custom.device.peripheral_npu.WithNPUPeripheral()   // 连接npu和pbus的pin
-      
-  //gpio
-  //  new chipyard.config.WithGPIO(width=12) 
+  new voyager_tapeout.custom.device.peripheral_npu.WithNPUPeripheral(voyager_tapeout.custom.device.peripheral_npu.PeripheralNPUParams(0x10050000, 0x1000))   // 连接npu和pbus的pin 
+                                                  // attach a offchip bus, since the serial-tl will master some external tilelink memory
+
   // new chipyard.config.AbstractConfig
+)
+
+class WithSerialConnect extends Config (
+  new testchipip.serdes.WithSerialTLMem(size = BigInt("10000000",16)) ++ // 8 GB of off-chip memory
+  new testchipip.serdes.WithSerialTLWidth(4)++
+  new chipyard.config.WithSerialBackingMemory  ++
+  new testchipip.soc.WithOffchipBusClient(MBUS) ++                                      // offchip bus connects to MBUS, since the serial-tl needs to provide backing memory
+  new testchipip.soc.WithOffchipBus
 )
