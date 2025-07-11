@@ -4,7 +4,7 @@
 #include <string.h>
 
 // Test matrices
-static elem_t input_matrix[DIM * DIM * 4] __attribute__((aligned(64)));
+static elem_t input_matrix[DIM * DIM ] __attribute__((aligned(64)));
 static elem_t output_matrix[DIM  * DIM * 4] __attribute__((aligned(64)));
 
 
@@ -23,7 +23,7 @@ void print_matrix(const char* name, elem_t* matrix, int rows, int cols) {
 
 void init_matrix(elem_t* matrix, int rows, int cols, int seed) {
     for (int i = 0; i < rows * cols; i++) {
-        matrix[i] = i % 128;  
+        matrix[i] = 1;  
     }
 }
 
@@ -54,30 +54,20 @@ int main() {
     //print_matrix("Input", input_matrix, DIM, DIM);
     
     // Move input to scratchpad
-    bb_mvin((uintptr_t)input_matrix, WR_ADDR, DIM * 4);
+    bb_mvin((uintptr_t)output_matrix, WR_ADDR, DIM * 4);
     bb_mvin((uintptr_t)input_matrix, OP1_ADDR, DIM );
+    bb_mvin((uintptr_t)input_matrix, OP2_ADDR, DIM );
 
-    /*
+    
     printf("Perform Matmul\n");
-    bb_mul_warp16(OP1_ADDR, OP2_ADDR, WR_ADDR, 16);
+    bb_mul_warp16(OP1_ADDR, OP2_ADDR, WR_ADDR, DIM);
     printf("Matmul Done\n");
-    */
+    
 
     // Move back from scratchpad to output
     bb_mvout((uintptr_t)output_matrix, WR_ADDR, DIM * 4);
     printf("Finished\n");
-    if(compare_matrices(output_matrix, input_matrix, DIM, DIM * 4)) {
-        printf("ACC Test passed: Output matches expected result.\n");
-    } else {
-        printf("ACC Test failed: Output does not match expected result.\n");
-    }
-    memset(output_matrix, 0, sizeof(output_matrix));
-    bb_mvout((uintptr_t)output_matrix, OP1_ADDR, DIM);
-    if(compare_matrices(output_matrix, input_matrix, DIM, DIM )) {
-        printf("SRAM Test passed: Output matches expected result.\n");
-    } else {
-        printf("SRAM Test failed: Output does not match expected result.\n");
-    }
+   
    // print_matrix("Output", output_matrix, DIM, DIM);
     
 

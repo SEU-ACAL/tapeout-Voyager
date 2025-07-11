@@ -105,7 +105,8 @@ class BuckyBallModule(outer: BuckyBall) extends LazyRoCCModuleImpBB(outer)
   outer.reader.module.io.tlb <> tlb.io.clients(1)
   
   // 连接MemLoader到Scratchpad SRAM写入接口
-  memLoader.io.sramWrite <> spad.io.srams.write
+  memLoader.io.sramWrite <> spad.io.dma.sramwrite
+  memLoader.io.accWrite <> spad.io.dma.accwrite
 
 // -----------------------------------------------------------------------------
 // Backend: Store Controller
@@ -122,7 +123,8 @@ class BuckyBallModule(outer: BuckyBall) extends LazyRoCCModuleImpBB(outer)
   outer.writer.module.io.tlb <> tlb.io.clients(0)
   
   // 连接MemStorer到Scratchpad SRAM读取接口
-  memStorer.io.sramRead <> spad.io.srams.read
+  memStorer.io.sramRead <> spad.io.dma.sramread
+  memStorer.io.accRead  <> spad.io.dma.accread
 
 // -----------------------------------------------------------------------------
 // Backend: Execute Controller
@@ -132,8 +134,10 @@ class BuckyBallModule(outer: BuckyBall) extends LazyRoCCModuleImpBB(outer)
   rs.io.commit_i.ex <> exec.io.cmdResp
   
   // 连接ExecuteController到Scratchpad的专用执行接口
-  exec.io.sramRead <> spad.io.exec.read
-  exec.io.sramWrite <> spad.io.exec.write
+  exec.io.sramRead <> spad.io.exec.sramread
+  exec.io.sramWrite <> spad.io.exec.sramwrite
+  exec.io.accRead <> spad.io.exec.accread
+  exec.io.accWrite <> spad.io.exec.accwrite
 
 //---------------------------------------------------------------------------
 // 返回RoCC接口连接

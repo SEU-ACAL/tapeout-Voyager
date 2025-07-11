@@ -20,6 +20,7 @@ case class BuckyBallConfig(
   accType: Data,
 
   veclane: Int = 16,
+  accveclane: Int = 4, 
 
   tlb_size: Int = 4,
   rob_entries: Int = 16,  // RoB条目数量
@@ -27,12 +28,12 @@ case class BuckyBallConfig(
   dma_maxbytes: Int = 64, // 未使用
   dma_buswidth: Int = 128,
   
-  sp_banks: Int = 4,
-  acc_banks: Int = 2,
+  sp_banks: Int = 2,
+  acc_banks: Int = 4,
   
   sp_singleported: Boolean = true,
   
-  sp_capacity: BuckyBallMemCapacity = CapacityInKilobytes(256),
+  sp_capacity: BuckyBallMemCapacity = CapacityInKilobytes(128),
   acc_capacity: BuckyBallMemCapacity = CapacityInKilobytes(64),
   
   max_in_flight_mem_reqs: Int = 16, // 未使用
@@ -41,16 +42,19 @@ case class BuckyBallConfig(
 
   spAddrLen: Int = 14, // 256KB的索引长度
   memAddrLen: Int = 32, // 4GB的索引长度
+
+  numVecPE: Int = 16, // 每个线程的向量PE数量
+  numVecThread: Int = 16, // 每个线程的向量线程数量
 ) {
   val sp_width = veclane * inputType.getWidth
   val sp_bank_entries = sp_capacity match {
     case CapacityInKilobytes(kb) => kb * 1024 * 8 / (sp_banks * sp_width)
     case CapacityInVectors(vs) => vs * veclane / sp_banks
   }
-  val acc_width = veclane * accType.getWidth
+  val acc_width = accveclane * accType.getWidth
   val acc_bank_entries = acc_capacity match {
     case CapacityInKilobytes(kb) => kb * 1024 * 8 / (acc_banks * acc_width)
-    case CapacityInVectors(vs) => vs * veclane / acc_banks
+    case CapacityInVectors(vs) => vs * accveclane / acc_banks
   }
   val local_addr_t = new LocalAddr(sp_banks, sp_bank_entries, acc_banks, acc_bank_entries)
 

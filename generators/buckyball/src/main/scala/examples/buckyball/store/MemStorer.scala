@@ -30,6 +30,7 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
     val dmaResp = Flipped(Decoupled(new SimpleWriteResponse))
     // 连接到Scratchpad的SRAM读取接口
     val sramRead = Vec(bbconfig.sp_banks, new SramReadIO(bbconfig.sp_bank_entries, spad_w))
+    val accRead = Vec(bbconfig.acc_banks, new SramReadIO(bbconfig.acc_bank_entries, bbconfig.accveclane * bbconfig.accType.getWidth))
   })
 
   val s_idle :: s_sram_req :: s_dma_wait :: Nil = Enum(3)
@@ -38,7 +39,8 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   val rob_id_reg = RegInit(0.U(rob_id_width.W))
   val mem_addr_reg = Reg(UInt(bbconfig.memAddrLen.W))
   val iter_reg = Reg(UInt(10.W))
-  val sram_count = Reg(UInt(log2Up(32).W))
+  val sram_count = Reg(UInt(10.W))
+  val acc_reg = RegInit(false.B)  // 是否是acc bank的操作
   
   // 缓存解码好的bank信息
   val rd_bank_reg = Reg(UInt(log2Up(bbconfig.sp_banks).W))
@@ -60,6 +62,7 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
     rd_bank_reg := io.cmdReq.bits.cmd.post_decode_cmd.rd_bank
     rd_bank_addr_reg := io.cmdReq.bits.cmd.post_decode_cmd.rd_bank_addr
     sram_count := 0.U
+    acc_reg := io.cmdReq.bits.cmd.post_decode_cmd.is_acc
     
     // 初始化缓存状态
     buffer_valid_bytes := 0.U
@@ -72,15 +75,23 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   val target_row = current_bank_addr
   
   for (i <- 0 until bbconfig.sp_banks) {
-    io.sramRead(i).req.valid := (state === s_sram_req) && (target_bank === i.U)
+    io.sramRead(i).req.valid := (state === s_sram_req) && (target_bank === i.U) && !acc_reg
     io.sramRead(i).req.bits.addr := target_row
     io.sramRead(i).req.bits.fromDMA := true.B
+  }
+
+  for(i <- 0 until bbconfig.acc_banks){
+    io.accRead(i).req.valid := (state === s_sram_req) && acc_reg && (i.U === target_row(log2Ceil(bbconfig.acc_banks) - 1, 0))
+    io.accRead(i).req.bits.addr := target_row >> log2Ceil(bbconfig.acc_banks)
+    io.accRead(i).req.bits.fromDMA := true.B
   }
 
   // SRAM响应处理
   val sram_resp_valid = io.sramRead.map(_.resp.valid).reduce(_ || _)
   val sram_resp_data = Mux1H(io.sramRead.map(_.resp.valid), io.sramRead.map(_.resp.bits.data))
-  
+  val acc_resp_valid = io.accRead.map(_.resp.valid).reduce(_ || _)
+  val acc_resp_data = Mux1H(io.accRead.map(_.resp.valid), io.accRead.map(_.resp.bits.data))
+
   // 计算当前行对应的内存地址
   val current_mem_addr = mem_addr_reg + (sram_count * line_bytes.U)
   val addr_offset = current_mem_addr(log2Ceil(align_bytes) - 1, 0)  // 地址的低4位，16字节对齐时为0
@@ -90,7 +101,7 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   dontTouch(aligned_addr)
   
   // 数据合并逻辑 (line_bytes = 16字节)
-  val incoming_data = sram_resp_data.asUInt
+  val incoming_data = Mux(sram_resp_valid, sram_resp_data.asUInt, acc_resp_data.asUInt)
   val incoming_bytes = 16.U  // 永远是16字节
   
   // 合并到缓存的数据
@@ -126,14 +137,14 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
     Cat(buffer_start_addr(bbconfig.memAddrLen - 1, log2Ceil(align_bytes)), 0.U(log2Ceil(align_bytes).W)))
   
   // DMA请求逻辑
-  val should_send_normal = sram_resp_valid && can_send_full_line
-  val should_send_first_unaligned = sram_resp_valid && (buffer_valid_bytes === 0.U && addr_offset =/= 0.U)
-  val should_send_last = sram_resp_valid && is_last_iter && !can_send_full_line
+  val should_send_normal = (sram_resp_valid || acc_resp_valid) && can_send_full_line
+  val should_send_first_unaligned = (sram_resp_valid || acc_resp_valid) && (buffer_valid_bytes === 0.U && addr_offset =/= 0.U)
+  val should_send_last = (sram_resp_valid || acc_resp_valid) && is_last_iter && !can_send_full_line
   val should_send = should_send_normal || should_send_first_unaligned || should_send_last
   
   // 迭代结束后还需要发送剩余缓存数据
   val has_remaining_data = buffer_valid_bytes > 0.U && is_last_iter
-  val final_send = has_remaining_data && !sram_resp_valid
+  val final_send = has_remaining_data && !(sram_resp_valid || acc_resp_valid)
   
   // 生成mask
   val send_mask = Wire(UInt(align_bytes.W))
@@ -161,7 +172,7 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
 
   // 连接SRAM响应ready信号
   io.sramRead.foreach(_.resp.ready := io.dmaReq.ready && (state === s_sram_req || state === s_dma_wait))
-
+  io.accRead.foreach(_.resp.ready := io.dmaReq.ready && (state === s_sram_req || state === s_dma_wait))
   // 状态转换和计数器更新
   when (io.sramRead.map(_.req.fire).reduce(_ || _)) {
     state := s_dma_wait
@@ -173,7 +184,7 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
     }
     
     // 更新缓存状态  
-    when (addr_offset =/= 0.U && sram_resp_valid) {
+    when (addr_offset =/= 0.U && (sram_resp_valid || acc_resp_valid)) {
       // 非对齐情况：缓存新数据的高位部分
       val remaining_bytes = align_bytes.U - addr_offset  // 缓存的是高位部分
       data_buffer := incoming_data >> (addr_offset * 8.U)
