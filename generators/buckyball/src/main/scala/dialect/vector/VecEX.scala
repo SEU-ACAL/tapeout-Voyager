@@ -8,7 +8,7 @@ import org.chipsalliance.cde.config.Parameters
 
 import dialect.vector._
 import buckyball.frontend.rs.{ReservationStationIssue, ReservationStationComplete, BuckyBallCmd}
-import buckyball.mem.{SramReadIO, SramWriteIO, SramReadResp}
+import buckyball.mem.{SramReadIO, SramWriteIO, SramReadResp, AccWriteIO}
 import buckyball.BuckyBallConfig
 
 class VecEX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
@@ -19,7 +19,8 @@ class VecEX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
         val sramWrite = Vec(bbconfig.sp_banks, new SramWriteIO(bbconfig.sp_bank_entries, spad_w, spad_w/8))
         val lu_ex_i = Flipped(Decoupled(new lu_ex_req))
         val sramReadResp = Vec(bbconfig.sp_banks, Flipped(Decoupled(new SramReadResp(spad_w))))
-  })
+        val accWrite = Vec(bbconfig.acc_banks, new AccWriteIO(bbconfig.acc_bank_entries, bbconfig.acc_width, bbconfig.acc_width/8))
+    })
     // 提取流水线前端的信号
     val op1_bank = io.lu_ex_i.bits.op1_bank
     val op2_bank = io.lu_ex_i.bits.op2_bank
@@ -30,14 +31,14 @@ class VecEX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
 
     //创建thread和PE的序列
     implicit val threadParams: ThreadParams = new ThreadParams() 
-    val threads = Seq.fill(16)(Module(new VecThread))
-    val PEs = Seq.fill(16)(Module(new PE()))
+    val threads = Seq.fill(bbconfig.numVecPE)(Module(new VecThread))
+    val PEs = Seq.fill(bbconfig.numVecPE)(Module(new PE()))
 
-    for(i <-0 until 16) {
+    for(i <-0 until bbconfig.numVecPE) {
         //默认thread输入
         threads(i).io.in.valid       := false.B
-        threads(i).io.in.bits.op1    := VecInit(Seq.fill(16)(0.U(8.W)))
-        threads(i).io.in.bits.op2    := VecInit(Seq.fill(16)(0.U(8.W)))
+        threads(i).io.in.bits.op1    := VecInit(Seq.fill(bbconfig.numVecPE)(0.U(8.W)))
+        threads(i).io.in.bits.op2    := VecInit(Seq.fill(bbconfig.numVecPE)(0.U(8.W)))
         threads(i).io.in.bits.opcode := 0.U
         threads(i).io.in.bits.iter := 0.U
 
@@ -65,22 +66,28 @@ class VecEX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
     PEs(0).io.west.valid := true.B
     PEs(0).io.west.bits := DontCare
     PEs(0).io.west.bits.waddr := io.lu_ex_i.bits.wr_bank_addr
-    PEs(15).io.east.ready := true.B
+    PEs(bbconfig.numVecPE - 1).io.east.ready := true.B
 
+    val acc_wr_counter = RegInit(0.U(10.W))
+    val wr_start_addr = RegEnable(io.lu_ex_i.bits.wr_start_addr, io.lu_ex_i.valid)
+    when(io.lu_ex_i.valid) {
+        acc_wr_counter := 0.U
+    }.elsewhen(PEs(bbconfig.numVecPE - 1).io.east.valid) {
+        acc_wr_counter := acc_wr_counter + 1.U
+    }
     //SPAD写端口默认赋值
-    for(i <- 0 until 4){
+    for(i <- 0 until bbconfig.sp_banks) {
         io.sramWrite(i).en := false.B
         io.sramWrite(i).addr := 0.U
         io.sramWrite(i).data := 0.U
         io.sramWrite(i).mask := VecInit(Seq.fill(spad_w / 8)(false.B))
     }
-
-    // 当PEs(15)的east输出有效时，写入SPAD
-    when(PEs(15).io.east.valid) {
-        io.sramWrite(wr_bank).en := true.B
-        io.sramWrite(wr_bank).addr := PEs(15).io.east.bits.waddr
-        io.sramWrite(wr_bank).data := PEs(15).io.east.bits.vector_rst.asUInt
-        io.sramWrite(wr_bank).mask := VecInit(Seq.fill(spad_w / 8)(true.B))
+    for(i <- 0 until bbconfig.acc_banks) {
+        io.accWrite(i).en := PEs(bbconfig.numVecPE - 1).io.east.valid
+        io.accWrite(i).addr := (wr_start_addr >> log2Ceil(bbconfig.acc_banks)) + acc_wr_counter
+        io.accWrite(i).data := PEs(bbconfig.numVecPE - 1).io.east.bits.vector_rst.asUInt(i * 128 + 127, i * 128)
+        io.accWrite(i).mask := VecInit(Seq.fill(bbconfig.acc_width / 8)(true.B))
+        io.accWrite(i).acc := true.B
     }
 
     // 响应完成信号

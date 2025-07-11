@@ -34,6 +34,7 @@ class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
     val op2_bank = RegInit(0.U(2.W))
     val wr_bank = RegInit(0.U(2.W))
     val wr_bank_addr = RegInit(0.U(12.W))
+    val is_acc = RegInit(false.B) 
 
     switch(state) {
         is(idle) {
@@ -47,6 +48,7 @@ class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
                 op2_bank_addr := io.cmdReq.bits.cmd.post_decode_cmd.op2_bank_addr
                 wr_bank := io.cmdReq.bits.cmd.post_decode_cmd.wr_bank
                 wr_bank_addr := io.cmdReq.bits.cmd.post_decode_cmd.wr_bank_addr
+                is_acc := io.cmdReq.bits.cmd.post_decode_cmd.is_acc
                 state := busy
             }
         }
@@ -68,6 +70,7 @@ class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
     io.id_lu_o.bits.op2_bank_addr := op2_bank_addr + iteration_counter
     io.id_lu_o.bits.wr_bank := wr_bank
     io.id_lu_o.bits.wr_bank_addr := wr_bank_addr + iteration_counter
+    io.id_lu_o.bits.wr_start_addr := wr_bank_addr
     io.id_lu_o.bits.opcode := 1.U
     io.id_lu_o.bits.iter := iteration
     io.id_lu_o.bits.thread_id := iteration_counter

@@ -56,12 +56,13 @@ class PostDecodeCmd(implicit bbconfig: BuckyBallConfig) extends Bundle {
   val iter          = UInt(10.W)
   
   // Scratchpad读取地址和bank信息 - store源地址
-  val rd_bank       = UInt(log2Up(bbconfig.sp_banks).W)
-  val rd_bank_addr  = UInt(log2Up(bbconfig.sp_bank_entries).W)
+  val rd_bank       = UInt(log2Up(bbconfig.sp_banks+ bbconfig.acc_banks).W)
+  val rd_bank_addr  = UInt(log2Up(bbconfig.sp_bank_entries+ bbconfig.acc_bank_entries).W)
   
   // Scratchpad写入地址和bank信息 - load目标地址，execute结果地址(后续拆到acc中)
-  val wr_bank       = UInt(log2Up(bbconfig.sp_banks).W)
-  val wr_bank_addr  = UInt(log2Up(bbconfig.sp_bank_entries).W)
+  val wr_bank       = UInt(log2Up(bbconfig.sp_banks + bbconfig.acc_banks).W)
+  val wr_bank_addr  = UInt(log2Up(bbconfig.sp_bank_entries + bbconfig.acc_bank_entries).W)
+  val is_acc        = Bool() // 是否是acc bank的操作    
   
   // Execute专用字段
   val op1_en        = Bool()
@@ -164,12 +165,13 @@ class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
   // Store: rd_bank = ls_spaddr解析的bank (从scratchpad读取), wr_bank不用  
   // Execute: rd_bank = op1_spaddr解析的bank (OpA，也作为读取), op1_bank/op2_bank = 操作数bank, wr_bank = wr_spaddr解析的bank (结果)
   
-  io.id_rs.bits.rd_bank := Mux(io.id_rs.bits.is_ex, op1_laddr.sp_bank(), ls_laddr.sp_bank())
-  io.id_rs.bits.rd_bank_addr := Mux(io.id_rs.bits.is_ex, op1_laddr.sp_row(), ls_laddr.sp_row())
+  io.id_rs.bits.rd_bank := Mux(io.id_rs.bits.is_ex, op1_laddr.mem_bank(), ls_laddr.mem_bank())
+  io.id_rs.bits.rd_bank_addr := Mux(io.id_rs.bits.is_ex, op1_laddr.mem_row(), ls_laddr.mem_row())
   
-  io.id_rs.bits.wr_bank := Mux(io.id_rs.bits.is_ex, wr_laddr.sp_bank(), ls_laddr.sp_bank())
-  io.id_rs.bits.wr_bank_addr := Mux(io.id_rs.bits.is_ex, wr_laddr.sp_row(), ls_laddr.sp_row())
-  
+  io.id_rs.bits.wr_bank := Mux(io.id_rs.bits.is_ex, wr_laddr.mem_bank(), ls_laddr.mem_bank())
+  io.id_rs.bits.wr_bank_addr := Mux(io.id_rs.bits.is_ex, wr_laddr.mem_row(), ls_laddr.mem_row())
+  io.id_rs.bits.is_acc := (io.id_rs.bits.wr_bank >= bbconfig.sp_banks.U) // 如果wr_bank大于sp_banks，则是acc bank操作
+
   io.id_rs.bits.op1_bank := op1_laddr.sp_bank()  // execute的OpA
   io.id_rs.bits.op1_bank_addr := op1_laddr.sp_row()
   io.id_rs.bits.op2_bank := op2_laddr.sp_bank()  // execute的OpB

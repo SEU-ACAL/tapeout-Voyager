@@ -31,7 +31,7 @@ class MulOp (implicit t: ThreadParams) extends Module {
       val op2 = Vec(t.lane, UInt(8.W))
     }))
     val out = Valid(new Bundle {
-      val vRst = Vec(t.lane, UInt(8.W))
+      val vRst = Vec(t.lane, UInt(32.W))
     })
   })
   io.out.valid     := io.in.valid
@@ -82,7 +82,7 @@ class tOpLoad extends Bundle {
 
 class tOut extends Bundle {
   val sRst = UInt(8.W)
-  val vRst = Vec(16, UInt(8.W))
+  val vRst = Vec(16, UInt(32.W))
 }
 
 abstract class BaseThread(

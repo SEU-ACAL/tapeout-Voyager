@@ -49,7 +49,15 @@ add_custom_target(buckyball-vecunit-matmul-baremetal ALL
     COMMENT "Building vecunit_matmul baremetal workload for Buckyball"
     VERBATIM)
 
+add_custom_target(buckyball-acc-matmul-baremetal ALL
+    COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_acc_matmul-baremetal
+            ${BUCKYBALL_CTEST_DIR}/acc_matmul.c 
+    DEPENDS ${BUCKYBALL_CTEST_DIR}/acc_matmul.c 
+    COMMENT "Building acc_matmul baremetal workload for Buckyball"
+    VERBATIM)
+
 add_custom_target(buckyball-CTest ALL DEPENDS
   buckyball-CTest-baremetal
   buckyball-vecunit-matmul-baremetal
+  buckyball-acc-matmul-baremetal
   )

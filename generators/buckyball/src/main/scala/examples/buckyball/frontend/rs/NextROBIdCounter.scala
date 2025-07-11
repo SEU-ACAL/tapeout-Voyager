@@ -58,6 +58,7 @@ class NextROBIdCounter(implicit bbconfig: BuckyBallConfig) extends Module {
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.rd_bank_addr  := 0.U
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.wr_bank       := 0.U
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.wr_bank_addr  := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_acc        := false.B
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.op1_en        := false.B
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.op2_en        := false.B
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.wr_spad_en    := false.B

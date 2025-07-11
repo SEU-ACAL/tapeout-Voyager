@@ -51,6 +51,7 @@ class VecLoadUnit(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Mod
   io.lu_ex_o.bits.op2_bank := op2_bank
   io.lu_ex_o.bits.wr_bank := wr_bank
   io.lu_ex_o.bits.wr_bank_addr := wr_bank_addr
+  io.lu_ex_o.bits.wr_start_addr := io.id_lu_i.bits.wr_start_addr
   io.lu_ex_o.bits.opcode := io.id_lu_i.bits.opcode
   io.lu_ex_o.bits.iter := io.id_lu_i.bits.iter
   io.lu_ex_o.bits.thread_id := io.id_lu_i.bits.thread_id

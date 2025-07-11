@@ -7,7 +7,7 @@ import org.chipsalliance.cde.config.Parameters
 import dialect.bbfp._
 import dialect.vector._
 import buckyball.frontend.rs.{ReservationStationIssue, ReservationStationComplete, BuckyBallCmd}
-import buckyball.mem.{SramReadIO, SramWriteIO}
+import buckyball.mem.{SramReadIO, SramWriteIO, AccWriteIO}
 import buckyball.BuckyBallConfig
 
 class ExecuteController(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
@@ -21,6 +21,9 @@ class ExecuteController(implicit bbconfig: BuckyBallConfig, p: Parameters) exten
     // 连接到Scratchpad的SRAM读写接口
     val sramRead = Vec(bbconfig.sp_banks, new SramReadIO(bbconfig.sp_bank_entries, spad_w))
     val sramWrite = Vec(bbconfig.sp_banks, new SramWriteIO(bbconfig.sp_bank_entries, spad_w, spad_w/8))
+    // 连接到Accumulator的读写接口
+    val accRead = Vec(bbconfig.acc_banks, new SramReadIO(bbconfig.acc_bank_entries, bbconfig.acc_width))
+    val accWrite = Vec(bbconfig.acc_banks, new AccWriteIO(bbconfig.acc_bank_entries, bbconfig.acc_width, bbconfig.acc_width/8))
   })
 
   val BBFP_Control = Module(new BBFP_Control)
@@ -70,6 +73,11 @@ class ExecuteController(implicit bbconfig: BuckyBallConfig, p: Parameters) exten
     io.sramWrite(i).addr := Mux(real_sel, BBFP_Control.io.sramWrite(i).addr, VecUnit.io.sramWrite(i).addr)
     io.sramWrite(i).data := Mux(real_sel, BBFP_Control.io.sramWrite(i).data, VecUnit.io.sramWrite(i).data)
     io.sramWrite(i).mask := Mux(real_sel, BBFP_Control.io.sramWrite(i).mask, VecUnit.io.sramWrite(i).mask)
+  }
+  for(i <- 0 until bbconfig.acc_banks) {
+    io.accRead(i).req <> VecUnit.io.accRead(i).req
+    io.accRead(i).resp <> VecUnit.io.accRead(i).resp
+    io.accWrite(i) <> VecUnit.io.accWrite(i)
   }
 
   // cmdReq输入分发

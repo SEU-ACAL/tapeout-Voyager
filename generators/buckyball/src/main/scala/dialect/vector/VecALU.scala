@@ -3,25 +3,27 @@ package dialect.vector
 import chisel3._
 import chisel3.util._
 import chisel3.stage._
-class north  extends Bundle {
+import buckyball.BuckyBallConfig
+import freechips.rocketchip.regmapper.RRTest1Map.bb
+class north(implicit bbconfig: BuckyBallConfig)  extends Bundle {
   val config     = UInt(16.W) 
-  val vector_rst = Vec(16, UInt(8.W))
+  val vector_rst = Vec(bbconfig.numVecPE, UInt(bbconfig.accType.getWidth.W))
 }
 
-class east extends Bundle {
+class east(implicit bbconfig: BuckyBallConfig) extends Bundle {
   val funct     = UInt(8.W)
   val waddr     = UInt(14.W)
-  val vector_rst = Vec(16, UInt(8.W))
+  val vector_rst = Vec(bbconfig.numVecPE, UInt(bbconfig.accType.getWidth.W))
 }
 
-class PE extends Module {
+class PE(implicit bbconfig: BuckyBallConfig) extends Module {
   val io = IO(new Bundle {
     val north = Flipped(Decoupled(new north()))
     val west = Flipped(Decoupled(new east()))
     val east = Decoupled(new east())
   })
 
-  val vector_reg = RegInit(VecInit(Seq.fill(16)(0.U(32.W))))
+  val vector_reg = RegInit(VecInit(Seq.fill(bbconfig.numVecPE)(0.U(bbconfig.accType.getWidth.W))))
   val funct_reg = RegInit(0.U(8.W))
   val waddr_reg = RegInit(0.U(14.W))
 

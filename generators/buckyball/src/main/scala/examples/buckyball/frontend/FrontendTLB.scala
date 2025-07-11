@@ -93,13 +93,13 @@ class FrontendTLB(nClients: Int, entries: Int, maxSize: Int)
     val l0_tlb_hit = last_translated_valid && ((client.req.bits.tlb_req.vaddr >> pgIdxBits).asUInt === (last_translated_vpn >> pgIdxBits).asUInt)
     val l0_tlb_paddr = Cat(last_translated_ppn >> pgIdxBits, client.req.bits.tlb_req.vaddr(pgIdxBits-1,0))
 
-    val l0_tlb_paddr_reg = RegEnable(l0_tlb_paddr, client.req.valid)
-
     val tlb = tlbs(i)
     val tlbReq = tlb.io.req.bits
     val tlbReqValid = tlb.io.req.valid
     val tlbReqFire = tlb.io.req.fire
 
+    val l0_tlb_paddr_reg = RegEnable(client.req.bits.tlb_req.vaddr, client.req.valid)
+    
     tlbReqValid := RegNext(client.req.valid && !l0_tlb_hit)
     tlbReq := RegNext(client.req.bits)
 
@@ -117,7 +117,7 @@ class FrontendTLB(nClients: Int, entries: Int, maxSize: Int)
       client.resp := tlb.io.resp
     }.otherwise {
       client.resp := DontCare
-      client.resp.paddr := l0_tlb_paddr_reg
+      client.resp.paddr :=  l0_tlb_paddr_reg
       client.resp.miss := !RegNext(l0_tlb_hit)
     }
   }

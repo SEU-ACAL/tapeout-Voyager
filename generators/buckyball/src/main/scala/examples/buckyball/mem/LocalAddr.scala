@@ -9,6 +9,7 @@ class LocalAddr(sp_banks: Int, sp_bank_entries: Int, acc_banks: Int, acc_bank_en
   private val spAddrBits = log2Ceil(sp_banks * sp_bank_entries)
   private val accAddrBits = log2Ceil(acc_banks * acc_bank_entries)
   private val maxAddrBits = spAddrBits max accAddrBits
+  private val memAddrBits = log2Ceil(sp_banks * sp_bank_entries + acc_banks * acc_bank_entries)
 
   private val spBankBits = log2Up(sp_banks)
   private val spBankRowBits = log2Up(sp_bank_entries)
@@ -27,12 +28,14 @@ class LocalAddr(sp_banks: Int, sp_bank_entries: Int, acc_banks: Int, acc_bank_en
 
   val garbage = UInt(((localAddrBits - maxAddrBits - metadata_w - 1) max 0).W)
   val garbage_bit = if (localAddrBits - maxAddrBits >= metadata_w + 1) UInt(1.W) else UInt(0.W)
-  val data = UInt(maxAddrBits.W)
+  val data = UInt(memAddrBits.W)
 
   def sp_bank(dummy: Int = 0) = if (spAddrBits == spBankRowBits) 0.U else data(spAddrBits - 1, spBankRowBits)
   def sp_row(dummy: Int = 0) = data(spBankRowBits - 1, 0)
   def acc_bank(dummy: Int = 0) = if (accAddrBits == accBankRowBits) 0.U else data(accAddrBits - 1, accBankRowBits)
   def acc_row(dummy: Int = 0) = data(accBankRowBits - 1, 0)
+  def mem_bank(dummy: Int = 0) = data(memAddrBits - 1, spBankRowBits)
+  def mem_row(dummy: Int = 0) = data(spBankRowBits - 1, 0)
 
   def full_sp_addr(dummy: Int = 0) = data(spAddrBits - 1, 0)
   def full_acc_addr(dummy: Int = 0) = data(accAddrBits - 1, 0)
