@@ -9,6 +9,6 @@ expect "vdbg> "
 # 执行 source debug_trigger.tcl
 send "source debug_trigger.tcl\r"
 
-send "screen /dev/tty10gpio 4800\r"
+send "screen /dev/tty13gpio 4800\r"
 
 interact

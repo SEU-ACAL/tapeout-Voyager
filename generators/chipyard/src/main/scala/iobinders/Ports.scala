@@ -96,7 +96,8 @@ case class ClockPort       (val getIO: () => Clock, val freqMHz: Double)
 
 case class ClockTapPort    (val getIO: () => Clock)
     extends Port[Clock]
-
+case class PLLCLKPort    (val getIO: () => Bool)
+    extends Port[Bool]
 case class ResetPort       (val getIO: () => AsyncReset)
     extends Port[Reset]
 
