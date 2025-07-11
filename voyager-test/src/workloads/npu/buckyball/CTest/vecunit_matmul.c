@@ -189,6 +189,10 @@ int test_zero_random() {
 }
 
 int main() {
+#ifdef MULTICORE 
+    multicore(MULTICORE);  // Only allow specified hart to continue
+#endif
+    
     int tests_passed = 0;
     int total_tests = 0;
     
@@ -224,6 +228,8 @@ int main() {
             printf("Invalid test index %d skipped\n", test_index + 1);
         }
     }
-    
-    return 0;
+
+#ifdef MULTICORE 
+    exit(0);
+#endif
 }
