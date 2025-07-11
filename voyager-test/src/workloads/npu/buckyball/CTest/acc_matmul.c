@@ -59,9 +59,9 @@ int main() {
     bb_mvin((uintptr_t)input_matrix, OP2_ADDR, DIM );
 
     
-    printf("Perform Matmul\n");
-    bb_mul_warp16(OP1_ADDR, OP2_ADDR, WR_ADDR, DIM);
-    printf("Matmul Done\n");
+    //printf("Perform Matmul\n");
+    bb_mul_warp16(OP1_ADDR, OP2_ADDR, WR_ADDR, DIM * 4);
+    //printf("Matmul Done\n");
     
 
     // Move back from scratchpad to output

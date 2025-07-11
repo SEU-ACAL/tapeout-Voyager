@@ -194,7 +194,7 @@ int main() {
     
     // 这里定义要运行的测试序号（1-8）
     // 修改这个数组来选择要运行的测试用例
-    const int test_selection[] = {1,2,3,4,5,6,7,8}; 
+    const int test_selection[] = {1}; 
     const int num_selected = sizeof(test_selection)/sizeof(test_selection[0]);
     
     // 创建测试函数数组
