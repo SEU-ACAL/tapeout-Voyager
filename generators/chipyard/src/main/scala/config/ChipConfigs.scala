@@ -53,6 +53,32 @@ class ChipLikeRocketConfig extends Config(
 
   new chipyard.config.AbstractConfig)
 
+
+class MyChipConfig extends Config(
+  new boom.v3.common.WithNLargeBooms(1) ++                 // Add 1 boom core
+  new freechips.rocketchip.rocket.WithNHugeCores(1) ++                      // 1 RocketTile
+  // new testchipip.serdes.WithSerialTLMem(size = BigInt("80000000",16))++
+  new testchipip.serdes.WithSerialTL(Seq(testchipip.serdes.SerialTLParams(              // 1 serial tilelink port
+    manager = Some(testchipip.serdes.SerialTLManagerParams(                             // port acts as a manager of offchip memory
+      memParams = Seq(testchipip.serdes.ManagerRAMParams(                               // 4 GB of off-chip memory
+        address = BigInt("80000000", 16),
+        size    = BigInt("80000000", 16)
+      )),
+      isMemoryDevice = true
+    )),
+    phyParams = testchipip.serdes.ExternalSyncSerialPhyParams(phitWidth=4, flitWidth=16)   // 4-bit bidir interface, sync'd to an external clock
+  ))) ++
+  new chipyard.config.WithSerialBackingMemory  ++
+  new freechips.rocketchip.subsystem.WithNMemoryChannels(1) ++
+  new testchipip.soc.WithOffchipBusClient(MBUS) ++                                      // offchip bus connects to MBUS, since the serial-tl needs to provide backing memory
+  new testchipip.soc.WithOffchipBus ++                                                  // attach a offchip bus, since the serial-tl will master some external tilelink memory
+  new chipyard.clocking.WithPLLSelectorDividerClockGenerator ++               // Use a PLL-based clock selector/divider generator structure
+  new chipyard.config.AbstractConfig
+)
+
+
+
+
 class FlatChipTopChipLikeRocketConfig extends Config(
   new chipyard.example.WithFlatChipTop ++
   new chipyard.ChipLikeRocketConfig)

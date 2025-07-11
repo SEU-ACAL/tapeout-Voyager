@@ -16,6 +16,7 @@ sim_name := none
 #########################################################################################
 SUB_PROJECT ?= vcu118
 
+
 ifeq ($(SUB_PROJECT),vc707)
 	SBT_PROJECT       ?= chipyard_fpga
 	MODEL             ?= VC707FPGATestHarness

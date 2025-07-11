@@ -160,7 +160,7 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
 
   Annotated.params(this, outer.boomParams)
 
-  val core = Module(new BoomCore()(outer.p))
+  val core = Module(new BoomCoreKernel()(outer.p))
   val lsu  = Module(new LSU()(outer.p, outer.dcache.module.edge))
 
   //===== GuardianCouncil Function: Start ====//
@@ -187,7 +187,7 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
   val core_trace = Wire(UInt(2.W))
   val fi_sel = Wire(UInt(8.W))
   // val fi_latency = Wire(UInt(57.W))
-  val debug_perf_sel = Wire(UInt(4.W))
+  val debug_perf_sel = Wire(UInt(5.W))
 
   val debug_gtimer_reset = Reg(UInt(1.W))
   val debug_gtimer = Reg(UInt(62.W))

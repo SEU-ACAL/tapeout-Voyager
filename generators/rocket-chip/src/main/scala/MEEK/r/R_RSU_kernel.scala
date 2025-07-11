@@ -138,52 +138,60 @@ class R_RSU_kernel(val params: R_RSUParams) extends Module with HasR_RSUIO_kerne
     }
     pcarf_ss                                   := io.pcarf_in
     fcsr_ss                                    := io.fcsr_in
-    crt_priv                                   := io.excpt_mode
+    crt_priv                                   := io.priv
   }
 
 
 
 
-  val merge_cdc_counter                           = RegInit(0.U(1.W))
+  // val merge_cdc_counter                           = RegInit(0.U(1.W))
   // when ((doMerge === 1.U) && (merging === 0.U)){
   //   merging                                      := 1.U
   //   merge_counter                                := 0.U
   //   merge_cdc_counter                            := 0.U
-  //   csr_merge_counter                            := 0.U
   // } .elsewhen (merging === 1.U) {
-  //   merging                                      := Mux((merge_counter === 32.U) && (merge_cdc_counter === 1.U)&&((csr_merge_counter === 7.U)), 0.U, 1.U)
-  //   merge_counter                                := Mux(merge_cdc_counter === 1.U&&(!io.big_hang), Mux((merge_counter === 32.U), Mux(csr_merge_counter === 7.U, 0.U, merge_counter), merge_counter + 1.U), merge_counter)    
+  //   merging                                      := Mux((merge_counter === 32.U) && (merge_cdc_counter === 1.U), 0.U, 1.U)
+  //   merge_counter                                := Mux((!io.big_hang) && (merge_cdc_counter === 1.U), Mux((merge_counter === 32.U), 0.U, merge_counter + 1.U), merge_counter)    
   //   merge_cdc_counter                            := merge_cdc_counter + 1.U
-  //   csr_merge_counter                            := Mux(merge_cdc_counter === 1.U&&(!io.big_hang), Mux((merge_counter === 32.U), Mux(csr_merge_counter === 7.U, 0.U, csr_merge_counter + 1.U), csr_merge_counter), csr_merge_counter)
   // } .otherwise {
   //   merging                                      := merging
   //   merge_counter                                := merge_counter
-  //   csr_merge_counter                            := csr_merge_counter
   // }
   when ((doMerge === 1.U) && (merging === 0.U)){
     merging                                      := 1.U
     merge_counter                                := 0.U
-    merge_cdc_counter                            := 0.U
   } .elsewhen (merging === 1.U) {
-    merging                                      := Mux((merge_counter === 32.U) && (merge_cdc_counter === 1.U), 0.U, 1.U)
-    merge_counter                                := Mux((!io.big_hang) && (merge_cdc_counter === 1.U), Mux((merge_counter === 32.U), 0.U, merge_counter + 1.U), merge_counter)    
-    merge_cdc_counter                            := merge_cdc_counter + 1.U
+    merging                                      := Mux((merge_counter === 32.U), 0.U, 1.U)
+    merge_counter                                := Mux((!io.big_hang), Mux((merge_counter === 32.U), 0.U, merge_counter + 1.U), merge_counter)
   } .otherwise {
     merging                                      := merging
     merge_counter                                := merge_counter
   }
 
-    val merge_cdc_counter_priv                     = RegInit(0.U(1.W))
+    // val merge_cdc_counter_priv                     = RegInit(0.U(1.W))
+    // when ((doMerge_priv === 1.U) && (merging_priv === 0.U)){
+    //   merging_priv                                 := 1.U
+    //   merge_counter_priv                           := 0.U
+    //   merge_cdc_counter_priv                       := 0.U
+    //   csr_merge_counter                            := 0.U
+    // } .elsewhen (merging_priv === 1.U) {
+    //   merging_priv                                 := Mux((merge_counter_priv === 32.U) && (merge_cdc_counter_priv === 1.U) && (csr_merge_counter === 7.U), 0.U, 1.U)
+    //   merge_counter_priv                           := Mux(merge_cdc_counter_priv === 1.U && ((!io.big_hang)), Mux((merge_counter_priv === 32.U), Mux(csr_merge_counter === 7.U, 0.U, merge_counter_priv), merge_counter_priv + 1.U), merge_counter_priv)    
+    //   csr_merge_counter                            := Mux(merge_cdc_counter_priv === 1.U && ((!io.big_hang)), Mux(merge_counter_priv === 32.U, Mux(csr_merge_counter === 7.U, 0.U, csr_merge_counter + 1.U), csr_merge_counter), csr_merge_counter)
+    //   merge_cdc_counter_priv                       := merge_cdc_counter_priv + 1.U
+    // } .otherwise {
+    //   merging_priv                                 := merging_priv
+    //   merge_counter_priv                           := merge_counter_priv
+    //   csr_merge_counter                            := csr_merge_counter
+    // }
     when ((doMerge_priv === 1.U) && (merging_priv === 0.U)){
       merging_priv                                 := 1.U
       merge_counter_priv                           := 0.U
-      merge_cdc_counter_priv                       := 0.U
       csr_merge_counter                            := 0.U
     } .elsewhen (merging_priv === 1.U) {
-      merging_priv                                 := Mux((merge_counter_priv === 32.U) && (merge_cdc_counter_priv === 1.U) && (csr_merge_counter === 7.U), 0.U, 1.U)
-      merge_counter_priv                           := Mux(merge_cdc_counter_priv === 1.U && ((!io.big_hang)), Mux((merge_counter_priv === 32.U), Mux(csr_merge_counter === 7.U, 0.U, merge_counter_priv), merge_counter_priv + 1.U), merge_counter_priv)    
-      csr_merge_counter                            := Mux(merge_cdc_counter_priv === 1.U && ((!io.big_hang)), Mux(merge_counter_priv === 32.U, Mux(csr_merge_counter === 7.U, 0.U, csr_merge_counter + 1.U), csr_merge_counter), csr_merge_counter)
-      merge_cdc_counter_priv                       := merge_cdc_counter_priv + 1.U
+      merging_priv                                 := Mux((merge_counter_priv === 32.U) && (csr_merge_counter === 7.U), 0.U, 1.U)
+      merge_counter_priv                           := Mux( ((!io.big_hang)), Mux((merge_counter_priv === 32.U), Mux(csr_merge_counter === 7.U, 0.U, merge_counter_priv), merge_counter_priv + 1.U), merge_counter_priv)    
+      csr_merge_counter                            := Mux( ((!io.big_hang)), Mux(merge_counter_priv === 32.U, Mux(csr_merge_counter === 7.U, 0.U, csr_merge_counter + 1.U), csr_merge_counter), csr_merge_counter)
     } .otherwise {
       merging_priv                                 := merging_priv
       merge_counter_priv                           := merge_counter_priv
@@ -224,8 +232,8 @@ class R_RSU_kernel(val params: R_RSUParams) extends Module with HasR_RSUIO_kerne
   io.arfs_index(0)                               := Mux(merging === 1.U, Cat(0.U(1.W), crt_priv, merge_counter), Mux(merging_priv === 1.U, Mux(csr_merge_counter =/= 0.U, Cat(1.U(1.W), crt_priv, csr_merge_counter), Cat(0.U(1.W), crt_priv, merge_counter_priv)), 0.U(9.W)))
 
   
-  io.arfs_pidx(0)                                := Mux((((merging === 1.U) && (merge_cdc_counter === 1.U)) || ((merging_priv === 1.U) && (merge_cdc_counter_priv === 1.U))) && (!io.big_hang), Cat(io.ic_crnt_target(4,0), seven_3bits), 0.U)
-  io.arfs_ecp_dest                               := Mux((((merging === 1.U) && (merge_cdc_counter === 1.U)) || ((merging_priv === 1.U) && (merge_cdc_counter_priv === 1.U))) && (!io.big_hang), Cat(io.ic_old_crnt_target(4,0), seven_3bits), 0.U)
+  io.arfs_pidx(0)                                := Mux((((merging === 1.U)) || ((merging_priv === 1.U))) && (!io.big_hang), Cat(io.ic_crnt_target(4,0), seven_3bits), 0.U)
+  io.arfs_ecp_dest                               := Mux((((merging === 1.U)) || ((merging_priv === 1.U))) && (!io.big_hang), Cat(io.ic_old_crnt_target(4,0), seven_3bits), 0.U)
 
   /*
   for (w <- 0 until params.scalarWidth) {
@@ -251,7 +259,7 @@ class R_RSU_kernel(val params: R_RSUParams) extends Module with HasR_RSUIO_kerne
   }*/
   
   io.rsu_merging                                   := merging | merging_priv
-  io.rsu_merging_valid                             := merging&(merge_cdc_counter===0.U)
+  io.rsu_merging_valid                             := merging
   io.rsu_busy                                      :=  Mux(io.snapshot.asBool || io.merge.asBool || io_merge_delay1.asBool || io_merge_delay2.asBool || doSnapshot.asBool || doMerge.asBool || merging.asBool
                                                           || io.snapshot_priv || io.merge_priv || io_merge_delay1_priv || io_merge_delay2_priv || doSnapshot_priv || doMerge_priv || merging_priv.asBool, 1.U, 0.U)
 
@@ -262,14 +270,14 @@ class R_RSU_kernel(val params: R_RSUParams) extends Module with HasR_RSUIO_kerne
   // }
 
   
-  // if (GH_GlobalParams.GH_DEBUG == 1) {
-  //   when ((doSnapshot === 1.U) && (io.core_trace.asBool)) {
-  //     printf(midas.targetutils.SynthesizePrintf("[CHECK POINTS --- Boom]: SCP[%x] ECP[%x] ARFS = [%x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x]\n", 
-  //     io.ic_crnt_target(4,0),io.ic_old_crnt_target(4,0),io.arfs_in(0), io.arfs_in(1), io.arfs_in(2), io.arfs_in(3),io.arfs_in(4), io.arfs_in(5), io.arfs_in(6), io.arfs_in(7),
-  //     io.arfs_in(8), io.arfs_in(9), io.arfs_in(10), io.arfs_in(11),io.arfs_in(12), io.arfs_in(13), io.arfs_in(14), io.arfs_in(15),
-  //     io.arfs_in(16), io.arfs_in(17), io.arfs_in(18), io.arfs_in(19),io.arfs_in(20), io.arfs_in(21), io.arfs_in(22), io.arfs_in(23),
-  //     io.arfs_in(24), io.arfs_in(25), io.arfs_in(26), io.arfs_in(27),io.arfs_in(28), io.arfs_in(29), io.arfs_in(30), io.arfs_in(31)))
-  //   }
-  // }
+  if (GH_GlobalParams.GH_DEBUG == 1) {
+    when ((doSnapshot === 1.U) && (io.core_trace.asBool)) {
+      printf(midas.targetutils.SynthesizePrintf("[CHECK POINTS --- Boom]: SCP[%x] ECP[%x] ARFS = [%x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x    %x]\n", 
+      io.ic_crnt_target(4,0),io.ic_old_crnt_target(4,0),io.arfs_in(0), io.arfs_in(1), io.arfs_in(2), io.arfs_in(3),io.arfs_in(4), io.arfs_in(5), io.arfs_in(6), io.arfs_in(7),
+      io.arfs_in(8), io.arfs_in(9), io.arfs_in(10), io.arfs_in(11),io.arfs_in(12), io.arfs_in(13), io.arfs_in(14), io.arfs_in(15),
+      io.arfs_in(16), io.arfs_in(17), io.arfs_in(18), io.arfs_in(19),io.arfs_in(20), io.arfs_in(21), io.arfs_in(22), io.arfs_in(23),
+      io.arfs_in(24), io.arfs_in(25), io.arfs_in(26), io.arfs_in(27),io.arfs_in(28), io.arfs_in(29), io.arfs_in(30), io.arfs_in(31)))
+    }
+  }
   
 }

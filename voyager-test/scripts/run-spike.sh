@@ -9,7 +9,7 @@ help () {
   echo " pk           Run binaries on the proxy kernel, which enables virtual memory"
   echo "              and a few syscalls. If this option is not set, binaries will be"
   echo "              run in baremetal mode."
-  echo " ext          Specify extension to use: gemmini or buckyballCycle or buckyballFunc (default: gemmini)"
+  echo " ext          Specify extension to use: gemmini or buckyballCycle or buckyballFunc (optional)"
   echo " debug        Output disassembly and commit logs to log directory"
   echo " BINARY       The RISCV binary that you want to run. This can either be the"
   echo '              name of a program in `software/gemmini-rocc-tests`, or it can'
@@ -43,11 +43,12 @@ pk=0
 show_help=0
 debug=0
 binary=""
-extension="gemmini"
+extension=""
 
 while [ $# -gt 0 ] ; do
   case $1 in
     --pk) pk=1 ;;
+    --pk=*) pk="${1#--pk=}" ;;
     --ext=*) extension="${1#--ext=}" ;;
     --ext) 
         shift
@@ -64,8 +65,8 @@ if [ $show_help -eq 1 ]; then
    help
 fi
 
-# Validate extension
-if [ "$extension" != "gemmini" ] && [ "$extension" != "buckyballCycle" ] && [ "$extension" != "buckyballFunc" ]; then
+# Validate extension (if provided)
+if [ -n "$extension" ] && [ "$extension" != "gemmini" ] && [ "$extension" != "buckyballCycle" ] && [ "$extension" != "buckyballFunc" ]; then
     echo "Error: Unknown extension '$extension'. Use 'gemmini' or 'buckyballCycle' or 'buckyballFunc'."
     exit 1
 fi
@@ -121,9 +122,20 @@ if [ $debug -eq 1 ]; then
     LOG_DIR="${ROOT}/log/${TIMESTAMP}-${binary}-spike-run-log"
     mkdir -p "${LOG_DIR}"
     # spike --extension=${extension} -l --log=${LOG_DIR}/disasm.log \
-    spike --extension=${extension} -l --log=${LOG_DIR}/disasm.log --log-commits \
-        $PK "${full_binary_path}" 2>&1 | tee ${LOG_DIR}/stdout.log
+    if [ -n "$extension" ]; then
+        spike --extension=${extension} -l --log=${LOG_DIR}/disasm.log --log-commits \
+            $PK "${full_binary_path}" 2>&1 | tee ${LOG_DIR}/stdout.log
+    else
+        spike -l --log=${LOG_DIR}/disasm.log --log-commits \
+            $PK "${full_binary_path}" 2>&1 | tee ${LOG_DIR}/stdout.log
+    fi
 else
-    spike --extension=${extension} $PK "${full_binary_path}"
+    if [ -n "$extension" ]; then
+        echo "spike --extension=${extension} $PK "${full_binary_path}""
+        spike --extension=${extension} $PK "${full_binary_path}"
+    else
+        echo "spike $PK "${full_binary_path}""
+        spike $PK "${full_binary_path}"
+    fi
 fi
 

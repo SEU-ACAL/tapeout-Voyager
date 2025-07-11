@@ -8,11 +8,14 @@ import java.rmi.server.UID
 import scala.collection.Stepper.UnboxingIntStepper
 
 class R_RSUSLIO_kernel(params: R_RSUSLParams) extends Bundle {
-  val rf_sp = Output(UInt(params.xLen.W))
-  val rf_wen = Input(Bool())
-  val rf_waddr = Input(UInt(5.W))
-  val rf_wdata = Input(UInt(params.xLen.W))
-  val checker_mode = Input(Bool())
+  // just for verilator
+  // val rf_sp = Output(UInt(params.xLen.W))
+  // val rf_wen = Input(Bool())
+  // val rf_waddr = Input(UInt(5.W))
+  // val rf_wdata = Input(UInt(params.xLen.W))
+  // val checker_mode = Input(Bool())
+  // val excpt      = Input(Bool())
+  // val eret       = Input(Bool())
 
   val arfs_out = Output(UInt(params.xLen.W))
   val farfs_out = Output(UInt(params.xLen.W))
@@ -26,8 +29,7 @@ class R_RSUSLIO_kernel(params: R_RSUSLParams) extends Bundle {
 
   val check_done = Input(UInt(1.W))
   val check_priv = Input(UInt(2.W))
-  val excpt      = Input(Bool())
-  val eret       = Input(Bool())
+  
 
   val arfs_merge = Input(UInt((params.xLen*2).W))
   val arfs_index = Input(UInt(8.W))
@@ -130,7 +132,8 @@ class R_RSUSL_kernel(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO
   val det_fall                                    = (!if_RSU_packet_ECP)&&RegNext(if_RSU_packet_ECP.asBool)&&(packet_index_ECP === 0x20.U)
   has_ECP                                        := Mux(if_RSU_packet===1.U,false.B,Mux(det_fall,true.B,has_ECP))
 
-  when (packet_valid === 1.U) {
+  val rfs_ss_wen = (packet_valid === 1.U)
+  when (rfs_ss_wen) {
     arfs_ss.write(packet_index, packet_arfs)
     farfs_ss.write(packet_index, packet_farfs)
     /*
@@ -141,9 +144,10 @@ class R_RSUSL_kernel(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO
       }
     }
     */
-  }.elsewhen(io.checker_mode && io.rf_wen && io.rf_waddr === 2.U){
-    arfs_ss.write(io.rf_waddr, io.rf_wdata)
-  } 
+  }
+  // .elsewhen(io.checker_mode && io.rf_wen && io.rf_waddr === 2.U){
+  //   arfs_ss.write(io.rf_waddr, io.rf_wdata)
+  // } 
   
   /*
   when (packet_valid_ECP === 1.U) {
@@ -166,12 +170,13 @@ class R_RSUSL_kernel(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO
   //   }
   // } 
 
-  val excpt = Reg(Bool())
-  val eret  = Reg(Bool())
-  excpt := io.excpt
-  eret  := io.eret
+  // just for verilator
+  // val excpt = Reg(Bool())
+  // val eret  = Reg(Bool())
+  // excpt := io.excpt
+  // eret  := io.eret
   
-  io.rf_sp := Mux(excpt, arfs_ss_GMode.read(2.U, io.excpt), Mux(eret, arfs_ss.read(2.U, io.eret), 0.U))
+  // io.rf_sp := Mux(excpt, arfs_ss_GMode.read(2.U, io.excpt), Mux(eret, arfs_ss.read(2.U, io.eret), 0.U))
   
 
   pcarfs_ss                                      := Mux(packet_valid.asBool && (packet_index === 0x20.U), packet_arfs(39,0), pcarfs_ss)
@@ -200,8 +205,8 @@ class R_RSUSL_kernel(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO
   apply_counter_memdelay                         := apply_counter
   arf_addr                                       := Mux(apply_snapshot.asBool, apply_counter, 0.U)
   farf_addr                                      := Mux(apply_snapshot.asBool, apply_counter, 0.U)
-  arf_data                                       := Mux(!io.store_from_checker, arfs_ss.read(arf_addr, apply_snapshot.asBool), arfs_ss_GMode.read(arf_addr, apply_snapshot.asBool))
-  farf_data                                      := Mux(!io.store_from_checker, farfs_ss.read(farf_addr, apply_snapshot.asBool), farfs_ss_GMode.read(arf_addr, apply_snapshot.asBool))
+  arf_data                                       := Mux(!io.store_from_checker, arfs_ss.read(arf_addr, apply_snapshot.asBool && !rfs_ss_wen), arfs_ss_GMode.read(arf_addr, apply_snapshot.asBool && !recording_context))
+  farf_data                                      := Mux(!io.store_from_checker, farfs_ss.read(farf_addr, apply_snapshot.asBool && !rfs_ss_wen), farfs_ss_GMode.read(arf_addr, apply_snapshot.asBool && !recording_context))
 
   // arf_addr_ECP                                   := Mux(do_check.asBool, checking_counter, 0.U)
   // farf_addr_ECP                                  := Mux(do_check.asBool, checking_counter, 0.U)
@@ -242,16 +247,16 @@ class R_RSUSL_kernel(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO
   pcarfs_ss_delay                                := pcarfs_ss
 
   if (GH_GlobalParams.GH_DEBUG == 1) {
-    when ((io.core_trace.asBool) && (pcarfs_ss_delay =/= pcarfs_ss)) {
-      printf(midas.targetutils.SynthesizePrintf("[C%x-CPS] = [%x]\n", io.core_id, pcarfs_ss))
-    }
+    // when ((io.core_trace.asBool) && (pcarfs_ss_delay =/= pcarfs_ss)) {
+    //   printf(midas.targetutils.SynthesizePrintf("[C%x-CPS] = [%x]\n", io.core_id, pcarfs_ss))
+    // }
   
-    when ((io.core_trace.asBool) && (packet_valid_ECP.asBool) && (packet_index_ECP === 0x20.U)) {
-      // printf(midas.targetutils.SynthesizePrintf("[C%x-CPE] = [%x]\n", io.core_id, packet_arfs_ECP))
-    }
+    // when ((io.core_trace.asBool) && (packet_valid_ECP.asBool) && (packet_index_ECP === 0x20.U)) {
+    //   printf(midas.targetutils.SynthesizePrintf("[C%x-CPE] = [%x]\n", io.core_id, packet_arfs_ECP))
+    // }
 
   }
- 
+
   io.pcarf_out                                   := pcarfs_ss
   io.fcsr_out                                    := Mux(((apply_snapshot_memdelay === 1.U) && (apply_counter_memdelay === 0x20.U)), farf_data, 0.U)
   io.pfarf_valid_out                             := Mux(((apply_snapshot_memdelay === 1.U) && (apply_counter_memdelay === 0x20.U)), 1.U, 0.U)

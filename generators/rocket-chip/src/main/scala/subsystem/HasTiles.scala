@@ -414,7 +414,7 @@ trait CanAttachTile {
         val useless_ic_counter = BundleBridgeSink[UInt](Some(() => UInt((16*GH_GlobalParams.GH_NUM_CORES).W)))
         val useless_debug_maincore_status = BundleBridgeSink[UInt](Some(() => UInt(4.W)))
         val useless_ght_packet_out = BundleBridgeSink[UInt](Some(() => UInt((2*GH_GlobalParams.GH_WIDITH_PACKETS).W)))
-        val useless_core_r_arfs = BundleBridgeSink[UInt](Some(() => UInt(152.W)))
+        val useless_core_r_arfs = BundleBridgeSink[UInt](Some(() => UInt(153.W)))
         val useless_ght_packet_dest = BundleBridgeSink[UInt](Some(() => UInt(32.W)))
         val useless_ght_status_out = BundleBridgeSink[UInt](Some(() => UInt(32.W)))
         val useless_bigcore_hang = BundleBridgeSource[UInt](Some(() => UInt(1.W)))
@@ -534,7 +534,7 @@ trait CanAttachTile {
       }else{
       // 创建所有 useless nodes
         val useless_ghe_packet_in = BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_TOTAL_PACKETS*GH_GlobalParams.GH_WIDITH_PACKETS+1).W)))
-        val useless_core_r_arfs_c = BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_WIDITH_PACKETS+8).W)))
+         val useless_core_r_arfs_c = BundleBridgeSource[UInt](Some(() => UInt((GH_GlobalParams.GH_WIDITH_PACKETS+8+1).W)))
         val useless_icsl_counter = BundleBridgeSource[UInt](Some(() => UInt(20.W)))
         val useless_clear_ic_status = BundleBridgeSink[UInt](Some(() => UInt(1.W)))
         val useless_clear_ic_status_tomain = BundleBridgeSource[UInt](Some(() => UInt(GH_GlobalParams.GH_NUM_CORES.W)))

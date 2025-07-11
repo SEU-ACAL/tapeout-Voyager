@@ -8,11 +8,17 @@ import org.chipsalliance.cde.config._
 import org.chipsalliance.diplomacy.lazymodule._
 
 class ClockSourceIO extends Bundle {
+  // val clock = Input(Clock())
   val power = Input(Bool())
   val gate = Input(Bool())
   val clk = Output(Clock())
 }
-
+class PLLSourceIO extends Bundle {
+  val clock = Input(Clock())
+  val power = Input(Bool())
+  val gate = Input(Bool())
+  val clk = Output(Clock())
+}
 /** This clock source is only intended to be used in test harnesses, and does not work correctly in verilator. */
 class ClockSourceAtFreq(val freqMHz: Double) extends BlackBox(Map(
   "PERIOD_PS" -> DoubleParam(1000000/freqMHz)
@@ -59,12 +65,31 @@ class ClockSourceAtFreqFromPlusArg(val plusArgName: String) extends BlackBox
       |  initial begin
       |    clk_i = 1'b0;
       |    if (!$$value$$plusargs("$plusArgName=%d", FREQ_MHZ)) begin
-      |      FREQ_MHZ = 100.0;
+      |      FREQ_MHZ = 50.0;
       |    end
       |    PERIOD_PS = 1000000.0 / FREQ_MHZ;
       |    forever #(PERIOD_PS/2.0) clk_i = ~clk_i & (power & ~gate);
       |  end
       |  assign clk = clk_i;
+      |endmodule
+      |""".stripMargin)
+}
+class PLL(val plusArgName: String) extends BlackBox
+    with HasBlackBoxInline {
+  val io = IO(new PLLSourceIO)
+
+  override def desiredName = s"PLL$plusArgName"
+
+  setInline(s"$desiredName.v",
+    s"""
+      |module $desiredName (
+      |    input power,
+      |    input clock,
+      |    input gate,
+      |    output clk);
+      |  timeunit 1ps/1ps;
+      |
+      |  assign clk = clock;
       |endmodule
       |""".stripMargin)
 }

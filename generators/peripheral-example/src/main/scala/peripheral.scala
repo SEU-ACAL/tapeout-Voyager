@@ -21,7 +21,7 @@ case class MyPeripheralParams(
 
 case object MyPeripheralKey extends Field[Option[MyPeripheralParams]](None)
 
-// IO trait for the peripheral
+// IO trait for the peripheral 拉到ChipTop的IO
 class MyPeripheralTopIO extends Bundle {
   val my_peripheral_status = Output(UInt(32.W))
 }

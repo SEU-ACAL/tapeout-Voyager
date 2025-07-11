@@ -121,9 +121,9 @@
 [submodule "tools/torture"]
 	path = tools/torture
 	url = https://github.com/ucb-bar/riscv-torture.git
-[submodule "vlsi/hammer-mentor-plugins"]
-	path = vlsi/hammer-mentor-plugins
-	url = https://github.com/ucb-bar/hammer-mentor-plugins.git
+# [submodule "vlsi/hammer-mentor-plugins"]
+# 	path = vlsi/hammer-mentor-plugins
+# 	url = https://github.com/ucb-bar/hammer-mentor-plugins.git
 [submodule "tools/dsptools"]
 	path = tools/dsptools
 	url = https://github.com/ucb-bar/dsptools.git
@@ -154,3 +154,6 @@
 [submodule "tools/buddy-mlir"]
 	path = tools/buddy-mlir
 	url = https://github.com/SEU-ACAL/tapeout-Compiler.git
+[submodule "voyager-test/src/workloads/embench/embench-iot"]
+	path = voyager-test/src/workloads/embench/embench-iot
+	url = https://github.com/embench/embench-iot.git

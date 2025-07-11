@@ -1,2 +1,2 @@
-firesim-dir: '../../../sims/firesim/'
-# board-dir: 'boards/prototype'
+# firesim-dir: '../../../sims/firesim/'
+board-dir: '../../../software/firemarshal/boards/prototype'

@@ -1,0 +1,55 @@
+name: Manual Test CI
+run-name: ${{ github.actor }} is running Manual Test 🚀
+on:
+  workflow_dispatch:
+    inputs:
+      tags:
+        description: 'Test scenario tags.'
+        required: true
+        default: 'embench-test'
+        type: choice
+        options:
+          - embench-test
+          - smoke-test
+          - verilator-test
+
+jobs:
+  Manual-Test:
+    name: Manual Test
+    runs-on: fpga
+    steps:
+      - name: Print test info
+        run: |
+          echo "Test scenario tags: ${{ github.event.inputs.tags }}"
+          echo "Triggered by: ${{ github.actor }}"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref }}"
+      
+      - name: Run Embench Test
+        if: contains(github.event.inputs.tags, 'embench-test')
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          cd voyager-test/scripts/sardine
+          python run_tests.py --allure -m embench
+      
+      - name: Run Smoke Test
+        if: contains(github.event.inputs.tags, 'smoke-test')
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          cd voyager-test/scripts/sardine
+          python run_tests.py --allure -m smoke
+      
+      - name: Run Verilator Test
+        if: contains(github.event.inputs.tags, 'verilator-test')
+        shell: zsh {0}
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          ./voyager-test/scripts/build-verilator.sh --config VoyagerVerilatorConfig --project voyager_tapeout --sub-project voyager_tapeout --debug
+      
+      - name: Test completed
+        run: echo "Manual test completed with status ${{ job.status }}" 

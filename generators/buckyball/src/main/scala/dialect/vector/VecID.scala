@@ -18,7 +18,7 @@ class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
     val io = IO(new Bundle{
         val cmdReq = Flipped(Decoupled(new ReservationStationIssue(new BuckyBallCmd, rob_id_width)))
         val cmdResp = Decoupled(new ReservationStationComplete(rob_id_width))
-    
+        
         val id_lu_o = Decoupled(new id_lu_req)
     })
     

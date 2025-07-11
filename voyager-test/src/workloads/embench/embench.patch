@@ -1,0 +1,2529 @@
+diff --git a/build_all.py b/build_all.py
+index c154a28..10aaf15 100755
+--- a/build_all.py
++++ b/build_all.py
+@@ -538,6 +538,7 @@ def compile_support():
+ 
+     # Compile each general support file in the benchmark
+     succeeded &= compile_file('beebsc', gp['supportdir'], gp['bd_supportdir'])
++    succeeded &= compile_file('meek', gp['supportdir'], gp['bd_supportdir'])
+     succeeded &= compile_file('main', gp['supportdir'], gp['bd_supportdir'])
+ 
+     # Compile dummy files that are needed
+@@ -611,7 +612,7 @@ def create_link_binlist(abs_bd):
+                 )
+ 
+     # Add generic support
+-    for supp in ['main.o', 'beebsc.o']:
++    for supp in ['main.o', 'beebsc.o','meek.o']:
+         binf = os.path.join(gp['bd_supportdir'], supp)
+         if os.path.isfile(binf):
+             binlist.extend(gp['ld_input_pattern'].format(binf).split())
+diff --git a/support/main.c b/support/main.c
+index fcddf29..b18da89 100644
+--- a/support/main.c
++++ b/support/main.c
+@@ -1,3 +1,57 @@
++/* Common main.c for the benchmarks
++
++   Copyright (C) 2014 Embecosm Limited and University of Bristol
++   Copyright (C) 2018-2019 Embecosm Limited
++
++   Contributor: James Pallister <james.pallister@bristol.ac.uk>
++   Contributor: Jeremy Bennett <jeremy.bennett@embecosm.com>
++
++   This file is part of Embench and was formerly part of the Bristol/Embecosm
++   Embedded Benchmark Suite.
++
++   SPDX-License-Identifier: GPL-3.0-or-later */
++
++// #include "support.h"
++// #include <stdlib.h>
++// #include <stdio.h>
++// #include <stdint.h>
++// #include <inttypes.h>
++// #include "rocc.h"
++// #include "meek.h"
++
++// #define U32         *(volatile unsigned int *)
++
++
++
++// int __attribute__ ((used))
++// main (int argc __attribute__ ((unused)),
++//       char *argv[] __attribute__ ((unused)))
++// {
++//   int i;
++//   volatile int result;
++//   int correct;
++//   printf("embench go!\n");
++
++
++
++  
++
++//   initialise_board ();
++//   initialise_benchmark ();
++//   warm_caches (WARMUP_HEAT);
++//   rStartup();
++//   start_trigger ();
++//   result = benchmark ();
++//   stop_trigger ();
++//   rCleanup();
++//   /* bmarks that use arrays will check a global array rather than int result */
++
++//   correct = verify_benchmark (result);
++
++//   return (!correct);
++
++// }				/* main () */
++
+ /* Common main.c for the benchmarks
+ 
+    Copyright (C) 2014 Embecosm Limited and University of Bristol
+@@ -12,6 +66,424 @@
+    SPDX-License-Identifier: GPL-3.0-or-later */
+ 
+ #include "support.h"
++#include <stdlib.h>
++#include <stdio.h>
++#include <stdint.h>
++#include <inttypes.h>
++#include "rocc.h"
++#include "ghe.h"
++#include "ght.h"
++#include "spin_lock.h"
++#include <riscv-pk/encoding.h>
++
++#define U32         *(volatile unsigned int *)
++#define msip_offest 4
++#define CLINT_BASE      0x2000000
++#define MSIP_OFFSET(h)  (h * 4)
++#define TIMECMP_OFFSET(h) (0x4000 + h * 8)
++#define MTIME_ADDR      (CLINT_BASE + 0xBFF8)
++#define NUM_CHECKERS 4
++
++volatile int timer_flags[4] = {0};
++
++void handle_trap();
++void csr_cfg();
++void mtimecmp_cfg();
++void msip_cfg();
++
++int uart_lock;
++
++// 安全读取64位mtime
++uint64_t get_mtime() {
++  volatile uint32_t* mtime_low = (uint32_t*)MTIME_ADDR;
++  volatile uint32_t* mtime_high = (uint32_t*)(MTIME_ADDR + 4);
++  uint32_t hi, lo;
++  do {
++      hi = *mtime_high;
++      lo = *mtime_low;
++  } while (hi != *mtime_high);
++  return ((uint64_t)hi << 32) | lo;
++}
++
++// 核心独立的软件中断配置
++void msip_cfg() {
++  uint64_t hart_id;
++  asm volatile ("csrr %0, mhartid" : "=r"(hart_id));
++  
++  volatile uint32_t* msip = (uint32_t*)(CLINT_BASE + MSIP_OFFSET(hart_id));
++  *msip = 0x1; // 触发当前核心的中断
++  lock_acquire(&uart_lock);
++  printf("Core%d: MSIP at 0x%p\n", hart_id, msip);
++  lock_release(&uart_lock);
++}
++
++// 核心独立的定时器配置
++void mtimecmp_cfg() {
++  uint64_t hart_id;
++  asm volatile ("csrr %0, mhartid" : "=r"(hart_id));
++  
++  volatile uint32_t* mtimecmp_low = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
++  volatile uint32_t* mtimecmp_high = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id) + 4);
++  
++  uint64_t current = get_mtime();
++  uint64_t cmp_val = current + 0x40; // 1M cycles间隔
++  
++  *mtimecmp_low = (uint32_t)cmp_val;
++  *mtimecmp_high = (uint32_t)(cmp_val >> 32);
++  lock_acquire(&uart_lock);
++  printf("Core%d: mtimecmp@0x%p\n", hart_id, mtimecmp_low);
++  lock_release(&uart_lock);
++}
++
++// CSR interrupt configuration function
++void csr_timer_cfg()
++{
++  uint64_t hart_id;
++  asm volatile ("csrr %0, mhartid" : "=r"(hart_id));
++  unsigned int csr_tmp;
++  //mie.MEIE
++  csr_tmp = read_csr(mie);
++  // U32(DEBUG_VAL) = csr_tmp;
++  //write_csr(mie,0x0);
++  write_csr(mie,(csr_tmp | 0x80));
++  // lock_acquire(&uart_lock);
++  // printf("Core:%d: Timer configuration complete\n", hart_id);
++  // lock_release(&uart_lock);
++}
++void csr_software_cfg()
++{
++  uint64_t hart_id;
++  asm volatile ("csrr %0, mhartid" : "=r"(hart_id));
++  unsigned int csr_tmp;
++  //mie.MEIE
++  csr_tmp = read_csr(mie);
++  // U32(DEBUG_VAL) = csr_tmp;
++  //write_csr(mie,0x0);
++  write_csr(mie,(csr_tmp | 0x8));
++  //mstatus.MIE
++  csr_tmp = read_csr(mstatus);
++  // U32(DEBUG_VAL) = csr_tmp;
++  //write_csr(mstatus,0x0);
++  write_csr(mstatus,(csr_tmp | 0x8));
++  lock_acquire(&uart_lock);
++  printf("Core:%d: Software configuration complete\n", hart_id);
++  lock_release(&uart_lock);
++}
++
++void handle_trap() {
++  // uint64_t saved_mepc = mepc; // 立即保存到局部变量
++  // 进入中断处理
++  // U32(DEBUG_SIG) = 0x5;
++  uint64_t hart_id;
++  asm volatile ("csrr %0, mhartid" : "=r"(hart_id));
++
++  uint64_t mcause_val = read_csr(mcause);
++  uint64_t interrupt = mcause_val >> 63;  // 最高位表示中断还是异常
++  uint64_t cause_code = mcause_val & 0x7FFFFFFFFFFFFFFF;
++
++  if(interrupt){
++    // 处理软件中断
++    if ((read_csr(mip) & 0x8) != 0) { // 检查MSIP
++      // U32(0x2000000) = 0x0;        // 清除软件中断
++      volatile uint32_t* msip = (uint32_t*)(CLINT_BASE + MSIP_OFFSET(hart_id));// 清除当前核心的MSIP
++      *msip = 0x0;
++    }
++    // // 处理定时器中断
++    // else if((read_csr(mip) & 0x80) != 0) {
++    //   // 安全读取当前时间
++    //   unsigned long long current_time = get_mtime();
++    //   // U32(0x2004000) = (unsigned int)(current_time + 0x50);     // 写入低32位
++    //   // U32(0x2004004) = (unsigned int)((current_time + 0x50) >> 32); // 写入高32位
++    //   volatile uint32_t* mtimecmp = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
++    //   uint64_t new_cmp = get_mtime() + 0x10;
++    //   *(uint64_t*)mtimecmp = new_cmp; // 直接写入64位
++    // }
++  
++    // 处理定时器中断
++    else if ((read_csr(mip) & 0x80) != 0) { // 检查MTIP
++      // 安全读取当前时间
++      unsigned long long current_time = get_mtime();
++      if(hart_id == 0){
++        timer_flags[0] += 1;
++        // 更新mtimecmp（当前时间 + 间隔0x10）
++        if(timer_flags[0] < 100){
++          // U32(0x2004000) = (unsigned int)(current_time + 0x50);     // 写入低32位
++          // U32(0x2004004) = (unsigned int)((current_time + 0x50) >> 32); // 写入高32位
++          volatile uint32_t* mtimecmp = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
++          uint64_t new_cmp = get_mtime() + 0x50;
++          *(uint64_t*)mtimecmp = new_cmp; // 直接写入64位
++        }
++        // 达到条件后禁用定时器中断
++        else if (timer_flags[0] >= 100) {
++            unsigned int mie_val = read_csr(mie);
++            write_csr(mie, mie_val & ~0x80); // 清除 MTIE (Bit7)
++            // printf("Timer interrupts disabled.\n");
++            // 清除 MIE 位（Bit3）
++            unsigned int mstatus_val = read_csr(mstatus);
++            write_csr(mstatus, mstatus_val & ~0x8); 
++        }
++      }
++      else if(hart_id == 1){
++        timer_flags[1] += 1;
++        // 更新mtimecmp（当前时间 + 间隔0x10）
++        if(timer_flags[1] < 100){
++          // U32(0x2004000) = (unsigned int)(current_time + 0x50);     // 写入低32位
++          // U32(0x2004004) = (unsigned int)((current_time + 0x50) >> 32); // 写入高32位
++          volatile uint32_t* mtimecmp = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
++          uint64_t new_cmp = get_mtime() + 0x50;
++          *(uint64_t*)mtimecmp = new_cmp; // 直接写入64位
++        }
++        // 达到条件后禁用定时器中断
++        else if (timer_flags[1] >= 100) {
++            unsigned int mie_val = read_csr(mie);
++            write_csr(mie, mie_val & ~0x80); // 清除 MTIE (Bit7)
++            // printf("Timer interrupts disabled.\n");
++            // 清除 MIE 位（Bit3）
++            unsigned int mstatus_val = read_csr(mstatus);
++            write_csr(mstatus, mstatus_val & ~0x8); 
++        }
++      }
++      else if(hart_id == 2){
++        timer_flags[2] += 1;
++        // 更新mtimecmp（当前时间 + 间隔0x10）
++        if(timer_flags[2] < 100){
++          // U32(0x2004000) = (unsigned int)(current_time + 0x50);     // 写入低32位
++          // U32(0x2004004) = (unsigned int)((current_time + 0x50) >> 32); // 写入高32位
++          volatile uint32_t* mtimecmp = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
++          uint64_t new_cmp = get_mtime() + 0x50;
++          *(uint64_t*)mtimecmp = new_cmp; // 直接写入64位
++        }
++        // 达到条件后禁用定时器中断
++        else if (timer_flags[2] >= 100) {
++            unsigned int mie_val = read_csr(mie);
++            write_csr(mie, mie_val & ~0x80); // 清除 MTIE (Bit7)
++            // printf("Timer interrupts disabled.\n");
++            // 清除 MIE 位（Bit3）
++            unsigned int mstatus_val = read_csr(mstatus);
++            write_csr(mstatus, mstatus_val & ~0x8); 
++        }
++      }
++      else if(hart_id == 3){
++        timer_flags[3] += 1;
++        // 更新mtimecmp（当前时间 + 间隔0x10）
++        if(timer_flags[3] < 100){
++          // U32(0x2004000) = (unsigned int)(current_time + 0x50);     // 写入低32位
++          // U32(0x2004004) = (unsigned int)((current_time + 0x50) >> 32); // 写入高32位
++          volatile uint32_t* mtimecmp = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
++          uint64_t new_cmp = get_mtime() + 0x50;
++          *(uint64_t*)mtimecmp = new_cmp; // 直接写入64位
++        }
++        // 达到条件后禁用定时器中断
++        else if (timer_flags[3] >= 100) {
++            unsigned int mie_val = read_csr(mie);
++            write_csr(mie, mie_val & ~0x80); // 清除 MTIE (Bit7)
++            // printf("Timer interrupts disabled.\n");
++            // 清除 MIE 位（Bit3）
++            unsigned int mstatus_val = read_csr(mstatus);
++            write_csr(mstatus, mstatus_val & ~0x8); 
++        }
++      }
++    }
++    // 将更新后的 mepc 值读取到 a0 寄存器
++   __asm__ volatile ("csrr a0, mepc");  // handle_trap之后会用a0更新mepc
++  } else {
++    switch (cause_code)
++    {
++    case 2:  // 处理非法指令异常
++      write_csr(mepc, 0x80000050);       // 强制跳转到指定地址
++      __asm__ volatile ("csrr a0, mepc"); // 确保a0携带新mepc值
++      break;
++
++    case 11:
++      // 更新 mepc 到下一条指令
++      write_csr(mepc, read_csr(mepc) + 4);
++      // 将更新后的 mepc 值读取到 a0 寄存器
++      __asm__ volatile ("csrr a0, mepc");  // handle_trap之后会用a0更新mepc
++      break;
++    
++    default:
++      break;
++    }
++  }
++  
++}
++
++int checker (int hart_id)
++{
++  //================== Initialisation ==================//
++  ghe_asR();
++  ght_set_satp_priv();
++  ghe_go();
++  ghe_initailised(1);
++
++  ghe_perf_ctrl(0x01);
++  ghe_perf_ctrl(0x00);
++
++
++  //===================== Execution =====================//
++  ROCC_INSTRUCTION (1, 0x75); // Record context
++  ROCC_INSTRUCTION (1, 0x73); // Store context from main core
++  ROCC_INSTRUCTION (1, 0x64); // Record PC
++  for (int sel_elu = 0; sel_elu < 2; sel_elu ++){
++    ROCC_INSTRUCTION_S (1, sel_elu, 0x65);
++
++    while (elu_checkstatus() != 0){
++      printf("C%x: Error detected for ELU %x.\r\n", hart_id, sel_elu);
++      ROCC_INSTRUCTION_S (1, sel_elu, 0x63);
++    }
++  }
++  
++  while (ghe_checkght_status() != 0x02){
++    if ((ghe_rsur_status() & 0x18) == 0x08){
++      ROCC_INSTRUCTION (1, 0x60);
++      R_INSTRUCTION_JLR (3, 0x00);
++    }
++  }
++
++
++  ROCC_INSTRUCTION (1, 0x72); // Store context from checker core
++  ROCC_INSTRUCTION (1, 0x60);
++
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++
++
++
++  if(0){
++    uint64_t perf_val = 0;
++    ghe_perf_ctrl(0x07<<1);
++    perf_val = ghe_perf_read();
++    printf("Perf: N.CP = %d \r\n", perf_val);
++
++    ghe_perf_ctrl(0x01<<1);
++    perf_val = ghe_perf_read();
++    printf("Perf: N.Checking = %d \r\n", perf_val);
++
++    ghe_perf_ctrl(0x02<<1);
++    perf_val = ghe_perf_read();
++    printf("Perf: N.PostChecking = %d \r\n", perf_val);
++
++    ghe_perf_ctrl(0x03<<1);
++    perf_val = ghe_perf_read();
++    printf("Perf: N.OtherThread = %d \r\n", perf_val);
++
++    ghe_perf_ctrl(0x04<<1);
++    perf_val = ghe_perf_read();
++    printf("Perf: N.NonChecking = %d \r\n", perf_val);
++  }
++
++
++  
++  while (ghe_checkght_status() != 0x02){
++  }
++
++  ghe_release();
++  ght_unset_satp_priv();
++
++  // uint64_t raw_read = ghe_raw_perf_read();
++  // lock_acquire(&uart_lock);
++  // printf("core %d stalld %" PRIu64 " cycles by RAW \r\n", hart_id, raw_read);
++  // lock_release(&uart_lock);
++  while(1){
++
++  }
++
++  return 0;
++}
++
++
++
++/* Core_1 & 2 thread */
++int __main(void)
++{
++  uint64_t Hart_id = 0;
++  asm volatile ("csrr %0, mhartid"  : "=r"(Hart_id));
++  
++  switch (Hart_id){
++      case 0x01:
++        //configuration
++        csr_software_cfg();
++      
++        //msip software interrupt
++        msip_cfg();
++        mtimecmp_cfg();
++        csr_timer_cfg();
++        checker(Hart_id);
++      break;
++
++      case 0x02:
++        //configuration
++        csr_software_cfg();
++        
++        //msip software interrupt
++        msip_cfg();
++        mtimecmp_cfg();
++        csr_timer_cfg();
++        checker(Hart_id);
++      break;
++
++      case 0x03:
++        //configuration
++        csr_software_cfg();
++        
++        //msip software interrupt
++        msip_cfg();
++        mtimecmp_cfg();
++        csr_timer_cfg();
++        checker(Hart_id);
++      break;
++
++      case 0x04:
++        // //configuration
++        // csr_software_cfg();
++        
++        // //msip software interrupt
++        // msip_cfg();
++        // mtimecmp_cfg();
++        // csr_timer_cfg();
++        checker(Hart_id);
++      break;
++
++      
++      default:
++      break;
++  }
++  
++  idle();
++  return 0;
++}
++
++static uint64_t read_cycles() {
++  uint64_t cycles;
++  asm volatile ("rdcycle %0" : "=r" (cycles));
++  return cycles;
++
++}
++
++int r_ini (int num_checkers){
++  //================== Initialisation ==================//
++  ght_set_numberofcheckers(num_checkers);
++
++  // Shared snapshots
++  // ght_cfg_mapper (0b00001111, 0b0011);
++  // ght_cfg_mapper (0b00010111, 0b0011);
++
++  // ght_cfg_mapper (0b00001111, 0b0011);
++  // ght_cfg_mapper (0b00010111, 0b0011);
++  // ght_cfg_mapper (0b00011111, 0b0110);
++  // ght_cfg_mapper (0b00100111, 0b1100);
++
++  // To do: add RVC commands
++  // ...
++  //================== Initialisation ==================//
++  ght_debug_filter_width(4);
++  lock_acquire(&uart_lock);
++  printf("R: Initialisation is completed!\r\n");
++  lock_release(&uart_lock);
++}
+ 
+ 
+ int __attribute__ ((used))
+@@ -21,6 +493,39 @@ main (int argc __attribute__ ((unused)),
+   int i;
+   volatile int result;
+   int correct;
++  printf("embench go!\n");
++
++  r_ini(NUM_CHECKERS);
++  //configuration
++  csr_software_cfg();
++
++  //msip software interrupt
++  msip_cfg();
++
++  // printf("interrupt test complete!\n");
++  lock_acquire(&uart_lock);
++  printf("Software interrupt test complete!\n");
++  lock_release(&uart_lock);
++
++  while (ght_get_initialisation() == 0){
++    // Wait for the checkers to be completed 
++ 	}
++  uint64_t Hart_id = 0;
++  asm volatile ("csrr %0, mhartid"  : "=r"(Hart_id));
++  lock_acquire(&uart_lock);
++  printf("[Boom-C%x]: Test is now started: \r\n", Hart_id);
++  lock_release(&uart_lock);
++  ghe_perf_ctrl(0x01);
++  ghe_perf_ctrl(0x00); 
++
++  ght_set_satp_priv();
++  mtimecmp_cfg();
++  csr_timer_cfg();
++  ROCC_INSTRUCTION (1, 0x31); // start monitoring
++  ROCC_INSTRUCTION_S (1, 0X01, 0x70); // ISAX_Go
++  //===================== Execution =====================//
++  uint64_t start_cpu = read_cycles();
++  
+ 
+   initialise_board ();
+   initialise_benchmark ();
+@@ -34,6 +539,64 @@ main (int argc __attribute__ ((unused)),
+ 
+   correct = verify_benchmark (result);
+ 
++  //=================== Post execution ===================//
++  
++  ROCC_INSTRUCTION_S (1, 0X02, 0x70); // ISAX_Stop
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  __asm__ volatile("nop");
++  ROCC_INSTRUCTION (1, 0x32); // stop monitoring
++  uint64_t status;
++  while ((status = ght_get_status()) < 0x1FFFF) {
++
++  }
++
++  uint64_t end_cpu = read_cycles();
++  uint64_t perf_val = 0;
++  ghe_perf_ctrl(0x07<<1);
++  perf_val = ghe_perf_read();
++  lock_acquire(&uart_lock);
++  printf("CPU execution took %" PRIu64 "cycles\n", end_cpu - start_cpu);
++  lock_release(&uart_lock);
++  // printf("CPU conv end at %" PRIu64 " cycle\n", end_cpu);
++
++  
++  lock_acquire(&uart_lock);
++  printf("Boom-Perf: Execution-time = %d \r\n", perf_val);
++  lock_release(&uart_lock);
++
++  ghe_perf_ctrl(0x01<<1);
++  perf_val = ghe_perf_read();
++  lock_acquire(&uart_lock);
++  printf("Boom-Perf: Sch-bloc-time = %d \r\n", perf_val);
++  printf("[Boom-C%x]: Test is now completed. \r\n", Hart_id);
++  lock_release(&uart_lock);
++
++  ght_unset_satp_priv();
++  ROCC_INSTRUCTION (1, 0x30); // reset monitoring
+   return (!correct);
+ 
+ }				/* main () */
+--- /dev/null
++++ b/submodule-changes.patch
+diff --git a/submodule-changes.patch b/submodule-changes.patch
+new file mode 100644
+index 0000000..c8407b1
+--- /dev/null
++++ b/submodule-changes.patch
+@@ -0,0 +1,613 @@
++diff --git a/build_all.py b/build_all.py
++index c154a28..10aaf15 100755
++--- a/build_all.py
+++++ b/build_all.py
++@@ -538,6 +538,7 @@ def compile_support():
++ 
++     # Compile each general support file in the benchmark
++     succeeded &= compile_file('beebsc', gp['supportdir'], gp['bd_supportdir'])
+++    succeeded &= compile_file('meek', gp['supportdir'], gp['bd_supportdir'])
++     succeeded &= compile_file('main', gp['supportdir'], gp['bd_supportdir'])
++ 
++     # Compile dummy files that are needed
++@@ -611,7 +612,7 @@ def create_link_binlist(abs_bd):
++                 )
++ 
++     # Add generic support
++-    for supp in ['main.o', 'beebsc.o']:
+++    for supp in ['main.o', 'beebsc.o','meek.o']:
++         binf = os.path.join(gp['bd_supportdir'], supp)
++         if os.path.isfile(binf):
++             binlist.extend(gp['ld_input_pattern'].format(binf).split())
++diff --git a/support/main.c b/support/main.c
++index fcddf29..b18da89 100644
++--- a/support/main.c
+++++ b/support/main.c
++@@ -1,3 +1,57 @@
+++/* Common main.c for the benchmarks
+++
+++   Copyright (C) 2014 Embecosm Limited and University of Bristol
+++   Copyright (C) 2018-2019 Embecosm Limited
+++
+++   Contributor: James Pallister <james.pallister@bristol.ac.uk>
+++   Contributor: Jeremy Bennett <jeremy.bennett@embecosm.com>
+++
+++   This file is part of Embench and was formerly part of the Bristol/Embecosm
+++   Embedded Benchmark Suite.
+++
+++   SPDX-License-Identifier: GPL-3.0-or-later */
+++
+++// #include "support.h"
+++// #include <stdlib.h>
+++// #include <stdio.h>
+++// #include <stdint.h>
+++// #include <inttypes.h>
+++// #include "rocc.h"
+++// #include "meek.h"
+++
+++// #define U32         *(volatile unsigned int *)
+++
+++
+++
+++// int __attribute__ ((used))
+++// main (int argc __attribute__ ((unused)),
+++//       char *argv[] __attribute__ ((unused)))
+++// {
+++//   int i;
+++//   volatile int result;
+++//   int correct;
+++//   printf("embench go!\n");
+++
+++
+++
+++  
+++
+++//   initialise_board ();
+++//   initialise_benchmark ();
+++//   warm_caches (WARMUP_HEAT);
+++//   rStartup();
+++//   start_trigger ();
+++//   result = benchmark ();
+++//   stop_trigger ();
+++//   rCleanup();
+++//   /* bmarks that use arrays will check a global array rather than int result */
+++
+++//   correct = verify_benchmark (result);
+++
+++//   return (!correct);
+++
+++// }				/* main () */
+++
++ /* Common main.c for the benchmarks
++ 
++    Copyright (C) 2014 Embecosm Limited and University of Bristol
++@@ -12,6 +66,424 @@
++    SPDX-License-Identifier: GPL-3.0-or-later */
++ 
++ #include "support.h"
+++#include <stdlib.h>
+++#include <stdio.h>
+++#include <stdint.h>
+++#include <inttypes.h>
+++#include "rocc.h"
+++#include "ghe.h"
+++#include "ght.h"
+++#include "spin_lock.h"
+++#include <riscv-pk/encoding.h>
+++
+++#define U32         *(volatile unsigned int *)
+++#define msip_offest 4
+++#define CLINT_BASE      0x2000000
+++#define MSIP_OFFSET(h)  (h * 4)
+++#define TIMECMP_OFFSET(h) (0x4000 + h * 8)
+++#define MTIME_ADDR      (CLINT_BASE + 0xBFF8)
+++#define NUM_CHECKERS 4
+++
+++volatile int timer_flags[4] = {0};
+++
+++void handle_trap();
+++void csr_cfg();
+++void mtimecmp_cfg();
+++void msip_cfg();
+++
+++int uart_lock;
+++
+++// 安全读取64位mtime
+++uint64_t get_mtime() {
+++  volatile uint32_t* mtime_low = (uint32_t*)MTIME_ADDR;
+++  volatile uint32_t* mtime_high = (uint32_t*)(MTIME_ADDR + 4);
+++  uint32_t hi, lo;
+++  do {
+++      hi = *mtime_high;
+++      lo = *mtime_low;
+++  } while (hi != *mtime_high);
+++  return ((uint64_t)hi << 32) | lo;
+++}
+++
+++// 核心独立的软件中断配置
+++void msip_cfg() {
+++  uint64_t hart_id;
+++  asm volatile ("csrr %0, mhartid" : "=r"(hart_id));
+++  
+++  volatile uint32_t* msip = (uint32_t*)(CLINT_BASE + MSIP_OFFSET(hart_id));
+++  *msip = 0x1; // 触发当前核心的中断
+++  lock_acquire(&uart_lock);
+++  printf("Core%d: MSIP at 0x%p\n", hart_id, msip);
+++  lock_release(&uart_lock);
+++}
+++
+++// 核心独立的定时器配置
+++void mtimecmp_cfg() {
+++  uint64_t hart_id;
+++  asm volatile ("csrr %0, mhartid" : "=r"(hart_id));
+++  
+++  volatile uint32_t* mtimecmp_low = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
+++  volatile uint32_t* mtimecmp_high = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id) + 4);
+++  
+++  uint64_t current = get_mtime();
+++  uint64_t cmp_val = current + 0x40; // 1M cycles间隔
+++  
+++  *mtimecmp_low = (uint32_t)cmp_val;
+++  *mtimecmp_high = (uint32_t)(cmp_val >> 32);
+++  lock_acquire(&uart_lock);
+++  printf("Core%d: mtimecmp@0x%p\n", hart_id, mtimecmp_low);
+++  lock_release(&uart_lock);
+++}
+++
+++// CSR interrupt configuration function
+++void csr_timer_cfg()
+++{
+++  uint64_t hart_id;
+++  asm volatile ("csrr %0, mhartid" : "=r"(hart_id));
+++  unsigned int csr_tmp;
+++  //mie.MEIE
+++  csr_tmp = read_csr(mie);
+++  // U32(DEBUG_VAL) = csr_tmp;
+++  //write_csr(mie,0x0);
+++  write_csr(mie,(csr_tmp | 0x80));
+++  // lock_acquire(&uart_lock);
+++  // printf("Core:%d: Timer configuration complete\n", hart_id);
+++  // lock_release(&uart_lock);
+++}
+++void csr_software_cfg()
+++{
+++  uint64_t hart_id;
+++  asm volatile ("csrr %0, mhartid" : "=r"(hart_id));
+++  unsigned int csr_tmp;
+++  //mie.MEIE
+++  csr_tmp = read_csr(mie);
+++  // U32(DEBUG_VAL) = csr_tmp;
+++  //write_csr(mie,0x0);
+++  write_csr(mie,(csr_tmp | 0x8));
+++  //mstatus.MIE
+++  csr_tmp = read_csr(mstatus);
+++  // U32(DEBUG_VAL) = csr_tmp;
+++  //write_csr(mstatus,0x0);
+++  write_csr(mstatus,(csr_tmp | 0x8));
+++  lock_acquire(&uart_lock);
+++  printf("Core:%d: Software configuration complete\n", hart_id);
+++  lock_release(&uart_lock);
+++}
+++
+++void handle_trap() {
+++  // uint64_t saved_mepc = mepc; // 立即保存到局部变量
+++  // 进入中断处理
+++  // U32(DEBUG_SIG) = 0x5;
+++  uint64_t hart_id;
+++  asm volatile ("csrr %0, mhartid" : "=r"(hart_id));
+++
+++  uint64_t mcause_val = read_csr(mcause);
+++  uint64_t interrupt = mcause_val >> 63;  // 最高位表示中断还是异常
+++  uint64_t cause_code = mcause_val & 0x7FFFFFFFFFFFFFFF;
+++
+++  if(interrupt){
+++    // 处理软件中断
+++    if ((read_csr(mip) & 0x8) != 0) { // 检查MSIP
+++      // U32(0x2000000) = 0x0;        // 清除软件中断
+++      volatile uint32_t* msip = (uint32_t*)(CLINT_BASE + MSIP_OFFSET(hart_id));// 清除当前核心的MSIP
+++      *msip = 0x0;
+++    }
+++    // // 处理定时器中断
+++    // else if((read_csr(mip) & 0x80) != 0) {
+++    //   // 安全读取当前时间
+++    //   unsigned long long current_time = get_mtime();
+++    //   // U32(0x2004000) = (unsigned int)(current_time + 0x50);     // 写入低32位
+++    //   // U32(0x2004004) = (unsigned int)((current_time + 0x50) >> 32); // 写入高32位
+++    //   volatile uint32_t* mtimecmp = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
+++    //   uint64_t new_cmp = get_mtime() + 0x10;
+++    //   *(uint64_t*)mtimecmp = new_cmp; // 直接写入64位
+++    // }
+++  
+++    // 处理定时器中断
+++    else if ((read_csr(mip) & 0x80) != 0) { // 检查MTIP
+++      // 安全读取当前时间
+++      unsigned long long current_time = get_mtime();
+++      if(hart_id == 0){
+++        timer_flags[0] += 1;
+++        // 更新mtimecmp（当前时间 + 间隔0x10）
+++        if(timer_flags[0] < 100){
+++          // U32(0x2004000) = (unsigned int)(current_time + 0x50);     // 写入低32位
+++          // U32(0x2004004) = (unsigned int)((current_time + 0x50) >> 32); // 写入高32位
+++          volatile uint32_t* mtimecmp = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
+++          uint64_t new_cmp = get_mtime() + 0x50;
+++          *(uint64_t*)mtimecmp = new_cmp; // 直接写入64位
+++        }
+++        // 达到条件后禁用定时器中断
+++        else if (timer_flags[0] >= 100) {
+++            unsigned int mie_val = read_csr(mie);
+++            write_csr(mie, mie_val & ~0x80); // 清除 MTIE (Bit7)
+++            // printf("Timer interrupts disabled.\n");
+++            // 清除 MIE 位（Bit3）
+++            unsigned int mstatus_val = read_csr(mstatus);
+++            write_csr(mstatus, mstatus_val & ~0x8); 
+++        }
+++      }
+++      else if(hart_id == 1){
+++        timer_flags[1] += 1;
+++        // 更新mtimecmp（当前时间 + 间隔0x10）
+++        if(timer_flags[1] < 100){
+++          // U32(0x2004000) = (unsigned int)(current_time + 0x50);     // 写入低32位
+++          // U32(0x2004004) = (unsigned int)((current_time + 0x50) >> 32); // 写入高32位
+++          volatile uint32_t* mtimecmp = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
+++          uint64_t new_cmp = get_mtime() + 0x50;
+++          *(uint64_t*)mtimecmp = new_cmp; // 直接写入64位
+++        }
+++        // 达到条件后禁用定时器中断
+++        else if (timer_flags[1] >= 100) {
+++            unsigned int mie_val = read_csr(mie);
+++            write_csr(mie, mie_val & ~0x80); // 清除 MTIE (Bit7)
+++            // printf("Timer interrupts disabled.\n");
+++            // 清除 MIE 位（Bit3）
+++            unsigned int mstatus_val = read_csr(mstatus);
+++            write_csr(mstatus, mstatus_val & ~0x8); 
+++        }
+++      }
+++      else if(hart_id == 2){
+++        timer_flags[2] += 1;
+++        // 更新mtimecmp（当前时间 + 间隔0x10）
+++        if(timer_flags[2] < 100){
+++          // U32(0x2004000) = (unsigned int)(current_time + 0x50);     // 写入低32位
+++          // U32(0x2004004) = (unsigned int)((current_time + 0x50) >> 32); // 写入高32位
+++          volatile uint32_t* mtimecmp = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
+++          uint64_t new_cmp = get_mtime() + 0x50;
+++          *(uint64_t*)mtimecmp = new_cmp; // 直接写入64位
+++        }
+++        // 达到条件后禁用定时器中断
+++        else if (timer_flags[2] >= 100) {
+++            unsigned int mie_val = read_csr(mie);
+++            write_csr(mie, mie_val & ~0x80); // 清除 MTIE (Bit7)
+++            // printf("Timer interrupts disabled.\n");
+++            // 清除 MIE 位（Bit3）
+++            unsigned int mstatus_val = read_csr(mstatus);
+++            write_csr(mstatus, mstatus_val & ~0x8); 
+++        }
+++      }
+++      else if(hart_id == 3){
+++        timer_flags[3] += 1;
+++        // 更新mtimecmp（当前时间 + 间隔0x10）
+++        if(timer_flags[3] < 100){
+++          // U32(0x2004000) = (unsigned int)(current_time + 0x50);     // 写入低32位
+++          // U32(0x2004004) = (unsigned int)((current_time + 0x50) >> 32); // 写入高32位
+++          volatile uint32_t* mtimecmp = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
+++          uint64_t new_cmp = get_mtime() + 0x50;
+++          *(uint64_t*)mtimecmp = new_cmp; // 直接写入64位
+++        }
+++        // 达到条件后禁用定时器中断
+++        else if (timer_flags[3] >= 100) {
+++            unsigned int mie_val = read_csr(mie);
+++            write_csr(mie, mie_val & ~0x80); // 清除 MTIE (Bit7)
+++            // printf("Timer interrupts disabled.\n");
+++            // 清除 MIE 位（Bit3）
+++            unsigned int mstatus_val = read_csr(mstatus);
+++            write_csr(mstatus, mstatus_val & ~0x8); 
+++        }
+++      }
+++    }
+++    // 将更新后的 mepc 值读取到 a0 寄存器
+++   __asm__ volatile ("csrr a0, mepc");  // handle_trap之后会用a0更新mepc
+++  } else {
+++    switch (cause_code)
+++    {
+++    case 2:  // 处理非法指令异常
+++      write_csr(mepc, 0x80000050);       // 强制跳转到指定地址
+++      __asm__ volatile ("csrr a0, mepc"); // 确保a0携带新mepc值
+++      break;
+++
+++    case 11:
+++      // 更新 mepc 到下一条指令
+++      write_csr(mepc, read_csr(mepc) + 4);
+++      // 将更新后的 mepc 值读取到 a0 寄存器
+++      __asm__ volatile ("csrr a0, mepc");  // handle_trap之后会用a0更新mepc
+++      break;
+++    
+++    default:
+++      break;
+++    }
+++  }
+++  
+++}
+++
+++int checker (int hart_id)
+++{
+++  //================== Initialisation ==================//
+++  ghe_asR();
+++  ght_set_satp_priv();
+++  ghe_go();
+++  ghe_initailised(1);
+++
+++  ghe_perf_ctrl(0x01);
+++  ghe_perf_ctrl(0x00);
+++
+++
+++  //===================== Execution =====================//
+++  ROCC_INSTRUCTION (1, 0x75); // Record context
+++  ROCC_INSTRUCTION (1, 0x73); // Store context from main core
+++  ROCC_INSTRUCTION (1, 0x64); // Record PC
+++  for (int sel_elu = 0; sel_elu < 2; sel_elu ++){
+++    ROCC_INSTRUCTION_S (1, sel_elu, 0x65);
+++
+++    while (elu_checkstatus() != 0){
+++      printf("C%x: Error detected for ELU %x.\r\n", hart_id, sel_elu);
+++      ROCC_INSTRUCTION_S (1, sel_elu, 0x63);
+++    }
+++  }
+++  
+++  while (ghe_checkght_status() != 0x02){
+++    if ((ghe_rsur_status() & 0x18) == 0x08){
+++      ROCC_INSTRUCTION (1, 0x60);
+++      R_INSTRUCTION_JLR (3, 0x00);
+++    }
+++  }
+++
+++
+++  ROCC_INSTRUCTION (1, 0x72); // Store context from checker core
+++  ROCC_INSTRUCTION (1, 0x60);
+++
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++
+++
+++
+++  if(0){
+++    uint64_t perf_val = 0;
+++    ghe_perf_ctrl(0x07<<1);
+++    perf_val = ghe_perf_read();
+++    printf("Perf: N.CP = %d \r\n", perf_val);
+++
+++    ghe_perf_ctrl(0x01<<1);
+++    perf_val = ghe_perf_read();
+++    printf("Perf: N.Checking = %d \r\n", perf_val);
+++
+++    ghe_perf_ctrl(0x02<<1);
+++    perf_val = ghe_perf_read();
+++    printf("Perf: N.PostChecking = %d \r\n", perf_val);
+++
+++    ghe_perf_ctrl(0x03<<1);
+++    perf_val = ghe_perf_read();
+++    printf("Perf: N.OtherThread = %d \r\n", perf_val);
+++
+++    ghe_perf_ctrl(0x04<<1);
+++    perf_val = ghe_perf_read();
+++    printf("Perf: N.NonChecking = %d \r\n", perf_val);
+++  }
+++
+++
+++  
+++  while (ghe_checkght_status() != 0x02){
+++  }
+++
+++  ghe_release();
+++  ght_unset_satp_priv();
+++
+++  // uint64_t raw_read = ghe_raw_perf_read();
+++  // lock_acquire(&uart_lock);
+++  // printf("core %d stalld %" PRIu64 " cycles by RAW \r\n", hart_id, raw_read);
+++  // lock_release(&uart_lock);
+++  while(1){
+++
+++  }
+++
+++  return 0;
+++}
+++
+++
+++
+++/* Core_1 & 2 thread */
+++int __main(void)
+++{
+++  uint64_t Hart_id = 0;
+++  asm volatile ("csrr %0, mhartid"  : "=r"(Hart_id));
+++  
+++  switch (Hart_id){
+++      case 0x01:
+++        //configuration
+++        csr_software_cfg();
+++      
+++        //msip software interrupt
+++        msip_cfg();
+++        mtimecmp_cfg();
+++        csr_timer_cfg();
+++        checker(Hart_id);
+++      break;
+++
+++      case 0x02:
+++        //configuration
+++        csr_software_cfg();
+++        
+++        //msip software interrupt
+++        msip_cfg();
+++        mtimecmp_cfg();
+++        csr_timer_cfg();
+++        checker(Hart_id);
+++      break;
+++
+++      case 0x03:
+++        //configuration
+++        csr_software_cfg();
+++        
+++        //msip software interrupt
+++        msip_cfg();
+++        mtimecmp_cfg();
+++        csr_timer_cfg();
+++        checker(Hart_id);
+++      break;
+++
+++      case 0x04:
+++        // //configuration
+++        // csr_software_cfg();
+++        
+++        // //msip software interrupt
+++        // msip_cfg();
+++        // mtimecmp_cfg();
+++        // csr_timer_cfg();
+++        checker(Hart_id);
+++      break;
+++
+++      
+++      default:
+++      break;
+++  }
+++  
+++  idle();
+++  return 0;
+++}
+++
+++static uint64_t read_cycles() {
+++  uint64_t cycles;
+++  asm volatile ("rdcycle %0" : "=r" (cycles));
+++  return cycles;
+++
+++}
+++
+++int r_ini (int num_checkers){
+++  //================== Initialisation ==================//
+++  ght_set_numberofcheckers(num_checkers);
+++
+++  // Shared snapshots
+++  // ght_cfg_mapper (0b00001111, 0b0011);
+++  // ght_cfg_mapper (0b00010111, 0b0011);
+++
+++  // ght_cfg_mapper (0b00001111, 0b0011);
+++  // ght_cfg_mapper (0b00010111, 0b0011);
+++  // ght_cfg_mapper (0b00011111, 0b0110);
+++  // ght_cfg_mapper (0b00100111, 0b1100);
+++
+++  // To do: add RVC commands
+++  // ...
+++  //================== Initialisation ==================//
+++  ght_debug_filter_width(4);
+++  lock_acquire(&uart_lock);
+++  printf("R: Initialisation is completed!\r\n");
+++  lock_release(&uart_lock);
+++}
++ 
++ 
++ int __attribute__ ((used))
++@@ -21,6 +493,39 @@ main (int argc __attribute__ ((unused)),
++   int i;
++   volatile int result;
++   int correct;
+++  printf("embench go!\n");
+++
+++  r_ini(NUM_CHECKERS);
+++  //configuration
+++  csr_software_cfg();
+++
+++  //msip software interrupt
+++  msip_cfg();
+++
+++  // printf("interrupt test complete!\n");
+++  lock_acquire(&uart_lock);
+++  printf("Software interrupt test complete!\n");
+++  lock_release(&uart_lock);
+++
+++  while (ght_get_initialisation() == 0){
+++    // Wait for the checkers to be completed 
+++ 	}
+++  uint64_t Hart_id = 0;
+++  asm volatile ("csrr %0, mhartid"  : "=r"(Hart_id));
+++  lock_acquire(&uart_lock);
+++  printf("[Boom-C%x]: Test is now started: \r\n", Hart_id);
+++  lock_release(&uart_lock);
+++  ghe_perf_ctrl(0x01);
+++  ghe_perf_ctrl(0x00); 
+++
+++  ght_set_satp_priv();
+++  mtimecmp_cfg();
+++  csr_timer_cfg();
+++  ROCC_INSTRUCTION (1, 0x31); // start monitoring
+++  ROCC_INSTRUCTION_S (1, 0X01, 0x70); // ISAX_Go
+++  //===================== Execution =====================//
+++  uint64_t start_cpu = read_cycles();
+++  
++ 
++   initialise_board ();
++   initialise_benchmark ();
++@@ -34,6 +539,64 @@ main (int argc __attribute__ ((unused)),
++ 
++   correct = verify_benchmark (result);
++ 
+++  //=================== Post execution ===================//
+++  
+++  ROCC_INSTRUCTION_S (1, 0X02, 0x70); // ISAX_Stop
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  __asm__ volatile("nop");
+++  ROCC_INSTRUCTION (1, 0x32); // stop monitoring
+++  uint64_t status;
+++  while ((status = ght_get_status()) < 0x1FFFF) {
+++
+++  }
+++
+++  uint64_t end_cpu = read_cycles();
+++  uint64_t perf_val = 0;
+++  ghe_perf_ctrl(0x07<<1);
+++  perf_val = ghe_perf_read();
+++  lock_acquire(&uart_lock);
+++  printf("CPU execution took %" PRIu64 "cycles\n", end_cpu - start_cpu);
+++  lock_release(&uart_lock);
+++  // printf("CPU conv end at %" PRIu64 " cycle\n", end_cpu);
+++
+++  
+++  lock_acquire(&uart_lock);
+++  printf("Boom-Perf: Execution-time = %d \r\n", perf_val);
+++  lock_release(&uart_lock);
+++
+++  ghe_perf_ctrl(0x01<<1);
+++  perf_val = ghe_perf_read();
+++  lock_acquire(&uart_lock);
+++  printf("Boom-Perf: Sch-bloc-time = %d \r\n", perf_val);
+++  printf("[Boom-C%x]: Test is now completed. \r\n", Hart_id);
+++  lock_release(&uart_lock);
+++
+++  ght_unset_satp_priv();
+++  ROCC_INSTRUCTION (1, 0x30); // reset monitoring
++   return (!correct);
++ 
++ }				/* main () */
+--- /dev/null
++++ b/support/ghe.h
+diff --git a/support/ghe.h b/support/ghe.h
+new file mode 100644
+index 0000000..0203b68
+--- /dev/null
++++ b/support/ghe.h
+@@ -0,0 +1,185 @@
++#include <stdint.h>
++
++#define GHE_FULL 0x02
++#define GHE_EMPTY 0x01
++
++
++static inline uint64_t ghe_status ()
++{
++  uint64_t status;
++  ROCC_INSTRUCTION_D (1, status, 0x00);
++  return status; 
++  // 0b01: empty; 
++  // 0b10: full;
++  // 0b00: data buffered;
++  // 0b11: error
++}
++
++static inline uint64_t ghe_asR ()
++{
++  ROCC_INSTRUCTION_S (1, 0x01, 0x01);
++}
++
++
++
++static inline uint64_t ghe_top_func_opcode ()
++{
++  uint64_t packet = 0x00;
++  if (ghe_status() != 0x01) {
++    ROCC_INSTRUCTION_D (1, packet, 0x0A);
++  }
++  return packet;
++}
++
++static inline uint64_t ghe_pop_func_opcode ()
++{
++  uint64_t packet = 0x00;
++  if (ghe_status() != 0x01) {
++    ROCC_INSTRUCTION_D (1, packet, 0x0B);
++  }
++  return packet;
++}
++
++
++static inline uint64_t ghe_top_data ()
++{
++  uint64_t packet = 0x00;
++  if (ghe_status() != 0x01) {
++    ROCC_INSTRUCTION_D (1, packet, 0x0C);
++  }
++  return packet;
++}
++
++
++static inline uint64_t ghe_pop_data ()
++{
++  uint64_t packet = 0x00;
++  if (ghe_status() != 0x01) {
++    ROCC_INSTRUCTION_D (1, packet, 0x0D);
++  }
++  return packet;
++}
++
++
++static inline uint64_t ghe_checkght_status ()
++{
++  uint64_t status;
++  ROCC_INSTRUCTION_D (1, status, 0x07);
++  return status; 
++}
++
++
++static inline void ghe_complete ()
++{
++  // uint64_t get_status = 0;
++  // uint64_t set_status = 0x01;
++  ROCC_INSTRUCTION (1, 0x41);
++}
++
++static inline void ghe_release ()
++{
++  // uint64_t get_status = 0;
++  // uint64_t set_status = 0xFF;
++  ROCC_INSTRUCTION (1, 0x43);
++}
++
++static inline void ghe_go ()
++{
++  // uint64_t get_status = 0;
++  // uint64_t set_status = 0;
++  ROCC_INSTRUCTION (1, 0x40);
++}
++
++static inline uint64_t ghe_agg_status ()
++{
++  uint64_t status;
++  ROCC_INSTRUCTION_D (1, status, 0x10);
++  return status;
++  // 0b01: empty; 
++  // 0b10: full;
++  // 0b00: data buffered;
++  // 0b11: error
++}
++
++static inline void ghe_agg_push (uint64_t header, uint64_t payload)
++{
++  ROCC_INSTRUCTION_SS (1, header, payload, 0x11);
++}
++
++static inline uint64_t ghe_sch_status ()
++{
++  uint64_t status;
++  ROCC_INSTRUCTION_D (1, status, 0x20);
++  return status; 
++  // 0b01: empty; 
++  // 0b10: full;
++  // 0b00: data buffered;
++  // 0b11: error
++}
++
++static inline void ghe_initailised (uint64_t if_initailised)
++{
++  if (if_initailised == 0){
++    ROCC_INSTRUCTION (1, 0x50);
++  }
++
++  if (if_initailised == 1){
++    ROCC_INSTRUCTION (1, 0x51);
++  }
++}
++
++static inline uint64_t ghe_get_bufferdepth ()
++{
++  uint64_t depth;
++  ROCC_INSTRUCTION_D (1, depth, 0x25);
++  return depth;
++}
++
++/* RSU Features */
++static inline uint64_t ghe_rsur_status ()
++{
++  uint64_t status;
++  ROCC_INSTRUCTION_D (1, status, 0x61);
++  return status;
++	  // 0b00: idle
++    // 0b01: snapshot received 
++    // 0b11: snapshot and results recieved
++    // 0b10: wrong status
++}
++
++static inline uint64_t elu_checkstatus ()
++{
++  uint64_t status;
++  ROCC_INSTRUCTION_D (1, status, 0x66);
++  return status; 
++}
++
++
++static inline void ghe_perf_ctrl (uint64_t ctrl_code)
++{
++  ROCC_INSTRUCTION_S (1,ctrl_code, 0x76);
++}
++
++
++static inline uint64_t ghe_perf_read ()
++{
++  uint64_t perf_val;
++  ROCC_INSTRUCTION_D (1, perf_val, 0x77);
++  return perf_val;
++}
++
++static inline uint64_t ghe_csr_perf_read (int csr_index)
++{
++  uint64_t perf_val;
++  ROCC_INSTRUCTION_DS (1, perf_val, csr_index, 0x55);
++  return perf_val;
++}
++
++static inline uint64_t trap_in ()
++{
++  ROCC_INSTRUCTION_S (1, 0x01, 0x91);
++}
++static inline uint64_t trap_out ()
++{
++  ROCC_INSTRUCTION_S (1, 0x01, 0x90);
++}
+\ No newline at end of file
+--- /dev/null
++++ b/support/ght.h
+diff --git a/support/ght.h b/support/ght.h
+new file mode 100644
+index 0000000..e5f4a12
+--- /dev/null
++++ b/support/ght.h
+@@ -0,0 +1,216 @@
++#include <stdint.h>
++
++#define TRUE 0x01
++#define FALSE 0x00
++#define NUM_CORES 4
++#define GC_DEBUG 1
++
++
++// #define DEPTH_GHE 256
++
++#define GHT_FULL 0x02
++#define GHT_EMPTY 0x01
++
++// uint64_t debug_bp_reset ()
++// {
++//   ROCC_INSTRUCTION (1, 0x2d);
++// }
++
++// uint64_t debug_bp_checker ()
++// {
++//   uint64_t bp_checker;
++//   ROCC_INSTRUCTION_D (1, bp_checker, 0x1d);
++//   return bp_checker;
++// }
++
++// uint64_t debug_bp_cdc ()
++// {
++//   uint64_t bp_cdc;
++//   ROCC_INSTRUCTION_D (1, bp_cdc, 0x1e);
++//   return bp_cdc;
++// }
++
++// uint64_t debug_bp_filter ()
++// {
++//   uint64_t bp_filter;
++//   ROCC_INSTRUCTION_D (1, bp_filter, 0x1e);
++//   return bp_filter;
++// }
++
++// static inline uint64_t debug_mcounter ()
++// {
++//   uint64_t mcounter;
++//   ROCC_INSTRUCTION_D (1, mcounter, 0x19);
++//   return mcounter;
++// }
++
++// static inline uint64_t debug_icounter ()
++// {
++//   uint64_t icounter;
++//   ROCC_INSTRUCTION_D (1, icounter, 0x1a);
++//   return icounter;
++// }
++
++// static inline uint64_t debug_gcounter ()
++// {
++//   uint64_t icounter;
++//   ROCC_INSTRUCTION_D (1, icounter, 0x23);
++//   return icounter;
++// }
++
++/*
++static inline void ght_set_status_00 ()
++{
++  ROCC_INSTRUCTION (1, 0x30);
++}
++
++static inline void ght_set_status_01 ()
++{
++  ROCC_INSTRUCTION (1, 0x31);
++}
++
++static inline void ght_set_status_02 ()
++{
++  ROCC_INSTRUCTION (1, 0x32);
++}
++*/
++
++static inline void ght_set_status (uint64_t index)
++{
++  if (index == 0){
++    ROCC_INSTRUCTION (1, 0x30);
++  }
++
++  if (index == 1){
++    ROCC_INSTRUCTION (1, 0x31);
++  }
++
++  if (index == 2){
++    ROCC_INSTRUCTION (1, 0x32);
++  }
++
++  if (index == 3){
++    ROCC_INSTRUCTION (1, 0x33);
++  }
++
++  if (index == 4){
++    ROCC_INSTRUCTION (1, 0x34);
++  }
++
++}
++
++static inline uint64_t ght_get_status ()
++{
++  uint64_t get_status;
++  ROCC_INSTRUCTION_DSS (1, get_status, 0X00, 0X00, 0x06);
++  return get_status;
++}
++
++static inline uint64_t ght_get_satp ()
++{
++  uint64_t get_satp;
++  ROCC_INSTRUCTION_DSS (1, get_satp, 0X00, 0X00, 0x17);
++  return get_satp;
++}
++
++static inline uint64_t ght_get_priv ()
++{
++  uint64_t get_priv;
++  ROCC_INSTRUCTION_DSS (1, get_priv, 0X00, 0X00, 0x18);
++  return get_priv;
++}
++
++static inline void ght_set_satp_priv ()
++{
++  ROCC_INSTRUCTION_S (1, 0x01, 0x16);
++}
++
++static inline void ght_unset_satp_priv ()
++{
++  ROCC_INSTRUCTION_S (1, 0x02, 0x16);
++}
++
++static inline uint64_t ght_get_buffer_status ()
++{
++  uint64_t get_buffer_status;
++  ROCC_INSTRUCTION_DSS (1, get_buffer_status, 0X00, 0X00, 0x08);
++  return get_buffer_status;
++}
++
++static inline void ght_cfg_filter (uint64_t index, uint64_t func, uint64_t opcode, uint64_t sel_d)
++{
++  uint64_t set_ref;
++  set_ref = ((index & 0x1f)<<4) | ((sel_d & 0xf)<<17) | ((opcode & 0x7f)<<21) | ((func & 0xf)<<28) | 0x02;
++  ROCC_INSTRUCTION_SS (1, set_ref, 0X02, 0x06);
++}
++
++static inline void ght_cfg_filter_rvc (uint64_t index, uint64_t func, uint64_t opcode, uint64_t msb, uint64_t sel_d)
++{
++  uint64_t set_ref;
++  set_ref = ((index & 0x1f)<<4) | ((sel_d & 0xf)<<17) | (((opcode|((msb&1)<<2)) & 0x7f)<<21) | (((func|0x8) & 0xf)<<28) | 0x02;
++  ROCC_INSTRUCTION_SS (1, set_ref, 0X02, 0x06);
++}
++
++static inline void ght_cfg_se (uint64_t se_id, uint64_t end_id, uint64_t policy, uint64_t start_id)
++{
++  uint64_t set_se;
++  set_se = ((se_id & 0x1f)<<4) | ((start_id & 0xf)<<17) | ((policy & 0x7f)<<21) | ((end_id & 0xf)<<28) | 0x04;
++  ROCC_INSTRUCTION_SS (1, set_se, 0X02, 0x06);
++}
++
++static inline void ght_cfg_mapper (uint64_t inst_type, uint64_t ses_receiving_inst)
++{
++  uint64_t set_mapper;
++  set_mapper = ((inst_type & 0xff)<<4) | ((ses_receiving_inst & 0xFFFF)<<16) | 0x03;
++  ROCC_INSTRUCTION_SS (1, set_mapper, 0X02, 0x06);
++}
++
++static inline void ghm_cfg_agg (uint64_t agg_core_id)
++{
++  uint64_t agg_core_set;
++  agg_core_set = ((agg_core_id & 0xffff)<<16) | 0x08;
++  ROCC_INSTRUCTION_SS (1, agg_core_set, 0X02, 0x06);
++}
++
++static inline void ght_debug_filter_width (uint64_t width)
++{
++  uint64_t set_debug_width;
++  set_debug_width = ((width & 0xf)<<4) | 0x05;
++  ROCC_INSTRUCTION_SS (1, set_debug_width, 0X02, 0x06);
++}
++
++
++
++void idle()
++{
++  while(1){};
++}
++
++static inline uint64_t ght_get_initialisation ()
++{
++  uint64_t get_status;
++  ROCC_INSTRUCTION_D (1, get_status, 0x1b);
++  return get_status;
++}
++
++static inline void ght_set_numberofcheckers (uint64_t num)
++{
++  ROCC_INSTRUCTION_S (1, num, 0x1c);
++}
++
++
++static inline void r_set_corex_p_s (uint64_t core_id)
++{
++  // Core x's packets
++  uint64_t mask = core_id << 3;
++  ght_cfg_mapper (0b10000001 | mask, 0b0001 << (core_id - 1));
++  ght_cfg_mapper (0b10000010 | mask, 0b0001 << (core_id - 1));
++  ght_cfg_mapper (0b10000011 | mask, 0b0001 << (core_id - 1));
++  ght_cfg_mapper (0b01000001 | mask, 0b0001 << (core_id - 1));
++  ght_cfg_mapper (0b01000010 | mask, 0b0001 << (core_id - 1));
++  ght_cfg_mapper (0b01000011 | mask, 0b0001 << (core_id - 1));
++  // Core x's snapshot
++  ght_cfg_mapper (0b10000111 | mask, 0b0001 << (core_id - 1));
++  ght_cfg_mapper (0b01000111 | mask, 0b0001 << (core_id - 1));
++  ght_cfg_mapper (0b11000111 | mask, 0b0001 << (core_id - 1));
++}
+\ No newline at end of file
+--- /dev/null
++++ b/support/meek.c
+diff --git a/support/meek.c b/support/meek.c
+new file mode 100644
+index 0000000..7506cfb
+--- /dev/null
++++ b/support/meek.c
+@@ -0,0 +1,685 @@
++// #ifndef _GNU_SOURCE
++// 	#define _GNU_SOURCE             /* See feature_test_macros(7) */
++// #endif
++
++// #define NUM_CHECKERS 4
++// #include "meek.h"
++// #include <riscv-pk/encoding.h>
++// #include <stdio.h>
++// #include <stdlib.h>
++// #include "rocc.h"
++// #include "spin_lock.h"
++// #include "ght.h"
++// #include "ghe.h"
++// #include "tasks.h"
++// size_t total_cycle_s  =0;
++// size_t total_commit_s =0;
++// size_t total_issue_s  =0;
++// size_t Fetch_Bubble_s =0;
++// size_t Load_commit_s  =0;
++// size_t Store_commit_s =0;
++// size_t fp_commit_s    =0;
++// size_t fp_load_commit_s    =0;
++// size_t fp_store_commit_s    =0;
++// size_t fp_div_commit_s    =0;
++// size_t br_commit_s    =0;
++// size_t jal_commit_s   =0;
++// size_t jalr_commit_s  =0;
++// size_t int_commit_s   =0;
++// size_t div_commit_s   =0;
++// size_t mul_commit_s  =0;
++// size_t gh_bp         =0;
++// size_t no_core        =0;
++// size_t ic_stall       =0;
++// size_t total_mispred_s=0;
++// size_t br_mispred_s   =0;
++// size_t flush_s        =0;
++// size_t icache_miss_s  =0;
++// size_t dcache_miss_s  =0;
++// size_t cdc_bp         =0;
++// size_t csr_commit         =0;
++// int uart_lock=0;
++
++// #include <inttypes.h>
++// // #include "timer.h"
++
++// #define U32         *(volatile unsigned int *)
++// #define msip_offest 4
++
++// #define CLINT_BASE      0x2000000
++// #define MSIP_OFFSET(h)  (h * 4)
++// #define TIMECMP_OFFSET(h) (0x4000 + h * 8)
++// #define MTIME_ADDR      (CLINT_BASE + 0xBFF8)
++
++// volatile int timer_flags[4] = {0};
++
++// #define NUM_CHECKERS 4
++// #define totalcsrperf 84
++
++
++
++// void handle_trap();
++// void csr_cfg();
++// void mtimecmp_cfg();
++// void msip_cfg();
++// // 安全读取64位mtime
++// uint64_t get_mtime() {
++//   volatile uint32_t* mtime_low = (uint32_t*)MTIME_ADDR;
++//   volatile uint32_t* mtime_high = (uint32_t*)(MTIME_ADDR + 4);
++//   uint32_t hi, lo;
++//   do {
++//       hi = *mtime_high;
++//       lo = *mtime_low;
++//   } while (hi != *mtime_high);
++//   return ((uint64_t)hi << 32) | lo;
++// }
++// // 核心独立的软件中断配置
++// void msip_cfg() {
++//   uint64_t hart_id;
++//   asm volatile ("csrr %0, mhartid" : "=r"(hart_id));
++  
++//   volatile uint32_t* msip = (uint32_t*)(CLINT_BASE + MSIP_OFFSET(hart_id));
++//   *msip = 0x1; // 触发当前核心的中断
++//   lock_acquire(&uart_lock);
++//   printf("Core%d: MSIP at 0x%p\n", hart_id, msip);
++//   lock_release(&uart_lock);
++// }
++
++// // 核心独立的定时器配置
++// void mtimecmp_cfg() {
++//   uint64_t hart_id;
++//   asm volatile ("csrr %0, mhartid" : "=r"(hart_id));
++  
++//   volatile uint32_t* mtimecmp_low = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
++//   volatile uint32_t* mtimecmp_high = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id) + 4);
++  
++//   uint64_t current = get_mtime();
++//   uint64_t cmp_val = current + 0x20; // 1M cycles间隔
++  
++//   *mtimecmp_low = (uint32_t)cmp_val;
++//   *mtimecmp_high = (uint32_t)(cmp_val >> 32);
++//   lock_acquire(&uart_lock);
++//   printf("Core%d: mtimecmp@0x%p\n", hart_id, mtimecmp_low);
++//   lock_release(&uart_lock);
++// }
++
++// // CSR interrupt configuration function
++// void csr_timer_cfg()
++// {
++//   uint64_t hart_id;
++//   asm volatile ("csrr %0, mhartid" : "=r"(hart_id));
++//   unsigned int csr_tmp;
++//   //mie.MEIE
++//   csr_tmp = read_csr(mie);
++//   // U32(DEBUG_VAL) = csr_tmp;
++//   //write_csr(mie,0x0);
++//   write_csr(mie,(csr_tmp | 0x80));
++//   // lock_acquire(&uart_lock);
++//   // printf("Core:%d: Timer configuration complete\n", hart_id);
++//   // lock_release(&uart_lock);
++// }
++// void csr_software_cfg()
++// {
++//   uint64_t hart_id;
++//   asm volatile ("csrr %0, mhartid" : "=r"(hart_id));
++//   unsigned int csr_tmp;
++//   //mie.MEIE
++//   csr_tmp = read_csr(mie);
++//   // U32(DEBUG_VAL) = csr_tmp;
++//   //write_csr(mie,0x0);
++//   write_csr(mie,(csr_tmp | 0x8));
++//   //mstatus.MIE
++//   csr_tmp = read_csr(mstatus);
++//   // U32(DEBUG_VAL) = csr_tmp;
++//   //write_csr(mstatus,0x0);
++//   write_csr(mstatus,(csr_tmp | 0x8));
++//   lock_acquire(&uart_lock);
++//   printf("Core:%d: Software configuration complete\n", hart_id);
++//   lock_release(&uart_lock);
++// }
++
++// void handle_trap() {
++//   // uint64_t saved_mepc = mepc; // 立即保存到局部变量
++//   // 进入中断处理
++//   // U32(DEBUG_SIG) = 0x5;
++//   trap_in();
++//   uint64_t hart_id;
++//   asm volatile ("csrr %0, mhartid" : "=r"(hart_id));
++
++//   uint64_t mcause_val = read_csr(mcause);
++//   uint64_t interrupt = mcause_val >> 63;  // 最高位表示中断还是异常
++//   uint64_t cause_code = mcause_val & 0x7FFFFFFFFFFFFFFF;
++
++//   if(interrupt){
++//     // 处理软件中断
++//     if ((read_csr(mip) & 0x8) != 0) { // 检查MSIP
++//       // U32(0x2000000) = 0x0;        // 清除软件中断
++//       volatile uint32_t* msip = (uint32_t*)(CLINT_BASE + MSIP_OFFSET(hart_id));// 清除当前核心的MSIP
++//       *msip = 0x0;
++//     }
++//     // // 处理定时器中断
++//     // else if((read_csr(mip) & 0x80) != 0) {
++//     //   // 安全读取当前时间
++//     //   unsigned long long current_time = get_mtime();
++//     //   // U32(0x2004000) = (unsigned int)(current_time + 0x20);     // 写入低32位
++//     //   // U32(0x2004004) = (unsigned int)((current_time + 0x20) >> 32); // 写入高32位
++//     //   volatile uint32_t* mtimecmp = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
++//     //   uint64_t new_cmp = get_mtime() + 0x10;
++//     //   *(uint64_t*)mtimecmp = new_cmp; // 直接写入64位
++//     // }
++  
++//     // 处理定时器中断
++//     else if ((read_csr(mip) & 0x80) != 0) { // 检查MTIP
++//       // 安全读取当前时间
++//       unsigned long long current_time = get_mtime();
++//       if(hart_id == 0){
++//         timer_flags[0] += 1;
++//         // 更新mtimecmp（当前时间 + 间隔0x10）
++//         if(timer_flags[0] < 40){
++//           // U32(0x2004000) = (unsigned int)(current_time + 0x20);     // 写入低32位
++//           // U32(0x2004004) = (unsigned int)((current_time + 0x20) >> 32); // 写入高32位
++//           volatile uint32_t* mtimecmp = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
++//           uint64_t new_cmp = get_mtime() + 0x20;
++//           *(uint64_t*)mtimecmp = new_cmp; // 直接写入64位
++//         }
++//         // 达到条件后禁用定时器中断
++//         else if (timer_flags[0] >= 40) {
++//             unsigned int mie_val = read_csr(mie);
++//             write_csr(mie, mie_val & ~0x80); // 清除 MTIE (Bit7)
++//             // printf("Timer interrupts disabled.\n");
++//             // 清除 MIE 位（Bit3）
++//             unsigned int mstatus_val = read_csr(mstatus);
++//             write_csr(mstatus, mstatus_val & ~0x8); 
++//         }
++//       }
++//       else if(hart_id == 1){
++//         timer_flags[1] += 1;
++//         // 更新mtimecmp（当前时间 + 间隔0x10）
++//         if(timer_flags[1] < 40){
++//           // U32(0x2004000) = (unsigned int)(current_time + 0x20);     // 写入低32位
++//           // U32(0x2004004) = (unsigned int)((current_time + 0x20) >> 32); // 写入高32位
++//           volatile uint32_t* mtimecmp = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
++//           uint64_t new_cmp = get_mtime() + 0x20;
++//           *(uint64_t*)mtimecmp = new_cmp; // 直接写入64位
++//         }
++//         // 达到条件后禁用定时器中断
++//         else if (timer_flags[1] >= 40) {
++//             unsigned int mie_val = read_csr(mie);
++//             write_csr(mie, mie_val & ~0x80); // 清除 MTIE (Bit7)
++//             // printf("Timer interrupts disabled.\n");
++//             // 清除 MIE 位（Bit3）
++//             unsigned int mstatus_val = read_csr(mstatus);
++//             write_csr(mstatus, mstatus_val & ~0x8); 
++//         }
++//       }
++//       else if(hart_id == 2){
++//         timer_flags[2] += 1;
++//         // 更新mtimecmp（当前时间 + 间隔0x10）
++//         if(timer_flags[2] < 40){
++//           // U32(0x2004000) = (unsigned int)(current_time + 0x20);     // 写入低32位
++//           // U32(0x2004004) = (unsigned int)((current_time + 0x20) >> 32); // 写入高32位
++//           volatile uint32_t* mtimecmp = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
++//           uint64_t new_cmp = get_mtime() + 0x20;
++//           *(uint64_t*)mtimecmp = new_cmp; // 直接写入64位
++//         }
++//         // 达到条件后禁用定时器中断
++//         else if (timer_flags[2] >= 40) {
++//             unsigned int mie_val = read_csr(mie);
++//             write_csr(mie, mie_val & ~0x80); // 清除 MTIE (Bit7)
++//             // printf("Timer interrupts disabled.\n");
++//             // 清除 MIE 位（Bit3）
++//             unsigned int mstatus_val = read_csr(mstatus);
++//             write_csr(mstatus, mstatus_val & ~0x8); 
++//         }
++//       }
++//       else if(hart_id == 3){
++//         timer_flags[3] += 1;
++//         // 更新mtimecmp（当前时间 + 间隔0x10）
++//         if(timer_flags[3] < 40){
++//           // U32(0x2004000) = (unsigned int)(current_time + 0x20);     // 写入低32位
++//           // U32(0x2004004) = (unsigned int)((current_time + 0x20) >> 32); // 写入高32位
++//           volatile uint32_t* mtimecmp = (uint32_t*)(CLINT_BASE + TIMECMP_OFFSET(hart_id));
++//           uint64_t new_cmp = get_mtime() + 0x20;
++//           *(uint64_t*)mtimecmp = new_cmp; // 直接写入64位
++//         }
++//         // 达到条件后禁用定时器中断
++//         else if (timer_flags[3] >= 40) {
++//             unsigned int mie_val = read_csr(mie);
++//             write_csr(mie, mie_val & ~0x80); // 清除 MTIE (Bit7)
++//             // printf("Timer interrupts disabled.\n");
++//             // 清除 MIE 位（Bit3）
++//             unsigned int mstatus_val = read_csr(mstatus);
++//             write_csr(mstatus, mstatus_val & ~0x8); 
++//         }
++//       }
++//     }
++//   } else {
++//     switch (cause_code)
++//     {
++//     case 11:
++//       // 更新 mepc 到下一条指令
++//       write_csr(mepc, read_csr(mepc) + 4);
++//       // 将更新后的 mepc 值读取到 a0 寄存器
++//       __asm__ volatile ("csrr a0, mepc");  // handle_trap之后会用a0更新mepc
++//       break;
++    
++//     default:
++//       break;
++//     }
++//   }
++//   trap_out();
++//   // return saved_mepc;
++// }
++
++// void perf_start(){
++//   write_csr(mhpmevent3,0x0200);
++//   write_csr(mhpmevent4,0x0400);
++//   write_csr(mhpmevent5,0x0800);
++//   write_csr(mhpmevent6,0x1000);
++//   write_csr(mhpmevent7,0x2000);
++//   write_csr(mhpmevent8,0x4000);
++//   write_csr(mhpmevent9,0x8000);
++//   write_csr(mhpmevent10,0x10000);
++//   write_csr(mhpmevent11,0x20000);
++//   write_csr(mhpmevent12,0x40000);
++//   write_csr(mhpmevent13,0x80000);
++//   write_csr(mhpmevent14,0x100000);
++//   write_csr(mhpmevent15,0x200000);
++//   write_csr(mhpmevent16,0x400000);
++//   write_csr(mhpmevent17,0x800000);
++
++//   write_csr(mhpmevent18,0x0101);
++//   write_csr(mhpmevent19,0x0201);
++//   write_csr(mhpmevent20,0x0401);
++
++//   write_csr(mhpmevent21,0x0102);
++//   write_csr(mhpmevent22,0x0202);
++//   write_csr(mhpmevent23,0x1000000);
++//   write_csr(mhpmevent24,0x2000000);
++//   write_csr(mhpmevent25,0x4000000);
++//   write_csr(mhpmevent26,0x8000000);
++//   write_csr(mhpmevent26,0x10000000);
++//   total_cycle_s   = read_csr(mcycle);
++//   total_commit_s  = read_csr(mhpmcounter3);
++//   total_issue_s   = read_csr(mhpmcounter4);
++//   Fetch_Bubble_s  = read_csr(mhpmcounter5);
++//   Load_commit_s   = read_csr(mhpmcounter6); 
++//   Store_commit_s  = read_csr(mhpmcounter7); 
++//   fp_commit_s     = read_csr(mhpmcounter8);   
++//   br_commit_s     = read_csr(mhpmcounter9); 
++//   jal_commit_s    = read_csr(mhpmcounter10);         
++//   jalr_commit_s   = read_csr(mhpmcounter11);     
++//   int_commit_s    = read_csr(mhpmcounter12);
++//   div_commit_s    = read_csr(mhpmcounter13);     
++//   mul_commit_s    = read_csr(mhpmcounter14);
++//   gh_bp          = read_csr(mhpmcounter15);
++//   no_core         = read_csr(mhpmcounter16);
++//   ic_stall        = read_csr(mhpmcounter17);
++//   total_mispred_s = read_csr(mhpmcounter18);
++//   br_mispred_s    = read_csr(mhpmcounter19);
++//   flush_s         = read_csr(mhpmcounter20);
++//   icache_miss_s   = read_csr(mhpmcounter21);
++//   dcache_miss_s   = read_csr(mhpmcounter22);
++//   fp_load_commit_s = read_csr(mhpmcounter23);
++//   fp_store_commit_s = read_csr(mhpmcounter24);
++//   fp_div_commit_s = read_csr(mhpmcounter25);
++//   cdc_bp          = read_csr(mhpmcounter26);
++//   csr_commit          = read_csr(mhpmcounter27);
++// }
++
++// void perf_end(){
++//   size_t total_cycle_e   = read_csr(mcycle)-total_cycle_s;
++//   size_t total_commit_e  = read_csr(mhpmcounter3) -total_commit_s  ;
++//   size_t total_issue_e   = read_csr(mhpmcounter4) -total_issue_s   ;
++//   size_t Fetch_Bubble_e  = read_csr(mhpmcounter5) -Fetch_Bubble_s  ;
++//   size_t Load_commit_e   = read_csr(mhpmcounter6) -Load_commit_s   ; 
++//   size_t Store_commit_e  = read_csr(mhpmcounter7) -Store_commit_s  ; 
++//   size_t fp_commit_e     = read_csr(mhpmcounter8) -fp_commit_s     ;   
++//   size_t br_commit_e     = read_csr(mhpmcounter9) -br_commit_s     ; 
++//   size_t jal_commit_e    = read_csr(mhpmcounter10)-jal_commit_s    ;         
++//   size_t jalr_commit_e   = read_csr(mhpmcounter11)-jalr_commit_s   ;     
++//   size_t int_commit_e    = read_csr(mhpmcounter12)-int_commit_s    ;
++//   size_t div_commit_e    = read_csr(mhpmcounter13)-div_commit_s    ;     
++//   size_t mul_commit_e    = read_csr(mhpmcounter14)-mul_commit_s    ; 
++//   size_t gh_bp_e         = read_csr(mhpmcounter15)-gh_bp           ;
++//   size_t no_core_e       = read_csr(mhpmcounter16)-no_core         ;
++//   size_t ic_stall_e      = read_csr(mhpmcounter17)-ic_stall        ;
++
++//   size_t total_mispred_e = read_csr(mhpmcounter18)-total_mispred_s ;
++//   size_t br_mispred_e    = read_csr(mhpmcounter19)-br_mispred_s    ;
++//   size_t flush_e         = read_csr(mhpmcounter20)-flush_s ;
++
++//   size_t icache_miss_e   = read_csr(mhpmcounter21)-icache_miss_s   ;
++//   size_t dcache_miss_e   = read_csr(mhpmcounter22)-dcache_miss_s   ;
++//   size_t fp_load_commit_e = read_csr(mhpmcounter23)-fp_load_commit_s;
++//   size_t fp_store_commit_e = read_csr(mhpmcounter24)-fp_store_commit_s;
++//   size_t fp_div_commit_e = read_csr(mhpmcounter25)-fp_div_commit_s;
++//   size_t cdc_bp_e         = read_csr(mhpmcounter26)-cdc_bp;
++//   size_t csr_commit_e    = read_csr(mhpmcounter27)-csr_commit;
++//   size_t retire          = (total_commit_e*100)/(total_cycle_e*3);
++//   size_t fetch_bound     = (Fetch_Bubble_e*100)/(total_cycle_e*3);
++//   size_t bad_speculation = (100*((total_issue_e-total_commit_e)+30*(total_mispred_e+flush_e)))/(total_cycle_e*3);
++//   size_t backend_bound   = 100-retire-fetch_bound-bad_speculation;
++//   //cache miss
++//   lock_acquire(&uart_lock);
++	
++  
++//   printf("total cycle %lu\n \
++//       total commit %lu\n \
++//       total_issue %lu\n \
++//       Fetch_Bubble %lu\n \
++//       Load_commit %lu \n \
++//       Store_commit %lu \n \
++//       fp_commit   %lu \n \
++//       fp_load_commit %lu \n \
++//       fp_store_commit %lu \n \
++//       fp_div_commit %lu \n \
++//       br_commit %lu \n \
++//       jal_commit  %lu \n \
++//       jalr_commit %lu \n \
++//       int_commit %lu \n \
++//       div_commit %lu \n \
++//       mul_commit %lu \n \
++//       csr_commit %lu \n \
++//       total_mispred %lu \n \
++//       br_mispred %lu \n \
++//       flsuh %lu \n \
++//       icache_miss %lu \n \
++//       dcache_miss %lu\n \
++//       cdc_bp %lu \n \
++//       no_core %lu \n \
++//       ic_stall %lu \n \
++//       gh_bp %lu \n \
++//       ",total_cycle_e,
++//       total_commit_e ,
++//       total_issue_e  ,
++//       Fetch_Bubble_e ,
++//       Load_commit_e  ,
++//       Store_commit_e ,
++//       fp_commit_e    ,
++//       fp_load_commit_e,
++//       fp_store_commit_e,
++//       fp_div_commit_e ,
++//       br_commit_e    ,
++//       jal_commit_e   ,
++//       jalr_commit_e  ,
++//       int_commit_e   ,
++//       div_commit_e   ,
++//       mul_commit_e ,
++//       csr_commit_e ,
++//       total_mispred_e,
++//       br_mispred_e   ,
++//       flush_e,
++//       icache_miss_e  ,
++//       dcache_miss_e  ,
++//       cdc_bp_e       ,
++//       no_core_e      ,
++//       ic_stall_e     ,
++//       gh_bp_e       
++//     );
++//   //top down level 1
++//   printf("retire %lu front bound %lu bad speculation: %lu backend bound %lu\n",retire,fetch_bound,bad_speculation,backend_bound);
++//   lock_release(&uart_lock);
++// }
++// int checker (int hart_id)
++// {
++
++//   //================== Initialisation ==================//
++//   ghe_asR();
++//   ght_set_satp_priv();
++//   ghe_go();
++//   ghe_initailised(1);
++
++//   ghe_perf_ctrl(0x01);
++//   ghe_perf_ctrl(0x00);
++
++
++//   //===================== Execution =====================//
++//   ROCC_INSTRUCTION (1, 0x75); // Record context
++//   ROCC_INSTRUCTION (1, 0x73); // Store context from main core
++//   ROCC_INSTRUCTION (1, 0x64); // Record PC
++//   for (int sel_elu = 0; sel_elu < 2; sel_elu ++){
++//     ROCC_INSTRUCTION_S (1, sel_elu, 0x65);
++
++//     while (elu_checkstatus() != 0){
++//       printf("C%x: Error detected for ELU %x.\r\n", hart_id, sel_elu);
++//       ROCC_INSTRUCTION_S (1, sel_elu, 0x63);
++//     }
++//   }
++  
++//   while (ghe_checkght_status() != 0x02){
++//     if ((ghe_rsur_status() & 0x18) == 0x08){//这个是不是有漏洞>
++//       ROCC_INSTRUCTION (1, 0x60);
++//       R_INSTRUCTION_JLR (3, 0x00);
++//     }
++//   }
++
++
++//   ROCC_INSTRUCTION (1, 0x72); // Store context from checker core
++//   ROCC_INSTRUCTION (1, 0x60);
++
++//   __asm__ volatile("nop");
++//   __asm__ volatile("nop");
++//   __asm__ volatile("nop");
++//   __asm__ volatile("nop");
++//   __asm__ volatile("nop");
++
++
++
++
++
++
++  
++//   while (ghe_checkght_status() != 0x02){
++//   }
++//   if(1){
++//     lock_acquire(&uart_lock);
++//     uint64_t perf_val = 0;
++//     printf("Perf[%d]\r\n", hart_id);
++//     ghe_perf_ctrl(0x01<<1);
++//     perf_val = ghe_perf_read();
++//     printf("Perf: Checking state = %d \r\n", perf_val);
++
++//     ghe_perf_ctrl(0x02<<1);
++//     perf_val = ghe_perf_read();
++//     printf("Perf: Post_Checking state = %d \r\n", perf_val);
++
++//     ghe_perf_ctrl(0x04<<1);
++//     perf_val = ghe_perf_read();
++//     printf("Perf: No checking state = %d \r\n", perf_val);
++//     ghe_perf_ctrl(0x05<<1);
++//     perf_val = ghe_perf_read();
++//     printf("Perf:LSL BP = %d \r\n", perf_val);
++//     ghe_perf_ctrl(0x06<<1);
++//     perf_val = ghe_perf_read();
++//     printf("Perf: LSL Block = %d \r\n", perf_val);
++//     ghe_perf_ctrl(0x08<<1);
++//     perf_val = ghe_perf_read();
++//     printf("Perf:Total FP BLOCK = %d \r\n", perf_val);
++//     ghe_perf_ctrl(0x09<<1);
++//     perf_val = ghe_perf_read();
++//     printf("Perf:Total BP Inst = %d \r\n", perf_val);
++//     ghe_perf_ctrl(0x0a<<1);
++//     perf_val = ghe_perf_read();
++//     printf("Perf:Total BP Mispred = %d \r\n", perf_val);
++//     ghe_perf_ctrl(0x0b<<1);
++//     perf_val = ghe_perf_read();
++//     printf("Perf:Total ICache Miss = %d \r\n", perf_val);
++//     ghe_perf_ctrl(0x0c<<1);
++//     perf_val = ghe_perf_read();
++//     printf("Perf: DIV blocking = %d \r\n", perf_val);
++//     ghe_perf_ctrl(0x0d<<1);
++//     perf_val = ghe_perf_read();
++//     printf("Perf: Total Cycle = %d \r\n", perf_val);
++//     ghe_perf_ctrl(0x0e<<1);
++//     perf_val = ghe_perf_read();
++//     printf("Perf: Total inst = %d \r\n", perf_val);
++//     lock_release(&uart_lock);
++//   }
++//   ghe_initailised(0);//注意这里会导致大核心直接读取到一个就打印数据，导致无法完整打印，实话说不如直接读取ghe_release
++//   ghe_release();
++//   ght_unset_satp_priv();
++
++//   while(1){
++
++//   }
++
++//   return 0;
++// }
++// // int uart_lock;
++// void rStartup (void) {
++//   // printf("")
++//   // barrier();
++//   printf("start Checking...\n");
++//   // barrier();
++//     //================== Initialisation ==================//
++// 	ght_set_numberofcheckers(NUM_CHECKERS);
++//   //configuration
++//   csr_software_cfg();
++
++//   //msip software interrupt
++//   msip_cfg();
++// 	ROCC_INSTRUCTION (1, 0x34);
++// 	while (ght_get_initialisation() == 0){
++//  	}
++
++// 	ght_set_satp_priv();
++// 	// printf("[Boom-%x]: Test is now started: \r\n", BOOM_ID);
++
++// 	//======================= Perf ========================//
++// 	ghe_perf_ctrl(0x01);
++//   ghe_perf_ctrl(0x00); 
++
++//     // ROCC_INSTRUCTION_S (1, 0x3, 0x69);
++//   mtimecmp_cfg();
++//   csr_timer_cfg();
++//    	ROCC_INSTRUCTION (1, 0x31); // start monitoring
++//    	ROCC_INSTRUCTION_S (1, 0x01, 0x70); // ISAX_Go
++//     //===================== Execution =====================//
++
++// }
++
++
++// void rCleanup (void){
++// 	//=================== Post execution ===================//
++// 	ROCC_INSTRUCTION (1, 0x32); // stop monitoring
++// 	ROCC_INSTRUCTION_S (1, 0X02, 0x70); // ISAX_Stop
++// 	// printf("End Checking...\n");
++// 	__asm__ volatile("nop");
++// 	__asm__ volatile("nop");
++// 	__asm__ volatile("nop");
++// 	__asm__ volatile("nop");
++	
++
++// 	ghe_perf_ctrl(0x07<<1);
++// 	uint64_t perf_val_CC = ghe_perf_read();
++// 	ghe_perf_ctrl(0x01<<1);
++// 	uint64_t perf_val_SB = ghe_perf_read();
++// 	ghe_perf_ctrl(0x02<<1);
++// 	uint64_t perf_val_SS = ghe_perf_read();
++// 	ghe_perf_ctrl(0x03<<1);
++// 	uint64_t perf_val_CS = ghe_perf_read();
++// 	ghe_perf_ctrl(0x04<<1);
++// 	uint64_t perf_val_SS_OT = ghe_perf_read();
++// 	ghe_perf_ctrl(0x05<<1);
++// 	uint64_t perf_val_SS_AB = ghe_perf_read();
++// 	ghe_perf_ctrl(0x06<<1);
++// 	uint64_t perf_val_OT = ghe_perf_read();
++
++
++//   // printf("BOOM Perf:  = %d \r\n", perf_val);
++//   // printf("Perf: LSL Block = %d \r\n", perf_val);
++//   // printf("Perf: LSL Block = %d \r\n", perf_val);
++//   // printf("Perf: LSL Block = %d \r\n", perf_val);
++// // 	uint64_t bp_checker  = debug_bp_checker();
++// //   uint64_t bp_cdc = debug_bp_cdc();
++// //   uint64_t bp_filter = debug_bp_filter();
++
++	
++// 	uint64_t status;
++//   	while (ght_get_initialisation() != 0) {
++
++//   	}
++
++
++
++
++//   lock_acquire(&uart_lock);
++// 	printf("[Boom]: Test is now completed: \r\n");
++//   printf("BOOM Perf: Sch state   = %d \r\n", perf_val_SS);
++//   printf("BOOM Perf: Check state = %d \r\n", perf_val_CS);
++//   lock_release(&uart_lock);
++	
++// 	ght_unset_satp_priv();
++// 	ROCC_INSTRUCTION (1, 0x30); // reset monitoring
++
++// }
++// int __main(void)
++// {
++//   uint64_t Hart_id = 0;
++//   asm volatile ("csrr %0, mhartid"  : "=r"(Hart_id));
++  
++//   switch (Hart_id){
++//       case 0x01:
++//         //configuration
++//         csr_software_cfg();
++        
++//         //msip software interrupt
++//         msip_cfg();
++//         mtimecmp_cfg();
++//         csr_timer_cfg();
++//         checker(Hart_id);
++//         printf("hart id %d\n", Hart_id);
++//       break;
++
++//       case 0x02:
++//         //configuration
++//         csr_software_cfg();
++        
++//         //msip software interrupt
++//         msip_cfg();
++//         mtimecmp_cfg();
++//         csr_timer_cfg();
++//         checker(Hart_id);
++//         printf("hart id %d\n", Hart_id);
++//       break;
++
++//       case 0x03:
++//         //configuration
++//         csr_software_cfg();
++        
++//         //msip software interrupt
++//         msip_cfg();
++//         mtimecmp_cfg();
++//         csr_timer_cfg();
++//         checker(Hart_id);
++//         printf("hart id %d\n", Hart_id);
++//       break;
++
++//       case 0x04:
++//         //configuration
++//         csr_software_cfg();
++        
++//         //msip software interrupt
++//         msip_cfg();
++//         mtimecmp_cfg();
++//         csr_timer_cfg();
++//         checker(Hart_id);
++//         printf("hart id %d\n", Hart_id);
++//       break;
++
++//       case 0x05:
++//         checker(Hart_id);
++//         printf("hart id %d\n", Hart_id);
++//       break;
++//       case 0x06:
++//         checker(Hart_id);
++//         printf("hart id %d\n", Hart_id);
++//       break;
++//       default:
++//       break;
++//   }
++  
++//   idle();
++//   return 0;
++// }
+\ No newline at end of file
+--- /dev/null
++++ b/support/meek.h
+diff --git a/support/meek.h b/support/meek.h
+new file mode 100644
+index 0000000..b2543da
+--- /dev/null
++++ b/support/meek.h
+@@ -0,0 +1,5 @@
++#ifndef MEEK_H
++#define MEEK_H
++void rCleanup (void);
++void rStartup (void);
++#endif
+\ No newline at end of file
+--- /dev/null
++++ b/support/rocc.h
+diff --git a/support/rocc.h b/support/rocc.h
+new file mode 100644
+index 0000000..b33031d
+--- /dev/null
++++ b/support/rocc.h
+@@ -0,0 +1,108 @@
++// Based on code by Schuyler Eldridge. Copyright (c) Boston University
++// https://github.com/seldridge/rocket-rocc-examples/blob/master/src/main/c/rocc.h
++
++#ifndef SRC_MAIN_C_ROCC_H
++#define SRC_MAIN_C_ROCC_H
++
++#include <stdint.h>
++
++#define STR1(x) #x
++#define STR(x) STR1(x)
++#define EXTRACT(a, size, offset) (((~(~0 << size) << offset) & a) >> offset)
++
++#define CUSTOMX_OPCODE(x) CUSTOM_ ## x
++#define CUSTOM_0 0b0001011
++#define CUSTOM_1 0b0101011
++#define CUSTOM_2 0b1011011
++#define CUSTOM_3 0b1100111
++// CUSTOM_3 is for CUSTOM Jump
++
++
++#define CUSTOMX(X, xd, xs1, xs2, rd, rs1, rs2, funct) \
++  CUSTOMX_OPCODE(X)                     |             \
++  (rd                 << (7))           |             \
++  (xs2                << (7+5))         |             \
++  (xs1                << (7+5+1))       |             \
++  (xd                 << (7+5+2))       |             \
++  (rs1                << (7+5+3))       |             \
++  (rs2                << (7+5+3+5))     |             \
++  (EXTRACT(funct, 7, 0) << (7+5+3+5+5))
++
++// Standard macro that passes rd, rs1, and rs2 via registers
++#define ROCC_INSTRUCTION_DSS(X, rd, rs1, rs2, funct) \
++	ROCC_INSTRUCTION_R_R_R(X, rd, rs1, rs2, funct, 10, 11, 12)
++
++#define ROCC_INSTRUCTION_DS(X, rd, rs1, funct) \
++	ROCC_INSTRUCTION_R_R_I(X, rd, rs1, 0, funct, 10, 11)
++
++#define ROCC_INSTRUCTION_D(X, rd, funct) \
++	ROCC_INSTRUCTION_R_I_I(X, rd, 0, 0, funct, 10)
++
++#define ROCC_INSTRUCTION_SS(X, rs1, rs2, funct) \
++	ROCC_INSTRUCTION_I_R_R(X, 0, rs1, rs2, funct, 11, 12)
++
++#define ROCC_INSTRUCTION_S(X, rs1, funct) \
++	ROCC_INSTRUCTION_I_R_I(X, 0, rs1, 0, funct, 11)
++
++#define ROCC_INSTRUCTION(X, funct) \
++	ROCC_INSTRUCTION_I_I_I(X, 0, 0, 0, funct)
++
++#define R_INSTRUCTION_JLR(X, funct) \
++	ROCC_INSTRUCTION_JLR(X, 0, 0, 0, funct)
++
++// rd, rs1, and rs2 are data
++// rd_n, rs_1, and rs2_n are the register numbers to use
++#define ROCC_INSTRUCTION_R_R_R(X, rd, rs1, rs2, funct, rd_n, rs1_n, rs2_n) { \
++    register uint64_t rd_  asm ("x" # rd_n);                                 \
++    register uint64_t rs1_ asm ("x" # rs1_n) = (uint64_t) rs1;               \
++    register uint64_t rs2_ asm ("x" # rs2_n) = (uint64_t) rs2;               \
++    asm volatile (                                                           \
++        ".word " STR(CUSTOMX(X, 1, 1, 1, rd_n, rs1_n, rs2_n, funct)) "\n\t"  \
++        : "=r" (rd_)                                                         \
++        : [_rs1] "r" (rs1_), [_rs2] "r" (rs2_));                             \
++    rd = rd_;                                                                \
++  }
++
++#define ROCC_INSTRUCTION_R_R_I(X, rd, rs1, rs2, funct, rd_n, rs1_n) {     \
++    register uint64_t rd_  asm ("x" # rd_n);                              \
++    register uint64_t rs1_ asm ("x" # rs1_n) = (uint64_t) rs1;            \
++    asm volatile (                                                        \
++        ".word " STR(CUSTOMX(X, 1, 1, 0, rd_n, rs1_n, rs2, funct)) "\n\t" \
++        : "=r" (rd_) : [_rs1] "r" (rs1_));                                \
++    rd = rd_;                                                             \
++  }
++
++#define ROCC_INSTRUCTION_R_I_I(X, rd, rs1, rs2, funct, rd_n) {           \
++    register uint64_t rd_  asm ("x" # rd_n);                             \
++    asm volatile (                                                       \
++        ".word " STR(CUSTOMX(X, 1, 0, 0, rd_n, rs1, rs2, funct)) "\n\t"  \
++        : "=r" (rd_));                                                   \
++    rd = rd_;                                                            \
++  }
++
++#define ROCC_INSTRUCTION_I_R_R(X, rd, rs1, rs2, funct, rs1_n, rs2_n) {    \
++    register uint64_t rs1_ asm ("x" # rs1_n) = (uint64_t) rs1;            \
++    register uint64_t rs2_ asm ("x" # rs2_n) = (uint64_t) rs2;            \
++    asm volatile (                                                        \
++        ".word " STR(CUSTOMX(X, 0, 1, 1, rd, rs1_n, rs2_n, funct)) "\n\t" \
++        :: [_rs1] "r" (rs1_), [_rs2] "r" (rs2_));                         \
++  }
++
++#define ROCC_INSTRUCTION_I_R_I(X, rd, rs1, rs2, funct, rs1_n) {         \
++    register uint64_t rs1_ asm ("x" # rs1_n) = (uint64_t) rs1;          \
++    asm volatile (                                                      \
++        ".word " STR(CUSTOMX(X, 0, 1, 0, rd, rs1_n, rs2, funct)) "\n\t" \
++        :: [_rs1] "r" (rs1_));                                          \
++  }
++
++#define ROCC_INSTRUCTION_I_I_I(X, rd, rs1, rs2, funct) {                 \
++    asm volatile (                                                       \
++        ".word " STR(CUSTOMX(X, 0, 0, 0, rd, rs1, rs2, funct)) "\n\t" ); \
++  }
++
++#define ROCC_INSTRUCTION_JLR(X, rd, rs1, rs2, funct) {                 \
++    asm volatile (                                                       \
++        ".word " STR(CUSTOMX(X, 0, 0, 1, rd, rs1, rs2, funct)) "\n\t" ); \
++  }
++
++#endif  // SRC_MAIN_C_ACCUMULATOR_H
+--- /dev/null
++++ b/support/spin_lock.h
+diff --git a/support/spin_lock.h b/support/spin_lock.h
+new file mode 100644
+index 0000000..29a8f83
+--- /dev/null
++++ b/support/spin_lock.h
+@@ -0,0 +1,27 @@
++#include <stdint.h>
++
++
++void lock_acquire(int *lock)
++{
++	int temp0 = 1;
++
++	__asm__(
++		"loop%=: "
++		"amoswap.w.aq %1, %1, (%0);"
++		"bnez %1,loop%="
++		://no output register
++		:"r" (lock), "r" (temp0)
++		:/*no clobbered registers*/
++	);
++}
++
++void lock_release (int *lock)
++{
++	__asm__(
++		"amoswap.w.rl x0, x0, (%0);"// Release lock by storing 0.
++		://no output
++		:"r" (lock)
++		://no clobbered register
++	);
++}
++
+--- /dev/null
++++ b/support/tasks.h
+diff --git a/support/tasks.h b/support/tasks.h
+new file mode 100644
+index 0000000..c9843b4
+--- /dev/null
++++ b/support/tasks.h
+@@ -0,0 +1,8 @@
++#include <stdint.h>
++#include <stdio.h>
++
++extern int uart_lock;
++extern char* shadow;
++
++int checker (int hart_id);
++uint64_t task_synthetic_malloc (uint64_t base);
+\ No newline at end of file

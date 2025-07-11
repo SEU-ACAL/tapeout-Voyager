@@ -1617,10 +1617,10 @@ class RocketMEEK(tile: RocketTileMeek)(implicit p: Parameters) extends CoreModul
       printf(midas.targetutils.SynthesizePrintf("C%d: %d [idx0 %d idx1 %d]  " +
         "MEM[data0 -> %x data1 -> %x addr0 -> %x addr1 -> %x] W[%d %d] R[%d %d]" +
         "CSR[data0 -> %x data1 -> %x ][%d %d]\n",
-         io.hartid,coreMonitorBundle.timer,lsl_index(0)(6,3),lsl_index(1)(6,3),lsl.io.m_ldst_data(0),lsl.io.m_ldst_data(1),lsl.io.m_ldst_addr(0),lsl.io.m_ldst_addr(1),
-         lsl.io.m_st_valid(0),lsl.io.m_st_valid(1),lsl.io.m_ld_valid(0),lsl.io.m_ld_valid(1),
-         lsl.io.m_csr_data(0),lsl.io.m_csr_data(1),
-         lsl.io.m_csr_valid(0),lsl.io.m_csr_valid(1)))
+        io.hartid,coreMonitorBundle.timer,lsl_index(0)(6,3),lsl_index(1)(6,3),lsl.io.m_ldst_data(0),lsl.io.m_ldst_data(1),lsl.io.m_ldst_addr(0),lsl.io.m_ldst_addr(1),
+        lsl.io.m_st_valid(0),lsl.io.m_st_valid(1),lsl.io.m_ld_valid(0),lsl.io.m_ld_valid(1),
+        lsl.io.m_csr_data(0),lsl.io.m_csr_data(1),
+        lsl.io.m_csr_valid(0),lsl.io.m_csr_valid(1)))
     }
   }
   // CoreMonitorBundle for late latency writes

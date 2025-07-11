@@ -39,17 +39,20 @@ class WithSystemModifications extends Config((site, here, up) => {
   case SerialTLKey => Nil // remove serialized tl port
 })
 
-// DOC include start: AbstractVCU118 and Rocket
+
+
 class WithVCU118Tweaks extends Config(
   // clocking
   new chipyard.harness.WithAllClocksFromHarnessClockInstantiator ++
   new chipyard.clocking.WithPassthroughClockGenerator ++
   new chipyard.config.WithUniformBusFrequencies(100) ++
+  new chipyard.config.WithTileFrequency(100.0) ++ // Set tile frequency to 100MHz
   new WithFPGAFrequency(100) ++ // default 100MHz freq
   // harness binders
   new WithUART ++
   new WithSPISDCard ++
   new WithDDRMem ++
+  // new WithVCU118SerialTL2DDR++
   new WithJTAG ++
   // other configuration
   new WithDefaultPeripherals ++
@@ -59,10 +62,22 @@ class WithVCU118Tweaks extends Config(
   new freechips.rocketchip.subsystem.WithNMemoryChannels(1)
 )
 
+
+
 class RocketVCU118Config extends Config(
   new WithVCU118Tweaks ++
   new chipyard.RocketConfig
 )
+
+// class ChipLikeVCU119Config extends Config(
+//   new WithChipLikeVCU118Tweaks  ++
+//   new chipyard.MyChipConfig
+// )
+
+
+
+
+
 // DOC include end: AbstractVCU118 and Rocket
 
 class BoomVCU118Config extends Config(

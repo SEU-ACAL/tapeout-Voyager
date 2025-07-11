@@ -72,8 +72,8 @@ FOR RTL SIMULATION
         sinks(i)._2.reset := ResetStretcher(sources(i).clock, asyncReset, 40).asAsyncReset
       } else {
         // WARNING: THIS IS FOR RTL SIMULATION ONLY
-        // sinks(i)._2.clock := sources(i).clock
-        sinks(i)._2.clock := divider.io.clockOut
+        sinks(i)._2.clock := sources(i).clock
+        // sinks(i)._2.clock := divider.io.clockOut
         sinks(i)._2.reset := sources(i).reset
       }
 

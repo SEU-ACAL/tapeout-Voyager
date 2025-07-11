@@ -41,11 +41,14 @@ object EXDecodeFields extends Enumeration {
       ITER = Value
 }
 
+
 class PostDecodeCmd(implicit bbconfig: BuckyBallConfig) extends Bundle {
+  val is_matmul_ws  = Bool()
   val is_load       = Bool()
   val is_store      = Bool()
   val is_ex         = Bool()
-  
+  val is_vec        = Bool()
+  val is_bbfp       = Bool()
   // 内存地址 - 只用于load/store
   val mem_addr      = UInt(bbconfig.memAddrLen.W)
   
@@ -76,8 +79,8 @@ class PostDecodeCmd(implicit bbconfig: BuckyBallConfig) extends Bundle {
 
   // 流水线控制
   val pid           = UInt(8.W)   // 流水线ID
-  val pstart        = Bool() // 流水线的开始
-  val pend          = Bool() // 流水线的结束
+  val pstart        = Bool()      // 流水线的开始
+  val pend          = Bool()      // 流水线的结束
 }
 
 class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
@@ -116,6 +119,8 @@ class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
   val ex_default_decode = List(N,N,N,N,N,N,N,N,DADDR,DADDR,DADDR,DITER)
   val ex_decode_list = ListLookup(func7, ex_default_decode, Array(
     MATMUL_WARP16_BITPAT -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(2*spAddrLen - 1,spAddrLen), rs2(spAddrLen-1,0), rs2(spAddrLen + 9,spAddrLen)), // bb_matmul_warp16
+    BB_BBFP_MUL -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(2*spAddrLen - 1,spAddrLen), rs2(spAddrLen-1,0), rs2(spAddrLen + 9,spAddrLen)), // bb_bbfp_mul
+    MATMUL_WS -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(2*spAddrLen - 1,spAddrLen), rs2(spAddrLen-1,0), rs2(spAddrLen + 9,spAddrLen)), // matmul_ws
   ))
 
   io.id_rs.valid              := io.id_i.valid
@@ -136,7 +141,9 @@ class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
   io.id_rs.bits.wr_spad_en    := ex_decode_list(5).asBool
   io.id_rs.bits.op1_from_spad := ex_decode_list(6).asBool
   io.id_rs.bits.op2_from_spad := ex_decode_list(7).asBool
-  
+  io.id_rs.bits.is_vec        := func7 === MATMUL_WARP16_BITPAT
+  io.id_rs.bits.is_bbfp       := func7 === BB_BBFP_MUL||func7 === MATMUL_WS
+  io.id_rs.bits.is_matmul_ws  := func7 === MATMUL_WS
   // LocalAddr解析 - 在解码阶段完成bank和本地地址的计算
   // 地址映射 (4个bank，每个bank 4096行)：
   // spaddr[13:12] -> bank_num (0-3)

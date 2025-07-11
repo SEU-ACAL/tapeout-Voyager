@@ -47,6 +47,11 @@ class R_LSLIO(params: R_LSLParams) extends Bundle {
   // val resp_replay_csr = Output(UInt(1.W))
   val st_deq = Output(Bool())
   val ld_deq = Output(Bool())
+
+  //for debug
+  val lsl_deq_ptr = Output(UInt((log2Ceil(GH_GlobalParams.GH_TOTAL_PACKETS)+1).W))
+  val vec_enq_valid = Output(Vec(GH_GlobalParams.GH_TOTAL_PACKETS, Bool()))
+  val vec_enq_data  = Output(Vec(GH_GlobalParams.GH_TOTAL_PACKETS, UInt(( 2*params.xLen + 2).W)))
 }
 
 trait HasR_RLSLIO extends BaseModule {
@@ -87,6 +92,8 @@ ENQ logic
     val wdata  = Mux1H(enq_OH, enq_data) 
     u_channel(i).io.enq_valid                   := enq_OH.reduce(_|_)//
     u_channel(i).io.enq_bits                    := wdata
+    io.vec_enq_valid(i) := u_channel(i).io.enq_valid
+    io.vec_enq_data(i)  := u_channel(i).io.enq_bits
   }
 
 /*
@@ -121,6 +128,8 @@ DEQ logic
   when(deq_valid.reduce(_|_)){
     lsl_deq_ptr := Mux(lsl_deq_ptr + 1.U>=GH_GlobalParams.GH_TOTAL_PACKETS.U,lsl_deq_ptr+1.U-GH_GlobalParams.GH_TOTAL_PACKETS.U,lsl_deq_ptr + 1.U)
   }
+
+  io.lsl_deq_ptr := lsl_deq_ptr
 
   resp_kill_reg              := io.req_kill // already in the replay procedure.... 
   val if_lsl_empty            = lsl_empty(lsl_deq_ptr)
@@ -176,7 +185,7 @@ CSR ENQ logic
 /*
 CSR DEQ logic
 */
-  val csr_deq_data                = RegInit(VecInit.fill(GH_GlobalParams.GH_TOTAL_PACKETS)(0.U(params.xLen.W)))
+  val csr_deq_data                = WireInit(VecInit.fill(GH_GlobalParams.GH_TOTAL_PACKETS)(0.U(params.xLen.W)))
   val csr_deq_valid               = WireInit(VecInit.fill(GH_GlobalParams.GH_TOTAL_PACKETS)(false.B))
   val csr_lsl_empty               = WireInit(VecInit.fill(GH_GlobalParams.GH_TOTAL_PACKETS)(true.B))
   val csr_out_packet              = WireInit(Mux1H(csr_deq_valid,csr_deq_data))

@@ -55,7 +55,7 @@ class ReservationStation(implicit bbconfig: BuckyBallConfig, p: Parameters) exte
   val ISSQueue     = Module(new IssueQueue(queue_entries))
   val CMTQueue     = Module(new CommitQueue(queue_entries))
 
-  // id -> RobIdCounter -> ROB
+  // id -> RobIdCounter -> ROB 先注册到ROB中
   RobIdCounter.io.post_decode_cmd_i <> io.id_i
   ROB.io.post_indexed_cmd_i <> RobIdCounter.io.post_index_cmd_o
 
@@ -68,7 +68,6 @@ class ReservationStation(implicit bbconfig: BuckyBallConfig, p: Parameters) exte
   ROB.io.commit_i <> CMTQueue.io.complete_o
 
 
-  
   io.rs_rocc_o.resp <> ROB.io.rob_cmt_o.resp
 
   // ROB -> RobIdCounter

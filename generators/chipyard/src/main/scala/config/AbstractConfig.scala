@@ -67,6 +67,7 @@ class AbstractConfig extends Config(
   //   Set up External Memory and IO Devices
   // ================================================
   // External memory section
+
   new testchipip.serdes.WithSerialTL(Seq(                           /** add a serial-tilelink interface */
     testchipip.serdes.SerialTLParams(
       client = Some(testchipip.serdes.SerialTLClientParams(totalIdBits=4)), // serial-tilelink interface will master the FBUS, and support 4 idBits
@@ -79,7 +80,7 @@ class AbstractConfig extends Config(
 
   // MMIO device section
   new chipyard.config.WithUART ++                                  /** add a UART */
-
+  //                                  /** add a GPIO */
 
   // ================================================
   //   Set up Debug/Bringup/Testing Features
@@ -90,7 +91,9 @@ class AbstractConfig extends Config(
   new freechips.rocketchip.subsystem.WithJtagDTM ++                 /** set the debug module to expose a JTAG port */
 
   // Boot Select Pins
-  new testchipip.boot.WithCustomBootPin ++                          /** add a custom-boot-pin to support pin-driven boot address */
+  new testchipip.boot.WithCustomBootPin(testchipip.boot.CustomBootPinParams(
+    customBootAddress = 0x00000001L
+  )) ++                          /** add a custom-boot-pin to support pin-driven boot address */
   new testchipip.boot.WithBootAddrReg ++                            /** add a boot-addr-reg for configurable boot address */
 
 
@@ -128,7 +131,7 @@ class AbstractConfig extends Config(
 
   // ChipTop clock IO/PLL/Divider/Mux settings
   new chipyard.clocking.WithClockTapIOCells ++                      /** Default generate a clock tapio */
-  new chipyard.clocking.WithPLLSelectorDividerClockGenerator(enable=false) ++
+  new chipyard.clocking.WithPLLSelectorDividerClockGenerator(false) ++
 
   // DigitalTop-internal clocking settings
   new freechips.rocketchip.subsystem.WithDontDriveBusClocksFromSBus ++  /** leave the bus clocks undriven by sbus */
@@ -137,19 +140,19 @@ class AbstractConfig extends Config(
     Seq("sbus", "mbus", "pbus", "fbus", "cbus", "obus", "implicit", "clock_tap"),
     Seq("tile"))) ++
 
-  new chipyard.config.WithPeripheryBusFrequency(500.0) ++           /** Default 500 MHz pbus */
-  new chipyard.config.WithMemoryBusFrequency(500.0) ++              /** Default 500 MHz mbus */
-  new chipyard.config.WithControlBusFrequency(500.0) ++             /** Default 500 MHz cbus */
-  new chipyard.config.WithSystemBusFrequency(500.0) ++              /** Default 500 MHz sbus */
-  new chipyard.config.WithFrontBusFrequency(500.0) ++               /** Default 500 MHz fbus */
-  new chipyard.config.WithOffchipBusFrequency(500.0) ++             /** Default 500 MHz obus */
+  new chipyard.config.WithPeripheryBusFrequency(1000.0) ++           /** Default 500 MHz pbus */
+  new chipyard.config.WithMemoryBusFrequency(1000.0) ++              /** Default 500 MHz mbus */
+  new chipyard.config.WithControlBusFrequency(1000.0) ++             /** Default 500 MHz cbus */
+  new chipyard.config.WithSystemBusFrequency(1000.0) ++              /** Default 500 MHz sbus */
+  new chipyard.config.WithFrontBusFrequency(1000.0) ++               /** Default 500 MHz fbus */
+  new chipyard.config.WithOffchipBusFrequency(1000.0) ++             /** Default 500 MHz obus */
   new chipyard.config.WithInheritBusFrequencyAssignments ++         /** Unspecified clocks within a bus will receive the bus frequency if set */
   new chipyard.config.WithNoSubsystemClockIO ++                     /** drive the subsystem diplomatic clocks from ChipTop instead of using implicit clocks */
 
   // reset
 
   // power
-
+  new chipyard.config.WithGPIO(width=12)  ++
 
   // ==================================
   //   Base Settings

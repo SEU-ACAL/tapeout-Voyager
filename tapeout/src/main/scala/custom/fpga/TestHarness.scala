@@ -1,4 +1,4 @@
-package voyager_tapeout.chip
+package voyager_tapeout.custom.fpga
 
 import chisel3._
 
@@ -18,11 +18,13 @@ import sifive.blocks.devices.spi.{PeripherySPIKey, SPIPortIO}
 
 import chipyard._
 import chipyard.harness._
-import voyager_tapeout.chip.{DDR2VCU118ShellPlacer, SysClock2VCU118ShellPlacer}
+import freechips.rocketchip.subsystem._
+import voyager_tapeout.custom.fpga.shell._
 
-class VCU118FPGATestHarness(override implicit val p: Parameters) extends VCU118ShellBasicOverlays {
+class VCU118FPGATestHarness(override implicit val p: Parameters) extends FPGAShellBasicOverlays {
 
   def dp = designParameters
+  
 
   val pmod_is_sdio  = p(VCU118ShellPMOD) == "SDIO"
   val jtag_location = Some(if (pmod_is_sdio) "FMC_J2" else "PMOD_J52")
@@ -31,17 +33,18 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends VCU118S
   val uart      = Overlay(UARTOverlayKey, new UARTVCU118ShellPlacer(this, UARTShellInput()))
   val sdio      = if (pmod_is_sdio) Some(Overlay(SPIOverlayKey, new SDIOVCU118ShellPlacer(this, SPIShellInput()))) else None
   val jtag      = Overlay(JTAGDebugOverlayKey, new JTAGDebugVCU118ShellPlacer(this, JTAGDebugShellInput(location = jtag_location)))
-  val cjtag     = Overlay(cJTAGDebugOverlayKey, new cJTAGDebugVCU118ShellPlacer(this, cJTAGDebugShellInput()))
-  val jtagBScan = Overlay(JTAGDebugBScanOverlayKey, new JTAGDebugBScanVCU118ShellPlacer(this, JTAGDebugBScanShellInput()))
-  val fmc       = Overlay(PCIeOverlayKey, new PCIeVCU118FMCShellPlacer(this, PCIeShellInput()))
-  val edge      = Overlay(PCIeOverlayKey, new PCIeVCU118EdgeShellPlacer(this, PCIeShellInput()))
-  val sys_clock2 = Overlay(ClockInputOverlayKey, new SysClock2VCU118ShellPlacer(this, ClockInputShellInput()))
-  val ddr2       = Overlay(DDROverlayKey, new DDR2VCU118ShellPlacer(this, DDRShellInput()))
+  // val cjtag     = Overlay(cJTAGDebugOverlayKey, new cJTAGDebugVCU118ShellPlacer(this, cJTAGDebugShellInput()))
+  // val jtagBScan = Overlay(JTAGDebugBScanOverlayKey, new JTAGDebugBScanVCU118ShellPlacer(this, JTAGDebugBScanShellInput()))
+  // val fmc       = Overlay(PCIeOverlayKey, new PCIeVCU118FMCShellPlacer(this, PCIeShellInput()))
+  // val edge      = Overlay(PCIeOverlayKey, new PCIeVCU118EdgeShellPlacer(this, PCIeShellInput()))
+  // val sys_clock2 = Overlay(ClockInputOverlayKey, new SysClock2VCU118ShellPlacer(this, ClockInputShellInput()))
+  // val ddr2       = Overlay(DDROverlayKey, new DDR2VCU118ShellPlacer(this, DDRShellInput()))
 
 // DOC include start: ClockOverlay
   // place all clocks in the shell
-  require(dp(ClockInputOverlayKey).size >= 1)
+  require(dp(ClockInputOverlayKey).size >= 2)  // 现在需要至少2个时钟
   val sysClkNode = dp(ClockInputOverlayKey)(0).place(ClockInputDesignInput()).overlayOutput.node
+  val fpgaClkNode = dp(ClockInputOverlayKey)(1).place(ClockInputDesignInput()).overlayOutput.node  // 新增ChipTop时钟节点
 
   /*** Connect/Generate clocks ***/
 
@@ -49,13 +52,26 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends VCU118S
   val harnessSysPLL = dp(PLLFactoryKey)()
   harnessSysPLL := sysClkNode
 
-  // create and connect to the dutClock
+  // create and connect to the dutClock (用于harness)
   val dutFreqMHz = (dp(SystemBusKey).dtsFrequency.get / (1000 * 1000)).toInt
+  // chiptop的时钟
   val dutClock = ClockSinkNode(freqMHz = dutFreqMHz)
-  println(s"VCU118 FPGA Base Clock Freq: ${dutFreqMHz} MHz")
+  println(s"VCU118 Dut Base Clock Freq: ${dutFreqMHz} MHz")
   val dutWrangler = LazyModule(new ResetWrangler)
   val dutGroup = ClockGroup()
   dutClock := dutWrangler.node := dutGroup := harnessSysPLL
+
+  // 创建ChipTop专用时钟 (100MHz独立时钟)
+  val fpgaFreqMHz = 100  // ChipTop使用100MHz时钟
+  val fpgaClock = ClockSinkNode(freqMHz = fpgaFreqMHz)
+  println(s"VCU118 FPGA Clock Freq: ${fpgaFreqMHz} MHz")
+  val fpgaWrangler = LazyModule(new ResetWrangler)
+  val fpgaGroup = ClockGroup()
+  
+  // 创建独立的PLL用于ChipTop时钟
+  val fpgaPLL = dp(PLLFactoryKey)()
+  fpgaPLL := fpgaClkNode  // 连接到独立的100MHz时钟源
+  fpgaClock := fpgaWrangler.node := fpgaGroup := fpgaPLL
 // DOC include end: ClockOverlay
 
   /*** UART ***/
@@ -68,22 +84,25 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends VCU118S
 // DOC include end: UartOverlay
 
   /*** SPI ***/
-
   // 1st SPI goes to the VCU118 SDIO port
 
   val io_spi_bb = BundleBridgeSource(() => (new SPIPortIO(dp(PeripherySPIKey).head)))
   dp(SPIOverlayKey).head.place(SPIDesignInput(dp(PeripherySPIKey).head, io_spi_bb))
 
   /*** DDR ***/
+  val ddrNode = dp(DDROverlayKey).head.place(DDRDesignInput(dp(ExtSerialMem).get.master.base, fpgaWrangler.node, fpgaPLL)).overlayOutput.ddr
 
-  val ddrNode = dp(DDROverlayKey).head.place(DDRDesignInput(dp(ExtTLMem).get.master.base, dutWrangler.node, harnessSysPLL)).overlayOutput.ddr
 
   // connect 1 mem. channel to the FPGA DDR
+  println("=========== 创建DDR Client Node ===========")
   val ddrClient = TLClientNode(Seq(TLMasterPortParameters.v1(Seq(TLMasterParameters.v1(
     name = "chip_ddr",
-    sourceId = IdRange(0, 1 << dp(ExtTLMem).get.master.idBits)
+    sourceId = IdRange(0, 1 << dp(ExtSerialMem).get.master.idBits)
   )))))
-  ddrNode := TLWidthWidget(dp(ExtTLMem).get.master.beatBytes) := ddrClient
+  println(s"DDR Client 节点创建完成")
+  println(s"DDR Client port参数: ${ddrClient.portParams}")
+  ddrNode := TLWidthWidget(dp(ExtSerialMem).get.master.beatBytes) := ddrClient
+  println("===========================================")
 
   /*** JTAG ***/
   val jtagPlacedOverlay = dp(JTAGDebugOverlayKey).head.place(JTAGDebugDesignInput())
@@ -118,14 +137,24 @@ class VCU118FPGATestHarnessImp(_outer: VCU118FPGATestHarness) extends LazyRawMod
   // reset setup
   val hReset = Wire(Reset())
   hReset := _outer.dutClock.in.head._1.reset
+  
+  // ChipTop reset setup
+  val fpgaReset = Wire(Reset())
+  fpgaReset := _outer.fpgaClock.in.head._1.reset
 
   def referenceClockFreqMHz = _outer.dutFreqMHz
   def referenceClock = _outer.dutClock.in.head._1.clock
   def referenceReset = hReset
   def success = { require(false, "Unused"); false.B }
+  
+  // ChipTop时钟访问方法
+  def fpgaFreqMHz = _outer.fpgaFreqMHz
+  def fpgaClock = _outer.fpgaClock.in.head._1.clock
+  def fpgaResetSigned = fpgaReset
 
-  childClock := referenceClock
-  childReset := referenceReset
+  // 使用FPGAClock作为子模块的默认时钟，而不是referenceClock
+  childClock := fpgaClock
+  childReset := fpgaResetSigned
 
   instantiateChipTops()
 }

@@ -47,7 +47,7 @@ class WithPLLSelectorDividerClockGenerator(enable: Boolean = true) extends Overr
     pllCtrlSink := pllCtrl.ctrlNode
 
     InModuleBody {
-      val clock_wire = Wire(Input(Clock()))
+      val clock_wire = Wire(Input(Clock())) // 连接digitaltop
       val reset_wire = Wire(Input(AsyncReset()))
       val (clock_io, clockIOCell) = IOCell.generateIOFromSignal(clock_wire, "clock", p(IOCellKey))
       val (reset_io, resetIOCell) = IOCell.generateIOFromSignal(reset_wire, "reset", p(IOCellKey))
@@ -59,10 +59,10 @@ class WithPLLSelectorDividerClockGenerator(enable: Boolean = true) extends Overr
 
       // For a real chip you should replace this ClockSourceAtFreqFromPlusArg
       // with a blackbox of whatever PLL is being integrated
-      val fake_pll = Module(new ClockSourceAtFreqFromPlusArg("pll_freq_mhz"))
+      val fake_pll = Module(new PLL("pll_freq_mhz"))
       fake_pll.io.power := pllCtrlSink.in(0)._1.power
-      fake_pll.io.gate := pllCtrlSink.in(0)._1.gate
-
+      fake_pll.io.gate  := pllCtrlSink.in(0)._1.gate
+      fake_pll.io.clock := clock_wire
       pllClockSource.out.unzip._1.map { o =>
         o.clock := fake_pll.io.clk
         o.reset := reset_wire
@@ -72,6 +72,8 @@ class WithPLLSelectorDividerClockGenerator(enable: Boolean = true) extends Overr
     }
   }
 })
+
+
 
 // This passes all clocks through to the TestHarness
 class WithPassthroughClockGenerator extends OverrideLazyIOBinder({

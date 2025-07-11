@@ -19,3 +19,5 @@ git update-index --skip-worktree scripts/permission-check.sh
 # Please commit your changes or stash them before you merge. 
 
 # git update-index --no-skip-worktree scripts/permission-check.sh
+
+git config --global alias.pull-with-update '!git pull && .github/scripts/pull-update.sh'

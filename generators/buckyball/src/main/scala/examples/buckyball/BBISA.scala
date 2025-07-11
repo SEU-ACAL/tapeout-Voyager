@@ -12,5 +12,7 @@ class BuckyBallRawCmd(implicit p: Parameters) extends Bundle {
 object BBISA {
   val MVIN_BITPAT  = BitPat("b0011000")
   val MVOUT_BITPAT = BitPat("b0011001")
-  val MATMUL_WARP16_BITPAT = BitPat("b0100000")
+  val MATMUL_WARP16_BITPAT = BitPat("b0100000") //32
+  val BB_BBFP_MUL = BitPat("b0011010") //26
+  val MATMUL_WS = BitPat("b0011011") //27
 }

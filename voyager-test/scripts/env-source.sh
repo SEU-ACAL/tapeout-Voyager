@@ -32,7 +32,7 @@ setup_vcs() {
     export NOVAS_HOME="/usr/stone/software/verdi/verdi/Verdi_O-2018.09-SP2"
 
     #LICENSE
-    export SNPSLMD_LICENSE_FILE="/usr/stone/software/Liscen/Synopsys.dat"
+    # export SNPSLMD_LICENSE_FILE="/usr/stone/software/Liscen/Synopsys.dat"
     export SNPSLMD_LICENSE_FILE=27000@devjz-ubt20-s01
     export LM_LICENSE_FILE="/usr/stone/software/Liscen/Synopsys.dat"
 

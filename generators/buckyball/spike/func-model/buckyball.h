@@ -34,7 +34,7 @@ public:
   void mvin(reg_t dram_addr, reg_t sp_addr);
   void mvout(reg_t dram_addr, reg_t sp_addr);
   void mul_warp16(reg_t rs1, reg_t rs2);
-
+  void bbfp_mul(reg_t rs1, reg_t rs2);
   std::vector<insn_desc_t> get_instructions();
   std::vector<disasm_insn_t*> get_disasms();
 
@@ -46,7 +46,7 @@ private:
   const unsigned mvout_funct = 25;  // func7: 0010001
   const unsigned mul_funct = 32; // func7: 0100000 (bb_mul_warp16)
   const unsigned flush_funct = 7;
-
+  const unsigned bbfp_mul_funct = 26;   // func7: 0100001
   template <class T>
   T read_from_dram(reg_t addr);
 

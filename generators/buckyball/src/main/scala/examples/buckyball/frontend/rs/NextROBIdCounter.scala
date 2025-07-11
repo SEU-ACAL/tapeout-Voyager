@@ -72,6 +72,9 @@ class NextROBIdCounter(implicit bbconfig: BuckyBallConfig) extends Module {
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.pstart        := false.B
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.pend          := false.B
     io.post_index_cmd_o.new_head_ptr                           := 0.U
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_vec        := false.B
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_bbfp       := false.B
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_matmul_ws  := false.B
   }
 
 
