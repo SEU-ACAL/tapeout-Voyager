@@ -152,7 +152,7 @@ class AbstractConfig extends Config(
   // reset
 
   // power
-  new chipyard.config.WithGPIO(width=12)  ++
+  
 
   // ==================================
   //   Base Settings

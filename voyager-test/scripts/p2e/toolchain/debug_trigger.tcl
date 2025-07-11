@@ -16,7 +16,7 @@ force reset 0
 get_time rclk
 
 # replace with the specific workload name
-memory -write -fpga 0.A -channel 0 -file workload.hex 
+memory -write -fpga 0.A -channel 0 -file ../image/interactive.hex 
 
 for {set i 0} {$i < 3} {incr i} {
 tracedb -open wave_mb$i -xedb -overwrite;

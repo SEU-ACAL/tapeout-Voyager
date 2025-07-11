@@ -33,7 +33,7 @@ class OurHeterSoCConfig extends Config(
   //  Crossing specifications+-
   new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1) ++
   new boom.meek.common.WithNLargeBooms(1) ++
-
+  new chipyard.config.WithGPIO(width=12)  ++
   // NPUPeripheral
   new voyager_tapeout.custom.harness.WithPeripheralNPUPin ++ // 连接harness和npu到chiptop的pin
   new voyager_tapeout.custom.iobinders.WithPeripheralNPUIOCell ++ // 连接npu和chiptop的pin

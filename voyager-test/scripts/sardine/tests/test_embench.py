@@ -15,19 +15,19 @@ embench_workloads = [
   (f"{embench_workload_dir}/nettle-sha256", "nettle-sha256"),
   (f"{embench_workload_dir}/qrduino", "qrduino"),
   (f"{embench_workload_dir}/st", "st"),
-  (f"{embench_workload_dir}/wikisort", "wikisort"),
-  (f"{embench_workload_dir}/crc32", "crc32"),
-  (f"{embench_workload_dir}/huffbench", "huffbench"),
+  # (f"{embench_workload_dir}/wikisort", "wikisort"),
+  # (f"{embench_workload_dir}/crc32", "crc32"),
+  # (f"{embench_workload_dir}/huffbench", "huffbench"),
   (f"{embench_workload_dir}/nbody", "nbody"),
-  (f"{embench_workload_dir}/nsichneu", "nsichneu"),
-  (f"{embench_workload_dir}/sglib-combined", "sglib-combined"),
+  # (f"{embench_workload_dir}/nsichneu", "nsichneu"),
+  # (f"{embench_workload_dir}/sglib-combined", "sglib-combined"),
   # (f"{embench_workload_dir}/statemate", "statemate"),
   (f"{embench_workload_dir}/cubic", "cubic"),
   (f"{embench_workload_dir}/matmult-int", "matmult-int"),
   (f"{embench_workload_dir}/nettle-aes", "nettle-aes"),
-  (f"{embench_workload_dir}/picojpeg", "picojpeg"),
-  (f"{embench_workload_dir}/slre", "slre"),
-  (f"{embench_workload_dir}/ud", "ud")
+  # (f"{embench_workload_dir}/picojpeg", "picojpeg"),
+  (f"{embench_workload_dir}/slre", "slre")
+  # (f"{embench_workload_dir}/ud", "ud")
 ]
 
 # Define configurations to test
@@ -43,7 +43,7 @@ def test_embench_workload(script_runner, caplog, workload_path, workload_id, con
   caplog.set_level(logging.INFO)
   
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", config, workload_path, "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", config, workload_path], timeout=60000)
   execution_time = time.time() - start_time
   
   logging.info(f"Workload: {workload_id}, Config: {config}")

@@ -44,6 +44,9 @@ int compare_matrices(elem_t* a, elem_t* b, int rows, int cols) {
 #define OP2_ADDR (BANK + DIM)
 #define WR_ADDR (DIM + 2 * BANK)
 int main() {
+#ifdef MULTICORE 
+    multicore(MULTICORE);  // Only allow specified hart to continue
+#endif
     
     // Initialize input matrix
     init_matrix(input_matrix, DIM, DIM * 4, 42);
@@ -68,7 +71,9 @@ int main() {
     bb_mvout((uintptr_t)output_matrix, WR_ADDR, DIM * 4);
     printf("Finished\n");
    
-   // print_matrix("Output", output_matrix, DIM, DIM);
-    
+    print_matrix("Output", output_matrix, DIM, DIM);
 
+#ifdef MULTICORE 
+    exit(0);
+#endif
 }

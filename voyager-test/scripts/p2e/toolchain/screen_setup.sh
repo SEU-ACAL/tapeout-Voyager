@@ -7,5 +7,5 @@ if screen -ls | grep -q "$SESSION_NAME"; then
     screen -r "$SESSION_NAME"
 else
     echo "Creating new screen session..."
-    screen -S "$SESSION_NAME" /dev/tty10gpio 4800
+    screen -S "$SESSION_NAME" /dev/tty13gpio 4800
 fi

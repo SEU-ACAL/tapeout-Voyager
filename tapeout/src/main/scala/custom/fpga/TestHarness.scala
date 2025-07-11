@@ -24,7 +24,6 @@ import voyager_tapeout.custom.fpga.shell._
 class VCU118FPGATestHarness(override implicit val p: Parameters) extends FPGAShellBasicOverlays {
 
   def dp = designParameters
-  
 
   val pmod_is_sdio  = p(VCU118ShellPMOD) == "SDIO"
   val jtag_location = Some(if (pmod_is_sdio) "FMC_J2" else "PMOD_J52")
@@ -33,12 +32,6 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends FPGAShe
   val uart      = Overlay(UARTOverlayKey, new UARTVCU118ShellPlacer(this, UARTShellInput()))
   val sdio      = if (pmod_is_sdio) Some(Overlay(SPIOverlayKey, new SDIOVCU118ShellPlacer(this, SPIShellInput()))) else None
   val jtag      = Overlay(JTAGDebugOverlayKey, new JTAGDebugVCU118ShellPlacer(this, JTAGDebugShellInput(location = jtag_location)))
-  // val cjtag     = Overlay(cJTAGDebugOverlayKey, new cJTAGDebugVCU118ShellPlacer(this, cJTAGDebugShellInput()))
-  // val jtagBScan = Overlay(JTAGDebugBScanOverlayKey, new JTAGDebugBScanVCU118ShellPlacer(this, JTAGDebugBScanShellInput()))
-  // val fmc       = Overlay(PCIeOverlayKey, new PCIeVCU118FMCShellPlacer(this, PCIeShellInput()))
-  // val edge      = Overlay(PCIeOverlayKey, new PCIeVCU118EdgeShellPlacer(this, PCIeShellInput()))
-  // val sys_clock2 = Overlay(ClockInputOverlayKey, new SysClock2VCU118ShellPlacer(this, ClockInputShellInput()))
-  // val ddr2       = Overlay(DDROverlayKey, new DDR2VCU118ShellPlacer(this, DDRShellInput()))
 
 // DOC include start: ClockOverlay
   // place all clocks in the shell
@@ -56,7 +49,6 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends FPGAShe
   val dutFreqMHz = (dp(SystemBusKey).dtsFrequency.get / (1000 * 1000)).toInt
   // chiptop的时钟
   val dutClock = ClockSinkNode(freqMHz = dutFreqMHz)
-  println(s"VCU118 Dut Base Clock Freq: ${dutFreqMHz} MHz")
   val dutWrangler = LazyModule(new ResetWrangler)
   val dutGroup = ClockGroup()
   dutClock := dutWrangler.node := dutGroup := harnessSysPLL
@@ -90,19 +82,15 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends FPGAShe
   dp(SPIOverlayKey).head.place(SPIDesignInput(dp(PeripherySPIKey).head, io_spi_bb))
 
   /*** DDR ***/
-  val ddrNode = dp(DDROverlayKey).head.place(DDRDesignInput(dp(ExtSerialMem).get.master.base, fpgaWrangler.node, fpgaPLL)).overlayOutput.ddr
+  val ddrNode = dp(DDROverlayKey)(1).place(DDRDesignInput(dp(ExtSerialMem).get.master.base, fpgaWrangler.node, fpgaPLL)).overlayOutput.ddr
 
 
   // connect 1 mem. channel to the FPGA DDR
-  println("=========== 创建DDR Client Node ===========")
   val ddrClient = TLClientNode(Seq(TLMasterPortParameters.v1(Seq(TLMasterParameters.v1(
     name = "chip_ddr",
     sourceId = IdRange(0, 1 << dp(ExtSerialMem).get.master.idBits)
   )))))
-  println(s"DDR Client 节点创建完成")
-  println(s"DDR Client port参数: ${ddrClient.portParams}")
   ddrNode := TLWidthWidget(dp(ExtSerialMem).get.master.beatBytes) := ddrClient
-  println("===========================================")
 
   /*** JTAG ***/
   val jtagPlacedOverlay = dp(JTAGDebugOverlayKey).head.place(JTAGDebugDesignInput())

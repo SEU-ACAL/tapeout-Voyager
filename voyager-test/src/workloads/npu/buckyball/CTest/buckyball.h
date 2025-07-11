@@ -83,6 +83,26 @@ typedef int8_t elem_t;
 #define bb_flush() \
     BUCKYBALL_INSTRUCTION_FLUSH(BB_FLUSH_FUNCT)
 
+// Multicore support function
+static inline void multicore(int target_hart_id) {
+  int hart_id;
+  asm volatile("csrr %0, mhartid" : "=r"(hart_id));
+  
+  if (hart_id != target_hart_id) {
+    while (1) {
+      asm volatile("wfi");  // Wait for interrupt
+    }
+  }
+  // If hart_id == target_hart_id, continue execution
+}
+
+// Macro to automatically setup multicore before main
+#define MULTICORE_INIT(hart_id) \
+  __attribute__((constructor)) \
+  static void _multicore_init() { \
+    multicore(hart_id); \
+  }
+
 // Utility functions
 void print_matrix(const char* name, elem_t* matrix, int rows, int cols);
 void init_matrix(elem_t* matrix, int rows, int cols, int seed);

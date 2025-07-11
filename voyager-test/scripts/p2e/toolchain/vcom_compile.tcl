@@ -11,7 +11,8 @@ netlistmacro_param -module xram_bbox_wrapper -attribute {ROOT_FREE_CK rclk}
 
  emulator_spec -add "file hw-config.hdf"
 
- create_clock -sig_name VCU118FPGATestHarness.clock -frequency 5Mhz
+ create_clock -sig_name VCU118FPGATestHarness.clock -frequency 50Mhz
+ create_clock -sig_name VCU118FPGATestHarness.clock_2 -frequency 5Mhz
 
 
  cable_connection -def {my_uart PHC 0.A.29}

@@ -55,6 +55,7 @@ class WithChipHarnessTweaks extends Config(
   // other configuration
   new WithDefaultPeripherals ++
   new WithSystemModifications ++ // setup busses, use sdboot bootrom, setup ext. mem. size
+
   new testchipip.serdes.WithNoSerialTLClient++
   new testchipip.serdes.WithSerialTLMem(size = BigInt("80000000",16)) ++ // 8 GB of off-chip memory
   new freechips.rocketchip.subsystem.WithoutTLMonitors 
