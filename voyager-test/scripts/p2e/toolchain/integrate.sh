@@ -118,49 +118,80 @@ process_test_harness() {
     
     echo "添加XEPIC宏定义"
     # 在第2行后添加XEPIC宏定义
-    sed -i '2a\
+    echo "添加XEPIC宏定义"
+    # 在module声明之前添加XEPIC宏定义
+    sed -i '/^module /i\
 `define XEPIC_P2E\
 `define XEPIC_XRAM_RTL\
 ' "$src_file"
 
-    echo "修改模块接口 - 添加条件编译"
-    # 修改模块接口 - 添加条件编译，保留sys_clock_p
-    sed -i '/^  input         sys_clock_p,/,/^  input         sys_clock_n,/ {
-        /^  input         sys_clock_p,/ {
-            i\
+    echo "1: fpgaPLLIn_reset"
+    # 修改fpgaPLLIn_reset信号，添加条件编译
+    sed -i '/assign fpgaPLLIn_reset = _resetIBUF_O | _powerOnReset_fpga_power_on_power_on_reset;/c\
 `ifndef XEPIC_P2E\
-  input         sys_clock_p,       // @[fpga/fpga-shells/src/main/scala/shell/IOShell.scala:149:18]
-            c\
-  input         sys_clock_n,       // @[fpga/fpga-shells/src/main/scala/shell/IOShell.scala:149:18]\
+assign fpgaPLLIn_reset = _resetIBUF_O | _powerOnReset_fpga_power_on_power_on_reset;\
+`else\
+assign fpgaPLLIn_reset = reset | _powerOnReset_fpga_power_on_power_on_reset;\
+`endif' "$src_file"
+
+    echo "2: 系统时钟输入"
+    # 修改系统时钟接口
+    sed -i '/^  input         sys_clock_p,/,/^  input         sys_clock_n,/c\
+`ifndef XEPIC_P2E\
+  input         sys_clock_p,\
+                sys_clock_n,\
 `else\
   input                clock,\
   output        sdio_sel,\
-`endif
-        }
-        /^  input         sys_clock_n,/ d
-    }' "$src_file"
+`endif' "$src_file"
 
-    echo "修改复位逻辑"
-    # 修改复位逻辑 - 匹配实际的变量名
-    sed -i '/assign harnessSysPLLIn_reset = _IBUF_O | _fpga_power_on_power_on_reset;/ {
-        i\
-  `ifndef XEPIC_P2E\
-            assign harnessSysPLLIn_reset = _IBUF_O | _fpga_power_on_power_on_reset;   // @[TestHarness.scala:100:25, :113:38, Xilinx.scala:104:21]\
-  `else\
-            assign harnessSysPLLIn_reset = reset | _fpga_power_on_power_on_reset;  // @[TestHarness.scala:100:25, :113:38, Xilinx.scala:104:21]\
-  `endif
-        d
-    }' "$src_file"
+    echo "3: FPGA时钟输入"
+    # 修改FPGA时钟接口
+    sed -i '/^  input         fpga_clock_p,/,/^  input         fpga_clock_n,/c\
+`ifndef XEPIC_P2E\
+  input         fpga_clock_p,\
+                fpga_clock_n,\
+`else\
+  input                clock_2,\
+`endif' "$src_file"
 
-    echo "删除原始实例，避免重复"
-    # 更精确地删除特定实例，避免误删其他实例
-    sed -i '/^  IBUFDS #(/,/^  );	\/\/ @\[.*ClockOverlay\.scala.*\]$/d' "$src_file"
-    sed -i '/^  harnessSysPLL harnessSysPLL (/,/^  );	\/\/ @\[.*XilinxShell\.scala.*\]$/d' "$src_file"
-    sed -i '/^  IBUF IBUF (/,/^  );	\/\/ @\[.*TestHarness\.scala.*\]$/d' "$src_file"
-    sed -i '/^  PowerOnResetFPGAOnly fpga_power_on (/,/^  );	\/\/ @\[.*Xilinx\.scala.*\]$/d' "$src_file"
+    echo "4-9: 删除原始实例"
+    export TARGET_FILE="$src_file"
+    python << 'EOF'
+import os
 
-    echo "添加完整的条件编译块"
-    # 在AnalogToUInt_1 a2b_4后添加完整的条件编译块
+filename = os.environ.get('TARGET_FILE')
+with open(filename, 'r') as f:
+    lines = f.readlines()
+
+new_lines = []
+i = 0
+while i < len(lines):
+    line = lines[i].strip()
+    
+    # 检查是否是要删除的实例开始
+    if (line.startswith('IBUFDS #(') or 
+        line.startswith('fpgaPLL fpgaPLL (') or
+        line.startswith('harnessSysPLL harnessSysPLL (') or
+        line.startswith('IBUF ') or
+        line.startswith('PowerOnResetFPGAOnly ')):
+        
+        # 跳过直到找到实例结束 );
+        while i < len(lines):
+            if lines[i].strip().endswith(');') or lines[i].strip().startswith(');'):
+                i += 1  # 跳过结束行
+                break
+            i += 1
+    else:
+        new_lines.append(lines[i])
+        i += 1
+
+with open(filename, 'w') as f:
+    f.writelines(new_lines)
+EOF
+
+    echo "10: 添加条件编译块"
+    # 在AnalogToUInt_1 a2b_4实例后添加完整的条件编译块
     sed -i '/AnalogToUInt_1 a2b_4 (/,/);/ {
         /);/ a\
 \
@@ -173,41 +204,51 @@ process_test_harness() {
     .IFD_DELAY_VALUE("AUTO"),\
     .IBUF_LOW_PWR("TRUE"),\
     .IBUF_DELAY_VALUE(0)\
-  ) sys_clock_ibufds (	// @[ClockOverlay.scala:14:24]\
+  ) sys_clock_ibufds (\
     .I  (sys_clock_p),\
     .IB (sys_clock_n),\
     .O  (_sys_clock_ibufds_O)\
   );\
 \
-  harnessSysPLL harnessSysPLL (	// @[XilinxShell.scala:84:55]\
-    .clk_in1  (_sys_clock_ibufds_O),	// @[ClockOverlay.scala:14:24]\
-    .reset    (harnessSysPLLIn_reset),	// @[TestHarness.scala:113:38]\
+  harnessSysPLL harnessSysPLL (\
+    .clk_in1  (_sys_clock_ibufds_O),\
+    .reset    (_WIRE),\
     .clk_out1 (_harnessSysPLL_clk_out1),\
     .locked   (_harnessSysPLL_locked)\
   );\
 \
-  IBUF IBUF (	// @[TestHarness.scala:100:25]\
+  IBUF resetIBUF (\
     .I (reset),\
-    .O (_IBUF_O)\
+    .O (_resetIBUF_O)\
   );\
 \
-  PowerOnResetFPGAOnly fpga_power_on (	// @[Xilinx.scala:104:21]\
-    .clock          (_sys_clock_ibufds_O),	// @[ClockOverlay.scala:14:24]\
-    .power_on_reset (_fpga_power_on_power_on_reset)\
+  PowerOnResetFPGAOnly powerOnReset_fpga_power_on (\
+    .clock          (_sys_clock_ibufds_O),\
+    .power_on_reset (_powerOnReset_fpga_power_on_power_on_reset)\
   );\
 `else\
   assign _sys_clock_ibufds_O = clock;\
   assign _harnessSysPLL_clk_out1 = clock;\
   assign _harnessSysPLL_locked = 1;\
+  assign _fpga_clock_ibufds_O = clock_2;\
+  assign _fpgaPLL_clk_out1 = clock_2;\
+  assign _fpgaPLL_locked = 1;\
 \
-  PowerOnResetFPGAOnly fpga_power_on (	// @[Xilinx.scala:104:21]\
-    .clock          (clock),	// @[ClockOverlay.scala:14:24]\
-    .power_on_reset (_fpga_power_on_power_on_reset)\
+  PowerOnResetFPGAOnly powerOnReset_fpga_power_on (\
+    .clock          (clock),\
+    .power_on_reset (_powerOnReset_fpga_power_on_power_on_reset)\
   );\
 `endif\
 \
 assign sdio_sel = 1'\''b0;
     }' "$src_file"
+
+    echo "确保endmodule存在"
+    # 检查文件末尾几行是否包含endmodule，如果没有则添加
+    if ! tail -n 5 "$src_file" | grep -q "endmodule"; then
+        echo "endmodule" >> "$src_file"
+        echo "已添加endmodule"
+    fi
 
     echo "VCU118FPGATestHarness.sv处理完成"
 }
