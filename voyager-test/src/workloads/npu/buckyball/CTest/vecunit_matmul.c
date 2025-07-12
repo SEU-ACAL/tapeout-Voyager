@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+
 // Test matrices
 static elem_t input_matrix_a[DIM * DIM] __attribute__((aligned(64)));
 static elem_t input_matrix_b[DIM * DIM] __attribute__((aligned(64)));
