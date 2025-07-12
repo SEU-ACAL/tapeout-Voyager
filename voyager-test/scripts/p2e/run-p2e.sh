@@ -7,6 +7,7 @@ set -e
 
 # Default values
 SKIP_STEPS=0
+BOARD_TEST_FILE=""
 
 # Help function
 help() {
@@ -14,6 +15,7 @@ help() {
   echo ""
   echo "Options:"
   echo "  -s, --skip NUMBER    跳过前几步 (例如: -s 2 从第3步开始)"
+  echo "  --board-test FILE    指定 pin_config.json 文件路径"
   echo "  -h, --help           显示帮助信息"
   echo ""
   echo "Steps:"
@@ -33,6 +35,15 @@ while [ $# -gt 0 ] ; do
         shift
       else
         echo "错误: -s 或 --skip 选项需要一个数字参数"
+        help
+      fi
+      ;;
+    --board-test)
+      if [[ -n $2 ]]; then
+        BOARD_TEST_FILE="$2"
+        shift
+      else
+        echo "错误: --board-test 选项需要一个文件路径参数"
         help
       fi
       ;;
@@ -150,10 +161,20 @@ main() {
     cd $SCRIPT_DIR/toolchain
     Log "$YELLOW" "Syncing FPGA IP ($FPGA_IP) to hw-config.hdf..."
     sed -i "s/\"IP\": \"[^\"]*\"/\"IP\": \"$FPGA_IP\"/g" hw-config.hdf
+    
     Log "$YELLOW" "Setting workload name ($WORKLOAD) in debug_trigger.tcl"
     sed -i "s/-file [^.]*\.hex/-file ..\/image\/$WORKLOAD.hex/g" debug_trigger.tcl
+    
     Log "$YELLOW" "Setting serial port ($SERIAL) in screen_setup.sh"
     sed -i "s|send \"/dev/tty[0-9]*gpio 4800\\\\r\"|send \"$SERIAL 4800\\\\r\"|g" screen_setup.sh
+    
+    if [ -n "$BOARD_TEST_FILE" ]; then
+      Log "$YELLOW" "Setting board test file ($BOARD_TEST_FILE) in pin_config.json"
+      cp $BOARD_TEST_FILE $SCRIPT_DIR/toolchain/pin_config.json
+    else
+      Log "$YELLOW" "No board test file specified, use default pin_config.json"
+      cp $SCRIPT_DIR/toolchain/default_pin_config.json $SCRIPT_DIR/toolchain/pin_config.json
+    fi
   else
     Log "$YELLOW" "Step 2 skipped"
   fi
