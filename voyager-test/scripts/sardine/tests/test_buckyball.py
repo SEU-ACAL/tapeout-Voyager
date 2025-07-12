@@ -13,7 +13,6 @@ script_dir = Path(__file__).parent.parent.parent
 
 @pytest.mark.verilator  
 @pytest.mark.buckyball
-@pytest.mark.smoke
 def test_verilator_ctest_mvin_mvout_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   
@@ -39,7 +38,6 @@ def test_verilator_ctest_mvin_mvout_multicore(script_runner, caplog):
 
 @pytest.mark.verilator  
 @pytest.mark.buckyball
-@pytest.mark.smoke
 def test_verilator_ctest_acc_matmul_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   
@@ -65,7 +63,6 @@ def test_verilator_ctest_acc_matmul_multicore(script_runner, caplog):
 
 @pytest.mark.verilator  
 @pytest.mark.buckyball
-@pytest.mark.smoke
 def test_verilator_ctest_bbfp_matmul_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   
@@ -91,7 +88,6 @@ def test_verilator_ctest_bbfp_matmul_multicore(script_runner, caplog):
 
 @pytest.mark.verilator  
 @pytest.mark.buckyball
-@pytest.mark.smoke
 def test_verilator_ctest_bbfptest_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   
