@@ -18,6 +18,9 @@ make
 pip install -r ${CYDIR}/voyager-test/scripts/sardine/requirements.txt
 sudo npm install -g allure-commandline # may need sudo, this is not suitable for all users, need be fixed later
 
+cd ${CYDIR}
+git submodule update --init voyager-test/src/workloads/embench/embench-iot
+
 cd ${CYDIR}/voyager-test/src/workloads/embench/embench-iot
 git apply --ignore-whitespace ../embench.patch
 cd ..

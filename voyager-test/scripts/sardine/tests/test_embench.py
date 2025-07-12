@@ -13,7 +13,7 @@ embench_workloads = [
   (f"{embench_workload_dir}/edn", "edn"), 
   (f"{embench_workload_dir}/minver", "minver"),
   (f"{embench_workload_dir}/nettle-sha256", "nettle-sha256"),
-  (f"{embench_workload_dir}/qrduino", "qrduino"),
+  # (f"{embench_workload_dir}/qrduino", "qrduino"), # about 50 minutes 
   (f"{embench_workload_dir}/st", "st"),
   # (f"{embench_workload_dir}/wikisort", "wikisort"),
   # (f"{embench_workload_dir}/crc32", "crc32"),
