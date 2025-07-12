@@ -46,9 +46,17 @@ add_custom_target(buckyball-CTest-multicore-baremetal ALL
     COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_acc_matmul_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
             -DMULTICORE=5
             ${BUCKYBALL_CTEST_DIR}/acc_matmul.c
+    COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_bbfp_matmul_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
+            -DMULTICORE=5
+            ${BUCKYBALL_CTEST_DIR}/bbfpmatmul.c
+    COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_bbfptest_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
+            -DMULTICORE=5
+            ${BUCKYBALL_CTEST_DIR}/bbfptest.c
     DEPENDS ${BUCKYBALL_CTEST_DIR}/mvin_mvout.c 
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul.c 
             ${BUCKYBALL_CTEST_DIR}/acc_matmul.c
+            ${BUCKYBALL_CTEST_DIR}/bbfpmatmul.c
+            ${BUCKYBALL_CTEST_DIR}/bbfptest.c
             ${BUCKYBALL_CTEST_DIR}/start.S
     COMMENT "Building baremetal workloads for Buckyball"
     VERBATIM)
@@ -63,9 +71,17 @@ add_custom_target(buckyball-CTest-singlecore-baremetal ALL
     COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_acc_matmul_singlecore-baremetal 
             -DMULTICORE=5
             ${BUCKYBALL_CTEST_DIR}/acc_matmul.c
+    COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_bbfp_matmul_singlecore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
+            -DMULTICORE=5
+            ${BUCKYBALL_CTEST_DIR}/bbfpmatmul.c
+    COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_bbfptest_singlecore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
+            -DMULTICORE=5
+            ${BUCKYBALL_CTEST_DIR}/bbfptest.c
     DEPENDS ${BUCKYBALL_CTEST_DIR}/mvin_mvout.c 
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul.c 
             ${BUCKYBALL_CTEST_DIR}/acc_matmul.c
+            ${BUCKYBALL_CTEST_DIR}/bbfpmatmul.c
+            ${BUCKYBALL_CTEST_DIR}/bbfptest.c
     COMMENT "Building baremetal workloads for Buckyball"
     VERBATIM)
 

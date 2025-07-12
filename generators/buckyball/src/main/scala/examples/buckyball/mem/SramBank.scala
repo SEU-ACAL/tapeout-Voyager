@@ -119,6 +119,7 @@ class AccBank(n: Int, w: Int, aligned_to: Int, single_ported: Boolean) extends M
   val s2_data = RegEnable(Mux(s1_acc, s1_data + rdata, s1_data), s1_valid)
   val s2_mask = RegEnable(s1_mask, s1_valid)
   val s2_valid = RegNext(s1_valid)
+  
   //S3: Write request
   val s3_addr = RegEnable(s2_addr, s2_valid)
   val s3_data = RegEnable(s2_data, s2_valid)

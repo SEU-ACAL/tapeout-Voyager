@@ -7,7 +7,7 @@ import org.chipsalliance.cde.config.Parameters
 
 import dialect.bbfp._
 import buckyball.frontend.rs.{ReservationStationIssue, ReservationStationComplete, BuckyBallCmd}
-import buckyball.mem.{SramReadIO, SramWriteIO}
+import buckyball.mem.{SramReadIO, SramWriteIO, AccWriteIO}
 import buckyball.BuckyBallConfig
 import org.yaml.snakeyaml.events.Event.ID
 
@@ -22,6 +22,10 @@ class BBFP_Control(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Mo
         // 连接到Scratchpad的SRAM读写接口
         val sramRead = Vec(bbconfig.sp_banks, new SramReadIO(bbconfig.sp_bank_entries, spad_w))
         val sramWrite = Vec(bbconfig.sp_banks, new SramWriteIO(bbconfig.sp_bank_entries, spad_w, spad_w/8))
+
+         // 连接到Accumulator的读写接口
+        val accRead = Vec(bbconfig.acc_banks, new SramReadIO(bbconfig.acc_bank_entries, bbconfig.acc_width))
+        val accWrite = Vec(bbconfig.acc_banks, new AccWriteIO(bbconfig.acc_bank_entries, bbconfig.acc_width, bbconfig.acc_width/8))
   })
 // -----------------------------------------------------------------------------
 // BBFP_ID
@@ -59,5 +63,9 @@ class BBFP_Control(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Mo
         io.sramWrite(i) <> BBFP_EX.io.sramWrite(i)
     }
     BBFP_EX.io.is_matmul_ws := io.is_matmul_ws
+    for (i <- 0 until bbconfig.acc_banks) {
+        io.accWrite(i) <> BBFP_EX.io.accWrite(i)
+        io.accRead(i) := DontCare
+    }
 
 }

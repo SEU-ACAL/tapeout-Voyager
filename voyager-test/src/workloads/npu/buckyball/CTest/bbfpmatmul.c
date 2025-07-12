@@ -1,0 +1,56 @@
+#include "buckyball.h"
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+
+void init_matrix(elem_t* matrix, int rows, int cols, int seed) {
+    for (int i = 0; i < rows * cols; i++) {
+        matrix[i] = i % 128;  
+    }
+}
+
+// Test matrices
+static elem_t input_matrix[DIM * DIM] __attribute__((aligned(64)));
+static elem_t weight_matrix[DIM * DIM] __attribute__((aligned(64)));
+static result_t output_matrix[DIM * DIM] __attribute__((aligned(64)));
+#define BANK 4096
+#define OP1_ADDR 0
+#define OP2_ADDR (BANK + DIM)
+#define WR_ADDR (DIM + 2 * BANK)
+
+int main() {
+#ifdef MULTICORE 
+    multicore(MULTICORE);  // Only allow specified hart to continue
+#endif
+    
+    // Initialize input matrix
+    init_matrix(input_matrix, DIM, DIM * 4, 42);
+    
+    // Clear output matrix
+    memset(output_matrix, 0, sizeof(output_matrix));
+    
+    //print_matrix("Input", input_matrix, DIM, DIM);
+    
+    // Move input to scratchpad
+    bb_mvin((uintptr_t)output_matrix, WR_ADDR, DIM * 4);
+    bb_mvin((uintptr_t)input_matrix, OP1_ADDR, DIM );
+    bb_mvin((uintptr_t)input_matrix, OP2_ADDR, DIM );
+
+    
+    printf("Perform Matmul\n");
+    bb_bbfp_mul(OP1_ADDR, OP2_ADDR, WR_ADDR, DIM);
+    printf("Matmul Done\n");
+    
+
+    // Move back from scratchpad to output
+    bb_mvout((uintptr_t)output_matrix, WR_ADDR, DIM * 4);
+    printf("Finished\n");
+   
+    // print_matrix("Output", output_matrix, DIM, DIM);
+
+#ifdef MULTICORE 
+    exit(0);
+#endif
+}

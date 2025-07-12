@@ -28,9 +28,11 @@
 #define BB_MVOUT_FUNCT 25        // 0x19 - Move out function code  
 #define BB_MUL_FUNCT 32          // 0x20 - Matrix multiply function code
 #define BB_FLUSH_FUNCT 7         // 0x07 - Flush function code
-
+#define BB_BBFP_MUL_FUNCT 26     // 0x18 - BBFP matrix multiply function code
+#define BB_MATMUL_WS_FUNCT 27    // 0x1B - Matrix multiply with warp16 function code
 // Data type for matrix elements
 typedef int8_t elem_t;
+typedef int32_t result_t;
 
 // Buckyball RoCC instruction macro (following xcustom.h style)
 #define BUCKYBALL_INSTRUCTION_R_R(rs1, rs2, func7) \
@@ -79,11 +81,31 @@ typedef int8_t elem_t;
         BUCKYBALL_INSTRUCTION_R_R(rs1_val, rs2_val, BB_MUL_FUNCT); \
     } while(0)
 
+#define bb_bbfp_mul(op1_addr, op2_addr, wr_addr, iter) \
+do { \
+    uint64_t rs1_val = ((op2_addr) << SPAD_ADDR_LEN) | ((op1_addr) & ((1UL << SPAD_ADDR_LEN) - 1)); \
+    uint64_t rs2_val = ((iter) << SPAD_ADDR_LEN) | ((wr_addr) & ((1UL << SPAD_ADDR_LEN) - 1)); \
+    BUCKYBALL_INSTRUCTION_R_R(rs1_val, rs2_val, BB_BBFP_MUL_FUNCT); \
+} while(0)
+
+// OP1 Psum地址 OP2新的激活地址 wraddr写回的psum地址 iter迭代次数
+#define bb_matmul_ws(op1_addr, op2_addr, wr_addr, iter) \
+do { \
+    uint64_t rs1_val = ((op2_addr) << SPAD_ADDR_LEN) | ((op1_addr) & ((1UL << SPAD_ADDR_LEN) - 1)); \
+    uint64_t rs2_val = ((iter) << SPAD_ADDR_LEN) | ((wr_addr) & ((1UL << SPAD_ADDR_LEN) - 1)); \
+    BUCKYBALL_INSTRUCTION_R_R(rs1_val, rs2_val, BB_MATMUL_WS_FUNCT); \
+} while(0)
+
 // Flush accelerator
 #define bb_flush() \
     BUCKYBALL_INSTRUCTION_FLUSH(BB_FLUSH_FUNCT)
 
-// Multicore support function
+#define MULTICORE_INIT(hart_id) \
+  __attribute__((constructor)) \
+  static void _multicore_init() { \
+    multicore(hart_id); \
+  }
+
 static inline void multicore(int target_hart_id) {
   int hart_id;
   asm volatile("csrr %0, mhartid" : "=r"(hart_id));
@@ -96,16 +118,10 @@ static inline void multicore(int target_hart_id) {
   // If hart_id == target_hart_id, continue execution
 }
 
-// Macro to automatically setup multicore before main
-#define MULTICORE_INIT(hart_id) \
-  __attribute__((constructor)) \
-  static void _multicore_init() { \
-    multicore(hart_id); \
-  }
-
 // Utility functions
-void print_matrix(const char* name, elem_t* matrix, int rows, int cols);
+void print_result_matrix(const char* name, result_t* matrix, int rows, int cols);
 void init_matrix(elem_t* matrix, int rows, int cols, int seed);
+void print_matrix(const char* name, elem_t* matrix, int rows, int cols);
 int compare_matrices(elem_t* a, elem_t* b, int rows, int cols);
-
+void init_matrixv2(elem_t* matrix, int rows, int cols, int seed,int value);
 #endif

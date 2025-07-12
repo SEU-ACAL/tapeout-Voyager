@@ -43,7 +43,7 @@ def test_embench_workload(script_runner, caplog, workload_path, workload_id, con
   caplog.set_level(logging.INFO)
   
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", config, workload_path], timeout=60000)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", config, workload_path, "--debug"], timeout=60000)
   execution_time = time.time() - start_time
   
   logging.info(f"Workload: {workload_id}, Config: {config}")

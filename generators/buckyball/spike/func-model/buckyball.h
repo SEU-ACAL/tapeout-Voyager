@@ -47,6 +47,7 @@ private:
   const unsigned mul_funct = 32; // func7: 0100000 (bb_mul_warp16)
   const unsigned flush_funct = 7;
   const unsigned bbfp_mul_funct = 26;   // func7: 0100001
+  const unsigned matmul_ws_funct = 27;   // func7: 0100010
   template <class T>
   T read_from_dram(reg_t addr);
 
