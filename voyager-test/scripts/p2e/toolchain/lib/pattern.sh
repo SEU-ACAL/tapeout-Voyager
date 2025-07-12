@@ -57,9 +57,12 @@ readonly PATTERN_BLACKBOX_CALIB_COMPLETE='wire.*_blackbox_c0_init_calib_complete
 
 # AXI4ASINK ready signal pattern and reset logic replacement
 readonly PATTERN_AXI4ASINK_R_READY='^  wire        _axi4asink_auto_out_r_ready;'
-readonly REPLACEMENT_RESET_LOGIC='  wire        com_reset;\
-  wire        _blackbox_c0_init_calib_complete;        # @[XilinxVCU118MIG.scala:51:26]\
-  assign com_reset = reset | (~_blackbox_c0_init_calib_complete);'
+readonly REPLACEMENT_RESET_LOGIC=$(cat << 'EOF'
+  wire        com_reset;
+  wire        _blackbox_c0_init_calib_complete;        // @[XilinxVCU118MIG.scala:51:26]
+  assign com_reset = reset | (~_blackbox_c0_init_calib_complete);
+EOF
+)
 
 # Reset connection patterns
 readonly PATTERN_RESET_CONNECTION='\.reset                          (reset),'
@@ -70,58 +73,60 @@ readonly REPLACEMENT_RESET_CONNECTION='.reset                          (com_rese
 # ====================================================================
 
 # Analog to UINT patterns for conditional compilation
-readonly PATTERN_ANALOG_TO_UINT_START='AnalogToUInt_1 a2b_4 ('
-readonly PATTERN_ANALOG_TO_UINT_END=');'
+readonly PATTERN_ANALOG_TO_UINT_START='AnalogToUInt_1 a2b_4'
+readonly PATTERN_ANALOG_TO_UINT_END='  );.*@.*fpga/fpga-shells.*shell/Util.scala:29:21'
 
 # Large conditional compilation block replacement
-readonly REPLACEMENT_CONDITIONAL_BLOCK='\
-\
-`ifndef XEPIC_P2E\
-  IBUFDS #(\
-    .DIFF_TERM("FALSE"),\
-    .IOSTANDARD("DEFAULT"),\
-    .DQS_BIAS("FALSE"),\
-    .CAPACITANCE("DONT_CARE"),\
-    .IFD_DELAY_VALUE("AUTO"),\
-    .IBUF_LOW_PWR("TRUE"),\
-    .IBUF_DELAY_VALUE(0)\
-  ) sys_clock_ibufds (\
-    .I  (sys_clock_p),\
-    .IB (sys_clock_n),\
-    .O  (_sys_clock_ibufds_O)\
-  );\
-\
-  harnessSysPLL harnessSysPLL (\
-    .clk_in1  (_sys_clock_ibufds_O),\
-    .reset    (_WIRE),\
-    .clk_out1 (_harnessSysPLL_clk_out1),\
-    .locked   (_harnessSysPLL_locked)\
-  );\
-\
-  IBUF resetIBUF (\
-    .I (reset),\
-    .O (_resetIBUF_O)\
-  );\
-\
-  PowerOnResetFPGAOnly powerOnReset_fpga_power_on (\
-    .clock          (_sys_clock_ibufds_O),\
-    .power_on_reset (_powerOnReset_fpga_power_on_power_on_reset)\
-  );\
-`else\
-  assign _sys_clock_ibufds_O = clock;\
-  assign _harnessSysPLL_clk_out1 = clock;\
-  assign _harnessSysPLL_locked = 1;\
-  assign _fpga_clock_ibufds_O = clock_2;\
-  assign _fpgaPLL_clk_out1 = clock_2;\
-  assign _fpgaPLL_locked = 1;\
-\
-  PowerOnResetFPGAOnly powerOnReset_fpga_power_on (\
-    .clock          (clock),\
-    .power_on_reset (_powerOnReset_fpga_power_on_power_on_reset)\
-  );\
-`endif\
-\
-assign sdio_sel = 1'"'"'b0;'
+readonly REPLACEMENT_CONDITIONAL_BLOCK=$(cat << 'EOF'
+
+`ifndef XEPIC_P2E
+  IBUFDS #(
+    .DIFF_TERM("FALSE"),
+    .IOSTANDARD("DEFAULT"),
+    .DQS_BIAS("FALSE"),
+    .CAPACITANCE("DONT_CARE"),
+    .IFD_DELAY_VALUE("AUTO"),
+    .IBUF_LOW_PWR("TRUE"),
+    .IBUF_DELAY_VALUE(0)
+  ) sys_clock_ibufds (
+    .I  (sys_clock_p),
+    .IB (sys_clock_n),
+    .O  (_sys_clock_ibufds_O)
+  );
+
+  harnessSysPLL harnessSysPLL (
+    .clk_in1  (_sys_clock_ibufds_O),
+    .reset    (_WIRE),
+    .clk_out1 (_harnessSysPLL_clk_out1),
+    .locked   (_harnessSysPLL_locked)
+  );
+
+  IBUF resetIBUF (
+    .I (reset),
+    .O (_resetIBUF_O)
+  );
+
+  PowerOnResetFPGAOnly powerOnReset_fpga_power_on (
+    .clock          (_sys_clock_ibufds_O),
+    .power_on_reset (_powerOnReset_fpga_power_on_power_on_reset)
+  );
+`else
+  assign _sys_clock_ibufds_O = clock;
+  assign _harnessSysPLL_clk_out1 = clock;
+  assign _harnessSysPLL_locked = 1;
+  assign _fpga_clock_ibufds_O = clock_2;
+  assign _fpgaPLL_clk_out1 = clock_2;
+  assign _fpgaPLL_locked = 1;
+
+  PowerOnResetFPGAOnly powerOnReset_fpga_power_on (
+    .clock          (clock),
+    .power_on_reset (_powerOnReset_fpga_power_on_power_on_reset)
+  );
+`endif
+
+assign sdio_sel = 1'b0;
+EOF
+)
 
 # ====================================================================
 # PYTHON SCRIPT PATTERNS AND TEMPLATES
@@ -151,24 +156,24 @@ readonly XEPIC_XRAM_TEMPLATE=$(cat << 'EOF'
         logic  [1:0]                      xram0_read_data_valid;
         logic                             mmp_ddr4_calib_done;
 
-         # slave0 slave-embeded, support burst control
-         defparam u_axi_xram.AXI_MODE = 4;  # AXI Mode: 3 = AXI3, 4 = AXI4
+         // slave0 slave-embeded, support burst control
+         defparam u_axi_xram.AXI_MODE = 4;  // AXI Mode: 3 = AXI3, 4 = AXI4
          defparam u_axi_xram.AXI_ID_WIDTH   = 4;
-         defparam u_axi_xram.AXI_DATA_WIDTH = 64;   # Data Width: 8,16,32,64,128,256,512,1024 
-         defparam u_axi_xram.AXI_ADDR_WIDTH = 32;  # Addr Width: 32..64
-         defparam u_axi_xram.AXI_USER_WIDTH = 0;  # 
-         defparam u_axi_xram.MEM_SIZE = 64'h4_0000_0000;  # 2^34
+         defparam u_axi_xram.AXI_DATA_WIDTH = 64;   // Data Width: 8,16,32,64,128,256,512,1024 
+         defparam u_axi_xram.AXI_ADDR_WIDTH = 32;  // Addr Width: 32..64
+         defparam u_axi_xram.AXI_USER_WIDTH = 0;  // 
+         defparam u_axi_xram.MEM_SIZE = 64'h4_0000_0000;  // 2^34
  
-         xaxi4_slave_emb u_axi_xram ( #or xaxi4_slave_emb_wrapper
+         xaxi4_slave_emb u_axi_xram ( //or xaxi4_slave_emb_wrapper
             /*AUTOARG*/
             .aclk      (io_port_c0_sys_clk_i),
             .aresetn   (~io_port_sys_rst),
-            # AXI write address channel
+            // AXI write address channel
             .i_awvalid (_axi4asink_auto_out_aw_valid),
             .o_awready (_blackbox_c0_ddr4_s_axi_awready),
             .i_awid    (_axi4asink_auto_out_aw_bits_id),
             .i_awaddr  (_axi4asink_auto_out_aw_bits_addr[30:0]),
-            .i_awlen   (_axi4asink_auto_out_aw_bits_len),     # in AXI3 .mode    (mode    ), [7:4] should be fixed to 0
+            .i_awlen   (_axi4asink_auto_out_aw_bits_len),     // in AXI3 .mode    (mode    ), [7:4] should be fixed to 0
             .i_awsize  (_axi4asink_auto_out_aw_bits_size),
             .i_awburst (_axi4asink_auto_out_aw_bits_burst),
             .i_awlock  (_axi4asink_auto_out_aw_bits_lock),
@@ -176,25 +181,25 @@ readonly XEPIC_XRAM_TEMPLATE=$(cat << 'EOF'
             .i_awprot  (_axi4asink_auto_out_aw_bits_prot),
             .i_awqos   (_axi4asink_auto_out_aw_bits_qos),
                          .i_awregion(4'b0),
-            # AXI write data channel
+            // AXI write data channel
             .i_wvalid  (_axi4asink_auto_out_w_valid),
             .o_wready  (_blackbox_c0_ddr4_s_axi_wready),
             .i_wid     (0),
             .i_wdata   (_axi4asink_auto_out_w_bits_data),
             .i_wstrb   (_axi4asink_auto_out_w_bits_strb),
             .i_wlast   (_axi4asink_auto_out_w_bits_last),
-            # AXI write response channel
+            // AXI write response channel
             .o_bvalid  (_blackbox_c0_ddr4_s_axi_bvalid),
             .i_bready  (_axi4asink_auto_out_b_ready),
             .o_bid     (_blackbox_c0_ddr4_s_axi_bid),
             .o_bresp   (_blackbox_c0_ddr4_s_axi_bresp),
 
-            # AXI read address channel
+            // AXI read address channel
             .i_arvalid (_axi4asink_auto_out_ar_valid),
             .o_arready (_blackbox_c0_ddr4_s_axi_arready),
             .i_arid    (_axi4asink_auto_out_ar_bits_id),
             .i_araddr  (_axi4asink_auto_out_ar_bits_addr[30:0]),
-            .i_arlen   (_axi4asink_auto_out_ar_bits_len),     # in AXI3 .mode    (mode    ), [7:4] should be fixed to 0
+            .i_arlen   (_axi4asink_auto_out_ar_bits_len),     // in AXI3 .mode    (mode    ), [7:4] should be fixed to 0
             .i_arsize  (_axi4asink_auto_out_ar_bits_size),
             .i_arburst (_axi4asink_auto_out_ar_bits_burst),
             .i_arlock  (_axi4asink_auto_out_ar_bits_lock),
@@ -202,7 +207,7 @@ readonly XEPIC_XRAM_TEMPLATE=$(cat << 'EOF'
             .i_arprot  (_axi4asink_auto_out_ar_bits_prot),
             .i_arqos   (_axi4asink_auto_out_ar_bits_qos),
                          .i_arregion(4'b0),
-            # AXI read response
+            // AXI read response
             .o_rvalid  (_blackbox_c0_ddr4_s_axi_rvalid),
             .i_rready  (_axi4asink_auto_out_r_ready),
             .o_rid     (_blackbox_c0_ddr4_s_axi_rid),
@@ -256,7 +261,8 @@ EOF
 )
 
 # XRAM endif code
-readonly XRAM_ENDIF_CODE='\n`endif'
+readonly XRAM_ENDIF_CODE='
+`endif'
 
 # ====================================================================
 # PATTERN VALIDATION

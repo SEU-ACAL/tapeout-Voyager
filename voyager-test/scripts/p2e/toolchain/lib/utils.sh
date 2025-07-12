@@ -26,6 +26,10 @@ safe_copy_file() {
         return 1
     fi
     
+    if [[ "$src_file" -ef "$dst_file" ]]; then
+        return 0
+    fi
+    
     local dst_dir
     dst_dir="$(dirname "$dst_file")"
     

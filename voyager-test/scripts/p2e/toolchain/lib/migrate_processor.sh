@@ -204,13 +204,15 @@ add_conditional_compilation_block() {
     local in_block=false
     
     while IFS= read -r line; do
-        echo "$line"
-        
         if [[ "$line" =~ $PATTERN_ANALOG_TO_UINT_START ]]; then
             in_block=true
+            echo "$line"
         elif [[ "$in_block" == true && "$line" =~ $PATTERN_ANALOG_TO_UINT_END ]]; then
+            echo "$line"
             printf '%s\n' "$REPLACEMENT_CONDITIONAL_BLOCK"
             in_block=false
+        else
+            echo "$line"
         fi
     done < "$target_file" > "$temp_file"
     
