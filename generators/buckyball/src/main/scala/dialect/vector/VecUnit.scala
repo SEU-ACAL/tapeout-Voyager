@@ -8,6 +8,7 @@ import dialect.vector._
 import buckyball.frontend.rs.{ReservationStationIssue, ReservationStationComplete, BuckyBallCmd}
 import buckyball.mem.{SramReadIO, SramWriteIO, SramReadResp, AccWriteIO}
 import buckyball.BuckyBallConfig
+import buckyball.util.Pipeline
 import org.yaml.snakeyaml.events.Event.ID
 
 class VecUnit(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
@@ -32,36 +33,36 @@ class VecUnit(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
     VecID.io.cmdReq <> io.cmdReq
     io.cmdResp <> VecID.io.cmdResp
 // -----------------------------------------------------------------------------
-// ID_LU
+// ID_LU Pipeline
 // -----------------------------------------------------------------------------
-    val ID_LU = Module(new ID_LU)
-    ID_LU.io.id_lu_i <> VecID.io.id_lu_o
+    val ID_LU = Module(new Pipeline(new id_lu_req, 1)())
+    ID_LU.io.in <> VecID.io.id_lu_o
 
 // -----------------------------------------------------------------------------
 // VECLOADUNIT
 // ----------------------------------------------------------------------------- 
-    val VecLoadUnit = Module(new VecLoadUnit)
-    VecLoadUnit.io.id_lu_i <> ID_LU.io.ld_lu_o
-    for (i <- 0 until bbconfig.sp_banks) {
-        io.sramRead(i).req <> VecLoadUnit.io.sramReadReq(i)
-    }
+	val VecLoadUnit = Module(new VecLoadUnit)
+	VecLoadUnit.io.id_lu_i <> ID_LU.io.out
+	for (i <- 0 until bbconfig.sp_banks) {
+		io.sramRead(i).req <> VecLoadUnit.io.sramReadReq(i)
+	}
 // -----------------------------------------------------------------------------
-// LU_EX
+// LU_EX Pipeline
 // -----------------------------------------------------------------------------    
-    val LU_EX = Module(new LU_EX)
-    LU_EX.io.lu_ex_i <> VecLoadUnit.io.lu_ex_o
+	val LU_EX = Module(new Pipeline(new lu_ex_req, 1)())
+	LU_EX.io.in <> VecLoadUnit.io.lu_ex_o
+
 // -----------------------------------------------------------------------------
 // VECEX
 // -----------------------------------------------------------------------------    
-    val VecEX = Module(new VecEX)
-    VecEX.io.lu_ex_i <> LU_EX.io.lu_ex_o
-    for (i <- 0 until bbconfig.sp_banks) {
-        VecEX.io.sramReadResp(i) <> io.sramRead(i).resp
-        io.sramWrite(i) <> VecEX.io.sramWrite(i)
-    }
-    for (i <- 0 until bbconfig.acc_banks) {
-        io.accWrite(i) <> VecEX.io.accWrite(i)
-        io.accRead(i) := DontCare
-    }
-
-}
+	val VecEX = Module(new VecEX)
+	VecEX.io.lu_ex_i <> LU_EX.io.out
+	for (i <- 0 until bbconfig.sp_banks) {
+					VecEX.io.sramReadResp(i) <> io.sramRead(i).resp
+					io.sramWrite(i) <> VecEX.io.sramWrite(i)
+			}
+			for (i <- 0 until bbconfig.acc_banks) {
+					io.accWrite(i) <> VecEX.io.accWrite(i)
+					io.accRead(i) := DontCare
+			}
+	}
