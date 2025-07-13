@@ -50,15 +50,14 @@ done
 if [[ -d "$OUTPUT_DIR" ]]; then
     log_info "Output directory exists, will update files: $OUTPUT_DIR"
     # only delete the files that are in the list
-    rm -f "$OUTPUT_DIR/VCU118FPGATestHarness.sv" "$OUTPUT_DIR/XilinxVCU118MIGIsland.sv"
+    if [[ "$SOURCE_DIR" != "$OUTPUT_DIR" ]]; then
+        rm -f "$OUTPUT_DIR/VCU118FPGATestHarness.sv" "$OUTPUT_DIR/XilinxVCU118MIGIsland.sv"
+    fi
 else
     log_info "Creating output directory: $OUTPUT_DIR"
     safe_create_directory "$OUTPUT_DIR" || exit "$EXIT_ERROR"
 fi
 
-
-log_info "Creating output directory: $OUTPUT_DIR"
-safe_create_directory "$OUTPUT_DIR" || exit "$EXIT_ERROR"
 
 # Process files
 log_info "Processing VCU118FPGATestHarness.sv..."
