@@ -9,4 +9,4 @@ source ${CYDIR}/env.sh
 
 # bash ./scripts/init-voyager-test.sh
 
-git submodule update --init voyager-test/src/workloads/parsec-benchmark
+git submodule update --init voyager-test/src/workloads/parsecv3/parsec-benchmark
