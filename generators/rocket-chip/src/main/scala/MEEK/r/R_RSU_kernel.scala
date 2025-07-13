@@ -126,6 +126,7 @@ class R_RSU_kernel(val params: R_RSUParams) extends Module with HasR_RSUIO_kerne
     }
     pcarf_ss                                   := io.pcarf_in
     fcsr_ss                                    := io.fcsr_in
+    crt_priv                                   := io.priv
   }.elsewhen(doSnapshot_priv){
     for (i <- 0 until params.numARFS) {
       arfs_ss(i)                               := io.arfs_in(i)

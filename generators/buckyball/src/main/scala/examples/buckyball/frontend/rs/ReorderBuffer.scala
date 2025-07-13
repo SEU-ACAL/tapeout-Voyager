@@ -91,6 +91,10 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
   val load_in_flight = RegInit(false.B)
   val store_in_flight = RegInit(false.B)
   
+  // 跟踪Ex指令发射延迟
+  val ex_delay_counter = RegInit(0.U(10.W))  // 8-bit counter for 100 cycles
+  val last_issued_was_ex = RegInit(false.B)  // 跟踪上一次发射的是否为Ex指令
+  
   // 当前要发射的指令类型
   val current_cmd_type = RobEntries(issue_ptr).cmd_type
   val is_load = current_cmd_type === 1.U
@@ -101,8 +105,11 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
   val load_blocked = is_load && store_in_flight  // Load被正在执行的Store阻塞
   val store_blocked = is_store && load_in_flight // Store被正在执行的Load阻塞
   
+  // 检查Ex指令延迟约束
+  val ex_delay_blocked = is_ex && last_issued_was_ex && (ex_delay_counter < 150.U)
+  
   val basic_can_issue = RobEntries(issue_ptr).state === RoBState.sWaiting && RobEntries(issue_ptr).ready
-  val can_issue = basic_can_issue && !load_blocked && !store_blocked
+  val can_issue = basic_can_issue && !load_blocked && !store_blocked && !ex_delay_blocked
   
   io.issue_o.valid := can_issue
   io.issue_o.bits := RobEntries(issue_ptr).cmd
@@ -118,6 +125,20 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
     when(is_store) {
       store_in_flight := true.B
     }
+    
+    // 更新Ex指令延迟跟踪
+    when(is_ex) {
+      last_issued_was_ex := true.B
+      ex_delay_counter := 0.U  // 重置计数器
+    }.otherwise {
+      last_issued_was_ex := false.B
+      ex_delay_counter := 0.U  // 非Ex指令时也重置计数器
+    }
+  }
+  
+  // 更新Ex指令延迟计数器
+  when(last_issued_was_ex && (ex_delay_counter < 150.U)) {
+    ex_delay_counter := ex_delay_counter + 1.U
   }
   
 // -----------------------------------------------------------------------------

@@ -33,13 +33,14 @@ class BBFP_ID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
     val op2_bank = RegInit(0.U(2.W))
     val wr_bank = RegInit(0.U(2.W))
     val wr_bank_addr = RegInit(0.U(12.W))
-    // val pe_ex_finish = io.pe_ex_finish
+    val is_matmul_ws = RegInit(false.B)
     io.is_matmul_ws := false.B
     switch(state) {
         is(idle) {
             when(io.cmdReq.valid && io.cmdReq.bits.cmd.post_decode_cmd.is_bbfp) {
                 iteration := io.cmdReq.bits.cmd.post_decode_cmd.iter
                 iteration_counter := 0.U
+                is_matmul_ws := false.B
                 rob_id_reg := io.cmdReq.bits.rob_id
                 op1_bank := io.cmdReq.bits.cmd.post_decode_cmd.op1_bank
                 op1_bank_addr := io.cmdReq.bits.cmd.post_decode_cmd.op1_bank_addr
@@ -51,17 +52,18 @@ class BBFP_ID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
                 io.is_matmul_ws := false.B
             }
             when(io.cmdReq.valid && io.cmdReq.bits.cmd.post_decode_cmd.is_matmul_ws){
-                iteration := io.cmdReq.bits.cmd.post_decode_cmd.iter
+                iteration := io.cmdReq.bits.cmd.post_decode_cmd.iter 
                 iteration_counter := 0.U
                 rob_id_reg := io.cmdReq.bits.rob_id
-                op1_bank := DontCare
-                op1_bank_addr := DontCare
+                op1_bank := io.cmdReq.bits.cmd.post_decode_cmd.op1_bank
+                op1_bank_addr := io.cmdReq.bits.cmd.post_decode_cmd.op1_bank_addr
                 op2_bank := io.cmdReq.bits.cmd.post_decode_cmd.op2_bank
                 op2_bank_addr := io.cmdReq.bits.cmd.post_decode_cmd.op2_bank_addr
                 wr_bank := io.cmdReq.bits.cmd.post_decode_cmd.wr_bank
                 wr_bank_addr := io.cmdReq.bits.cmd.post_decode_cmd.wr_bank_addr
                 state := busy
                 io.is_matmul_ws := true.B
+                is_matmul_ws := true.B
             }
         }
         is(busy) {
@@ -90,14 +92,14 @@ class BBFP_ID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
     val complete = (iteration_counter === iteration - 1.U) && (state === busy) 
     
     // 将complete信号打10拍
-    val complete_delay = RegInit(VecInit(Seq.fill(10)(false.B)))
-    complete_delay(0) := complete
-    for (i <- 1 until 10) {
-        complete_delay(i) := complete_delay(i-1)
-    }
-    val complete_10clk = complete_delay(9)
+    // val complete_delay = RegInit(VecInit(Seq.fill(10)(false.B)))
+    // complete_delay(0) := complete
+    // for (i <- 1 until 10) {
+    //     complete_delay(i) := complete_delay(i-1)
+    // }
+    // val complete_10clk = complete_delay(9)
     
     io.cmdResp.bits.rob_id := rob_id_reg
-    io.cmdResp.valid := complete_10clk
+    io.cmdResp.valid := complete
 
 }

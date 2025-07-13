@@ -110,7 +110,7 @@ jobs:
           source ~/.zshrc
           chipyard_exec
           cd voyager-test/scripts/sardine
-          python run_tests.py --allure -m smoke
+          python run_tests.py --allure -m "smoke or embench or buckyball"
       - run: echo "🍏 Smoke Test is ${{ job.status }}."
         # 如果检查失败，强制回退分支
       - name: Revert Bad Commit
@@ -122,6 +122,32 @@ jobs:
           setproxy
           git reset --hard HEAD~1
           git push --force origin ${{ github.ref }}
+  
+    # P2E-Test:
+    # name: P2E Specific Test
+    # runs-on: fpga
+    # needs: Smoke-Test
+    # if: contains(github.event.head_commit.message, '[p2e-test]') 
+    # steps:
+    #   - name: Run P2E Specific Test
+    #     shell: zsh {0}
+    #     run: |
+    #       source ~/.zshrc
+    #       chipyard_exec
+    #       echo "🚀 Running P2E Specific Test..."
+    #       echo "Triggered by commit: ${{ github.event.head_commit.message }}"
+    #       ./voyager-test/scripts/batch-test.sh --p2e-test
+    #   - run: echo "🍏 P2E Specific Test is ${{ job.status }}."
+    #   # 如果检查失败，强制回退分支
+    #   - name: Revert Bad Commit
+    #     if: failure()
+    #     shell: zsh {0}
+    #     run: |
+    #       source ~/.zshrc
+    #       chipyard_exec
+    #       setproxy
+    #       git reset --hard HEAD~1
+    #       git push --force origin ${{ github.ref }}
 
   # ============== 专用测试 ==================
   # NPU测试: 匹配到[npu-test]才会执行

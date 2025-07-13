@@ -74,11 +74,30 @@ class ExecuteController(implicit bbconfig: BuckyBallConfig, p: Parameters) exten
     io.sramWrite(i).data := Mux(real_sel, BBFP_Control.io.sramWrite(i).data, VecUnit.io.sramWrite(i).data)
     io.sramWrite(i).mask := Mux(real_sel, BBFP_Control.io.sramWrite(i).mask, VecUnit.io.sramWrite(i).mask)
   }
-  for(i <- 0 until bbconfig.acc_banks) {
-    io.accRead(i).req <> VecUnit.io.accRead(i).req
-    io.accRead(i).resp <> VecUnit.io.accRead(i).resp
-    io.accWrite(i) <> VecUnit.io.accWrite(i)
+
+  // 连接到Accumulator的读写接口
+  for (i <- 0 until bbconfig.acc_banks) {
+    // accRead(i).req - Decoupled接口
+    io.accRead(i).req.valid := Mux(real_sel, BBFP_Control.io.accRead(i).req.valid, VecUnit.io.accRead(i).req.valid)
+    io.accRead(i).req.bits  := Mux(real_sel, BBFP_Control.io.accRead(i).req.bits, VecUnit.io.accRead(i).req.bits)
+    BBFP_Control.io.accRead(i).req.ready := io.accRead(i).req.ready && real_sel
+    VecUnit.io.accRead(i).req.ready      := io.accRead(i).req.ready && !real_sel
+
+    // accRead(i).resp - Flipped Decoupled接口
+    BBFP_Control.io.accRead(i).resp.valid := io.accRead(i).resp.valid && real_sel
+    BBFP_Control.io.accRead(i).resp.bits  := io.accRead(i).resp.bits
+    VecUnit.io.accRead(i).resp.valid      := io.accRead(i).resp.valid && !real_sel
+    VecUnit.io.accRead(i).resp.bits       := io.accRead(i).resp.bits
+    io.accRead(i).resp.ready := Mux(real_sel, BBFP_Control.io.accRead(i).resp.ready, VecUnit.io.accRead(i).resp.ready)
+
+    // accWrite(i) - 普通Bundle字段分发
+    io.accWrite(i).en   := Mux(real_sel, BBFP_Control.io.accWrite(i).en,   VecUnit.io.accWrite(i).en)
+    io.accWrite(i).addr := Mux(real_sel, BBFP_Control.io.accWrite(i).addr, VecUnit.io.accWrite(i).addr)
+    io.accWrite(i).data := Mux(real_sel, BBFP_Control.io.accWrite(i).data, VecUnit.io.accWrite(i).data)
+    io.accWrite(i).mask := Mux(real_sel, BBFP_Control.io.accWrite(i).mask, VecUnit.io.accWrite(i).mask)
+    io.accWrite(i).acc  := Mux(real_sel, BBFP_Control.io.accWrite(i).acc, VecUnit.io.accWrite(i).acc)
   }
+
 
   // cmdReq输入分发
   BBFP_Control.io.cmdReq.valid := io.cmdReq.valid && sel

@@ -273,6 +273,12 @@ std::vector<disasm_insn_t*> buckyballFunc_t::get_disasms() {
     ROCC_OPCODE_MASK | (0x7F << 25), 
     {&buckyball_rs1, &buckyball_rs2}));
 
+  // MATMUL_WS instruction (funct = 27)
+  insns.push_back(new disasm_insn_t("bb_matmul_ws", 
+    ROCC_OPCODE3 | (27 << 25), 
+    ROCC_OPCODE_MASK | (0x7F << 25), 
+    {&buckyball_rs1, &buckyball_rs2}));
+
   // FLUSH instruction (funct = 7) - no operands needed
   insns.push_back(new disasm_insn_t("bb_flush", 
     ROCC_OPCODE3 | (7 << 25), 

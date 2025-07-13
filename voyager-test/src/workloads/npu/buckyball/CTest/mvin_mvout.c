@@ -7,7 +7,6 @@
 static elem_t input_matrix[DIM * DIM * 4] __attribute__((aligned(64)));
 static elem_t output_matrix[DIM  * DIM * 4] __attribute__((aligned(64)));
 
-
 #define BANK 4096
 // Utility function implementations
 void print_matrix(const char* name, elem_t* matrix, int rows, int cols) {
@@ -44,6 +43,9 @@ int compare_matrices(elem_t* a, elem_t* b, int rows, int cols) {
 #define OP2_ADDR (BANK + DIM)
 #define WR_ADDR (DIM + 2 * BANK)
 int main() {
+#ifdef MULTICORE 
+    multicore(MULTICORE);  // Only allow specified hart to continue
+#endif
     
     // Initialize input matrix
     init_matrix(input_matrix, DIM, DIM * 4, 42);
@@ -79,6 +81,7 @@ int main() {
         printf("SRAM Test failed: Output does not match expected result.\n");
     }
    // print_matrix("Output", output_matrix, DIM, DIM);
-    
-
+#ifdef MULTICORE 
+   exit(0);
+#endif
 }

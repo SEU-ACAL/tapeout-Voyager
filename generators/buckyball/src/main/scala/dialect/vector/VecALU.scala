@@ -4,7 +4,7 @@ import chisel3._
 import chisel3.util._
 import chisel3.stage._
 import buckyball.BuckyBallConfig
-import freechips.rocketchip.regmapper.RRTest1Map.bb
+
 class north(implicit bbconfig: BuckyBallConfig)  extends Bundle {
   val config     = UInt(16.W) 
   val vector_rst = Vec(bbconfig.numVecPE, UInt(bbconfig.accType.getWidth.W))
@@ -33,10 +33,10 @@ class PE(implicit bbconfig: BuckyBallConfig) extends Module {
     waddr_reg := io.west.bits.waddr
   }
 
-  io.west.ready := io.east.ready
+  io.west.ready  := io.east.ready
   io.north.ready := io.east.ready
 
-  io.east.valid       := io.north.valid
+  io.east.valid      := io.north.valid
   io.east.bits.funct := funct_reg
   io.east.bits.waddr := waddr_reg
 

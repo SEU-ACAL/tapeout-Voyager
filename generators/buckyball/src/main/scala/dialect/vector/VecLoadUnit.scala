@@ -11,6 +11,17 @@ import buckyball.frontend.rs.{ReservationStationIssue, ReservationStationComplet
 import buckyball.mem.{SramReadIO, SramWriteIO, SramReadReq}
 import buckyball.BuckyBallConfig
 
+class lu_ex_req(implicit bbconfig: BuckyBallConfig) extends Bundle {
+    val op1_bank      = UInt(log2Up(bbconfig.sp_banks).W)
+    val op2_bank      = UInt(log2Up(bbconfig.sp_banks).W)
+    val wr_bank       = UInt(log2Up(bbconfig.sp_banks).W)
+    val wr_bank_addr  = UInt(log2Up(bbconfig.sp_bank_entries).W)
+    val wr_start_addr = UInt(log2Up(bbconfig.sp_bank_entries).W)
+    val opcode        = UInt(3.W)
+    val iter          = UInt(10.W)
+    val thread_id     = UInt(10.W)
+}
+
 class VecLoadUnit(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
     val rob_id_width = log2Up(bbconfig.rob_entries)
     val spad_w = bbconfig.veclane * bbconfig.inputType.getWidth
