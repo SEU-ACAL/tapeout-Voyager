@@ -191,11 +191,11 @@ class GH_BUF (val params: GH_BUF_Params)(implicit p: Parameters) extends BoomMod
 
 
   if (GH_GlobalParams.GH_DEBUG == 1) {
-    when(deq_valid.reduce(_||_)){
-        printf(midas.targetutils.SynthesizePrintf("BOOM Packet: Dest0 %d Data %x Dest1 %d Data %x\n",
-          out_inst_type(0)(6,3), out_buf(0),
-          out_inst_type(1)(6,3), out_buf(1)))
-    }
+    // when(deq_valid.reduce(_||_)){
+    //     printf(midas.targetutils.SynthesizePrintf("BOOM Packet: Dest0 %d Data %x Dest1 %d Data %x\n",
+    //       out_inst_type(0)(6,3), out_buf(0),
+    //       out_inst_type(1)(6,3), out_buf(1)))
+    // }
   }
   // dontTouch()
   // Outputs

@@ -205,7 +205,7 @@ class GHEImp(outer: GHE)(implicit p: Parameters) extends LazyRoCCMEEKModuleImp(o
     //开始校验
     when (doMask) {
       ght_status_reg           := (funct & 0x0F.U);
-      // printf(midas.targetutils.SynthesizePrintf("Check State %d\n",(funct & 0x0F.U)))
+      printf(midas.targetutils.SynthesizePrintf("Check State %d\n",(funct & 0x0F.U)))
     }
 
     when (doCritical) {
