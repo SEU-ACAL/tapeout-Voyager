@@ -42,7 +42,7 @@ class WithSystemModifications extends Config((site, here, up) => {
 // DOC include start: AbstractVCU118 and Rocket
 class WithChipHarnessTweaks extends Config(
   // clocking
-  new chipyard.harness.WithAbsoluteFreqHarnessClockInstantiator ++
+  new chipyard.harness.WithAllClocksFromHarnessClockInstantiator  ++
   new voyager_tapeout.custom.iobinders.WithVoyagerPLLSelectorDividerClockGenerator++
   new chipyard.config.WithUniformBusFrequencies(100) ++
   new WithFPGAFrequency(100) ++ // default 100MHz freq
@@ -63,7 +63,7 @@ class WithChipHarnessTweaks extends Config(
 
 class WithChipTLMemHarnessTweaks extends Config(
   // clocking
-  new chipyard.harness.WithAbsoluteFreqHarnessClockInstantiator ++
+  new chipyard.harness.WithAllClocksFromHarnessClockInstantiator  ++
   new voyager_tapeout.custom.iobinders.WithVoyagerPLLSelectorDividerClockGenerator++
   new chipyard.config.WithUniformBusFrequencies(100) ++
   new WithFPGAFrequency(100) ++ // default 100MHz freq

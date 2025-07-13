@@ -164,7 +164,7 @@ class GHEImp(outer: GHE)(implicit p: Parameters) extends LazyRoCCMEEKModuleImp(o
       // printf(midas.targetutils.SynthesizePrintf("Big Init state %d\n",(io.bigcore_comp(2,0) )))
     }
     when (doInitialised){
-      // printf(midas.targetutils.SynthesizePrintf("Littel Init state %d\n",(funct )))
+      printf(midas.targetutils.SynthesizePrintf("Littel Init state %d\n",funct ))
       ghe_initialised_reg      := (funct & 0x0F.U);
     }
 
