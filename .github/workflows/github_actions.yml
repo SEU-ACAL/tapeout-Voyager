@@ -21,9 +21,10 @@ jobs:
           chipyard_exec
           setproxy
           git reset --hard origin/${{ github.ref }}
+        if: contains(github.event.head_commit.message, '<need pull-with-update>') 
+          git pull-with-update origin ${{ github.ref }}
+        else:
           git pull origin ${{ github.ref }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "🍏 pull from repository ${{ job.status }}."
 
   Pre-commit-check:
