@@ -2112,7 +2112,7 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
   io.commit_uops                                  := rob.io.commit.uops
   // io.if_big_complete_ack                           := ic_master.io.if_big_complete_ack
   //===== GuardianCouncil Function: End ====//
-  when(rob.io.commit.arch_valids(w)&&io.ic_trace.asBool){
+  when(rob.io.commit.arch_valids.reduce(_||_)&&io.ic_trace.asBool){
     midas.targetutils.SynthesizePrintf(printf("C%d: prs:%d%d " +
             "rw:%d %x %x %x arf:%x %x %x " +
             "npc:%x cp:%x icr:%x\n",
