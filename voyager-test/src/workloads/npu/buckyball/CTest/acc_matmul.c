@@ -4,39 +4,18 @@
 #include <string.h>
 
 // Test matrices
-static elem_t input_matrix[DIM * DIM ] __attribute__((aligned(64)));
-static elem_t output_matrix[DIM  * DIM * 4] __attribute__((aligned(64)));
+static elem_t input_matrix[DIM * DIM * 4 ] __attribute__((aligned(64)));
+static result_t output_matrix[DIM  * DIM ] __attribute__((aligned(64)));
 
 
 #define BANK 4096
 // Utility function implementations
-void print_matrix(const char* name, elem_t* matrix, int rows, int cols) {
-    printf("Matrix %s:\n", name);
-    for (int i = 0; i < rows; i++) {
-        for (int j = 0; j < cols; j++) {
-            printf("%4d ", matrix[i * cols + j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
-}
+
 
 void init_matrix(elem_t* matrix, int rows, int cols, int seed) {
     for (int i = 0; i < rows * cols; i++) {
         matrix[i] = 1;  
     }
-}
-
-int compare_matrices(elem_t* a, elem_t* b, int rows, int cols) {
-    for (int i = 0; i < rows * cols; i++) {
-        if (a[i] != b[i]) {
-            printf("Difference at index %d: %d != %d\n", i, a[i], b[i]);
-            //print_matrix("Matrix A", a, rows, 1);
-            //print_matrix("Matrix B", b, rows, 1);
-            return 0;  // Matrices are different
-        }
-    }
-    return 1;  // Matrices are the same
 }
 
 
@@ -58,22 +37,23 @@ int main() {
     
     // Move input to scratchpad
     bb_mvin((uintptr_t)output_matrix, WR_ADDR, DIM * 4);
-    bb_mvin((uintptr_t)input_matrix, OP1_ADDR, DIM );
-    bb_mvin((uintptr_t)input_matrix, OP2_ADDR, DIM );
+    bb_mvin((uintptr_t)input_matrix, OP1_ADDR, DIM * 4);
+    bb_mvin((uintptr_t)input_matrix, OP2_ADDR, DIM * 4);
 
-    /*
+    
     printf("perform Matmul\n");
-    bb_mul_warp16(OP1_ADDR, OP2_ADDR, WR_ADDR, DIM);
+    bb_mul_warp16(OP1_ADDR, OP2_ADDR, WR_ADDR, DIM * 4);
     printf("Matmul Done\n");
-    */
+    
 
     // Move back from scratchpad to output
     bb_mvout((uintptr_t)output_matrix, WR_ADDR, DIM * 4);
     printf("Finished\n");
    
-    print_matrix("Output", output_matrix, DIM, DIM);
+    //print_matrix("Output", output_matrix, DIM, DIM);
 
 #ifdef MULTICORE 
     exit(0);
 #endif
 }
+

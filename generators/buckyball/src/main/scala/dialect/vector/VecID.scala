@@ -22,6 +22,7 @@ class id_lu_req(implicit bbconfig: BuckyBallConfig) extends Bundle {
     val opcode        = UInt(3.W)
     val iter          = UInt(10.W) 
     val thread_id     = UInt(10.W)
+    val rob_id        = UInt(log2Up(bbconfig.rob_entries).W)
 }
 
 class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
@@ -30,7 +31,6 @@ class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
 
     val io = IO(new Bundle{
         val cmdReq = Flipped(Decoupled(new ReservationStationIssue(new BuckyBallCmd, rob_id_width)))
-        val cmdResp = Decoupled(new ReservationStationComplete(rob_id_width))
         
         val id_lu_o = Decoupled(new id_lu_req)
     })
@@ -87,12 +87,9 @@ class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
     io.id_lu_o.bits.opcode := 1.U
     io.id_lu_o.bits.iter := iteration
     io.id_lu_o.bits.thread_id := iteration_counter
+    io.id_lu_o.bits.rob_id := rob_id_reg
 
     io.cmdReq.ready := io.id_lu_o.ready
 
-    //指令完成信号
-    val complete = (iteration_counter === iteration - 1.U) && (state === busy) 
-    io.cmdResp.bits.rob_id := rob_id_reg
-    io.cmdResp.valid := complete
-
+    
 }

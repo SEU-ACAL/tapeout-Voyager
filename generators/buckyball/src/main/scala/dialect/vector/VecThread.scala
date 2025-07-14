@@ -129,16 +129,18 @@ class VecThread (implicit t: ThreadParams)
   val op1   = RegInit(VecInit(Seq.fill(t.lane)(0.U(8.W))))
   val op2   = RegInit(VecInit(Seq.fill(t.lane)(0.U(8.W))))
   val opcode = RegInit(0.U(8.W))
-  val iter   = RegInit(0.U(9.W))
+  val iter_counter   = RegInit(0.U(9.W))
+  val iteration = RegInit(0.U(9.W)) // 迭代次数
   // val arbiter = Module(new Arbiter(UInt(8.W), supportedFuncUnits.supportedFuncNum))  
 
   io.in.ready := !busy
   switch(busy){
     is(true.B) {
-      when (iter === 1.U) {
+      when (iter_counter === iteration - 1.U) {
         busy := false.B
+        iter_counter := 0.U
       }.otherwise{
-        iter := iter - 1.U
+        iter_counter := iter_counter + 1.U
       }
     }
     is(false.B) {
@@ -146,7 +148,8 @@ class VecThread (implicit t: ThreadParams)
         op1    := io.in.bits.op1
         op2    := io.in.bits.op2
         opcode := io.in.bits.opcode
-        iter   := io.in.bits.iter
+        iteration   := io.in.bits.iter 
+        iter_counter := 1.U
         busy   := true.B
       }
     }
@@ -163,9 +166,13 @@ class VecThread (implicit t: ThreadParams)
     mul = Module(new MulOp())
     when (busy) {
       mul.io.in.valid := true.B
-      mul.io.in.bits.op1 := op1(16.U - iter)
+      mul.io.in.bits.op1 := op1(iter_counter)
       mul.io.in.bits.op2 := op2
-    }.otherwise {
+    }.elsewhen(io.in.fire){
+      mul.io.in.valid := true.B
+      mul.io.in.bits.op1 := io.in.bits.op1(iter_counter)
+      mul.io.in.bits.op2 := io.in.bits.op2
+    }.otherwise{
       mul.io.in.valid := false.B
       mul.io.in.bits.op1 := 0.U
       mul.io.in.bits.op2 := VecInit(Seq.fill(t.lane)(0.U(8.W)))
@@ -173,10 +180,10 @@ class VecThread (implicit t: ThreadParams)
   }
   if (hasPop) {
     pop = Module(new PopOp())
-    when ((io.in.fire && (opcode === 2.U )) || opcode === 2.U || iter =/= 0.U) {
+    when ((io.in.fire && (opcode === 2.U )) || opcode === 2.U || iter_counter =/= 0.U) {
       pop.io.in.valid := true.B
       pop.io.in.bits.op1 := op1
-      iter := iter - 1.U
+      iter_counter := iter_counter - 1.U
     }.otherwise{
       pop.io.in.valid := false.B
       pop.io.in.bits.op1 := 0.U
@@ -184,10 +191,10 @@ class VecThread (implicit t: ThreadParams)
   }
   if (hasMax) {
     max = Module(new MaxOp())
-    when ((io.in.fire && (opcode === 3.U )) || opcode === 3.U || iter =/= 0.U) {
+    when ((io.in.fire && (opcode === 3.U )) || opcode === 3.U || iter_counter =/= 0.U) {
       max.io.in.valid := true.B
-      max.io.in.bits.op1 := op1(iter)
-      iter := iter - 1.U
+      max.io.in.bits.op1 := op1(iter_counter)
+      iter_counter := iter_counter - 1.U
     }.otherwise {
       max.io.in.valid := false.B
       max.io.in.bits.op1 := 0.U

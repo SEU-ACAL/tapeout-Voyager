@@ -121,7 +121,9 @@ static inline void multicore(int target_hart_id) {
 // Utility functions
 void print_result_matrix(const char* name, result_t* matrix, int rows, int cols);
 void init_matrix(elem_t* matrix, int rows, int cols, int seed);
-void print_matrix(const char* name, elem_t* matrix, int rows, int cols);
-int compare_matrices(elem_t* a, elem_t* b, int rows, int cols);
+void print_matrix(const char* name, result_t* matrix, int rows, int cols);
+int compare_matrices(result_t* a, result_t* b, int rows, int cols);
+int compare_matricesu8(elem_t* a, elem_t* b, int rows, int cols);
 void init_matrixv2(elem_t* matrix, int rows, int cols, int seed,int value);
+
 #endif

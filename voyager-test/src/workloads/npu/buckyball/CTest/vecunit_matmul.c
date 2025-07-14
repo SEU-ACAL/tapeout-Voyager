@@ -7,8 +7,8 @@
 // Test matrices
 static elem_t input_matrix_a[DIM * DIM] __attribute__((aligned(64)));
 static elem_t input_matrix_b[DIM * DIM] __attribute__((aligned(64)));
-static elem_t output_matrix[DIM * DIM] __attribute__((aligned(64)));
-static elem_t expected_matrix[DIM * DIM] __attribute__((aligned(64)));
+static result_t output_matrix[DIM * DIM] __attribute__((aligned(64)));
+static result_t expected_matrix[DIM * DIM] __attribute__((aligned(64)));
 
 #define BANK 4096
 #define OP1_ADDR 0
@@ -16,7 +16,7 @@ static elem_t expected_matrix[DIM * DIM] __attribute__((aligned(64)));
 #define WR_ADDR (DIM + 2 * BANK)
 
 // Utility functions
-void print_matrix(const char* name, elem_t* matrix, int rows, int cols) {
+void print_matrix(const char* name, result_t* matrix, int rows, int cols) {
     printf("Matrix %s:\n", name);
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
@@ -27,10 +27,12 @@ void print_matrix(const char* name, elem_t* matrix, int rows, int cols) {
     printf("\n");
 }
 
-void clear_matrix(elem_t* matrix, int rows, int cols) {
+void clear_matrix(result_t* matrix, int rows, int cols) {
+    memset(matrix, 0, rows * cols * sizeof(result_t));
+}
+void clear_u8_matrix(elem_t* matrix, int rows, int cols) {
     memset(matrix, 0, rows * cols * sizeof(elem_t));
 }
-
 void init_ones_matrix(elem_t* matrix, int rows, int cols) {
     for (int i = 0; i < rows * cols; i++) {
         matrix[i] = 1;
@@ -38,21 +40,21 @@ void init_ones_matrix(elem_t* matrix, int rows, int cols) {
 }
 
 void init_identity_matrix(elem_t* matrix, int size) {
-    clear_matrix(matrix, size, size);
+    clear_u8_matrix(matrix, size, size);
     for (int i = 0; i < size; i++) {
         matrix[i * size + i] = 1;
     }
 }
 
 void init_row_vector(elem_t* matrix, int cols, elem_t value) {
-    clear_matrix(matrix, DIM, DIM);
+    clear_u8_matrix(matrix, DIM, DIM);
     for (int j = 0; j < cols; j++) {
         matrix[j] = value;
     }
 }
 
 void init_col_vector(elem_t* matrix, int rows, elem_t value) {
-    clear_matrix(matrix, DIM, DIM);
+    clear_u8_matrix(matrix, DIM, DIM);
     for (int i = 0; i < rows; i++) {
         matrix[i * DIM] = value;
     }
@@ -77,7 +79,7 @@ void transpose_matrix(elem_t* src, elem_t* dst, int rows, int cols) {
 }
 
 // CPU矩阵乘法（用于生成期望结果）
-void cpu_matmul(elem_t* a, elem_t* b, elem_t* c, int rows, int cols, int inner) {
+void cpu_matmul(elem_t* a, elem_t* b, result_t* c, int rows, int cols, int inner) {
     clear_matrix(c, rows, cols);
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
@@ -88,10 +90,12 @@ void cpu_matmul(elem_t* a, elem_t* b, elem_t* c, int rows, int cols, int inner) 
     }
 }
 
-int compare_matrices(elem_t* a, elem_t* b, int rows, int cols) {
+int compare_matrices(result_t* a, result_t* b, int rows, int cols) {
     for (int i = 0; i < rows * cols; i++) {
         if (a[i] != b[i]) {
             printf("Mismatch at index %d: expected %d, got %d\n", i, b[i], a[i]);
+            //print_matrix("Expected", b, 1, cols);
+            //print_matrix("Actual", a, 1, cols);
             return 0;
         }
     }
@@ -99,7 +103,7 @@ int compare_matrices(elem_t* a, elem_t* b, int rows, int cols) {
 }
 
 // 执行硬件矩阵乘法
-void hw_matmul(const char* test_name, elem_t* a, elem_t* b, elem_t* c, int size) {
+void hw_matmul(const char* test_name, elem_t* a, elem_t* b, result_t* c, int size) {
     // 转置左矩阵
     static elem_t a_transposed[DIM * DIM] __attribute__((aligned(64)));
     transpose_matrix(a, a_transposed, size, size);
@@ -107,6 +111,7 @@ void hw_matmul(const char* test_name, elem_t* a, elem_t* b, elem_t* c, int size)
     // Move matrices to scratchpad
     bb_mvin((uintptr_t)a_transposed, OP1_ADDR, size);
     bb_mvin((uintptr_t)b, OP2_ADDR, size);
+    bb_mvin((uintptr_t)c, WR_ADDR, size << 2);
 
     printf("Perform test: %s\n ", test_name);
     // Perform matrix multiplication
@@ -114,7 +119,7 @@ void hw_matmul(const char* test_name, elem_t* a, elem_t* b, elem_t* c, int size)
     printf("Finish test: %s\n", test_name);
 
     // Move result back
-    bb_mvout((uintptr_t)c, WR_ADDR, size);
+    bb_mvout((uintptr_t)c, WR_ADDR, size << 2);
 }
 
 int run_test(const char* test_name, elem_t* a, elem_t* b, int size) {
@@ -184,7 +189,7 @@ int test_random3() {
 }
 
 int test_zero_random() {
-    clear_matrix(input_matrix_a, DIM, DIM);
+    clear_u8_matrix(input_matrix_a, DIM, DIM);
     init_random_matrix(input_matrix_b, DIM, DIM, 555);
     return run_test("Zero × Random", input_matrix_a, input_matrix_b, DIM);
 }
@@ -199,7 +204,7 @@ int main() {
     
     // 这里定义要运行的测试序号（1-8）
     // 修改这个数组来选择要运行的测试用例
-    const int test_selection[] = {1}; 
+    const int test_selection[] = {1,2,3,4,5,6,7,8}; 
     const int num_selected = sizeof(test_selection)/sizeof(test_selection[0]);
     
     // 创建测试函数数组

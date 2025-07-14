@@ -20,6 +20,7 @@ class lu_ex_req(implicit bbconfig: BuckyBallConfig) extends Bundle {
     val opcode        = UInt(3.W)
     val iter          = UInt(10.W)
     val thread_id     = UInt(10.W)
+    val rob_id        = UInt(log2Up(bbconfig.rob_entries).W) 
 }
 
 class VecLoadUnit(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
@@ -66,6 +67,7 @@ class VecLoadUnit(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Mod
   io.lu_ex_o.bits.opcode := io.id_lu_i.bits.opcode
   io.lu_ex_o.bits.iter := io.id_lu_i.bits.iter
   io.lu_ex_o.bits.thread_id := io.id_lu_i.bits.thread_id
+  io.lu_ex_o.bits.rob_id := io.id_lu_i.bits.rob_id
 
   io.id_lu_i.ready := io.lu_ex_o.ready
 

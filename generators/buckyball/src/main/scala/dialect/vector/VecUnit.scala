@@ -31,7 +31,6 @@ class VecUnit(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
 // -----------------------------------------------------------------------------
     val VecID = Module(new VecID)
     VecID.io.cmdReq <> io.cmdReq
-    io.cmdResp <> VecID.io.cmdResp
 // -----------------------------------------------------------------------------
 // ID_LU Pipeline
 // -----------------------------------------------------------------------------
@@ -57,6 +56,7 @@ class VecUnit(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
 // -----------------------------------------------------------------------------    
 	val VecEX = Module(new VecEX)
 	VecEX.io.lu_ex_i <> LU_EX.io.out
+	io.cmdResp <> VecEX.io.cmdResp
 	for (i <- 0 until bbconfig.sp_banks) {
 					VecEX.io.sramReadResp(i) <> io.sramRead(i).resp
 					io.sramWrite(i) <> VecEX.io.sramWrite(i)

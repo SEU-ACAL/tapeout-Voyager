@@ -31,7 +31,7 @@ void init_matrixv2(elem_t* matrix, int rows, int cols, int seed,int value) {
     }
 }
 
-int compare_matrices(elem_t* a, elem_t* b, int rows, int cols) {
+int compare_matrices(result_t* a, result_t* b, int rows, int cols) {
     for (int i = 0; i < rows * cols; i++) {
         if (a[i] != b[i]) {
             return 0;  // Matrices are different
