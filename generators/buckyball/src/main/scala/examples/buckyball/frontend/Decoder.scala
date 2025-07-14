@@ -40,7 +40,10 @@ object EXDecodeFields extends Enumeration {
       OP1_EN, OP2_EN, WR_SPAD, OP1_FROM_SPAD, OP2_FROM_SPAD, OP1_SPADDR, OP2_SPADDR, WR_SPADDR,
       ITER = Value
 }
-
+object FENCEDecodeFields extends Enumeration {
+  type Field = Value
+  val PID, PSTART, PEND = Value
+}
 
 class PostDecodeCmd(implicit bbconfig: BuckyBallConfig) extends Bundle {
   val is_matmul_ws  = Bool()
@@ -122,7 +125,9 @@ class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
     BB_BBFP_MUL -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(2*spAddrLen - 1,spAddrLen), rs2(spAddrLen-1,0), rs2(spAddrLen + 9,spAddrLen)), // bb_bbfp_mul
     MATMUL_WS -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(2*spAddrLen - 1,spAddrLen), rs2(spAddrLen-1,0), rs2(spAddrLen + 9,spAddrLen)), // matmul_ws
   ))
-
+// -----------------------------------------------------------------------------
+// Fence instructions
+// -----------------------------------------------------------------------------
   io.id_rs.valid              := io.id_i.valid
   io.id_rs.bits.is_load       := ls_decode_list(3).asBool
   io.id_rs.bits.is_store      := ls_decode_list(4).asBool

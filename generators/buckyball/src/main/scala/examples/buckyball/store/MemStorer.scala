@@ -82,7 +82,7 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
 
   for(i <- 0 until bbconfig.acc_banks){
     io.accRead(i).req.valid := (state === s_sram_req) && acc_reg && (i.U === target_row(log2Ceil(bbconfig.acc_banks) - 1, 0))
-    io.accRead(i).req.bits.addr := target_row >> log2Ceil(bbconfig.acc_banks)
+    io.accRead(i).req.bits.addr := rd_bank_addr_reg + (sram_count >> log2Ceil(bbconfig.acc_banks))
     io.accRead(i).req.bits.fromDMA := true.B
   }
 

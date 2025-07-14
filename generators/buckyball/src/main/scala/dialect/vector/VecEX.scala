@@ -85,7 +85,7 @@ class VecEX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
     }
     for(i <- 0 until bbconfig.acc_banks) {
         io.accWrite(i).en := PEs(bbconfig.numVecPE - 1).io.east.valid
-        io.accWrite(i).addr := (wr_start_addr >> log2Ceil(bbconfig.acc_banks)) + acc_wr_counter(log2Ceil(bbconfig.numVecPE) - 1, 0)
+        io.accWrite(i).addr := wr_start_addr + acc_wr_counter(log2Ceil(bbconfig.numVecPE) - 1, 0)
         io.accWrite(i).data := PEs(bbconfig.numVecPE - 1).io.east.bits.vector_rst.asUInt(i * 128 + 127, i * 128)
         io.accWrite(i).mask := VecInit(Seq.fill(bbconfig.acc_width / 8)(true.B))
         io.accWrite(i).acc := true.B

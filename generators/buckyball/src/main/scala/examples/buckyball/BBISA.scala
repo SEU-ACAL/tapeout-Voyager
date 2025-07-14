@@ -15,4 +15,5 @@ object BBISA {
   val MATMUL_WARP16_BITPAT = BitPat("b0100000") //32
   val BB_BBFP_MUL = BitPat("b0011010") //26
   val MATMUL_WS = BitPat("b0011011") //27
+  val FENCE = BitPat("b0011100") //31
 }
