@@ -1,6 +1,7 @@
 package voyager_tapeout.custom.fpga
 
 import chisel3._
+import chisel3.experimental.{Analog, attach}
 
 import freechips.rocketchip.diplomacy.{LazyModule, LazyRawModuleImp, BundleBridgeSource}
 import org.chipsalliance.cde.config.{Parameters}
@@ -15,7 +16,7 @@ import sifive.fpgashells.clocks._
 
 import sifive.blocks.devices.uart.{PeripheryUARTKey, UARTPortIO}
 import sifive.blocks.devices.spi.{PeripherySPIKey, SPIPortIO}
-
+import sifive.blocks.devices.gpio.{PeripheryGPIOKey, GPIOPortIO}
 import chipyard._
 import chipyard.harness._
 import freechips.rocketchip.subsystem._
@@ -30,7 +31,7 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends FPGAShe
 
   // Order matters; ddr depends on sys_clock
   val uart      = Overlay(UARTOverlayKey, new UARTVCU118ShellPlacer(this, UARTShellInput()))
-  val sdio      = if (pmod_is_sdio) Some(Overlay(SPIOverlayKey, new SDIOVCU118ShellPlacer(this, SPIShellInput()))) else None
+  // val sdio      = if (pmod_is_sdio) Some(Overlay(SPIOverlayKey, new SDIOVCU118ShellPlacer(this, SPIShellInput()))) else None
   val jtag      = Overlay(JTAGDebugOverlayKey, new JTAGDebugVCU118ShellPlacer(this, JTAGDebugShellInput(location = jtag_location)))
 
 // DOC include start: ClockOverlay
@@ -66,6 +67,11 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends FPGAShe
   fpgaClock := fpgaWrangler.node := fpgaGroup := fpgaPLL
 // DOC include end: ClockOverlay
 
+
+  /*** GPIO ***/
+
+  // val io_gpio_bb = BundleBridgeSource(() => (new GPIOPortIO(dp(PeripheryGPIOKey).head)))
+  // dp(GPIOOverlayKey).head.place(GPIODesignInput(dp(PeripheryGPIOKey).head, io_gpio_bb))
   /*** UART ***/
 
 // DOC include start: UartOverlay
@@ -106,6 +112,16 @@ class VCU118FPGATestHarnessImp(_outer: VCU118FPGATestHarness) extends LazyRawMod
   val reset = IO(Input(Bool())).suggestName("reset")
   _outer.xdc.addPackagePin(reset, "L19")
   _outer.xdc.addIOStandard(reset, "LVCMOS12")
+
+  val gpiowidth = _outer.dp(PeripheryGPIOKey).head.width 
+  val gpio_pins = IO(Vec(gpiowidth,Analog(1.W))).suggestName("gpio_pins")
+  gpio_pins.zipWithIndex.foreach { case (pin, i) =>
+    val ioPin = IOPin(pin)
+    _outer.xdc.addPackagePin(ioPin, s"D$i")
+    _outer.xdc.addIOStandard(ioPin, "LVCMOS12")
+  }
+
+
 
   val resetIBUF = Module(new IBUF)
   resetIBUF.io.I := reset

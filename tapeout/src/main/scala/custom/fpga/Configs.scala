@@ -49,9 +49,9 @@ class WithChipHarnessTweaks extends Config(
   // harness binders
   new WithUART ++
   new WithSPISDCard ++
-  // new WithDDRMem ++
   new WithJTAG ++
   new WithSerialTL2DDR++
+  new WithGPIO ++
   // other configuration
   new WithDefaultPeripherals ++
   new WithSystemModifications ++ // setup busses, use sdboot bootrom, setup ext. mem. size

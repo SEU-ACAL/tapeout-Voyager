@@ -55,6 +55,15 @@ class WithJTAG extends HarnessBinder({
   }
 })
 
+class WithGPIO extends HarnessBinder({
+  case (th: VCU118FPGATestHarnessImp, port: GPIOPort, chipId: Int) => {
+
+      th.gpio_pins(port.pinId) <> port.io
+  }
+})
+
+
+
 /** TLSerdes */
 class WithSerialTL2DDR extends HarnessBinder({
   case (th: VCU118FPGATestHarnessImp, port: SerialTLPort, chipId: Int) => {
