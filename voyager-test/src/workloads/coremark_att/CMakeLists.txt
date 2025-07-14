@@ -1,6 +1,6 @@
 project(coremark C)
 
-set(COREMARK_DIR ${WORKLOAD_DIR}/coremark_att/coremark)
+set(COREMARK_DIR ${COREMARK_WORKLOAD_DIR}/coremark)
 set(COREMARK_BUILD_DIR ${COREMARK_DIR}/build)
 
 add_custom_target(coremark-build

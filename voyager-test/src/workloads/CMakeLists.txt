@@ -3,6 +3,8 @@ set(NPU_WORKLOAD_DIR ${WORKLOAD_DIR}/npu)
 set(PERIPHERAL_WORKLOAD_DIR ${WORKLOAD_DIR}/peripheral)
 set(PLL_WORKLOAD_DIR ${WORKLOAD_DIR}/pll)
 set(TUTORIAL_WORKLOAD_DIR ${WORKLOAD_DIR}/tutorial)
+set(PARSECV3_WORKLOAD_DIR ${WORKLOAD_DIR}/parsecv3)
+set(COREMARK_WORKLOAD_DIR ${WORKLOAD_DIR}/coremark_att)
 
 add_subdirectory(cpu)
 add_subdirectory(npu)

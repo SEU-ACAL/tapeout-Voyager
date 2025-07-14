@@ -2,8 +2,8 @@
 # TODO: under development
 project(parsecv3 C)
 
-set(PARSECV3_DIR ${WORKLOAD_DIR}/parsecv3)
-set(PARSECV3_SRC_DIR ${WORKLOAD_DIR}/parsecv3/parsec-benchmark)
+set(PARSECV3_DIR ${PARSECV3_WORKLOAD_DIR})
+set(PARSECV3_SRC_DIR ${PARSECV3_WORKLOAD_DIR}/parsec-benchmark)
 
 set(PARSECV3_BUILD_DIR ${PARSECV3_DIR}/build)
 
@@ -14,6 +14,9 @@ add_custom_target(parsecv3-build
   COMMAND . ./env.sh  && cd pkgs && ./build_parsec.sh
   COMMAND sh -c "cp -rf pkgs/* ${PARSECV3_DIR}/build/ 2>/dev/null || true"
   COMMAND ${PARSECV3_DIR}/simplify_parsec.sh # Removed the unnecessary files for the workload execution
+  COMMAND mkdir -p ${OUTPUT_BIN_DIR}/parsecv3
+  # copy all executable files except scripts to the output directory
+  COMMAND find ${PARSECV3_DIR}/build -type f -executable ! -name "*.sh" ! -name "*.py" -exec cp {} ${OUTPUT_BIN_DIR}/parsecv3/ \; 
   WORKING_DIRECTORY ${PARSECV3_SRC_DIR}
   COMMENT "Building PARSECv3 Components"
   VERBATIM)
