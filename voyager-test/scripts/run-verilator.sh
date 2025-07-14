@@ -118,7 +118,7 @@ find_binary_in_dir() {
 
 # 在cpu和npu及其子目录中查找二进制文件
 # embench 由于命名格式不同无法被识别，所以对应的执行脚本只能用绝对路径
-for dir in cpu npu tutorial peripheral pll; do
+for dir in cpu npu tutorial peripheral pll coremark; do
   base_dir="${CYDIR}/voyager-test/output/workloads/${dir}"
   if [ -d "${base_dir}" ]; then
     found_path=$(find_binary_in_dir "${base_dir}" "${binary}" "${default_suffix}")
