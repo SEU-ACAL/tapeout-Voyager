@@ -7,14 +7,14 @@ set -e
 
 # Default values
 SKIP_STEPS=0
-CONFIG="RocketConfig"
+CONFIG="VoyagerSerialFPGAConfig"
 
 # Help function
 help() {
   echo "Usage: $0 [OPTIONS]"
   echo ""
   echo "Options:"
-  echo "  -c, --config CONFIG  指定配置 (默认: RocketConfig)"
+  echo "  -c, --config CONFIG  指定配置 (默认: VoyagerSerialFPGAConfig)"
   echo "  -s, --skip NUMBER    跳过前几步 (例如: -s 2 从第3步开始)"
   echo "  -h, --help           显示帮助信息"
   echo ""
@@ -154,7 +154,7 @@ main() {
   if [ $SKIP_STEPS -lt 2 ]; then
     Log "$BLUE" "====================== Step 2: Integrating XEPIC ======================"
     cd $SCRIPT_DIR/toolchain
-    ./integrate.sh 
+    ./integrate.sh $OUTPUT_DIR/gen-collateral $OUTPUT_DIR/gen-collateral
     ./update_filelist.sh 
     chmod +x change_gpio.sh
     ./change_gpio.sh

@@ -77,6 +77,7 @@ add_dependencies(sync-bin
   tutorial-build 
   peripheral-build 
   embench-build
+  parsecv3-build
   boardtest-build)
 add_custom_target(build-all ALL 
   DEPENDS sync-bin

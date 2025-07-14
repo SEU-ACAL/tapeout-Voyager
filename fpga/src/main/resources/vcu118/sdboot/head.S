@@ -34,7 +34,7 @@ clock_delay1:
   // 配置时钟分频
   srli t2, t1, 1      // 右移1位，获取bit 1-2
   andi t2, t2, 0x3    // 只保留这两位
-  addi t2, t2, 1      // 确保分频系数至少为1
+  # addi t2, t2, 1      // 确保分频系数至少为1
   li t3, CLOCK_DIV_ADDR
   sb t2, 0(t3)        // 写入分频寄存器
   

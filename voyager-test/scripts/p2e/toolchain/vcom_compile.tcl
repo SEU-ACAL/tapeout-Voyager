@@ -59,11 +59,20 @@ source $env(XRAM_HOME)/P2_Emu/tcl/xram_compile.tcl
 #fv_monitor -scope TestHarness.chiptop0.system -depth 3 -vsyndb libs.vsyn
 
 dynamic_trigger -enable
-trigger_net -add {VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.tile_reset_domain_tile.core.mem_reg_pc} -clk clock
-trigger_net -add {VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.tile_reset_domain_tile.core.ex_reg_pc} -clk clock
-trigger_net -add {VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.tile_reset_domain_tile.core.wb_reg_pc} -clk clock
+# trigger_net -add {VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.tile_reset_domain_tile.core.mem_reg_pc} -clk clock
+# trigger_net -add {VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.tile_reset_domain_tile.core.ex_reg_pc} -clk clock
+# trigger_net -add {VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.tile_reset_domain_tile.core.wb_reg_pc} -clk clock
 
-trace_net -add VCU118FPGATestHarness -depth 6
+trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.element_reset_domain_boom_tile.core.rob -depth 4
+trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.element_reset_domain_boom_tile.core.ic_master -depth 4
+trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.element_reset_domain_boom_tile.core.rsu_master -depth 4
+
+trace_net -add VCU118FPGATestHarness.chiptop0.system.ghm_domain -depth 4
+trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain_1.element_reset_domain_tile.core -depth 4
+trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain_1.element_reset_domain_tile.core -depth 4
+trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain_2.element_reset_domain_tile.core -depth 4
+trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain_3.element_reset_domain_tile.core -depth 4
+trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain_4.element_reset_domain_tile.core -depth 4
  #design_edit
 #load the design and check the compilation constraint. vCom performs design edit according to he settings of timing, terminal assignments, instrument logic and net optimization.
  design_edit

@@ -223,7 +223,7 @@ class R_ICSL_kernel (val params: R_ICSLParams) extends Module with HasR_ICSLIO_k
   
   when(io.if_check_completed.asBool){
     check_done := false.B
-  }.elsewhen(((if_completion && icsl_checkermode.asBool) || (icsl_checkerpriv_mode.asBool && if_completion_priv)) && !io.something_inflight && !(io.returned_to_special_address_valid.asBool)){
+  }.elsewhen(((if_completion && icsl_checkermode.asBool) || (icsl_checkerpriv_mode.asBool && if_completion_priv)) && !io.something_inflight && !(io.returned_to_special_address_valid.asBool) && !io.self_xcpt){
     check_done := true.B
   }
 

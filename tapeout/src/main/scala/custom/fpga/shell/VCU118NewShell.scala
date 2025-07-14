@@ -28,19 +28,18 @@ abstract class FPGAShellBasicOverlays()(implicit p: Parameters) extends VCU118Sh
 // class GPIOFPGAPlacedOverlay(val shell: FPGAShellBasicOverlays, name: String, val designInput: GPIODesignInput, val shellInput: GPIOShellInput)
 //   extends GPIOXilinxPlacedOverlay(name, designInput, shellInput) {
 //     shell { InModuleBody {
-//       val allgpioPins = Seq ("")
-//       (IOPin.of(io) zip allddrpins) foreach { case (io, pin) => shell.xdc.addPackagePin(io, pin) }
+//       val allgpioPins = Seq ("D15", "B14", "B12", "C13", "C15", "A13", "A14",
+//       "A15", "A16", "B12", "C12", "B13")
+//       (IOPin.of(io) zip allgpioPins) foreach { case (io, pin) => shell.xdc.addPackagePin(io, pin) }
 //     }
 //     }
-
-
-//   }
-
+// }
 
 // class GPIOFPGAShellPlacer(shell: FPGAShellBasicOverlays, val shellInput: GPIOShellInput)(implicit val valName: ValName)
 //   extends GPIOShellPlacer[FPGAShellBasicOverlays] {
 //   def place(designInput: GPIODesignInput) = new GPIOFPGAPlacedOverlay(shell, valName.name, designInput, shellInput)
 // }
+
 
 
 class FPGAClockFPGAPlacedOverlay(val shell: FPGAShellBasicOverlays, name: String, val designInput: ClockInputDesignInput, val shellInput: ClockInputShellInput)

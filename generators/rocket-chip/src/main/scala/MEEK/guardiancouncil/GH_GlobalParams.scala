@@ -11,6 +11,6 @@ object GH_GlobalParams {
   //一次128bit数据+8bit状态
   val GH_WIDITH_PACKETS = 2*GH_WIDITH_PERF+8;
   val IF_CHECK_OPEN = true;
-  val IF_CDC_OPEN  = true;
+  val IF_CDC_OPEN  = false;
 }
 
