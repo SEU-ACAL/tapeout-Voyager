@@ -157,7 +157,7 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
       store_in_flight := false.B
     }
   }
-
+//test
   // to ROBCounter
   io.rob_robcnt_o.valid       := io.commit_i.valid
   io.rob_robcnt_o.bits        := io.commit_i.bits
