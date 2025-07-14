@@ -157,3 +157,6 @@
 [submodule "voyager-test/src/workloads/embench/embench-iot"]
 	path = voyager-test/src/workloads/embench/embench-iot
 	url = https://github.com/embench/embench-iot.git
+[submodule "voyager-test/src/workloads/parsecv3/parsec-benchmark"]
+	path = voyager-test/src/workloads/parsecv3/parsec-benchmark
+	url = https://github.com/zhejianguk/parsec_gc.git

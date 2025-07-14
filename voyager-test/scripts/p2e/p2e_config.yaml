@@ -4,23 +4,23 @@
 ssh:
   host: "103.221.143.59"
   port: 52123
-  username: "guobing"
-  password: "7SZMxL0e"
+  username: "XXX"
+  password: "XXX"
   
 # Default paths
 paths:
-  remote_base: "/home/guobing"
+  remote_base: "/home/XXX"
   local_base: "."
 
 fpga:
-  ip: 192.168.100.13
+  ip: 192.168.100.10
   # choose one of the following
   # 192.168.100.10
   # 192.168.100.11  
   # 192.168.100.12
   # 192.168.100.13
   # 192.168.100.14
-  serial: /dev/tty13gpio
+  serial: /dev/tty10gpio
   # same as the last digit of the ip address
 
 workload:

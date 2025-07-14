@@ -14,16 +14,24 @@ jobs:
         run: |
           echo "🎉 The job was automatically triggered by a ${{ github.event_name }} event."
           echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
-      - name: Pull from the repository
+      - name: Pull from the repository (with update)
         shell: zsh {0}
+        if: contains(github.event.head_commit.message, '<need pull-with-update>')
+        run: |
+          source ~/.zshrc
+          chipyard_exec
+          setproxy
+          git reset --hard origin/${{ github.ref }}
+          git pull-with-update origin ${{ github.ref }}
+      - name: Pull from the repository (normal)
+        shell: zsh {0}
+        if: "!contains(github.event.head_commit.message, '<need pull-with-update>')"
         run: |
           source ~/.zshrc
           chipyard_exec
           setproxy
           git reset --hard origin/${{ github.ref }}
           git pull origin ${{ github.ref }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - run: echo "🍏 pull from repository ${{ job.status }}."
 
   Pre-commit-check:

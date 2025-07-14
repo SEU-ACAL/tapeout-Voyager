@@ -9,12 +9,16 @@ CYDIR=$(git rev-parse --show-toplevel)
 source ${CYDIR}/env.sh
 
 cd ${CYDIR}
-git submodule update --init voyager-test/src/workloads/embench/embench-iot
 
+# embench install
+git submodule update --init voyager-test/src/workloads/embench/embench-iot
 cd ${CYDIR}/voyager-test/src/workloads/embench/embench-iot
 git apply --ignore-whitespace ../embench.patch
 cd ..
 ./build.sh
+
+# parsecv3 benchmark install
+git submodule update --init voyager-test/src/workloads/parsecv3/parsec-benchmark
 
 
 cd ${CYDIR}/voyager-test
