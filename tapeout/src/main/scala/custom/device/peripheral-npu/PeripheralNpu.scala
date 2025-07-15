@@ -74,19 +74,19 @@ class AXISlaveNPUWrapperBlackBox extends BlackBox with HasBlackBoxResource {
     // NPU外部控制和状态信号
     // val clk_FPGA_w = Input(Clock())      // FPGA权重时钟
     // val clk_FPGA_cim = Input(Clock())    // FPGA CIM时钟
-    val clk_FPGA_w = Input(Bool())      // FPGA权重时钟
-    val clk_FPGA_cim = Input(Bool())    // FPGA CIM时钟
-    val rstn_FPGA = Input(Bool())        // FPGA复位信号
-    val PLL_CLK_SEL = Input(Bool())      // PLL时钟选择
-    val TEST_MODE = Input(Bool())        // 测试模式选择
+    val clk_FPGA_w = Input(Bool())      // FPGA权重时钟 // 拉到顶层
+    val clk_FPGA_cim = Input(Bool())    // FPGA CIM时钟 // 拉到顶层
+    val rstn_FPGA = Input(Bool())       // FPGA复位信号 // 拉到顶层
+    val PLL_CLK_SEL = Input(Bool())     // PLL时钟选择 // 拉到顶层
+    val TEST_MODE = Input(Bool())       // 测试模式选择 // 拉到顶层
 
     // FPGA系统接口 - 用于外部数据加载和存储
-    val FPGA_sys_load_en = Input(Bool())
-    val FPGA_sys_load_addr = Input(UInt(20.W))
-    val FPGA_sys_load_data = Output(UInt(64.W))
-    val FPGA_sys_store_en = Input(Bool())
-    val FPGA_sys_store_addr = Input(UInt(20.W))
-    val FPGA_sys_store_data = Input(UInt(64.W))
+    val FPGA_sys_load_en = Input(Bool()) // 拉到顶层
+    val FPGA_sys_load_addr = Input(UInt(20.W))// 拉到顶层
+    val FPGA_sys_load_data = Output(UInt(64.W))// 拉到顶层
+    val FPGA_sys_store_en = Input(Bool())// 拉到顶层
+    val FPGA_sys_store_addr = Input(UInt(20.W))// 拉到顶层
+    val FPGA_sys_store_data = Input(UInt(64.W))// 拉到顶层
 
     // PLL时钟输入
     val clk_PLL_w   = Input(Bool()) //Input(Clock())
@@ -212,6 +212,10 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
     axi.r.bits.id := Cat(0.U((axi.r.bits.id.getWidth - 1).W), npuBlackBox.io.axi_rid)  // 扩展1位ID到系统宽度
     axi.r.valid := npuBlackBox.io.axi_rvalid
     npuBlackBox.io.axi_rready := axi.r.ready
+
+    //---------------------------------
+    // 以下是连到顶层的
+    //---------------------------------
 
     // 连接外部时钟信号 - 使用系统时钟作为默认值
     npuBlackBox.io.clk_FPGA_w := io.npu_pin1
