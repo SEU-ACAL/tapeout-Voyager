@@ -144,8 +144,10 @@ mkdir -p "${LOG_DIR}"
 cd ${CYDIR}/voyager-test/output/verilator/
 ./simulator-chipyard.harness-${CONFIG}${DEBUG} $PK +permissive \
   $([ $debug -eq 1 ] && echo "+vcdfile=${WAVEFORM}") \
-  +verbose +loadmem=${full_binary_path} +loadmem_addr=80000000 \
-  +permissive-off ${full_binary_path} \
+  $([ $debug -eq 1 ] && echo "+verbose") \
+  +loadmem=${full_binary_path} +loadmem_addr=80000000 \
+  +permissive-off \
+  ${full_binary_path} \
   &> >(tee ${LOG_DIR}/stdout.log) \
   2> >(spike-dasm > ${LOG_DIR}/disasm.log)
 

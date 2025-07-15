@@ -144,10 +144,9 @@ main() {
     mkdir -p $OUTPUT_DIR/image
     cd $CYDIR/software/firemarshal
     Log "$YELLOW" "Generating workload..."
-    # ./marshal -v -d build ./$WORKLOAD/$WORKLOAD.json  
-    ./marshal -v  install  ./$WORKLOAD/$WORKLOAD.json  
-    Log "$BLUE" "====================== finsih build ======================"
-    cp ${CYDIR}/software/firemarshal/images/firechip/parsec-parsec_workload/parsec-parsec_workload-bin-nodisk $OUTPUT_DIR/image/
+    ./marshal -v -d build $WORKLOAD.json  
+    ./marshal -v -d install -t prototype $WORKLOAD.json
+    cp ${CYDIR}/software/firemarshal/images/prototype/${WORKLOAD}/${WORKLOAD}-bin-nodisk $OUTPUT_DIR/image/
     cd $OUTPUT_DIR/image
     Log "$YELLOW" "Converting image to hex... (This may take a while)"
     python3 $SCRIPT_DIR/toolchain/elf2hex.py $OUTPUT_DIR/image/parsec-parsec_workload-bin-nodisk $OUTPUT_DIR/image/$WORKLOAD.hex --remap-to-zero 
