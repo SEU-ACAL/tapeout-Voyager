@@ -16,6 +16,7 @@ import chipyard.iobinders._
 import voyager_tapeout.custom.fpga.VCU118FPGATestHarnessImp
 import voyager_tapeout.custom.fpga.Serial
 import testchipip.serdes._
+import voyager_tapeout.custom.iobinders.{SPIChipPort}
 
 /*** UART ***/
 class WithUART extends HarnessBinder({
@@ -24,12 +25,6 @@ class WithUART extends HarnessBinder({
   }
 })
 
-/*** SPI ***/
-class WithSPISDCard extends HarnessBinder({
-  case (th: VCU118FPGATestHarnessImp, port: SPIPort, chipId: Int) => {
-    th.vcu118Outer.io_spi_bb.bundle <> port.io
-  }
-})
 
 /*** Experimental DDR ***/
 class WithDDRMem extends HarnessBinder({
@@ -62,7 +57,11 @@ class WithGPIO extends HarnessBinder({
   }
 })
 
-
+class WithChipSPI extends HarnessBinder({
+  case (th: VCU118FPGATestHarnessImp, port: SPIChipPort, chipId: Int) => {
+    th.spi_pins <> port.io
+  }
+})
 
 /** TLSerdes */
 class WithSerialTL2DDR extends HarnessBinder({
