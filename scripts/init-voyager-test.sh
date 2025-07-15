@@ -18,6 +18,7 @@ cd ..
 ./build.sh
 
 # parsecv3 benchmark install
+cd ${CYDIR}
 git submodule update --init voyager-test/src/workloads/parsecv3/parsec-benchmark
 
 
