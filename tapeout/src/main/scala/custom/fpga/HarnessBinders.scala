@@ -9,6 +9,7 @@ import freechips.rocketchip.diplomacy._
 
 import sifive.blocks.devices.uart.{UARTPortIO}
 import sifive.blocks.devices.spi.{HasPeripherySPI, SPIPortIO}
+import voyager_tapeout.custom.iobinders.{SPIChipPort}
 
 import chipyard._
 import chipyard.harness._
@@ -24,10 +25,9 @@ class WithUART extends HarnessBinder({
   }
 })
 
-/*** SPI ***/
-class WithSPISDCard extends HarnessBinder({
-  case (th: VCU118FPGATestHarnessImp, port: SPIPort, chipId: Int) => {
-    th.vcu118Outer.io_spi_bb.bundle <> port.io
+class WithChipSPI extends HarnessBinder({
+  case (th: VCU118FPGATestHarnessImp, port: SPIChipPort, chipId: Int) => {
+    th.spi_pins <> port.io
   }
 })
 
