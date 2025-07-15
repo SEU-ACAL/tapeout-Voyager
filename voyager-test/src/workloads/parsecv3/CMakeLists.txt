@@ -16,7 +16,8 @@ add_custom_target(parsecv3-build
   COMMAND ${PARSECV3_DIR}/simplify_parsec.sh # Removed the unnecessary files for the workload execution
   COMMAND mkdir -p ${OUTPUT_BIN_DIR}/parsecv3
   # copy all executable files except scripts to the output directory
-  COMMAND sh -c "cp -rf ${PARSECV3_DIR}/build/*  ${OUTPUT_BIN_DIR}/parsecv3/ 2>/dev/null || true"
+  # COMMAND sh -c "cp -rf ${PARSECV3_DIR}/build/*  ${OUTPUT_BIN_DIR}/parsecv3/ 2>/dev/null || true"
+  COMMAND find ${PARSECV3_DIR}/build -type f -executable ! -name "*.sh" ! -name "*.py" -exec cp {} ${OUTPUT_BIN_DIR}/parsecv3/ \; 
   WORKING_DIRECTORY ${PARSECV3_SRC_DIR}
   COMMENT "Building PARSECv3 Components"
   VERBATIM)

@@ -45,7 +45,6 @@ class WithNPU extends Config (
   new voyager_tapeout.custom.harness.WithPeripheralNPUPin ++ // 连接harness和npu到chiptop的pin
   new voyager_tapeout.custom.iobinders.WithPeripheralNPUIOCell ++ // 连接npu和chiptop的pin
   new voyager_tapeout.custom.device.peripheral_npu.WithNPUPeripheral(voyager_tapeout.custom.device.peripheral_npu.PeripheralNPUParams(0x10050000, 0x1000))   // 连接npu和pbus的pin 
-
 )
 
 class WithSerialConnect extends Config (

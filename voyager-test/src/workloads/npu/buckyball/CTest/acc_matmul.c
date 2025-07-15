@@ -18,6 +18,17 @@ void init_matrix(elem_t* matrix, int rows, int cols, int seed) {
     }
 }
 
+void print_matrix(const char* name, result_t* matrix, int rows, int cols) {
+	printf("Matrix %s:\n", name);
+	for (int i = 0; i < rows; i++) {
+			for (int j = 0; j < cols; j++) {
+					printf("%4d ", matrix[i * cols + j]);
+			}
+			printf("\n");
+	}
+	printf("\n");
+}
+
 
 #define OP1_ADDR 0
 #define OP2_ADDR (BANK + DIM)
@@ -50,7 +61,7 @@ int main() {
     bb_mvout((uintptr_t)output_matrix, WR_ADDR, DIM * 4);
     printf("Finished\n");
    
-    //print_matrix("Output", output_matrix, DIM, DIM);
+    // print_matrix("Output", output_matrix, DIM, DIM);
 
 #ifdef MULTICORE 
     exit(0);
