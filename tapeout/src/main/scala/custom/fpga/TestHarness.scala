@@ -21,6 +21,7 @@ import chipyard._
 import chipyard.harness._
 import freechips.rocketchip.subsystem._
 import voyager_tapeout.custom.fpga.shell._
+import testchipip.spi.SPIChipIO
 
 class VCU118FPGATestHarness(override implicit val p: Parameters) extends FPGAShellBasicOverlays {
 
@@ -31,7 +32,6 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends FPGAShe
 
   // Order matters; ddr depends on sys_clock
   val uart      = Overlay(UARTOverlayKey, new UARTVCU118ShellPlacer(this, UARTShellInput()))
-  // val sdio      = if (pmod_is_sdio) Some(Overlay(SPIOverlayKey, new SDIOVCU118ShellPlacer(this, SPIShellInput()))) else None
   val jtag      = Overlay(JTAGDebugOverlayKey, new JTAGDebugVCU118ShellPlacer(this, JTAGDebugShellInput(location = jtag_location)))
 
 // DOC include start: ClockOverlay
@@ -82,10 +82,7 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends FPGAShe
 // DOC include end: UartOverlay
 
   /*** SPI ***/
-  // 1st SPI goes to the VCU118 SDIO port
 
-  val io_spi_bb = BundleBridgeSource(() => (new SPIPortIO(dp(PeripherySPIKey).head)))
-  dp(SPIOverlayKey).head.place(SPIDesignInput(dp(PeripherySPIKey).head, io_spi_bb))
 
   /*** DDR ***/
   val ddrNode = dp(DDROverlayKey)(1).place(DDRDesignInput(dp(ExtSerialMem).get.master.base, fpgaWrangler.node, fpgaPLL)).overlayOutput.ddr
@@ -113,15 +110,27 @@ class VCU118FPGATestHarnessImp(_outer: VCU118FPGATestHarness) extends LazyRawMod
   _outer.xdc.addPackagePin(reset, "L19")
   _outer.xdc.addIOStandard(reset, "LVCMOS12")
 
-  val gpiowidth = _outer.dp(PeripheryGPIOKey).head.width 
-  val gpio_pins = IO(Vec(gpiowidth,Analog(1.W))).suggestName("gpio_pins")
+  val gpiowidth = _outer.dp(PeripheryGPIOKey).head.width
+  val gpio_pins = IO(Vec(gpiowidth, Analog(1.W))).suggestName("gpio_pins")
   gpio_pins.zipWithIndex.foreach { case (pin, i) =>
     val ioPin = IOPin(pin)
     _outer.xdc.addPackagePin(ioPin, s"D$i")
     _outer.xdc.addIOStandard(ioPin, "LVCMOS12")
   }
 
+  val csWidth = _outer.dp(PeripherySPIKey).head.csWidth
+  val spi_pins = IO(new SPIChipIO(csWidth)).suggestName("spi_pins")
+  val packagePinsWithPackageIOs = Seq(("AV15", IOPin(spi_pins.sck)),
+                                     ("AY15", IOPin(spi_pins.cs(0))),
+                                     ("AW15", IOPin(spi_pins.dq(0))),
+                                     ("AV16", IOPin(spi_pins.dq(1))),
+                                     ("AU16", IOPin(spi_pins.dq(2))),
+                                     ("AY14", IOPin(spi_pins.dq(3))))
 
+  packagePinsWithPackageIOs foreach { case (pin, io) => {
+      _outer.xdc.addPackagePin(io, pin)
+      _outer.xdc.addIOStandard(io, "LVCMOS18")
+    } }
 
   val resetIBUF = Module(new IBUF)
   resetIBUF.io.I := reset

@@ -34,6 +34,9 @@ class OurHeterSoCConfig extends Config(
   new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1) ++
   new boom.meek.common.WithNLargeBooms(1) ++
   new chipyard.config.WithGPIO(width=12)  ++
+  new chipyard.config.WithSPI ++
+  // new voyager_tapeout.custom.harness.WithSimSPIModel++
+  new voyager_tapeout.custom.iobinders.WithSPIIOCells ++
   // NPUPeripheral
   new voyager_tapeout.custom.harness.WithPeripheralNPUPin ++ // 连接harness和npu到chiptop的pin
   new voyager_tapeout.custom.iobinders.WithPeripheralNPUIOCell ++ // 连接npu和chiptop的pin
@@ -45,7 +48,9 @@ class OurHeterSoCConfig extends Config(
 
 class WithSerialConnect extends Config (
   new testchipip.serdes.WithSerialTLMem(size = BigInt("10000000",16)) ++ // 8 GB of off-chip memory
-  new testchipip.serdes.WithSerialTLWidth(4)++
+  // 用于仿真，增大位宽
+  new testchipip.serdes.WithSerialTLPHYParams(
+  testchipip.serdes.ExternalSyncSerialPhyParams(phitWidth=64, flitWidth=64))++ 
   new chipyard.config.WithSerialBackingMemory  ++
   new testchipip.soc.WithOffchipBusClient(MBUS) ++                                      // offchip bus connects to MBUS, since the serial-tl needs to provide backing memory
   new testchipip.soc.WithOffchipBus

@@ -28,6 +28,8 @@ import sifive.blocks.devices.i2c._
 import tracegen.{TraceGenSystemModuleImp}
 
 import chipyard.iocell._
+import chipyard.iobinders.SPIPort
+import testchipip.spi._
 
 import voyager_tapeout.custom.device.peripheral_npu.{CanHavePeripheryNPU, PeripheralNPUIOCell}
 import chipyard.iobinders.IOCellKey
@@ -37,6 +39,8 @@ import scala.reflect.{ClassTag}
 // Use chipyard's IOBinder infrastructure
 import chipyard.iobinders.{OverrideIOBinder}
 import chipyard.iobinders.IOBinderTypes.IOBinderTuple
+
+import chipyard.iobinders._
 
 // Import our custom Port types
 import voyager_tapeout.custom.iobinders.{PeripheralNPUPort}
@@ -57,5 +61,37 @@ class WithPeripheralNPUIOCell extends OverrideIOBinder({
       
       (Seq(PeripheralNPUPort(() => port)), cells)
     }).getOrElse((Nil, Nil))
+  }
+})
+
+class WithSPIIOCells extends OverrideIOBinder({
+  (system: HasPeripherySPI) => {
+    val (ports:Seq[SPIChipPort], cells2d) = system.spi.zipWithIndex.map { case (s, i) =>
+      val p = system.asInstanceOf[BaseSubsystem].p
+      val name = s"spi_${i}"
+      // 生成顶层 IO, port 是连接到chiptop的
+      val port = IO(new SPIChipIO(s.c.csWidth)).suggestName(name)
+      val iocellBase = s"iocell_${name}"
+
+
+      // SCK 和 CS 是单向输出
+      val sckIOs = IOCell.generateFromSignal(s.sck, port.sck, Some(s"${iocellBase}_sck"), p(IOCellKey), IOCell.toAsyncReset)
+      val csIOs = IOCell.generateFromSignal(s.cs, port.cs, Some(s"${iocellBase}_cs"), p(IOCellKey), IOCell.toAsyncReset)
+      
+
+      // DQ 是双向,s是digitaltop
+      val dqIOs = s.dq.zip(port.dq).zipWithIndex.map { case ((pin, ana), j) =>
+        val iocell = p(IOCellKey).gpio().suggestName(s"${iocellBase}_dq_${j}")
+        iocell.io.o := pin.o
+        iocell.io.oe := pin.oe
+        iocell.io.ie := true.B
+        pin.i := iocell.io.i
+        iocell.io.pad <> ana
+        iocell
+      }
+
+      (SPIChipPort(() => port), dqIOs ++ csIOs ++ sckIOs)
+    }.unzip
+    (ports, cells2d.flatten)
   }
 })

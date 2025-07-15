@@ -48,10 +48,11 @@ class WithChipHarnessTweaks extends Config(
   new WithFPGAFrequency(100) ++ // default 100MHz freq
   // harness binders
   new WithUART ++
-  new WithSPISDCard ++
+ // new WithSPISDCard ++
   new WithJTAG ++
   new WithSerialTL2DDR++
-  new WithGPIO ++
+  new WithChipSPI++
+  new WithGPIO++
   // other configuration
   new WithDefaultPeripherals ++
   new WithSystemModifications ++ // setup busses, use sdboot bootrom, setup ext. mem. size
@@ -69,9 +70,9 @@ class WithChipTLMemHarnessTweaks extends Config(
   new WithFPGAFrequency(100) ++ // default 100MHz freq
   // harness binders
   new WithUART ++
-  new WithSPISDCard ++
   new WithDDRMem ++
   new WithJTAG ++
+  new WithChipSPI++
   // other configuration
   new WithDefaultPeripherals ++
   new WithSystemModifications ++ // setup busses, use sdboot bootrom, setup ext. mem. size
