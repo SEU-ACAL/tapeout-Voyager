@@ -21,3 +21,4 @@ add_custom_target(parsecv3-build
   WORKING_DIRECTORY ${PARSECV3_SRC_DIR}
   COMMENT "Building PARSECv3 Components"
   VERBATIM)
+add_dependencies(parsecv3-build cpu_linux_pthread-build)
