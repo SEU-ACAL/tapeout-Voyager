@@ -20,11 +20,12 @@ class R_RSUIO_kernel(params: R_RSUParams) extends Bundle {
   val shadowcsr_in = Vec(CSRshadows.CSRsize, Input(UInt(params.xLen.W)))
 
   //kernel
-  val csr_rw_valid = Input(Bool())
-  val csr_rw_addr  = Input(UInt(12.W))
-  val ic_state     = Input(UInt(3.W))
-  val priv         = Input(UInt(2.W))
-  val excpt_mode   = Input(UInt(2.W))
+  val csr_rw_valid    = Input(Bool())
+  val csr_rw_addr     = Input(UInt(12.W))
+  val ic_state        = Input(UInt(3.W))
+  val ic_change_state = Input(Bool())
+  val priv            = Input(UInt(2.W))
+  val excpt_mode      = Input(UInt(2.W))
 
   val snapshot = Input(UInt(1.W))
   val merge = Input(UInt(1.W))
@@ -94,7 +95,8 @@ class R_RSU_kernel(val params: R_RSUParams) extends Module with HasR_RSUIO_kerne
     }
   }
 
-  when(io.ic_state =/= 6.U && io.csr_rw_valid){
+  //提前获取csr_exe写入csr寄存器之前的旧值
+  when(((io.ic_state =/= 6.U) || ((io.ic_state === 6.U) && io.ic_change_state)) && io.csr_rw_valid){
     for(i <- 0 until CSRshadows.CSRsize){
       when(io.csr_rw_addr === CSRshadows.csrshadow_seq_nouse(i)){
         csrshadow_ss(i)                        := io.shadowcsr_in(i)

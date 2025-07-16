@@ -1650,20 +1650,22 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
     "sta:%x cnt:%x %x " +
     "cpl:%d comp:%d rsu_s:%x%x " +
     "cxp:%d%d crt:%d rpc:%x cpr:%d xpm:%d " +
-    "csr:%d%d%d%d %d arf:%d %d npc:%x\n",
+    "csr:%d%d%d%d %d arf:%d %x npc:%x " +
+    "mss:%x %x\n",
     io.hartid, io.if_correct_process, rsu_slave.io.debug_do_check, icsl.io.debug_check_done, self_xcpt_flag ,self_eret_flag,
     icsl.io.debug_state, icsl.io.ic_counter, icsl.io.debug_sl_counter, 
     icsl.io.if_check_completed, icsl.io.debug_comp, rsu_slave.io.rsu_status, rsu_slave.io.debug_rsustatus,
     check_exception, check_exception_rise, check_privret, csr.io.evec, check_priv, excpt_mode, 
-    io.arfs_if_CPS, arfs_is_CSR, priv_cps_done, priv_status, csr.io.shadow_idx, arfs_is_ARFS, rsu_slave.io.arfs_index, rsu_pc
+    io.arfs_if_CPS, arfs_is_CSR, priv_cps_done, priv_status, csr.io.shadow_idx, arfs_is_ARFS, rsu_slave.io.arfs_index, rsu_pc,
+    csr.io.shadow_read(CSRshadowsindex.mstatus), csr.io.shadow_read(CSRshadowsindex.sstatus)
   ))
 
 
-  // when((lsl.io.req_valid || lsl.io.resp_valid || lsl.io.vec_enq_valid(0) || lsl.io.vec_enq_valid(1) || wb_csr)){
-  //   midas.targetutils.SynthesizePrintf(printf("C%d: ptr:%d qv:%d%d rv:%d adr:%x dt:%x %x enq:%d%d %x%x\n",
-  //     io.hartid, lsl.io.lsl_deq_ptr, lsl.io.req_valid, wb_csr, lsl.io.resp_valid, lsl.io.resp_addr, lsl.io.resp_data, lsl_resp_data_csr, lsl.io.vec_enq_valid(0), lsl.io.vec_enq_valid(1), lsl.io.vec_enq_data(0), lsl.io.vec_enq_data(1)
-  //   ))
-  // }
+  when((lsl.io.req_valid || lsl.io.resp_valid || lsl.io.vec_enq_valid(0) || lsl.io.vec_enq_valid(1) || wb_csr)){
+    midas.targetutils.SynthesizePrintf(printf("C%d: ptr:%d qv:%d%d rv:%d adr:%x dt:%x %x enq:%d%d %x%x\n",
+      io.hartid, lsl.io.lsl_deq_ptr, lsl.io.req_valid, wb_csr, lsl.io.resp_valid, lsl.io.resp_addr, lsl.io.resp_data, lsl_resp_data_csr, lsl.io.vec_enq_valid(0), lsl.io.vec_enq_valid(1), lsl.io.vec_enq_data(0), lsl.io.vec_enq_data(1)
+    ))
+  }
   
 
 
