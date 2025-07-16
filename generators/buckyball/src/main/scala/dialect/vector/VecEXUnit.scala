@@ -56,7 +56,7 @@ class VecEXUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
   io.ctrl_ex_i.ready := state === idle
   when(io.ctrl_ex_i.fire) {
 		VecBall.io.iterIn.valid := true.B
-		VecBall.io.iterIn.bits := io.ctrl_ex_i.bits.iter
+		VecBall.io.iterIn.bits  := io.ctrl_ex_i.bits.iter
     state := busy
   }
 
@@ -76,12 +76,12 @@ class VecEXUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
 // -----------------------------------------------------------------------------
 // 向store unit发送计算结果，进行写回
 // -----------------------------------------------------------------------------
-	io.ex_st_o.valid := VecBall.io.rstOut.valid
+	io.ex_st_o.valid        := VecBall.io.rstOut.valid
 	VecBall.io.rstOut.ready := io.ex_st_o.ready
 
 	when(io.ex_st_o.fire) {
-		io.ex_st_o.bits.rst := VecBall.io.rstOut.bits
-		io.ex_st_o.bits.iter := VecBall.io.iterOut.bits
+		io.ex_st_o.bits.rst   := VecBall.io.rstOut.bits
+		io.ex_st_o.bits.iter  := VecBall.io.iterOut.bits
 	}
 
 }

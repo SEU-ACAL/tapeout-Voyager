@@ -33,6 +33,7 @@ class VecCtrlUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
   val wr_bank       = RegInit(0.U(2.W))
   val wr_bank_addr  = RegInit(0.U(12.W))
   val is_acc        = RegInit(false.B) 
+  val has_send      = RegInit(false.B)
 
   val idle :: busy :: Nil = Enum(2)
   val state = RegInit(idle)
@@ -59,7 +60,7 @@ class VecCtrlUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
 // 发送控制信号到VecUnit的load/store/ex单元
 // -----------------------------------------------------------------------------
 
-  when(state === busy) {
+  when(state === busy && !has_send) {
     io.ctrl_ld_o.valid               := true.B
     io.ctrl_ld_o.bits.op1_bank       := op1_bank
     io.ctrl_ld_o.bits.op1_bank_addr  := op1_bank_addr
@@ -74,6 +75,8 @@ class VecCtrlUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
     io.ctrl_st_o.bits.wr_bank        := wr_bank
     io.ctrl_st_o.bits.wr_bank_addr   := wr_bank_addr
     io.ctrl_st_o.bits.iter           := iter
+
+    has_send                         := true.B
   }.otherwise {
     io.ctrl_ld_o.valid               := false.B
     io.ctrl_ld_o.bits.op1_bank       := 0.U
@@ -99,8 +102,9 @@ class VecCtrlUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
     io.cmdResp_o.valid       := true.B
     io.cmdResp_o.bits.rob_id := rob_id_reg
     state                    := idle
+    has_send                 := false.B
   }.otherwise {
-    io.cmdResp_o.valid := false.B
+    io.cmdResp_o.valid       := false.B
     io.cmdResp_o.bits.rob_id := 0.U
   }
 
