@@ -37,7 +37,14 @@ class VoyagerSerialFPGAConfig extends Config(
   new voyager_tapeout.custom.WithSerialConnect++
   new chipyard.config.AbstractConfig)
 
-
+class VoyagerSerialDebugConfig extends Config(
+  new voyager_tapeout.custom.fpga.WithChipHarnessTweaks ++
+  new voyager_tapeout.custom.harness.WithCustomChipTop ++
+  new voyager_tapeout.custom.harness.WithCustomIOCells ++
+  new voyager_tapeout.custom.WithCustomDigitalTop ++
+  new voyager_tapeout.custom.OurHeterSoCConfig ++
+  new voyager_tapeout.custom.WithSerialDebugConnect++
+  new chipyard.config.AbstractConfig)
 class VoyagerTLFPGAConfig extends Config(
   new voyager_tapeout.custom.fpga.WithChipTLMemHarnessTweaks ++
   new voyager_tapeout.custom.harness.WithCustomChipTop ++

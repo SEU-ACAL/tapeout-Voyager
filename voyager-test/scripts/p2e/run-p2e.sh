@@ -7,7 +7,6 @@ set -e
 
 # Default values
 SKIP_STEPS=0
-BOARD_TEST_FILE=""
 
 # Help function
 help() {
@@ -15,7 +14,6 @@ help() {
   echo ""
   echo "Options:"
   echo "  -s, --skip NUMBER    跳过前几步 (例如: -s 2 从第3步开始)"
-  echo "  --board-test FILE    指定 pin_config.json 文件路径"
   echo "  -h, --help           显示帮助信息"
   echo ""
   echo "Steps:"
@@ -35,15 +33,6 @@ while [ $# -gt 0 ] ; do
         shift
       else
         echo "错误: -s 或 --skip 选项需要一个数字参数"
-        help
-      fi
-      ;;
-    --board-test)
-      if [[ -n $2 ]]; then
-        BOARD_TEST_FILE="$2"
-        shift
-      else
-        echo "错误: --board-test 选项需要一个文件路径参数"
         help
       fi
       ;;
@@ -142,15 +131,14 @@ main() {
   if [ $SKIP_STEPS -lt 1 ]; then
     Log "$BLUE" "====================== Step 1: Generate workload ======================"
     mkdir -p $OUTPUT_DIR/image
-    cd $CYDIR/software/firemarshal
+    cd $SCRIPT_DIR/../marshal
     Log "$YELLOW" "Generating workload..."
-    # ./marshal -v -d build ./$WORKLOAD/$WORKLOAD.json  
-    ./marshal -v  install  ./$WORKLOAD/$WORKLOAD.json  
-    Log "$BLUE" "====================== finsih build ======================"
-    cp ${CYDIR}/software/firemarshal/images/firechip/parsec-parsec_workload/parsec-parsec_workload-bin-nodisk $OUTPUT_DIR/image/
+    ./marshal -v -d build $WORKLOAD.json  
+    ./marshal -v -d install -t prototype $WORKLOAD.json
+    cp ${CYDIR}/software/firemarshal/images/prototype/${WORKLOAD}/${WORKLOAD}-bin-nodisk $OUTPUT_DIR/image/
     cd $OUTPUT_DIR/image
     Log "$YELLOW" "Converting image to hex... (This may take a while)"
-    python3 $SCRIPT_DIR/toolchain/elf2hex.py $OUTPUT_DIR/image/parsec-parsec_workload-bin-nodisk $OUTPUT_DIR/image/$WORKLOAD.hex --remap-to-zero 
+    python3 $SCRIPT_DIR/toolchain/elf2hex.py $OUTPUT_DIR/image/$WORKLOAD-bin-nodisk $OUTPUT_DIR/image/$WORKLOAD.hex --remap-to-zero 
   else
     Log "$YELLOW" "Step 1 skipped"
   fi
@@ -161,20 +149,10 @@ main() {
     cd $SCRIPT_DIR/toolchain
     Log "$YELLOW" "Syncing FPGA IP ($FPGA_IP) to hw-config.hdf..."
     sed -i "s/\"IP\": \"[^\"]*\"/\"IP\": \"$FPGA_IP\"/g" hw-config.hdf
-    
     Log "$YELLOW" "Setting workload name ($WORKLOAD) in debug_trigger.tcl"
     sed -i "s/-file [^.]*\.hex/-file ..\/image\/$WORKLOAD.hex/g" debug_trigger.tcl
-    
-    Log "$YELLOW" "Setting serial port ($SERIAL) in screen_setup.sh"
-    sed -i "s|send \"/dev/tty[0-9]*gpio 4800\\\\r\"|send \"$SERIAL 4800\\\\r\"|g" screen_setup.sh
-    
-    if [ -n "$BOARD_TEST_FILE" ]; then
-      Log "$YELLOW" "Setting board test file ($BOARD_TEST_FILE) in pin_config.json"
-      cp $BOARD_TEST_FILE $SCRIPT_DIR/toolchain/pin_config.json
-    else
-      Log "$YELLOW" "No board test file specified, use default pin_config.json"
-      cp $SCRIPT_DIR/toolchain/default_pin_config.json $SCRIPT_DIR/toolchain/pin_config.json
-    fi
+    Log "$YELLOW" "Setting serial port ($SERIAL) in run_vdbg.exp"
+    sed -i "s|send \"screen /dev/tty[0-9]*gpio 4800\\\\r\"|send \"screen $SERIAL 4800\\\\r\"|g" run_vdbg.exp
   else
     Log "$YELLOW" "Step 2 skipped"
   fi

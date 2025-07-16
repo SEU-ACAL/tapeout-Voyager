@@ -1,0 +1,10 @@
+{
+  "name" : "parsec",
+  "workdir" : ".",
+  "base" : "voyager-br-base.json",
+  "overlay" : "/home/gb515897968/tape/tapeout/tapeout-Voyager/voyager-test/scripts/marshal/parsec/overlay",
+  "host-init" : "./parsec/host-init.sh",
+  "rootfs-size" : "16GiB",
+  "spike-args" : "--extension=BuckyballFunc"
+}
+

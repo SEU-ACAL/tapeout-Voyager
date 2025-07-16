@@ -40,6 +40,7 @@ terminal_assign  -add {my_sdio A11 sdio_sel} -IOSTANDARD LVCMOS18
  write_net -add {_WIRE}
  write_net -add {_fpga_power_on_power_on_reset}
  write_net -add {_harnessBinderReset_catcher_io_sync_reset}
+ write_net -add {VCU118FPGATestHarness._plusarg_reader_out}
  read_net -add  {VCU118FPGATestHarness.mig.island.mmp_ddr4_calib_done}
  #memory_access -add TestHarness.chiptop0.system.subsystem_l2_wrapper.l2.inclusive_cache_bank_sched.bankedStore.cc_banks_0.cc_banks_0_ext.mem_0_0.ram
  #memory_access -add TestHarness.chiptop0.system.subsystem_l2_wrapper.l2.inclusive_cache_bank_sched.bankedStore.cc_banks_1.cc_banks_0_ext.mem_0_0.ram
@@ -62,17 +63,17 @@ dynamic_trigger -enable
 # trigger_net -add {VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.tile_reset_domain_tile.core.mem_reg_pc} -clk clock
 # trigger_net -add {VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.tile_reset_domain_tile.core.ex_reg_pc} -clk clock
 # trigger_net -add {VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.tile_reset_domain_tile.core.wb_reg_pc} -clk clock
+trace_net -add VCU118FPGATestHarness -depth 6
+# trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.element_reset_domain_boom_tile.core.rob -depth 4
+# trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.element_reset_domain_boom_tile.core.ic_master -depth 4
+# trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.element_reset_domain_boom_tile.core.rsu_master -depth 4
 
-trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.element_reset_domain_boom_tile.core.rob -depth 4
-trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.element_reset_domain_boom_tile.core.ic_master -depth 4
-trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.element_reset_domain_boom_tile.core.rsu_master -depth 4
-
-trace_net -add VCU118FPGATestHarness.chiptop0.system.ghm_domain -depth 4
-trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain_1.element_reset_domain_tile.core -depth 4
-trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain_1.element_reset_domain_tile.core -depth 4
-trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain_2.element_reset_domain_tile.core -depth 4
-trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain_3.element_reset_domain_tile.core -depth 4
-trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain_4.element_reset_domain_tile.core -depth 4
+# trace_net -add VCU118FPGATestHarness.chiptop0.system.ghm_domain -depth 4
+# trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain_1.element_reset_domain_tile.core -depth 4
+# trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain_1.element_reset_domain_tile.core -depth 4
+# trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain_2.element_reset_domain_tile.core -depth 4
+# trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain_3.element_reset_domain_tile.core -depth 4
+# trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain_4.element_reset_domain_tile.core -depth 4
  #design_edit
 #load the design and check the compilation constraint. vCom performs design edit according to he settings of timing, terminal assignments, instrument logic and net optimization.
  design_edit
