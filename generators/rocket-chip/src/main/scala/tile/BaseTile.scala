@@ -29,6 +29,7 @@ import freechips.rocketchip.buckyball.BuildRoCCBB
 //===== GuardianCouncil Function: Start ====//
 import freechips.rocketchip.guardiancouncil._
 case object EnableGuardianCouncilNodes extends Field[Boolean](false)
+case object EnableROBDebug extends Field[Boolean](true)
 //===== GuardianCouncil Function: End   ====//
 case object TileVisibilityNodeKey extends Field[TLEphemeralNode]
 case object TileKey extends Field[TileParams]

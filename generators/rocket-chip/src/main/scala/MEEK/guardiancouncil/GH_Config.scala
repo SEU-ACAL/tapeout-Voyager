@@ -16,3 +16,7 @@ class WithGHE extends Config((site, here, up) => {
 class WithGuardianCouncilNodes extends Config((site, here, up) => {
   case EnableGuardianCouncilNodes => true
 })
+
+class WithDisableROBDebug extends Config((site, here, up) => {
+  case EnableROBDebug => false
+})
