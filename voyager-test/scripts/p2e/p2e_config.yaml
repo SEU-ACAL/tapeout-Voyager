@@ -9,7 +9,7 @@ ssh:
   
 # Default paths
 paths:
-  remote_base: "/home/guobing"
+  remote_base: "/home/wangzhenyuan/project3"
   local_base: "."
 
 fpga:

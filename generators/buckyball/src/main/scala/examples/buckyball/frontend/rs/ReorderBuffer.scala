@@ -90,6 +90,7 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
   // 跟踪已发射但未完成的指令类型
   val load_in_flight = RegInit(false.B)
   val store_in_flight = RegInit(false.B)
+  val ex_in_flight = RegInit(false.B)  // 跟踪Ex指令是否在执行中
   
   // 跟踪Ex指令发射延迟
   val ex_delay_counter = RegInit(0.U(10.W))  // 8-bit counter for 100 cycles
@@ -156,8 +157,11 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
     when(completed_cmd_type === 2.U) { // Store完成
       store_in_flight := false.B
     }
+    when(completed_cmd_type === 3.U) { // Ex完成
+      ex_in_flight := false.B
+    }
   }
-
+//test
   // to ROBCounter
   io.rob_robcnt_o.valid       := io.commit_i.valid
   io.rob_robcnt_o.bits        := io.commit_i.bits

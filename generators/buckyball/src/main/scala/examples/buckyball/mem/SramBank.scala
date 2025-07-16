@@ -46,7 +46,7 @@ class SramBank(n: Int, w: Int, aligned_to: Int, single_ported: Boolean) extends 
 
   // Local memory
   val mem = SyncReadMem(n, Vec(mask_len, mask_elem))
-
+  assert(!(io.write.en && io.read.req.fire), "SramBank: Read and write requests cannot be issued simultaneously")
   // Write logic
   when (io.write.en) {
     if (aligned_to >= w)
@@ -109,8 +109,8 @@ class AccBank(n: Int, w: Int, aligned_to: Int, single_ported: Boolean) extends M
 
   // Local memory
   val mem = SyncReadMem(n, Vec(mask_len, mask_elem))
-  val raddr = Mux(s1_valid, s1_addr, io.read.req.bits.addr)
-  val ren = io.read.req.fire || s1_valid
+  val raddr = Mux(io.write.en, io.write.addr, io.read.req.bits.addr)
+  val ren = io.read.req.fire || io.write.en
   val fromDMA = io.read.req.bits.fromDMA
   val rdata = mem.read(raddr, ren).asUInt
 

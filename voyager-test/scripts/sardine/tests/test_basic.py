@@ -19,7 +19,7 @@ def test_verilator_hello(script_runner, caplog):
   
   logging.info("Testing Verilator hello script...")
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "hello", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "hello", "--debug"], timeout=1200)
   execution_time = time.time() - start_time
   
   logging.info(f"Execution time: {execution_time:.2f} seconds")

@@ -2093,6 +2093,7 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
   io.arfs_ecp_dest                                := rsu_master.io.arfs_ecp_dest
 
   rsu_master.io.ic_state                                 := ic_master.io.state
+  rsu_master.io.ic_change_state                          := ic_master.io.if_pipeline_stall.asBool && (ic_master.io.state === 6.U)
   rsu_master.io.csr_rw_valid                             := csr_exe_unit.io.iresp.valid && CSR.isWriteCSR(csr_rw_cmd)
   rsu_master.io.csr_rw_addr                              := csr_exe_unit.io.iresp.bits.uop.csr_addr
 
@@ -2112,27 +2113,24 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
   io.commit_uops                                  := rob.io.commit.uops
   // io.if_big_complete_ack                           := ic_master.io.if_big_complete_ack
   //===== GuardianCouncil Function: End ====//
-  when(rob.io.commit.arch_valids.reduce(_||_)&&io.ic_trace.asBool){
-    midas.targetutils.SynthesizePrintf(printf("C%d: prs:%d%d " +
-            "rw:%d %x %x %x arf:%x %x %x " +
-            "npc:%x cp:%x icr:%x\n",
-            io.hartid, io.if_correct_process, satp_ppn_switch,
-            csr_exe_unit.io.iresp.valid, csr.io.rw.addr, csr.io.rw.cmd, csr.io.rw.wdata, rsu_master.io.arfs_index(0), rsu_master.io.arfs_pidx(0), rsu_master.io.arfs_ecp_dest,
-            rob.io.r_next_pc, ic_master.io.shared_CP_CFG, ic_incr))
-
-    midas.targetutils.SynthesizePrintf(printf("C%d: p:%d v:%d%d%d " +
-        "sl:%d%d%d xpt:%d ca:%x ct:%x%x%x%x na:%d%d%d%d sa:%d%d%d%d tg:%x sta:%d cr:%x ss:%d%d xpt:%d%d%d " +
-        "fl:%d %d %x\n",
-          io.hartid,
-          RegNext(csr.io.status.prv),  rob.io.commit.arch_valids(2), rob.io.commit.arch_valids(1), rob.io.commit.arch_valids(0),
-          rsu_stall, ic_stall, io.gh_stall, csr.io.r_exception, csr.io.trace(0).cause,
-          ic_master.io.ic_counter(1), ic_master.io.ic_counter(2), ic_master.io.ic_counter(3), ic_master.io.ic_counter(4), 
-          ic_master.io.icsl_na(1), ic_master.io.icsl_na(2), ic_master.io.icsl_na(3), ic_master.io.icsl_na(4), 
-          ic_master.io.ic_status(1), ic_master.io.ic_status(2), ic_master.io.ic_status(3), ic_master.io.ic_status(4),
-          ic_master.io.crnt_target,
-          ic_master.io.state, ic_master.io.ctrl, ic_master.io.if_dosnap, ic_master.io.if_dosnap_priv, ic_master.io.mode_switch, ic_master.io.mode_ret, ic_master.io.excp_mode,
-          rob.io.flush.valid, rob.io.flush.bits.flush_typ, csr.io.evec))
-  }
+  midas.targetutils.SynthesizePrintf(printf("C%d: prs:%d%d " +
+          "rw:%d %x %x %x arf:%x %x %x " +
+          "npc:%x cp:%x icr:%x mss:%x %x\n",
+          io.hartid, io.if_correct_process, satp_ppn_switch,
+          csr_exe_unit.io.iresp.valid, csr.io.rw.addr, csr.io.rw.cmd, csr.io.rw.wdata, rsu_master.io.arfs_index(0), rsu_master.io.arfs_pidx(0), rsu_master.io.arfs_ecp_dest,
+          rob.io.r_next_pc, ic_master.io.shared_CP_CFG, ic_incr, csr.io.shadow_read(CSRshadowsindex.mstatus), csr.io.shadow_read(CSRshadowsindex.sstatus)))
+  midas.targetutils.SynthesizePrintf(printf("C%d: p:%d v:%d%d%d " +
+      "sl:%d%d%d xpt:%d ca:%x ct:%x%x%x%x na:%d%d%d%d sa:%d%d%d%d tg:%x sta:%d cr:%x ss:%d%d xpt:%d%d%d " +
+      "fl:%d %d %x\n",
+        io.hartid,
+        RegNext(csr.io.status.prv),  rob.io.commit.arch_valids(2), rob.io.commit.arch_valids(1), rob.io.commit.arch_valids(0),
+        rsu_stall, ic_stall, io.gh_stall, csr.io.r_exception, csr.io.trace(0).cause,
+        ic_master.io.ic_counter(1), ic_master.io.ic_counter(2), ic_master.io.ic_counter(3), ic_master.io.ic_counter(4), 
+        ic_master.io.icsl_na(1), ic_master.io.icsl_na(2), ic_master.io.icsl_na(3), ic_master.io.icsl_na(4), 
+        ic_master.io.ic_status(1), ic_master.io.ic_status(2), ic_master.io.ic_status(3), ic_master.io.ic_status(4),
+        ic_master.io.crnt_target,
+        ic_master.io.state, ic_master.io.ctrl, ic_master.io.if_dosnap, ic_master.io.if_dosnap_priv, ic_master.io.mode_switch, ic_master.io.mode_ret, ic_master.io.excp_mode,
+        rob.io.flush.valid, rob.io.flush.bits.flush_typ, csr.io.evec))
 
 }
 

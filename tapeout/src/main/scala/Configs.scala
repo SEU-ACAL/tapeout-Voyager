@@ -8,7 +8,7 @@ import chipyard._
 // )
 
 class VoyagerFPGAConfig extends Config(
-  new voyager_tapeout.VoyagerSerialFPGAConfig
+  new voyager_tapeout.VoyagerSerialWithoutNPUFPGAConfig 
 )
 
 class VoyagerVerilatorConfig extends Config(
@@ -16,9 +16,10 @@ class VoyagerVerilatorConfig extends Config(
   new voyager_tapeout.custom.harness.WithCustomIOCells ++
   new voyager_tapeout.custom.WithCustomDigitalTop ++
   new voyager_tapeout.custom.OurHeterSoCConfig ++
+  new voyager_tapeout.custom.WithNPU ++
   new chipyard.config.AbstractConfig)
 
-  
+
 // class VoyagerSerialVerilatorConfig extends Config(
 //   new voyager_tapeout.custom.harness.WithCustomChipTop ++
 //   new voyager_tapeout.custom.harness.WithCustomIOCells ++
@@ -27,8 +28,17 @@ class VoyagerVerilatorConfig extends Config(
 //   new voyager_tapeout.custom.WithSerialConnect++
 //   new chipyard.config.AbstractConfig)
 
-
 class VoyagerSerialFPGAConfig extends Config(
+  new voyager_tapeout.custom.fpga.WithChipHarnessTweaks ++
+  new voyager_tapeout.custom.harness.WithCustomChipTop ++
+  new voyager_tapeout.custom.harness.WithCustomIOCells ++
+  new voyager_tapeout.custom.WithCustomDigitalTop ++
+  new voyager_tapeout.custom.OurHeterSoCConfig ++
+  new voyager_tapeout.custom.WithNPU ++
+  new voyager_tapeout.custom.WithSerialConnect++
+  new chipyard.config.AbstractConfig)
+
+class VoyagerSerialWithoutNPUFPGAConfig extends Config(
   new voyager_tapeout.custom.fpga.WithChipHarnessTweaks ++
   new voyager_tapeout.custom.harness.WithCustomChipTop ++
   new voyager_tapeout.custom.harness.WithCustomIOCells ++

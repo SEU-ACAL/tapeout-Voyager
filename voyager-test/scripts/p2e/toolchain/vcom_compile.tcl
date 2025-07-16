@@ -22,16 +22,16 @@ netlistmacro_param -module xram_bbox_wrapper -attribute {ROOT_FREE_CK rclk}
 terminal_assign  -add {my_uart A3 uart_txd} -IOSTANDARD LVCMOS18
 terminal_assign  -add {my_uart A2 uart_rxd} -IOSTANDARD LVCMOS18
 
-terminal_assign  -add {my_sdio A0 sdio_spi_clk} -IOSTANDARD LVCMOS18
+terminal_assign  -add {my_sdio A0 spi_pins_sck} -IOSTANDARD LVCMOS18
 ###CMD
-terminal_assign  -add {my_sdio A2 sdio_spi_cs} -IOSTANDARD LVCMOS18
+terminal_assign  -add {my_sdio A1 spi_pins_cs0} -IOSTANDARD LVCMOS18
 ###D0 D1 D2 D3
-terminal_assign  -add {my_sdio A4 sdio_spi_dat_0} -IOSTANDARD LVCMOS18
-terminal_assign  -add {my_sdio A5 sdio_spi_dat_1} -IOSTANDARD LVCMOS18
-terminal_assign  -add {my_sdio A6 sdio_spi_dat_2} -IOSTANDARD LVCMOS18
-terminal_assign  -add {my_sdio A7 sdio_spi_dat_3} -IOSTANDARD LVCMOS18
+terminal_assign  -add {my_sdio A4 spi_pins_dat_0} -IOSTANDARD LVCMOS18
+terminal_assign  -add {my_sdio A5 spi_pins_dat_1} -IOSTANDARD LVCMOS18
+terminal_assign  -add {my_sdio A6 spi_pins_dat_2} -IOSTANDARD LVCMOS18
+terminal_assign  -add {my_sdio A7 spi_pins_dat_3} -IOSTANDARD LVCMOS18
 ###D1 D2 CD WP RESET
-terminal_assign  -add {my_sdio A11 sdio_sel} -IOSTANDARD LVCMOS18
+# terminal_assign  -add {my_sdio A11 sdio_sel} -IOSTANDARD LVCMOS18
 
 
 #write_net

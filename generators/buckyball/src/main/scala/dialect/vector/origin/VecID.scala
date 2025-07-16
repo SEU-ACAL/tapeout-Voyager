@@ -1,0 +1,95 @@
+// package dialect.vector
+
+// package dialect.vector
+// import chisel3._
+// import chisel3.util._
+// import chisel3.stage._
+// import org.chipsalliance.cde.config.Parameters
+
+// import dialect.vector._
+// import buckyball.frontend.rs.{ReservationStationIssue, ReservationStationComplete, BuckyBallCmd}
+// import buckyball.mem.{SramReadIO, SramWriteIO}
+// import buckyball.BuckyBallConfig
+
+// class id_lu_req(implicit bbconfig: BuckyBallConfig) extends Bundle {
+//     val op1_bank      = UInt(log2Up(bbconfig.sp_banks).W)
+//     val op1_bank_addr = UInt(log2Up(bbconfig.sp_bank_entries).W)
+//     val op2_bank      = UInt(log2Up(bbconfig.sp_banks).W)
+//     val op2_bank_addr = UInt(log2Up(bbconfig.sp_bank_entries).W)
+//     val wr_bank       = UInt(log2Up(bbconfig.sp_banks).W)
+//     val wr_bank_addr  = UInt(log2Up(bbconfig.sp_bank_entries).W)
+//     val wr_start_addr = UInt(log2Up(bbconfig.sp_bank_entries).W)
+//     val opcode        = UInt(3.W)
+//     val iter          = UInt(10.W) 
+//     val thread_id     = UInt(10.W)
+//     val rob_id        = UInt(log2Up(bbconfig.rob_entries).W)
+// }
+
+// class VecID(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
+//     val rob_id_width = log2Up(bbconfig.rob_entries)
+//     val spad_w = bbconfig.veclane * bbconfig.inputType.getWidth
+
+//     val io = IO(new Bundle{
+//         val cmdReq = Flipped(Decoupled(new ReservationStationIssue(new BuckyBallCmd, rob_id_width)))
+        
+//         val id_lu_o = Decoupled(new id_lu_req)
+//     })
+    
+//     val busy :: idle :: Nil = Enum(2)
+//     //寄存器定义
+//     val state = RegInit(idle)
+//     val rob_id_reg = RegInit(0.U(rob_id_width.W))
+//     val iteration_counter = RegInit(0.U(10.W))
+//     val iteration = RegInit(0.U(10.W))
+//     val op1_bank = RegInit(0.U(2.W))
+//     val op1_bank_addr = RegInit(0.U(12.W))
+//     val op2_bank_addr = RegInit(0.U(12.W))
+//     val op2_bank = RegInit(0.U(2.W))
+//     val wr_bank = RegInit(0.U(2.W))
+//     val wr_bank_addr = RegInit(0.U(12.W))
+//     val is_acc = RegInit(false.B) 
+
+//     switch(state) {
+//         is(idle) {
+//             when(io.cmdReq.valid) {
+//                 iteration := io.cmdReq.bits.cmd.post_decode_cmd.iter
+//                 iteration_counter := 0.U
+//                 rob_id_reg := io.cmdReq.bits.rob_id
+//                 op1_bank := io.cmdReq.bits.cmd.post_decode_cmd.op1_bank
+//                 op1_bank_addr := io.cmdReq.bits.cmd.post_decode_cmd.op1_bank_addr
+//                 op2_bank := io.cmdReq.bits.cmd.post_decode_cmd.op2_bank
+//                 op2_bank_addr := io.cmdReq.bits.cmd.post_decode_cmd.op2_bank_addr
+//                 wr_bank := io.cmdReq.bits.cmd.post_decode_cmd.wr_bank
+//                 wr_bank_addr := io.cmdReq.bits.cmd.post_decode_cmd.wr_bank_addr
+//                 is_acc := io.cmdReq.bits.cmd.post_decode_cmd.is_acc
+//                 state := busy
+//             }
+//         }
+//         is(busy) {
+//             iteration_counter := iteration_counter + 1.U
+//             when(iteration_counter === iteration - 1.U) {
+//                 iteration_counter := 0.U
+//                 state := idle
+//             }
+//         }
+//     }
+   
+
+//     //生成ID_LU请求
+//     io.id_lu_o.valid := state === busy
+//     io.id_lu_o.bits.op1_bank := op1_bank
+//     io.id_lu_o.bits.op1_bank_addr := op1_bank_addr + iteration_counter
+//     io.id_lu_o.bits.op2_bank := op2_bank
+//     io.id_lu_o.bits.op2_bank_addr := op2_bank_addr + iteration_counter
+//     io.id_lu_o.bits.wr_bank := wr_bank
+//     io.id_lu_o.bits.wr_bank_addr := wr_bank_addr + iteration_counter
+//     io.id_lu_o.bits.wr_start_addr := wr_bank_addr
+//     io.id_lu_o.bits.opcode := 1.U
+//     io.id_lu_o.bits.iter := iteration
+//     io.id_lu_o.bits.thread_id := iteration_counter
+//     io.id_lu_o.bits.rob_id := rob_id_reg
+
+//     io.cmdReq.ready := io.id_lu_o.ready
+
+    
+// }

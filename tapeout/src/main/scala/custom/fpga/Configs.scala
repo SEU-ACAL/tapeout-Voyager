@@ -39,46 +39,36 @@ class WithSystemModifications extends Config((site, here, up) => {
 })
 
 
-// DOC include start: AbstractVCU118 and Rocket
-class WithChipHarnessTweaks extends Config(
-  // clocking
+class WithBaseHarnessTweaks extends Config (
   new chipyard.harness.WithAllClocksFromHarnessClockInstantiator  ++
   new voyager_tapeout.custom.iobinders.WithVoyagerPLLSelectorDividerClockGenerator++
   new chipyard.config.WithUniformBusFrequencies(100) ++
   new WithFPGAFrequency(100) ++ // default 100MHz freq
-  // harness binders
   new WithUART ++
-  new WithSPISDCard ++
-  // new WithDDRMem ++
   new WithJTAG ++
-  new WithSerialTL2DDR++
-  // other configuration
+  new WithChipSPI++
+  new WithGPIO++
   new WithDefaultPeripherals ++
   new WithSystemModifications ++ // setup busses, use sdboot bootrom, setup ext. mem. size
+  new freechips.rocketchip.subsystem.WithoutTLMonitors 
+)
 
+
+// DOC include start: AbstractVCU118 and Rocket
+class WithChipHarnessTweaks extends Config(
+  new WithSerialTL2DDR++
   new testchipip.serdes.WithNoSerialTLClient++
   new testchipip.serdes.WithSerialTLMem(size = BigInt("80000000",16)) ++ // 8 GB of off-chip memory
-  new freechips.rocketchip.subsystem.WithoutTLMonitors 
+  new voyager_tapeout.custom.fpga.WithBaseHarnessTweaks 
 )
 
 class WithChipTLMemHarnessTweaks extends Config(
-  // clocking
-  new chipyard.harness.WithAllClocksFromHarnessClockInstantiator  ++
-  new voyager_tapeout.custom.iobinders.WithVoyagerPLLSelectorDividerClockGenerator++
-  new chipyard.config.WithUniformBusFrequencies(100) ++
-  new WithFPGAFrequency(100) ++ // default 100MHz freq
-  // harness binders
-  new WithUART ++
-  new WithSPISDCard ++
   new WithDDRMem ++
-  new WithJTAG ++
-  // other configuration
-  new WithDefaultPeripherals ++
-  new WithSystemModifications ++ // setup busses, use sdboot bootrom, setup ext. mem. size
   new chipyard.config.WithTLBackingMemory ++ // use TL backing memory
   new testchipip.serdes.WithNoSerialTL++ // 8 GB of off-chip memory
-  new freechips.rocketchip.subsystem.WithoutTLMonitors 
+  new voyager_tapeout.custom.fpga.WithBaseHarnessTweaks 
 )
+
 
 
 

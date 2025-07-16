@@ -1,6 +1,7 @@
 package voyager_tapeout.custom.fpga
 
 import chisel3._
+import chisel3.experimental.{Analog, attach}
 
 import freechips.rocketchip.diplomacy.{LazyModule, LazyRawModuleImp, BundleBridgeSource}
 import org.chipsalliance.cde.config.{Parameters}
@@ -15,11 +16,12 @@ import sifive.fpgashells.clocks._
 
 import sifive.blocks.devices.uart.{PeripheryUARTKey, UARTPortIO}
 import sifive.blocks.devices.spi.{PeripherySPIKey, SPIPortIO}
-
+import sifive.blocks.devices.gpio.{PeripheryGPIOKey, GPIOPortIO}
 import chipyard._
 import chipyard.harness._
 import freechips.rocketchip.subsystem._
 import voyager_tapeout.custom.fpga.shell._
+import testchipip.spi.SPIChipIO
 
 class VCU118FPGATestHarness(override implicit val p: Parameters) extends FPGAShellBasicOverlays {
 
@@ -30,7 +32,6 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends FPGAShe
 
   // Order matters; ddr depends on sys_clock
   val uart      = Overlay(UARTOverlayKey, new UARTVCU118ShellPlacer(this, UARTShellInput()))
-  val sdio      = if (pmod_is_sdio) Some(Overlay(SPIOverlayKey, new SDIOVCU118ShellPlacer(this, SPIShellInput()))) else None
   val jtag      = Overlay(JTAGDebugOverlayKey, new JTAGDebugVCU118ShellPlacer(this, JTAGDebugShellInput(location = jtag_location)))
 
 // DOC include start: ClockOverlay
@@ -66,6 +67,11 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends FPGAShe
   fpgaClock := fpgaWrangler.node := fpgaGroup := fpgaPLL
 // DOC include end: ClockOverlay
 
+
+  /*** GPIO ***/
+
+  // val io_gpio_bb = BundleBridgeSource(() => (new GPIOPortIO(dp(PeripheryGPIOKey).head)))
+  // dp(GPIOOverlayKey).head.place(GPIODesignInput(dp(PeripheryGPIOKey).head, io_gpio_bb))
   /*** UART ***/
 
 // DOC include start: UartOverlay
@@ -75,11 +81,6 @@ class VCU118FPGATestHarness(override implicit val p: Parameters) extends FPGAShe
   dp(UARTOverlayKey).head.place(UARTDesignInput(io_uart_bb))
 // DOC include end: UartOverlay
 
-  /*** SPI ***/
-  // 1st SPI goes to the VCU118 SDIO port
-
-  val io_spi_bb = BundleBridgeSource(() => (new SPIPortIO(dp(PeripherySPIKey).head)))
-  dp(SPIOverlayKey).head.place(SPIDesignInput(dp(PeripherySPIKey).head, io_spi_bb))
 
   /*** DDR ***/
   val ddrNode = dp(DDROverlayKey)(1).place(DDRDesignInput(dp(ExtSerialMem).get.master.base, fpgaWrangler.node, fpgaPLL)).overlayOutput.ddr
@@ -106,6 +107,29 @@ class VCU118FPGATestHarnessImp(_outer: VCU118FPGATestHarness) extends LazyRawMod
   val reset = IO(Input(Bool())).suggestName("reset")
   _outer.xdc.addPackagePin(reset, "L19")
   _outer.xdc.addIOStandard(reset, "LVCMOS12")
+
+  val gpiowidth = _outer.dp(PeripheryGPIOKey).head.width 
+  val gpio_pins = IO(Vec(gpiowidth,Analog(1.W))).suggestName("gpio_pins")
+  gpio_pins.zipWithIndex.foreach { case (pin, i) =>
+    val ioPin = IOPin(pin)
+    _outer.xdc.addPackagePin(ioPin, s"D$i")
+    _outer.xdc.addIOStandard(ioPin, "LVCMOS12")
+  }
+
+  val csWidth = _outer.dp(PeripherySPIKey).head.csWidth
+  val spi_pins = IO(new SPIChipIO(csWidth)).suggestName("spi_pins")
+  val packagePinsWithPackageIOs = Seq(("AV15", IOPin(spi_pins.sck)),
+                                     ("AY15", IOPin(spi_pins.cs(0))),
+                                     ("AW15", IOPin(spi_pins.dq(0))),
+                                     ("AV16", IOPin(spi_pins.dq(1))),
+                                     ("AU16", IOPin(spi_pins.dq(2))),
+                                     ("AY14", IOPin(spi_pins.dq(3))))
+
+  packagePinsWithPackageIOs foreach { case (pin, io) => {
+      _outer.xdc.addPackagePin(io, pin)
+      _outer.xdc.addIOStandard(io, "LVCMOS18")
+    } }
+
 
   val resetIBUF = Module(new IBUF)
   resetIBUF.io.I := reset

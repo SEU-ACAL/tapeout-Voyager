@@ -261,3 +261,4 @@ XXXXXXXXX(你本身的commit message) need test: (从以下的tag中选择一个
 - [[NPU-README](docs/NPU-README.md)] 主要关于buddy-mlir的使用.
 - [[sram_README](docs/sram_readme.md)] 主要关于sram替换的文档. 
 - [[tools_README](docs/tools_README.md)] 主要关于工具的文档. 
+- [[PeripheralNPU对接文档](docs/peripheral-npu/peripheral-npu.md)] PeripheralNPU 对接文档.

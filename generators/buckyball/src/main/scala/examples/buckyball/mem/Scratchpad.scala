@@ -149,6 +149,6 @@ class Scratchpad(config: BuckyBallConfig)(implicit val p: Parameters) extends Mo
     bank.io.write.addr := Mux(exec_write_sel, exec_write.addr, main_write.addr)
     bank.io.write.data := Mux(exec_write_sel, exec_write.data, main_write.data)
     bank.io.write.mask := Mux(exec_write_sel, exec_write.mask, main_write.mask)
-    bank.io.write.acc := Mux(exec_write_sel, exec_write.acc, false.B)
+    bank.io.write.acc := Mux(exec_write_sel, exec_write.acc, main_write.acc)
   }
 }

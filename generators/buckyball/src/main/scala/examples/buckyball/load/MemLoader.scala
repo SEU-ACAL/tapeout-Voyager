@@ -96,7 +96,7 @@ class MemLoader(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   }
   for (i <- 0 until bbconfig.acc_banks) {
     io.accWrite(i).en   := io.dmaResp.fire && is_acc_reg && (target_row(log2Ceil(bbconfig.acc_banks) - 1, 0) === i.U)
-    io.accWrite(i).addr := target_row >> log2Ceil(bbconfig.acc_banks) // 计算acc bank的地址
+    io.accWrite(i).addr := wr_bank_addr_reg + (io.dmaResp.bits.addrcounter >> log2Ceil(bbconfig.acc_banks))
     io.accWrite(i).data := io.dmaResp.bits.data
     io.accWrite(i).mask := VecInit(Seq.fill(mask_len)(true.B))
     io.accWrite(i).acc  :=  false.B

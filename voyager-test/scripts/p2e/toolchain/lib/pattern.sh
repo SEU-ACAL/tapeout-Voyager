@@ -73,8 +73,8 @@ readonly REPLACEMENT_RESET_CONNECTION='.reset                          (com_rese
 # ====================================================================
 
 # Analog to UINT patterns for conditional compilation
-readonly PATTERN_ANALOG_TO_UINT_START='AnalogToUInt_1 a2b_4'
-readonly PATTERN_ANALOG_TO_UINT_END='  );.*@.*fpga/fpga-shells.*shell/Util.scala:29:21'
+readonly PATTERN_ANALOG_TO_UINT_START='UIntToAnalog_1 a2b_1 '
+readonly PATTERN_ANALOG_TO_UINT_END='  );'
 
 # Large conditional compilation block replacement
 readonly REPLACEMENT_CONDITIONAL_BLOCK=$(cat << 'EOF'

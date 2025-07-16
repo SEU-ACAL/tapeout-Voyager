@@ -160,3 +160,4 @@
 [submodule "voyager-test/src/workloads/parsecv3/parsec-benchmark"]
 	path = voyager-test/src/workloads/parsecv3/parsec-benchmark
 	url = https://github.com/zhejianguk/parsec_gc.git
+	branch = Voyager-TapeOut

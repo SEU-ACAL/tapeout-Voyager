@@ -11,58 +11,67 @@ import buckyball.BuckyBallConfig
 import buckyball.util.Pipeline
 import org.yaml.snakeyaml.events.Event.ID
 
-class VecUnit(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
-    val rob_id_width = log2Up(bbconfig.rob_entries)
-    val spad_w = bbconfig.veclane * bbconfig.inputType.getWidth
+class VecUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
+  val rob_id_width = log2Up(b.rob_entries)
+  val spad_w = b.veclane * b.inputType.getWidth
   
-    val io = IO(new Bundle {
-        val cmdReq = Flipped(Decoupled(new ReservationStationIssue(new BuckyBallCmd, rob_id_width)))
-        val cmdResp = Decoupled(new ReservationStationComplete(rob_id_width))
-        
-        // 连接到Scratchpad的SRAM读写接口
-        val sramRead = Vec(bbconfig.sp_banks, new SramReadIO(bbconfig.sp_bank_entries, spad_w))
-        val sramWrite = Vec(bbconfig.sp_banks, new SramWriteIO(bbconfig.sp_bank_entries, spad_w, spad_w/8))
-        // 连接到Accumulator的读写接口
-        val accRead = Vec(bbconfig.acc_banks, new SramReadIO(bbconfig.acc_bank_entries, bbconfig.acc_width))
-        val accWrite = Vec(bbconfig.acc_banks, new AccWriteIO(bbconfig.acc_bank_entries, bbconfig.acc_width, bbconfig.acc_width/8))
-    })
+  val io = IO(new Bundle {
+    val cmdReq = Flipped(Decoupled(new ReservationStationIssue(new BuckyBallCmd, rob_id_width)))
+    val cmdResp = Decoupled(new ReservationStationComplete(rob_id_width))
+    
+    // 连接到Scratchpad的SRAM读写接口
+    val sramRead = Vec(b.sp_banks, new SramReadIO(b.sp_bank_entries, spad_w))
+    val sramWrite = Vec(b.sp_banks, new SramWriteIO(b.sp_bank_entries, spad_w, spad_w/8))
+    // 连接到Accumulator的读写接口
+    val accRead = Vec(b.acc_banks, new SramReadIO(b.acc_bank_entries, b.acc_width))
+    val accWrite = Vec(b.acc_banks, new AccWriteIO(b.acc_bank_entries, b.acc_width, b.acc_width/8))
+  })
 // -----------------------------------------------------------------------------
-// VECID
+// VECCTRLUNIT
 // -----------------------------------------------------------------------------
-    val VecID = Module(new VecID)
-    VecID.io.cmdReq <> io.cmdReq
-    io.cmdResp <> VecID.io.cmdResp
-// -----------------------------------------------------------------------------
-// ID_LU Pipeline
-// -----------------------------------------------------------------------------
-    val ID_LU = Module(new Pipeline(new id_lu_req, 1)())
-    ID_LU.io.in <> VecID.io.id_lu_o
+  val VecCtrlUnit = Module(new VecCtrlUnit)
+  VecCtrlUnit.io.cmdReq <> io.cmdReq
+  io.cmdResp <> VecCtrlUnit.io.cmdResp_o
+
+
 
 // -----------------------------------------------------------------------------
 // VECLOADUNIT
-// ----------------------------------------------------------------------------- 
-	val VecLoadUnit = Module(new VecLoadUnit)
-	VecLoadUnit.io.id_lu_i <> ID_LU.io.out
-	for (i <- 0 until bbconfig.sp_banks) {
-		io.sramRead(i).req <> VecLoadUnit.io.sramReadReq(i)
-	}
 // -----------------------------------------------------------------------------
-// LU_EX Pipeline
-// -----------------------------------------------------------------------------    
-	val LU_EX = Module(new Pipeline(new lu_ex_req, 1)())
-	LU_EX.io.in <> VecLoadUnit.io.lu_ex_o
+	val VecLoadUnit = Module(new VecLoadUnit)
+	VecLoadUnit.io.ctrl_ld_i <> VecCtrlUnit.io.ctrl_ld_o
+	for (i <- 0 until b.sp_banks) {
+		io.sramRead(i).req <> VecLoadUnit.io.sramReadReq(i)
+		VecLoadUnit.io.sramReadResp(i) <> io.sramRead(i).resp
+	}
 
 // -----------------------------------------------------------------------------
 // VECEX
-// -----------------------------------------------------------------------------    
-	val VecEX = Module(new VecEX)
-	VecEX.io.lu_ex_i <> LU_EX.io.out
-	for (i <- 0 until bbconfig.sp_banks) {
-					VecEX.io.sramReadResp(i) <> io.sramRead(i).resp
-					io.sramWrite(i) <> VecEX.io.sramWrite(i)
-			}
-			for (i <- 0 until bbconfig.acc_banks) {
-					io.accWrite(i) <> VecEX.io.accWrite(i)
-					io.accRead(i) := DontCare
-			}
+// -----------------------------------------------------------------------------  
+	val VecEX = Module(new VecEXUnit)
+	VecEX.io.ctrl_ex_i <> VecCtrlUnit.io.ctrl_ex_o
+	VecEX.io.ld_ex_i <> VecLoadUnit.io.ld_ex_o
+
+
+// -----------------------------------------------------------------------------
+// VECSTOREUNIT
+// -----------------------------------------------------------------------------
+	val VecStoreUnit = Module(new VecStoreUnit)
+	VecStoreUnit.io.ctrl_st_i <> VecCtrlUnit.io.ctrl_st_o
+  VecStoreUnit.io.ex_st_i <> VecEX.io.ex_st_o
+	for (i <- 0 until b.acc_banks) {
+		io.accWrite(i) <> VecStoreUnit.io.accWrite(i)
 	}
+	VecCtrlUnit.io.cmdResp_i <> VecStoreUnit.io.cmdResp_o
+
+
+// -----------------------------------------------------------------------------
+// Set DontCare
+// -----------------------------------------------------------------------------
+  for (i <- 0 until b.sp_banks) {
+    io.sramWrite(i) := DontCare
+  }
+  for (i <- 0 until b.acc_banks) {
+    io.accRead(i) := DontCare
+  }
+}
