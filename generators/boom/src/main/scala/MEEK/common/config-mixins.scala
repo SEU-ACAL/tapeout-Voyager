@@ -176,7 +176,7 @@ class WithNMediumBooms(n: Int = 1) extends Config(
  */
 class WithNLargeBooms(n: Int = 1) extends Config(
   // new WithAsynchronousBoomTiles++
-  new WithTAGELBPD ++ // Default to TAGE-L BPD
+  new WithTAGELBPD (1024) ++ // Default to TAGE-L BPD, but with less BIM size.
   new WithNBoomPerfCounters(29)++//后面选择性去除
   new Config((site, here, up) => {
     case TilesLocated(InSubsystem) => {
@@ -436,7 +436,8 @@ class WithNCS152DefaultBooms(n: Int = 1) extends Config(
   *  Branch prediction configs below
   */
 
-class WithTAGELBPD extends Config((site, here, up) => {
+class WithTAGELBPD (bimSets: Int = 2048) extends Config((site, here, up) => {
+  // bimSets == 2048 is aligned to the default BOOM configuration
   case TilesLocated(InSubsystem) => up(TilesLocated(InSubsystem), site) map {
     case tp: BoomTileAttachParams => tp.copy(tileParams = tp.tileParams.copy(core = tp.tileParams.core.copy(
       bpdMaxMetaLength = 120,
@@ -447,7 +448,7 @@ class WithTAGELBPD extends Config((site, here, up) => {
         val loop = Module(new LoopBranchPredictorBank()(p))
         val tage = Module(new TageBranchPredictorBank()(p))
         val btb = Module(new BTBBranchPredictorBank()(p))
-        val bim = Module(new BIMBranchPredictorBank()(p))
+        val bim = Module(new BIMBranchPredictorBank(BoomBIMParams(nSets = bimSets))(p))
         val ubtb = Module(new FAMicroBTBBranchPredictorBank()(p))
         val preds = Seq(loop, tage, btb, ubtb, bim)
         preds.map(_.io := DontCare)
