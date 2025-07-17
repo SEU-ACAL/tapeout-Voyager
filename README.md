@@ -277,6 +277,9 @@ module GenericDigitalInIOCell(
   PBCSUD16_WDDNW_3V_X u_PAD_CLK_CIM ( .PAD(pad), .I(1'b0), .OEN(1'b1), .PU(1'b0), .PD(1'b0), .IE(1'b1), .ST(1'b0), .DS0(1'b0), .DS1(1'b0), .DS2(1'b0), .DS3(1'b0), .C(i) );
 ```
 
+同样，目前PLL配有黑盒，在跑仿真时，需要将PLL的IP核注释
+
+
 ## 十、文档目录
 
 其余具体可见 `docs`下的文档，欢迎大家多写文档，记录下用法和一些坑.
