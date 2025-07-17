@@ -262,7 +262,7 @@ XXXXXXXXX(你本身的commit message) need test: (从以下的tag中选择一个
 
 ## 注意事项
 
-现在的IOCell都经过了黑盒，所以如果跑仿真，需要去将PBCSUD16_WDDNW_3V_X注释，并且将注释行解注释，其他的cell类似
+如果跑仿真，需要去将PBCSUD16_WDDNW_3V_X注释，并且将注释行解注释，其他的cell类似
 
 > 要注意CustomDigitalInIOCell
 
