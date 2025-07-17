@@ -77,6 +77,7 @@ add_dependencies(sync-bin
   tutorial-build 
   peripheral-build 
   embench-build
+  cpu_linux_pthread-build
   parsecv3-build
   boardtest-build
   coremark-build)

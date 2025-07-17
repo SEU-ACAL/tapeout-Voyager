@@ -28,7 +28,6 @@ class SramWriteIO(val n: Int, val w: Int, val mask_len: Int) extends Bundle {
 }
 
 class SramBank(n: Int, w: Int, aligned_to: Int, single_ported: Boolean) extends Module {
-  
   require(w % aligned_to == 0 || w < aligned_to)
   
   // single_ported参数表示此SRAM bank的期望使用模式
@@ -44,10 +43,18 @@ class SramBank(n: Int, w: Int, aligned_to: Int, single_ported: Boolean) extends 
     val write = Flipped(new SramWriteIO(n, w, mask_len))
   })
 
-  // Local memory
+  // Local memory (single port)
   val mem = SyncReadMem(n, Vec(mask_len, mask_elem))
-  assert(!(io.write.en && io.read.req.fire), "SramBank: Read and write requests cannot be issued simultaneously")
-  // Write logic
+
+  // 只允许每周期一个请求
+  val read_fire = io.read.req.valid && io.read.req.ready
+  val write_fire = io.write.en
+  assert(!(read_fire && write_fire), "SramBank: Read and write requests cannot be issued simultaneously")
+
+  // ready信号：只要没有写请求，读请求就可以ready
+  io.read.req.ready := !io.write.en
+
+  // 写逻辑
   when (io.write.en) {
     if (aligned_to >= w)
       mem.write(io.write.addr, io.write.data.asTypeOf(Vec(mask_len, mask_elem)), VecInit((~(0.U(mask_len.W))).asBools))
@@ -55,9 +62,9 @@ class SramBank(n: Int, w: Int, aligned_to: Int, single_ported: Boolean) extends 
       mem.write(io.write.addr, io.write.data.asTypeOf(Vec(mask_len, mask_elem)), io.write.mask)
   }
 
-  // Read logic
+  // 读逻辑
   val raddr = io.read.req.bits.addr
-  val ren = io.read.req.fire
+  val ren = io.read.req.fire && !io.write.en
   val rdata = mem.read(raddr, ren).asUInt
   val fromDMA = io.read.req.bits.fromDMA
 
@@ -67,7 +74,6 @@ class SramBank(n: Int, w: Int, aligned_to: Int, single_ported: Boolean) extends 
   q.io.enq.bits.data := rdata
   q.io.enq.bits.fromDMA := RegNext(fromDMA)
 
-  io.read.req.ready := true.B
   io.read.resp <> q.io.deq
 }
 

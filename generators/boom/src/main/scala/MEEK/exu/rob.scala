@@ -34,6 +34,7 @@ import freechips.rocketchip.util._
 import boom.meek.common._
 import boom.meek.util._
 import boom.meek.lsu.STQEntry
+import freechips.rocketchip.tile.EnableROBDebug
 /**
  * IO bundle to interact with the ROB
  *
@@ -235,6 +236,8 @@ class Rob(
 {
   val io = IO(new RobIo(numWakeupPorts, numFpuPorts))
 
+  val enDebug = p(EnableROBDebug)
+
   // ROB Finite State Machine
   val s_reset :: s_normal :: s_rollback :: s_wait_till_empty :: Nil = Enum(4)
   val rob_state = RegInit(s_reset)
@@ -345,9 +348,9 @@ class Rob(
     val rob_predicated = Reg(Vec(numRobRows, Bool())) // Was this instruction predicated out?
 
     val rob_debug_wdata = Mem(numRobRows, UInt(xLen.W))
-    //===== GuardianCouncil Function: Start ====//
-    val rob_debug_rs1   = Mem(numRobRows, UInt(xLen.W))
-    val rob_debug_rs2   = Mem(numRobRows, UInt(xLen.W))
+    val rob_debug_rs1   = if(enDebug) Some(Mem(numRobRows, UInt(xLen.W))) else None
+    val rob_debug_rs2   = if(enDebug) Some(Mem(numRobRows, UInt(xLen.W))) else None
+    //===== GuardianCouncil Function: Start ====//)
     val gh_effective_alu_out_reg                  = Reg(Vec(numRobRows, UInt(xLen.W)))
     //===== GuardianCouncil Function: End   ====//
     //-----------------------------------------------
@@ -558,8 +561,8 @@ class Rob(
       val rob_idx = io.wb_resps(i).bits.uop.rob_idx
       when (io.debug_wb_valids(i) && MatchBank(GetBankIdx(rob_idx))) {
         rob_debug_wdata(GetRowIdx(rob_idx)) := io.debug_wb_wdata(i)
-        rob_debug_rs1(GetRowIdx(rob_idx))   := io.debug_rs1_data(i)
-        rob_debug_rs2(GetRowIdx(rob_idx))   := io.debug_rs2_data(i)
+        rob_debug_rs1.getOrElse{Mem(1, UInt(64.W))}(GetRowIdx(rob_idx))   := io.debug_rs1_data(i)
+        rob_debug_rs2.getOrElse{Mem(1, UInt(64.W))}(GetRowIdx(rob_idx))   := io.debug_rs2_data(i)
       }
       val temp_uop = rob_uop(GetRowIdx(rob_idx))
 
@@ -579,12 +582,12 @@ class Rob(
       io.commit.debug_rs1(w) := io.debug_st.bits.vaddr.bits
       io.commit.debug_rs2(w) := io.debug_st.bits.data.bits
     }.elsewhen(io.commit.valids(w) && io.commit.uops(w).lrs2_rtype === RT_X){
-      io.commit.debug_rs1(w)   := rob_debug_rs1(rob_head)
+      io.commit.debug_rs1(w)   := rob_debug_rs1.getOrElse{Mem(1, UInt(64.W))}(rob_head)
       io.commit.debug_rs2(w)   := Cat(0.U(32.W), ImmGen(io.commit.uops(w).imm_packed, io.commit.uops(w).ctrl.imm_sel).asUInt)
     }
     .otherwise{
-      io.commit.debug_rs1(w)   := rob_debug_rs1(rob_head)
-      io.commit.debug_rs2(w)   := rob_debug_rs2(rob_head)
+      io.commit.debug_rs1(w)   := rob_debug_rs1.getOrElse{Mem(1, UInt(64.W))}(rob_head)
+      io.commit.debug_rs2(w)   := rob_debug_rs2.getOrElse{Mem(1, UInt(64.W))}(rob_head)
     }
     //===== GuardianCouncil Function: End  ====//
   } //for (w <- 0 until coreWidth)
