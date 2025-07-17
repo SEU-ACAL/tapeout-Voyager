@@ -38,19 +38,19 @@ set(ELF_CC "riscv64-unknown-elf-gcc")
 
 add_custom_target(buckyball-CTest-multicore-baremetal ALL
     COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_mvin_mvout_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
-            -DMULTICORE=5
+            -DMULTICORE=4
             ${BUCKYBALL_CTEST_DIR}/mvin_mvout.c 
     COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_vecunit_matmul_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
-            -DMULTICORE=5
+            -DMULTICORE=4
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul.c 
     COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_acc_matmul_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
-            -DMULTICORE=5
+            -DMULTICORE=4
             ${BUCKYBALL_CTEST_DIR}/acc_matmul.c
     COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_bbfp_matmul_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
-            -DMULTICORE=5
+            -DMULTICORE=4
             ${BUCKYBALL_CTEST_DIR}/bbfpmatmul.c
     COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_bbfptest_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
-            -DMULTICORE=5
+            -DMULTICORE=4
             ${BUCKYBALL_CTEST_DIR}/bbfptest.c
     DEPENDS ${BUCKYBALL_CTEST_DIR}/mvin_mvout.c 
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul.c 

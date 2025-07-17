@@ -16,16 +16,15 @@ class OurHeterSoCConfig extends Config(
   new chipyard.config.WithTileFrequency(100, Some(2)) ++
   new chipyard.config.WithTileFrequency(100, Some(3)) ++
   new chipyard.config.WithTileFrequency(100, Some(4)) ++
-  new chipyard.config.WithTileFrequency(100, Some(5)) ++
   new freechips.rocketchip.guardiancouncil.WithGuardianCouncilNodes ++
   new freechips.rocketchip.guardiancouncil.WithDisableROBDebug ++
 
   new freechips.rocketchip.rocket.WithNBuckyBallCores(1) ++ //independent Rocket for buckyball: hartid 5
   new chipyard.config.WithMultiRoCCBB ++
-  new chipyard.config.WithMultiRoCCBuckyBall(5)(buckyball.BuckyBallConfigs.defaultConfig) ++ // put buckyball on hart-5(rocket)
+  new chipyard.config.WithMultiRoCCBuckyBall(4)(buckyball.BuckyBallConfigs.defaultConfig) ++ // put buckyball on hart-5(rocket)
   
   new chipyard.config.WithMultiRoCCMEEK ++
-  new chipyard.config.WithMultiSingleRoCCGHE(0, 1, 2, 3, 4) ++ //put custom RoCC on hart0-4 for custom0 ISA extension ++
+  new chipyard.config.WithMultiSingleRoCCGHE(0, 1, 2, 3) ++ //put custom RoCC on hart0-3 for custom0 ISA extension ++
   new freechips.rocketchip.subsystem.WithInclusiveCache(capacityKB = 256) ++ // 256 KB L2Cache -- May change its size later
   new chipyard.config.WithSystemBusWidth(128) ++
   // new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
