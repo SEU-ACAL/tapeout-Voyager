@@ -1,6 +1,7 @@
 # 仓库开发手册 [![Voyager CI](https://github.com/SEU-ACAL/tapeout-Voyager/actions/workflows/github_actions.yml/badge.svg)](https://github.com/SEU-ACAL/tapeout-Voyager/actions/workflows/github_actions.yml)
 
 ## 零、安装 mosh
+
 针对网络波动问题（如在火车上写代码），建议使用MIT开发的mosh：https://mosh.org/
 
 服务器端已安装mosh-server并配置，请本地机器安装mosh（以ubuntu为例）
@@ -11,6 +12,7 @@ $ sudo apt install mosh
 ```
 
 检查是否安装成功
+
 ```
 $ mosh --version
 mosh 1.4.0 [build mosh 1.4.0]
@@ -21,12 +23,12 @@ There is NO WARRANTY, to the extent permitted by law.
 ```
 
 使用mosh连接服务器
+
 ```
 $ mosh [UserName]@[ServerAddress]
 ```
 
 效果：断线自动重连，重连后不会丢失任何正在运行的内容。
-
 
 ## 一、安装 anaconda
 
@@ -45,28 +47,31 @@ $ ./build-setup.sh
 
 `voyager-test` 文件夹用于存放workload和执行的测试框架.
 现有workload list 如下
+
 - cpu
-    - hello
+  - hello
+  - spmm
+- npu
+  - native
+    - baremetal
+    - imagenet
+    - mlps
+    - transformers
+  - buddy
     - spmm
-- npu 
-    - native
-        - baremetal
-        - imagenet
-        - mlps
-        - transformers
-    - buddy
-        - spmm
 - tutorial (voyager-test tutorial)
 
 **3.1 编译workload**
 
 编译所有workload
+
 ```shell
 $ cd Voyager/voyager-test/build
 $ make build-all
 ```
 
 如果只需单独编译部分workload
+
 ```shell
 $ cd Voyager/voyager-test/build
 $ make cpu-build
@@ -74,7 +79,6 @@ $ make npu-build
 ```
 
 添加自定义workload请参考教程: [voyager-test tutorial](./voyager-test/README.md)
-
 
 ## 四、Spike
 
@@ -89,7 +93,6 @@ $ ./voyager-test/scripts/run-spike.sh matmul_os
 # 使用buckyballFunc扩展运行bb_mvin_mvout
 $ ./voyager-test/scripts/run-spike.sh --ext=buckyballFunc bb_mvin_mvout
 ```
-
 
 ## 五、Verilator
 
@@ -158,6 +161,7 @@ $ ./voyager-test/scripts/run-vcs.sh --config RocketConfig hello
 $ ./voyager-test/scripts/run-vcs.sh --config GemminiRocketConfig vector 
 $ ./voyager-test/scripts/run-vcs.sh --config RocketConfig hello --debug 
 ```
+
 **6.3 Verdi**
 
 服务器上看波形很卡，建议本地装个verdi看
@@ -169,7 +173,7 @@ $ verdi
 
 ## 七、firesim
 
-firesim 由`./build-setup.sh`已经安装好, 参考[教程](docs/firesim-README.md)运行(求补充)
+firesim 由 `./build-setup.sh`已经安装好, 参考[教程](docs/firesim-README.md)运行(求补充)
 
 ## 七、P2E
 
@@ -193,12 +197,13 @@ $ ./voyager-test/scripts/p2e/run-p2e.sh -s 2 # 跳过前两步，直接去加速
 
 **7.2 自定义 P2E 测试用例**
 
-如果你要新建自定义的.json文件规定的测试，在`voyager-test/scripts/marshal/`中的`workload_name`和文件夹名应一致，然后运行`build-p2e.sh`和`run-p2e.sh`即可。
+如果你要新建自定义的.json文件规定的测试，在 `voyager-test/scripts/marshal/`中的 `workload_name`和文件夹名应一致，然后运行 `build-p2e.sh`和 `run-p2e.sh`即可。
 
 ## 八、后端 (DC)
 
-使用`run-dc.sh`脚本会先使用verilator自动生成对应版本的Config，之后进行DC综合. 报告和网表文件将生成在 `./voyager-test/output/dc/reports` 路径下.
-DC所用到的db_file存放在`/opt/dc/lib/TSMCHOME`路径下.
+使用 `run-dc.sh`脚本会先使用verilator自动生成对应版本的Config，之后进行DC综合. 报告和网表文件将生成在 `./voyager-test/output/dc/reports` 路径下.
+DC所用到的db_file存放在 `/opt/dc/lib/TSMCHOME`路径下.
+
 ```shell
 # 不指定--top会使用默认的ChipTop综合所有模块
 $ ./voyager-test/scripts/run-dc.sh --config RocketConfig
@@ -207,19 +212,21 @@ $ ./voyager-test/scripts/run-dc.sh --config GemminiRocketConfig --top RocketTile
 ```
 
 注：vcs和dc版本不同，所以环境变量也不同，单独使用需要使用脚本切换。
+
 ```shell
 $ source ./voyager-test/scripts/env-source.sh vcs
 $ source ./voyager-test/scripts/env-source.sh dc
 ```
-如果由于 license 问题导致脚本切换失败，可使用`lmdown`和 `lmli` 手动切换
+
+如果由于 license 问题导致脚本切换失败，可使用 `lmdown`和 `lmli` 手动切换
 如果直接使用 `build-vcs.sh`, `run-vcs.sh` 和 `run-dc.sh` 会自动切换，无需手动切换。
 
 ## 九、CI
 
 **9.1 pre-commit (提交前检查)**
 
-pre-commit 由`./build-setup.sh`已经安装好，无需单独安装。
-Commit代码前，请打开 `scripts/permission-check.sh` 找到`allowed_dirs`，将你需要修改的文件夹路径取消注释。
+pre-commit 由 `./build-setup.sh`已经安装好，无需单独安装。
+Commit代码前，请打开 `scripts/permission-check.sh` 找到 `allowed_dirs`，将你需要修改的文件夹路径取消注释。
 通过这种方式我们防止提交文件夹污染，只有位于这几个文件夹的文件修改允许提交。
 
 **9.2 可提交物说明**
@@ -228,6 +235,7 @@ Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `
 
 `generator` 文件夹下存放RTL design.
 `generator`下可修改的目录如下:
+
 - chipyard/src: 存放顶层TopConfig
 - boom/src
 - rocket-chip/src
@@ -250,15 +258,32 @@ commit 格式为：
 ```
 XXXXXXXXX(你本身的commit message) need test: (从以下的tag中选择一个或多个)
 [verilator-test] [p2e-test-with-rebuild] [p2e-test-wo-rebuild]
-``` -->
+``` --
+
+## 注意事项
+
+现在的IOCell都经过了黑盒，所以如果跑仿真，需要去将PBCSUD16_WDDNW_3V_X注释，并且将注释行解注释，其他的cell类似
+
+> 要注意CustomDigitalInIOCell
+
+```
+module GenericDigitalInIOCell(
+    input pad,
+    output i,
+    input ie
+);
+
+  //assign i = ie ? pad : 1'b0;
+  PBCSUD16_WDDNW_3V_X u_PAD_CLK_CIM ( .PAD(pad), .I(1'b0), .OEN(1'b1), .PU(1'b0), .PD(1'b0), .IE(1'b1), .ST(1'b0), .DS0(1'b0), .DS1(1'b0), .DS2(1'b0), .DS3(1'b0), .C(i) );
+```
 
 ## 十、文档目录
 
-其余具体可见`docs`下的文档，欢迎大家多写文档，记录下用法和一些坑.
+其余具体可见 `docs`下的文档，欢迎大家多写文档，记录下用法和一些坑.
 
-- [[Q&A List](docs/Q&A.md)] 仓库使用遇到问题可以在群里询问，问题解决后将解决方法记录在这里.    
-- [[firesim](docs/firesim-README.md)] firesim 的简略文档，求补充.  
+- [[Q&amp;A List](docs/Q&A.md)] 仓库使用遇到问题可以在群里询问，问题解决后将解决方法记录在这里.
+- [[firesim](docs/firesim-README.md)] firesim 的简略文档，求补充.
 - [[NPU-README](docs/NPU-README.md)] 主要关于buddy-mlir的使用.
-- [[sram_README](docs/sram_readme.md)] 主要关于sram替换的文档. 
-- [[tools_README](docs/tools_README.md)] 主要关于工具的文档. 
+- [[sram_README](docs/sram_readme.md)] 主要关于sram替换的文档.
+- [[tools_README](docs/tools_README.md)] 主要关于工具的文档.
 - [[PeripheralNPU对接文档](docs/peripheral-npu/peripheral-npu.md)] PeripheralNPU 对接文档.

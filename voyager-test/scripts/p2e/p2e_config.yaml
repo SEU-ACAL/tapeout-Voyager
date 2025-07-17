@@ -5,11 +5,11 @@ ssh:
   host: "103.221.143.59"
   port: 52123
   username: "guobing"
-  password: "XXX"
+  password: "7SZMxL0e"
   
 # Default paths
 paths:
-  remote_base: "/home/wangzhenyuan/project3"
+  remote_base: "/home/guobing"
   local_base: "."
 
 fpga:
@@ -24,5 +24,5 @@ fpga:
   # same as the last digit of the ip address
 
 workload:
-  workload_name: interactive
+  workload_name: parsec
   # this is point to the interactive.json in voyager-test/scripts/marshal

@@ -46,18 +46,20 @@ class WithNPU extends Config (
   new voyager_tapeout.custom.iobinders.WithPeripheralNPUIOCell ++ // 连接npu和chiptop的pin
   new voyager_tapeout.custom.device.peripheral_npu.WithNPUPeripheral(voyager_tapeout.custom.device.peripheral_npu.PeripheralNPUParams(0x10050000, 0x1000))   // 连接npu和pbus的pin 
 )
-
+//Chip config
 class WithSerialConnect extends Config (
   new testchipip.serdes.WithSerialTLMem(size = BigInt("10000000",16)) ++ // 8 GB of off-chip memory
   new testchipip.serdes.WithSerialTLPHYParams(
-  testchipip.serdes.ExternalSyncSerialPhyParams(phitWidth=64, flitWidth=64))++ 
+  testchipip.serdes.ExternalSyncSerialPhyParams(phitWidth=4, flitWidth=4))++ 
   new chipyard.config.WithSerialBackingMemory  ++
   new testchipip.soc.WithOffchipBusClient(MBUS) ++                                      // offchip bus connects to MBUS, since the serial-tl needs to provide backing memory
   new testchipip.soc.WithOffchipBus
 )
+
 class WithSerialDebugConnect extends Config (
   new testchipip.serdes.WithSerialTLMem(size = BigInt("10000000",16)) ++ // 8 GB of off-chip memory
-  new testchipip.serdes.WithSerialTLWidth(64)++
+  new testchipip.serdes.WithSerialTLPHYParams(
+  testchipip.serdes.ExternalSyncSerialPhyParams(phitWidth=64, flitWidth=64))++ 
   new chipyard.config.WithSerialBackingMemory  ++
   new testchipip.soc.WithOffchipBusClient(MBUS) ++                                      // offchip bus connects to MBUS, since the serial-tl needs to provide backing memory
   new testchipip.soc.WithOffchipBus

@@ -44,9 +44,9 @@ class CustomDigitalInIOCell extends RawModule with DigitalInIOCell {
   io.i := io.pad
   // Connect NPU pins
   io.npu_bundle.npu_pin1 := io.pad    // Send signal from pad to NPU peripheral
-  io.npu_bundle.npu_pin2 := false.B   // NPU peripheral output, default value here
+  io.npu_bundle.npu_pin2 := io.pad   // NPU peripheral output, default value here
   io.npu_bundle.npu_pin3 := io.pad    // Send signal from pad to NPU peripheral
-  io.npu_bundle.npu_pin4 := false.B   // NPU peripheral output, default value here
+  io.npu_bundle.npu_pin4 := io.pad    // NPU peripheral output, default value here
 }
 
 case class CustomIOCellParams() extends IOCellTypeParams {

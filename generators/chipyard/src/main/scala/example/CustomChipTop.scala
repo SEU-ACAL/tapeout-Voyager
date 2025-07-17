@@ -37,6 +37,7 @@ class CustomChipTop(implicit p: Parameters) extends ChipTop {
   // we don't have to set the TOP make variable to CustomChipTop
   override lazy val desiredName = "ChipTop"
 
+
   // InModuleBody blocks are executed within the LazyModuleImp of this block
   InModuleBody {
     iocellMap.foreach { case (interface, cells) => {
