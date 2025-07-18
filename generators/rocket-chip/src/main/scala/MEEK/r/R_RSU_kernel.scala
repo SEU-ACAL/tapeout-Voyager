@@ -89,11 +89,6 @@ class R_RSU_kernel(val params: R_RSUParams) extends Module with HasR_RSUIO_kerne
   io_merge_delay2_priv                           := io_merge_delay1_priv
   doMerge_priv                                   := io_merge_delay2_priv
   
-  when(io.ic_state === 6.U){
-    for(i <- 0 until CSRshadows.CSRsize){
-      csrshadow_haswrite(i)                  := false.B
-    }
-  }
 
   //提前获取csr_exe写入csr寄存器之前的旧值
   when(((io.ic_state =/= 6.U) || ((io.ic_state === 6.U) && io.ic_change_state)) && io.csr_rw_valid){
@@ -118,6 +113,10 @@ class R_RSU_kernel(val params: R_RSUParams) extends Module with HasR_RSUIO_kerne
       csrshadow_ss(CSRshadowsindex.sip)    := io.shadowcsr_in(CSRshadowsindex.sip)
       csrshadow_haswrite(CSRshadowsindex.mip) := true.B
       csrshadow_haswrite(CSRshadowsindex.sip) := true.B
+    }
+  }.elsewhen(io.ic_state === 6.U && !io.ic_change_state){
+    for(i <- 0 until CSRshadows.CSRsize){
+      csrshadow_haswrite(i)                  := false.B
     }
   }
 
