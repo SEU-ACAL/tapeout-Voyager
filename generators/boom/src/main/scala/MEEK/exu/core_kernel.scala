@@ -1973,7 +1973,7 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
 
   val little_status1 = freechips.rocketchip.util.WideCounter(32)
   val little_status2 = freechips.rocketchip.util.WideCounter(32)
-  val little_status3 = freechips.rocketchip.util.WideCounter(32)
+  // val little_status3 = freechips.rocketchip.util.WideCounter(32)
   // val little_status4 = freechips.rocketchip.util.WideCounter(32)
   when(!ic_master.io.ic_status(1).asBool){
     little_status1 := 0.U
@@ -1981,18 +1981,18 @@ class BoomCoreKernel()(implicit p: Parameters) extends BoomModule
   when(!ic_master.io.ic_status(2).asBool){
     little_status2 := 0.U
   }
+  /*
   when(!ic_master.io.ic_status(3).asBool){
     little_status3 := 0.U
   }
-  /*
   when(!ic_master.io.ic_status(4).asBool){
     little_status4 := 0.U
   }
   */ 
   assert(!little_status1(18), "little core 1 has hung")
   assert(!little_status2(18), "little core 2 has hung")
-  assert(!little_status3(18), "little core 3 has hung")
- //  assert(!little_status4(18), "little core 4 has hung")
+  // assert(!little_status3(18), "little core 3 has hung")
+  // assert(!little_status4(18), "little core 4 has hung")
 
   
   val r_exception_record_2                         = RegInit(0.U(1.W))

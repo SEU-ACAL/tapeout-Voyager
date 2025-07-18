@@ -74,9 +74,9 @@ class WithMEEKCores(
       icache = Some(ICacheParams(
         rowBits = site(SystemBusKey).beatBits,
         nSets = 64,
-        nWays = 4,
+        nWays = 2,
         nTLBSets = 1,
-        nTLBWays = 32,
+        nTLBWays = 16,
         blockBytes = site(CacheBlockBytes))))
     List.tabulate(n)(i => RocketTileMeekAttachParams(
       checker.copy(tileId = i + idOffset),
@@ -153,17 +153,21 @@ class WithNBuckyBallCores(
     val prev = up(TilesLocated(`location`), site)
     val idOffset = up(NumTiles)
     val big = RocketTileParamsBB(
-      core   = RocketCoreParams(mulDiv = Some(MulDivParams(
-        mulUnroll = 8,
-        mulEarlyOut = true,
-        divEarlyOut = true))),
+      core   = RocketCoreParams(fpu = None),
       dcache = Some(DCacheParams(
         rowBits = site(SystemBusKey).beatBits,
-        nMSHRs = nMSHRs,
-        blockBytes = site(CacheBlockBytes),
-        usingStridePrefetch = true)),
+        nSets = 64,
+        nWays = 2,
+        nTLBSets = 1,
+        nTLBWays = 4,
+        nMSHRs = 0,
+        blockBytes = site(CacheBlockBytes))),
       icache = Some(ICacheParams(
         rowBits = site(SystemBusKey).beatBits,
+        nSets = 64,
+        nWays = 2,
+        nTLBSets = 1,
+        nTLBWays = 4,
         blockBytes = site(CacheBlockBytes))))
     List.tabulate(n)(i => RocketTileAttachParamsBB(
       big.copy(tileId = i + idOffset),

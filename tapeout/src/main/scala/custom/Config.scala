@@ -14,25 +14,23 @@ class OurHeterSoCConfig extends Config(
   new chipyard.config.WithTileFrequency(100, Some(0)) ++
   new chipyard.config.WithTileFrequency(100, Some(1)) ++
   new chipyard.config.WithTileFrequency(100, Some(2)) ++
-  new chipyard.config.WithTileFrequency(100, Some(3)) ++
-  new chipyard.config.WithTileFrequency(100, Some(4)) ++
   new freechips.rocketchip.guardiancouncil.WithGuardianCouncilNodes ++
   new freechips.rocketchip.guardiancouncil.WithDisableROBDebug ++
 
-  new freechips.rocketchip.rocket.WithNBuckyBallCores(1) ++ //independent Rocket for buckyball: hartid 5
+  new freechips.rocketchip.rocket.WithNBuckyBallCores(1) ++ //independent Rocket for buckyball: hartid 3
   new chipyard.config.WithMultiRoCCBB ++
-  new chipyard.config.WithMultiRoCCBuckyBall(4)(buckyball.BuckyBallConfigs.defaultConfig) ++ // put buckyball on hart-5(rocket)
+  new chipyard.config.WithMultiRoCCBuckyBall(3)(buckyball.BuckyBallConfigs.defaultConfig) ++ // put buckyball on hart-3 (rocket)
   
   new chipyard.config.WithMultiRoCCMEEK ++
-  new chipyard.config.WithMultiSingleRoCCGHE(0, 1, 2, 3) ++ //put custom RoCC on hart0-3 for custom0 ISA extension ++
-  new freechips.rocketchip.subsystem.WithInclusiveCache(capacityKB = 256) ++ // 256 KB L2Cache -- May change its size later
+  new chipyard.config.WithMultiSingleRoCCGHE(0, 1, 2) ++ //put custom RoCC on hart0-2 for custom0 ISA extension ++
+  new freechips.rocketchip.subsystem.WithInclusiveCache(capacityKB = 64) ++ // 64 KB L2Cache
   new chipyard.config.WithSystemBusWidth(128) ++
   // new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
   //   AsynchronousCrossing().depth,
   //   AsynchronousCrossing().sourceSync) ++
   //  Crossing specifications+-
   new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1) ++
-  new boom.meek.common.WithNLargeBooms(1) ++
+  new boom.meek.common.WithNMediumBooms(1) ++
   new chipyard.config.WithGPIO(width=12)  ++
   new chipyard.config.WithSPI ++
   // new voyager_tapeout.custom.harness.WithSimSPIModel++

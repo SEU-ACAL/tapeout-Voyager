@@ -2,7 +2,7 @@
 	#define _GNU_SOURCE             /* See feature_test_macros(7) */
 #endif
 
-#define NUM_CHECKERS 3
+#define NUM_CHECKERS 2
 #include "meek.h"
 #include <riscv-pk/encoding.h>
 #include <stdio.h>
