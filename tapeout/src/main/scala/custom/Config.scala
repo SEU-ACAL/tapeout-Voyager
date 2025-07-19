@@ -23,7 +23,7 @@ class OurHeterSoCConfig extends Config(
   
   new chipyard.config.WithMultiRoCCMEEK ++
   new chipyard.config.WithMultiSingleRoCCGHE(0, 1, 2) ++ //put custom RoCC on hart0-2 for custom0 ISA extension ++
-  new freechips.rocketchip.subsystem.WithInclusiveCache(capacityKB = 64) ++ // 64 KB L2Cache
+  new freechips.rocketchip.subsystem.WithInclusiveCache(capacityKB = 32) ++ // 64 KB L2Cache
   new chipyard.config.WithSystemBusWidth(128) ++
   // new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
   //   AsynchronousCrossing().depth,

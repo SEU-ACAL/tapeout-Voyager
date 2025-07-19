@@ -328,11 +328,11 @@ class Rob(
   val rob_unsafe_masked = WireInit(VecInit(Seq.fill(numRobRows << log2Ceil(coreWidth)){false.B}))
 
   // Used for trace port, for debug purposes only
-  val rob_debug_inst_mem   = SyncReadMem(numRobRows, Vec(coreWidth, UInt(32.W)))
+  val rob_debug_inst_mem   = if(enDebug) Some(SyncReadMem(numRobRows, Vec(coreWidth, UInt(32.W)))) else None
   val rob_debug_inst_wmask = WireInit(VecInit(0.U(coreWidth.W).asBools))
   val rob_debug_inst_wdata = Wire(Vec(coreWidth, UInt(32.W)))
-  rob_debug_inst_mem.write(rob_tail, rob_debug_inst_wdata, rob_debug_inst_wmask)
-  val rob_debug_inst_rdata = rob_debug_inst_mem.read(rob_head, will_commit.reduce(_||_))
+  rob_debug_inst_mem.getOrElse{SyncReadMem(1, Vec(coreWidth, UInt(32.W)))}.write(rob_tail, rob_debug_inst_wdata, rob_debug_inst_wmask)
+  val rob_debug_inst_rdata = rob_debug_inst_mem.getOrElse{SyncReadMem(1, Vec(coreWidth, UInt(32.W)))}.read(rob_head, will_commit.reduce(_||_))
 
   val rob_fflags    = Seq.fill(coreWidth)(Reg(Vec(numRobRows, UInt(freechips.rocketchip.tile.FPConstants.FLAGS_SZ.W))))
 

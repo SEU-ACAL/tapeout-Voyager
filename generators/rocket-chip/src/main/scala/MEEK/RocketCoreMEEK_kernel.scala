@@ -826,7 +826,7 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
          
   dontTouch(lsl_req_valid_csr) 
   val rsu_slave = Module(new R_RSUSL_kernel(R_RSUSLParams(xLen, 32)))
-  val lsl = Module(new R_LSL(R_LSLParams(255, xLen)))
+  val lsl = Module(new R_LSL(R_LSLParams(128, xLen)))
   val icsl = Module(new R_ICSL_kernel(R_ICSLParams(16)))
   val arfs_shadow = Reg(Vec(32, UInt(xLen.W))) 
   // Instantiate RSU

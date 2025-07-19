@@ -129,7 +129,7 @@ class WithNSmallBooms(n: Int = 1) extends Config(
  * 2-wide BOOM.
  */
 class WithNMediumBooms(n: Int = 1) extends Config(
-  new WithTAGELBPD (256) ++ // Default to TAGE-L BPD, but with less BIM size.
+  new WithTAGELBPD (128) ++ // Default to TAGE-L BPD, but with less BIM size.
   new Config((site, here, up) => {
     case TilesLocated(InSubsystem) => {
       val prev = up(TilesLocated(InSubsystem), site)
@@ -140,26 +140,26 @@ class WithNMediumBooms(n: Int = 1) extends Config(
             core = BoomCoreParams(
               fetchWidth = 4,
               decodeWidth = 2,
-              numRobEntries = 64,
+              numRobEntries = 48,
               issueParams = Seq(
-                IssueParams(issueWidth=1, numEntries=12, iqType=IQT_MEM.litValue, dispatchWidth=2),
-                IssueParams(issueWidth=2, numEntries=20, iqType=IQT_INT.litValue, dispatchWidth=2),
-                IssueParams(issueWidth=1, numEntries=16, iqType=IQT_FP.litValue , dispatchWidth=2)),
-              numIntPhysRegisters = 80,
-              numFpPhysRegisters = 64,
-              numLdqEntries = 16,
-              numStqEntries = 16,
+                IssueParams(issueWidth=1, numEntries=8, iqType=IQT_MEM.litValue, dispatchWidth=2),
+                IssueParams(issueWidth=2, numEntries=12, iqType=IQT_INT.litValue, dispatchWidth=2),
+                IssueParams(issueWidth=1, numEntries=10, iqType=IQT_FP.litValue , dispatchWidth=2)),
+              numIntPhysRegisters = 60,
+              numFpPhysRegisters = 48,
+              numLdqEntries = 10,
+              numStqEntries = 10,
               maxBrCount = 12,
-              numFetchBufferEntries = 16,
-              ftq = FtqParameters(nEntries=32),
+              numFetchBufferEntries = 10,
+              ftq = FtqParameters(nEntries=20),
               nPerfCounters = 6,
               fpu = Some(freechips.rocketchip.tile.FPUParams(sfmaLatency=4, dfmaLatency=4, divSqrt=true))
             ),
             dcache = Some(
-              DCacheParams(rowBits = 64, nSets=64, nWays=4, nMSHRs=2, nTLBWays=8)
+              DCacheParams(rowBits = 64, nSets=64, nWays=2, nMSHRs=2, nTLBWays=8)
             ),
             icache = Some(
-              ICacheParams(rowBits = 64, nSets=64, nWays=4, fetchBytes=2*4)
+              ICacheParams(rowBits = 64, nSets=64, nWays=2, fetchBytes=2*4)
             ),
             tileId = i + idOffset
           ),

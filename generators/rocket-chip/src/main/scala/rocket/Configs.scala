@@ -65,8 +65,8 @@ class WithMEEKCores(
         divEarlyOut = true))),
       dcache = Some(DCacheParams(
         rowBits = site(SystemBusKey).beatBits,
-        nSets = 16,
-        nWays = 2,
+        nSets = 32,
+        nWays = 1,
         nTLBSets = 1,
         nTLBWays = 4,
         nMSHRs = 0,
@@ -74,7 +74,7 @@ class WithMEEKCores(
       icache = Some(ICacheParams(
         rowBits = site(SystemBusKey).beatBits,
         nSets = 64,
-        nWays = 2,
+        nWays = 1,
         nTLBSets = 1,
         nTLBWays = 16,
         blockBytes = site(CacheBlockBytes))))
@@ -157,7 +157,7 @@ class WithNBuckyBallCores(
       dcache = Some(DCacheParams(
         rowBits = site(SystemBusKey).beatBits,
         nSets = 64,
-        nWays = 2,
+        nWays = 1,
         nTLBSets = 1,
         nTLBWays = 4,
         nMSHRs = 0,
@@ -165,7 +165,7 @@ class WithNBuckyBallCores(
       icache = Some(ICacheParams(
         rowBits = site(SystemBusKey).beatBits,
         nSets = 64,
-        nWays = 2,
+        nWays = 1,
         nTLBSets = 1,
         nTLBWays = 4,
         blockBytes = site(CacheBlockBytes))))
