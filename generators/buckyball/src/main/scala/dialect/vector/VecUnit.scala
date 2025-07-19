@@ -6,7 +6,7 @@ import org.chipsalliance.cde.config.Parameters
 
 import dialect.vector._
 import buckyball.frontend.rs.{ReservationStationIssue, ReservationStationComplete, BuckyBallCmd}
-import buckyball.mem.{SramReadIO, SramWriteIO, SramReadResp, AccWriteIO}
+import buckyball.mem.{SramReadIO, SramWriteIO}
 import buckyball.BuckyBallConfig
 import buckyball.util.Pipeline
 import org.yaml.snakeyaml.events.Event.ID
@@ -20,11 +20,11 @@ class VecUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
     val cmdResp = Decoupled(new ReservationStationComplete(rob_id_width))
     
     // 连接到Scratchpad的SRAM读写接口
-    val sramRead = Vec(b.sp_banks, new SramReadIO(b.sp_bank_entries, spad_w))
-    val sramWrite = Vec(b.sp_banks, new SramWriteIO(b.sp_bank_entries, spad_w, spad_w/8))
+    val sramRead = Vec(b.sp_banks, Flipped(new SramReadIO(b.spad_bank_entries, spad_w)))
+    val sramWrite = Vec(b.sp_banks, Flipped(new SramWriteIO(b.spad_bank_entries, spad_w, b.spad_mask_len)))
     // 连接到Accumulator的读写接口
-    val accRead = Vec(b.acc_banks, new SramReadIO(b.acc_bank_entries, b.acc_width))
-    val accWrite = Vec(b.acc_banks, new AccWriteIO(b.acc_bank_entries, b.acc_width, b.acc_width/8))
+    val accRead = Vec(b.acc_banks, Flipped(new SramReadIO(b.acc_bank_entries, b.acc_w)))
+    val accWrite = Vec(b.acc_banks, Flipped(new SramWriteIO(b.acc_bank_entries, b.acc_w, b.acc_mask_len)))
   })
 // -----------------------------------------------------------------------------
 // VECCTRLUNIT

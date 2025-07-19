@@ -13,9 +13,9 @@ import buckyball.BuckyBallConfig
 
 class ctrl_ld_req(implicit b: BuckyBallConfig, p: Parameters) extends Bundle {
   val op1_bank      = UInt(log2Up(b.sp_banks).W)
-  val op1_bank_addr = UInt(log2Up(b.sp_bank_entries).W)
+  val op1_bank_addr = UInt(log2Up(b.spad_bank_entries).W)
   val op2_bank      = UInt(log2Up(b.sp_banks).W)
-  val op2_bank_addr = UInt(log2Up(b.sp_bank_entries).W)
+  val op2_bank_addr = UInt(log2Up(b.spad_bank_entries).W)
   val iter          = UInt(10.W)
 }
 
@@ -23,7 +23,7 @@ class VecLoadUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
   val rob_id_width = log2Up(b.rob_entries)
 	val spad_w = b.veclane * b.inputType.getWidth
   val io = IO(new Bundle {
-    val sramReadReq = Vec(b.sp_banks, Decoupled(new SramReadReq(b.sp_bank_entries)))
+    val sramReadReq = Vec(b.sp_banks, Decoupled(new SramReadReq(b.spad_bank_entries)))
 		val sramReadResp = Vec(b.sp_banks, Flipped(Decoupled(new SramReadResp(spad_w))))
     val ctrl_ld_i = Flipped(Decoupled(new ctrl_ld_req))
     val ld_ex_o = Decoupled(new ld_ex_req)
@@ -34,8 +34,8 @@ class VecLoadUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
 
 	val op1_bank 		 = RegInit(0.U(log2Up(b.sp_banks).W))
 	val op2_bank 		 = RegInit(0.U(log2Up(b.sp_banks).W))
-	val op1_addr 		 = RegInit(0.U(log2Up(b.sp_bank_entries).W))
-	val op2_addr 		 = RegInit(0.U(log2Up(b.sp_bank_entries).W))
+	val op1_addr 		 = RegInit(0.U(log2Up(b.spad_bank_entries).W))
+	val op2_addr 		 = RegInit(0.U(log2Up(b.spad_bank_entries).W))
   val iter 				 = RegInit(0.U(10.W))
   val iter_counter = RegInit(0.U(10.W))
 

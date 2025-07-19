@@ -60,11 +60,11 @@ class PostDecodeCmd(implicit bbconfig: BuckyBallConfig) extends Bundle {
   
   // Scratchpad读取地址和bank信息 - store源地址
   val rd_bank       = UInt(log2Up(bbconfig.sp_banks+ bbconfig.acc_banks).W)
-  val rd_bank_addr  = UInt(log2Up(bbconfig.sp_bank_entries+ bbconfig.acc_bank_entries).W)
+  val rd_bank_addr  = UInt(log2Up(bbconfig.spad_bank_entries+ bbconfig.acc_bank_entries).W)
   
   // Scratchpad写入地址和bank信息 - load目标地址，execute结果地址(后续拆到acc中)
   val wr_bank       = UInt(log2Up(bbconfig.sp_banks + bbconfig.acc_banks).W)
-  val wr_bank_addr  = UInt(log2Up(bbconfig.sp_bank_entries + bbconfig.acc_bank_entries).W)
+  val wr_bank_addr  = UInt(log2Up(bbconfig.spad_bank_entries + bbconfig.acc_bank_entries).W)
   val is_acc        = Bool() // 是否是acc bank的操作    
   
   // Execute专用字段
@@ -76,9 +76,9 @@ class PostDecodeCmd(implicit bbconfig: BuckyBallConfig) extends Bundle {
   
   // Execute的操作数地址（保留原始字段名）
   val op1_bank      = UInt(log2Up(bbconfig.sp_banks).W)
-  val op1_bank_addr = UInt(log2Up(bbconfig.sp_bank_entries).W)
+  val op1_bank_addr = UInt(log2Up(bbconfig.spad_bank_entries).W)
   val op2_bank      = UInt(log2Up(bbconfig.sp_banks).W)
-  val op2_bank_addr = UInt(log2Up(bbconfig.sp_bank_entries).W)
+  val op2_bank_addr = UInt(log2Up(bbconfig.spad_bank_entries).W)
 
   // 流水线控制
   val pid           = UInt(8.W)   // 流水线ID

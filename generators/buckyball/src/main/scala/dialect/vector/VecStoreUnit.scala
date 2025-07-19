@@ -7,13 +7,13 @@ import org.chipsalliance.cde.config.Parameters
 
 import dialect.vector._
 import buckyball.frontend.rs.{ReservationStationIssue, ReservationStationComplete, BuckyBallCmd}
-import buckyball.mem.{SramReadIO, SramWriteIO, SramReadResp, AccWriteIO}
+import buckyball.mem.{SramReadIO, SramWriteIO}
 import buckyball.BuckyBallConfig
 
 
 class ctrl_st_req(implicit b: BuckyBallConfig, p: Parameters) extends Bundle {
   val wr_bank = UInt(log2Up(b.sp_banks).W)
-  val wr_bank_addr = UInt(log2Up(b.sp_bank_entries).W)
+  val wr_bank_addr = UInt(log2Up(b.spad_bank_entries).W)
   val iter = UInt(10.W)
 }
 
@@ -28,13 +28,13 @@ class VecStoreUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
     val ex_st_i   = Flipped(Decoupled(new ex_st_req))
 
     // val sramWrite = Vec(b.sp_banks, new SramWriteIO(b.sp_bank_entries, spad_w, spad_w/8))
-    val accWrite = Vec(b.acc_banks, new AccWriteIO(b.acc_bank_entries, b.acc_width, b.acc_width/8))
+    val accWrite = Vec(b.acc_banks, Flipped(new SramWriteIO(b.acc_bank_entries, b.acc_w, b.acc_mask_len)))
 
     val cmdResp_o = Valid(new Bundle {val commit = Bool()})
   })
 
 	// val wr_bank 		 = RegInit(0.U(log2Up(b.sp_banks).W))
-	val wr_bank_addr = RegInit(0.U(log2Up(b.sp_bank_entries).W))
+	val wr_bank_addr = RegInit(0.U(log2Up(b.spad_bank_entries).W))
   val iter 				 = RegInit(0.U(10.W))
   val iter_counter = RegInit(0.U(10.W))
 
@@ -67,8 +67,8 @@ class VecStoreUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
   // }
 	when(io.ex_st_i.fire) {
 		for(i <- 0 until b.acc_banks) {
-			io.accWrite(i).en   := io.ex_st_i.valid
-			io.accWrite(i).addr := (wr_bank_addr >> log2Ceil(b.acc_banks)) + iter_counter
+			io.accWrite(i).req.valid := io.ex_st_i.valid
+			io.accWrite(i).req.bits.addr := (wr_bank_addr >> log2Ceil(b.acc_banks)) + iter_counter
 
 			// 每个accumulator bank存储 veclane/acc_banks 个元素
 			val elementsPerBank = b.veclane / b.acc_banks  // 16/4 = 4个元素
@@ -77,20 +77,18 @@ class VecStoreUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
 
 			// 将对应的元素打包成一个UInt
 			val bankData = Cat(io.ex_st_i.bits.rst.slice(startIdx, endIdx + 1).reverse)
-			io.accWrite(i).data := bankData
+			io.accWrite(i).req.bits.data := bankData
 
-			io.accWrite(i).mask := VecInit(Seq.fill(b.acc_width / 8)(true.B))
-			io.accWrite(i).acc  := true.B
+			io.accWrite(i).req.bits.mask := VecInit(Seq.fill(b.acc_mask_len)(true.B))
 		}
 		iter_counter := iter_counter + 1.U
 		assert(io.ex_st_i.bits.iter === iter_counter, "[VecEX -> VecStore] iteration mismatch %d %d", io.ex_st_i.bits.iter, iter_counter)
 	}.otherwise {
     io.accWrite.foreach { acc =>
-      acc.en := false.B
-      acc.addr := 0.U
-      acc.data := Cat(Seq.fill(b.acc_width / 8)(0.U(8.W)))
-      acc.mask := VecInit(Seq.fill(b.acc_width / 8)(false.B))
-      acc.acc := false.B
+      acc.req.valid := false.B
+      acc.req.bits.addr := 0.U
+      acc.req.bits.data := Cat(Seq.fill(b.acc_w / 8)(0.U(8.W)))
+      acc.req.bits.mask := VecInit(Seq.fill(b.acc_mask_len)(false.B))
     }
 	}
 
