@@ -2,11 +2,11 @@ module axi_slave_npu_wrapper(
         input clk,
         input rstn,
 
-        input [28:0] axi_awaddr,
+        input [19:0] axi_awaddr,
         input [7:0]  axi_awlen,  // 8 bit
         input [2:0]  axi_awsize, // 3 bit
         input [1:0]  axi_awburst,
-        input [0:0]  axi_awid,
+        input [3:0]  axi_awid,
         input        axi_awvalid,
         output       axi_awready,
 
@@ -17,40 +17,43 @@ module axi_slave_npu_wrapper(
         output       axi_wready,
 
         output     [1:0] axi_bresp,
-        output     [0:0] axi_bid,
+        output     [3:0] axi_bid,
         output           axi_bvalid,
         input            axi_bready,
 
-        input  [28:0] axi_araddr,
+        input  [19:0] axi_araddr,
         input  [7:0]  axi_arlen,
         input  [2:0]  axi_arsize,
         input  [1:0]  axi_arburst,
-        input  [0:0]  axi_arid,
+        input  [3:0]  axi_arid,
         input         axi_arvalid,
         output        axi_arready,
 
         output     [63:0] axi_rdata,
-        output     [ 0:0] axi_rid,
+        output     [ 3:0] axi_rid,
         output     [1:0]  axi_rresp,
         output            axi_rlast,
         output            axi_rvalid,
         input             axi_rready,
 
-        //PAD port
+        //PAD input port
         input 				clk_FPGA_w,
         input 				clk_FPGA_cim,
         input 				rstn_FPGA,
         input  		 		PLL_CLK_SEL,					//0:original , 1:PLL_CLK
         input 				TEST_MODE,						//0:CPU  	 , 1:TEST_MODE
         // input			load_store_OEN,					//0:load 	 , 1:store			in PAD port
+		//PAD output port
+		output 				FPGA_sys_load_data_vld,
         //PAD port reuse
         input        	  	FPGA_sys_load_en,
-        input  [19:0]	  	FPGA_sys_load_addr,
+        input  [16:0]	  	FPGA_sys_load_addr,
         output [63:0]  		FPGA_sys_load_data,
 
         input        	  	FPGA_sys_store_en,
-        input  [19:0]	  	FPGA_sys_store_addr,
+        input  [16:0]	  	FPGA_sys_store_addr,
         input  [63:0]	  	FPGA_sys_store_data,
+		//PAD 
 
         //on-chip input port
         //TO PLL
@@ -59,17 +62,22 @@ module axi_slave_npu_wrapper(
     );
 
     wire        sys_load_en;
-    wire [19:0] sys_load_addr;
+    wire [16:0] sys_load_addr;
     wire [63:0] sys_load_data;
+	wire 		sys_load_data_vld;
     wire        sys_store_en;
-    wire [19:0] sys_store_addr;
+    wire [16:0] sys_store_addr;
     wire [63:0] sys_store_data;
 
+	wire 	  clk_w;
+	wire 	  clk_cim;
+	wire 	  rstn_NPU;
+	wire 	  NPU_AXI_SEL;
 
 
     // axi transfer
 	axi_bridge axi_bridge_inst (
-				   .clk              ( clk               ),
+				   .clk              ( clk           ),
 				   .rstn             ( rstn              ),
 				   .axi_awaddr       ( axi_awaddr        ),
 				   .axi_awlen        ( axi_awlen         ),
@@ -112,13 +120,15 @@ module axi_slave_npu_wrapper(
     sys_top sys_top_inst (
                 .clk_w               ( clk_w               ),
                 .clk_cim             ( clk_cim             ),
-                .rstn                 (rstn_FPGA&rstn_NPU),
-                .sys_load_en          (sys_load_en),
-                .sys_load_addr        (sys_load_addr),
-                .sys_load_data        (sys_load_data),
-                .sys_store_en         (sys_store_en),
-                .sys_store_addr       (sys_store_addr),
-                .sys_store_data       (sys_store_data),
+				.clk_axi			 ( clk             ),
+                .rstn                ( rstn_NPU ),
+                .sys_load_en         ( sys_load_en),
+                .sys_load_addr       ( sys_load_addr),
+                .sys_load_data       ( sys_load_data),
+				.sys_load_data_vld   ( sys_load_data_vld ),
+                .sys_store_en        ( sys_store_en),
+                .sys_store_addr      ( sys_store_addr),
+                .sys_store_data      ( sys_store_data),
 
 				.NPU_AXI_SEL         ( NPU_AXI_SEL         )
             );
@@ -126,37 +136,42 @@ module axi_slave_npu_wrapper(
 
 
     TEST_MODE_bridge u_TEST_MODE_bridge(
-                         .clk_FPGA_w          ( clk_FPGA_w          ),
-                         .clk_FPGA_cim        ( clk_FPGA_cim        ),
-                         .rstn_FPGA           ( rstn_FPGA			),
-                         .PLL_CLK_SEL         ( PLL_CLK_SEL         ),
-                         .TEST_MODE           ( TEST_MODE           ),
-                         .FPGA_sys_load_en    ( FPGA_sys_load_en    ),
-                         .FPGA_sys_load_addr  ( FPGA_sys_load_addr  ),
-                         .FPGA_sys_load_data  ( FPGA_sys_load_data  ),
-                         .FPGA_sys_store_en   ( FPGA_sys_store_en   ),
-                         .FPGA_sys_store_addr ( FPGA_sys_store_addr ),
-                         .FPGA_sys_store_data ( FPGA_sys_store_data ),
-                         .clk_PLL_w           ( clk_PLL_w           ),			//no PLL***
-                         .clk_PLL_cim         ( clk_PLL_cim         ),			//no PLL***
-                         .clk_AXI             ( clk            		),
-                         .AXI_sys_load_en     ( AXI_sys_load_en     ),
-                         .AXI_sys_load_addr   ( AXI_sys_load_addr   ),
-                         .AXI_sys_load_data   ( AXI_sys_load_data   ),
-                         .AXI_sys_store_en    ( AXI_sys_store_en    ),
-                         .AXI_sys_store_addr  ( AXI_sys_store_addr  ),
-                         .AXI_sys_store_data  ( AXI_sys_store_data  ),
-                         .NPU_AXI_SEL         ( NPU_AXI_SEL         ),
-                         .clk_w               ( clk_w               ),
-                         .clk_cim             ( clk_cim             ),
-                         .rstn_NPU            ( rstn_NPU			),
-                         .sys_load_en         ( sys_load_en         ),
-                         .sys_load_addr       ( sys_load_addr       ),
-                         .sys_load_data       ( sys_load_data       ),
-                         .sys_store_en        ( sys_store_en        ),
-                         .sys_store_addr      ( sys_store_addr      ),
-                         .sys_store_data      ( sys_store_data      )
+                         .clk_FPGA_w          		( clk_FPGA_w          ),
+                         .clk_FPGA_cim        		( clk_FPGA_cim        ),
+                         .rstn_FPGA           		( rstn_FPGA			),
+                         .PLL_CLK_SEL         		( PLL_CLK_SEL         ),
+                         .TEST_MODE           		( TEST_MODE           ),
+                         .FPGA_sys_load_en    		( FPGA_sys_load_en    ),
+                         .FPGA_sys_load_addr  		( FPGA_sys_load_addr  ),
+                         .FPGA_sys_load_data  		( FPGA_sys_load_data  ),
+						 .FPGA_sys_load_data_vld    ( FPGA_sys_load_data_vld   ),
+                         .FPGA_sys_store_en   		( FPGA_sys_store_en   ),
+                         .FPGA_sys_store_addr 		( FPGA_sys_store_addr ),
+                         .FPGA_sys_store_data 		( FPGA_sys_store_data ),
+                         .clk_PLL_w           		( clk_PLL_w           ),			//no PLL***
+                         .clk_PLL_cim         		( clk_PLL_cim         ),			//no PLL***
+                         .clk_AXI             		( clk            		),
+						 .rstn_AXI			  		( rstn					),
+                         .AXI_sys_load_en     		( AXI_sys_load_en     ),
+                         .AXI_sys_load_addr   		( AXI_sys_load_addr   ),
+                         .AXI_sys_load_data   		( AXI_sys_load_data   ),
+                         .AXI_sys_store_en    		( AXI_sys_store_en    ),
+                         .AXI_sys_store_addr  		( AXI_sys_store_addr  ),
+                         .AXI_sys_store_data  		( AXI_sys_store_data  ),
+                         .NPU_AXI_SEL         		( NPU_AXI_SEL         ),
+                         .clk_w               		( clk_w               ),
+                         .clk_cim             		( clk_cim             ),
+                         .rstn_NPU            		( rstn_NPU				),
+                         .sys_load_en         		( sys_load_en         ),
+                         .sys_load_addr       		( sys_load_addr       ),
+                         .sys_load_data       		( sys_load_data       ),
+						 .sys_load_data_vld   		( sys_load_data_vld   ),
+                         .sys_store_en        		( sys_store_en        ),
+                         .sys_store_addr      		( sys_store_addr      ),
+                         .sys_store_data      		( sys_store_data      )
                      );
 
 
 endmodule
+
+

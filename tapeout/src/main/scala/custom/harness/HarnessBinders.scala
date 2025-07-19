@@ -17,10 +17,19 @@ import voyager_tapeout.custom.harness.HasCustomHarnessInstantiators
 
 class WithPeripheralNPUPin extends HarnessBinder({
   case (th: HasHarnessInstantiators, port: PeripheralNPUPort, chipId: Int) => {
-    // Drive NPU input pins from the test harness
-    port.io.npu_pin1 := true.B   // Drive input pin high
-    port.io.npu_pin3 := false.B  // Drive input pin low
-    // Output pins (npu_pin2, npu_pin4) are driven by the NPU peripheral
+    port.io.npu_clk_FPGA_w             := false.B 
+    port.io.npu_clk_FPGA_cim           := false.B 
+    port.io.npu_rstn_FPGA              := false.B 
+    port.io.npu_PLL_CLK_SEL            := false.B 
+    port.io.npu_TEST_MODE	             := false.B 
+    port.io.npu_FPGA_sys_load_en       := false.B 
+    port.io.npu_FPGA_sys_load_addr     := false.B 
+    // port.io.npu_FPGA_sys_load_data     := 0.U(64.W)
+    port.io.npu_FPGA_sys_store_en      := false.B 
+    port.io.npu_FPGA_sys_store_addr    := 0.U(20.W)
+    port.io.npu_FPGA_sys_store_data    := 0.U(64.W)
+    port.io.npu_clk_PLL_w              := false.B 
+    port.io.npu_clk_PLL_cim            := false.B 
   }
 })
 

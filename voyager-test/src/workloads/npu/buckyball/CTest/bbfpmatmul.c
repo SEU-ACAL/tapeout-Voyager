@@ -15,7 +15,7 @@ void init_matrix(elem_t* matrix, int rows, int cols, int seed) {
 static elem_t input_matrix[DIM * DIM] __attribute__((aligned(64)));
 static elem_t weight_matrix[DIM * DIM] __attribute__((aligned(64)));
 static result_t output_matrix[DIM * DIM] __attribute__((aligned(64)));
-#define BANK 4096
+#define BANK 512
 #define OP1_ADDR 0
 #define OP2_ADDR (BANK + DIM)
 #define WR_ADDR (DIM + 2 * BANK)
@@ -35,8 +35,11 @@ int main() {
     
     // Move input to scratchpad
     bb_mvin((uintptr_t)output_matrix, WR_ADDR, DIM * 4);
+    printf("Output matrix moved to scratchpad\n");  
     bb_mvin((uintptr_t)input_matrix, OP1_ADDR, DIM );
+    printf("Input matrix moved to scratchpad\n");
     bb_mvin((uintptr_t)input_matrix, OP2_ADDR, DIM );
+    printf("Input matrix moved to scratchpad\n");
 
     
     printf("Perform Matmul\n");
@@ -45,7 +48,7 @@ int main() {
     
 
     // Move back from scratchpad to output
-    bb_mvout((uintptr_t)output_matrix, WR_ADDR, DIM * 4);
+    bb_mvout((uintptr_t)output_matrix, WR_ADDR, 16);
     printf("Finished\n");
    
     // print_matrix("Output", output_matrix, DIM, DIM);

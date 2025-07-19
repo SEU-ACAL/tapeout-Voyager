@@ -12,7 +12,7 @@ static elem_t weight_matrix[DIM * DIM] __attribute__((aligned(64)));
 static result_t output_matrix[DIM * DIM] __attribute__((aligned(64)));
 
 
-#define BANK 4096
+#define BANK 512
 // Utility function     
 void print_result_matrix(const char* name, result_t* matrix, int rows, int cols) {
     printf("Matrix %s:\n", name);

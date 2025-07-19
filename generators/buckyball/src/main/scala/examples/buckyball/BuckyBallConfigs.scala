@@ -33,7 +33,7 @@ case class BuckyBallConfig(
   
   sp_singleported: Boolean = true,
   
-  sp_capacity: BuckyBallMemCapacity = CapacityInKilobytes(32),
+  sp_capacity: BuckyBallMemCapacity = CapacityInKilobytes(16),
   acc_capacity: BuckyBallMemCapacity = CapacityInKilobytes(8),
   
   max_in_flight_mem_reqs: Int = 16, // 未使用

@@ -27,10 +27,20 @@ case class PeripheralNPUParams(
 case object PeripheralNPUKey extends Field[Option[PeripheralNPUParams]](None)
 
 class PeripheralNPUIOCell extends Bundle {
-  val npu_pin1 = Input(Bool())
-  val npu_pin2 = Output(Bool())
-  val npu_pin3 = Input(Bool())
-  val npu_pin4 = Output(Bool())
+  val npu_clk_FPGA_w             = Input(Bool())
+  val npu_clk_FPGA_cim           = Input(Bool())
+  val npu_rstn_FPGA              = Input(Bool())
+  val npu_PLL_CLK_SEL            = Input(Bool())
+  val npu_TEST_MODE	             = Input(Bool())
+  val npu_FPGA_sys_load_data_vld = Output(Bool())
+  val npu_FPGA_sys_load_en       = Input(Bool())
+  val npu_FPGA_sys_load_addr     = Input(UInt(20.W))
+  val npu_FPGA_sys_load_data     = Output(UInt(64.W))
+  val npu_FPGA_sys_store_en      = Input(Bool())
+  val npu_FPGA_sys_store_addr    = Input(UInt(20.W))
+  val npu_FPGA_sys_store_data    = Input(UInt(64.W))
+  val npu_clk_PLL_w              = Input(Bool())
+  val npu_clk_PLL_cim            = Input(Bool())
 }
 
 // NPU AXI从设备BlackBox - 包装Verilog NPU模块
@@ -74,19 +84,20 @@ class AXISlaveNPUWrapperBlackBox extends BlackBox with HasBlackBoxResource {
     // NPU外部控制和状态信号
     // val clk_FPGA_w = Input(Clock())      // FPGA权重时钟
     // val clk_FPGA_cim = Input(Clock())    // FPGA CIM时钟
-    val clk_FPGA_w = Input(Bool())      // FPGA权重时钟
-    val clk_FPGA_cim = Input(Bool())    // FPGA CIM时钟
-    val rstn_FPGA = Input(Bool())        // FPGA复位信号
-    val PLL_CLK_SEL = Input(Bool())      // PLL时钟选择
-    val TEST_MODE = Input(Bool())        // 测试模式选择
+    val clk_FPGA_w    = Input(Bool())      // FPGA权重时钟
+    val clk_FPGA_cim  = Input(Bool())    // FPGA CIM时钟
+    val rstn_FPGA     = Input(Bool())        // FPGA复位信号
+    val PLL_CLK_SEL   = Input(Bool())      // PLL时钟选择
+    val TEST_MODE     = Input(Bool())        // 测试模式选择
 
     // FPGA系统接口 - 用于外部数据加载和存储
-    val FPGA_sys_load_en = Input(Bool())
-    val FPGA_sys_load_addr = Input(UInt(20.W))
-    val FPGA_sys_load_data = Output(UInt(64.W))
-    val FPGA_sys_store_en = Input(Bool())
-    val FPGA_sys_store_addr = Input(UInt(20.W))
-    val FPGA_sys_store_data = Input(UInt(64.W))
+    val FPGA_sys_load_data_vld = Output(Bool())
+    val FPGA_sys_load_en       = Input(Bool())
+    val FPGA_sys_load_addr     = Input(UInt(20.W))
+    val FPGA_sys_load_data     = Output(UInt(64.W))
+    val FPGA_sys_store_en      = Input(Bool())
+    val FPGA_sys_store_addr    = Input(UInt(20.W))
+    val FPGA_sys_store_data    = Input(UInt(64.W))
 
     // PLL时钟输入
     val clk_PLL_w   = Input(Bool()) //Input(Clock())
@@ -213,34 +224,26 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
     axi.r.valid := npuBlackBox.io.axi_rvalid
     npuBlackBox.io.axi_rready := axi.r.ready
 
-    // 连接外部时钟信号 - 使用系统时钟作为默认值
-    npuBlackBox.io.clk_FPGA_w := io.npu_pin1
-    npuBlackBox.io.clk_FPGA_cim := io.npu_pin1
-    npuBlackBox.io.rstn_FPGA := !io.npu_pin3
+    npuBlackBox.io.clk_FPGA_w            := io.npu_clk_FPGA_w             
+    npuBlackBox.io.clk_FPGA_cim          := io.npu_clk_FPGA_cim           
+    npuBlackBox.io.rstn_FPGA             := io.npu_rstn_FPGA              
+    npuBlackBox.io.PLL_CLK_SEL           := io.npu_PLL_CLK_SEL            
+    npuBlackBox.io.TEST_MODE	           := io.npu_TEST_MODE	             
+    npuBlackBox.io.FPGA_sys_load_en      := io.npu_FPGA_sys_load_en       
+    npuBlackBox.io.FPGA_sys_load_addr    := io.npu_FPGA_sys_load_addr     
+    npuBlackBox.io.FPGA_sys_store_en     := io.npu_FPGA_sys_store_en      
+    npuBlackBox.io.FPGA_sys_store_addr   := io.npu_FPGA_sys_store_addr    
+    npuBlackBox.io.FPGA_sys_store_data   := io.npu_FPGA_sys_store_data    
+    npuBlackBox.io.clk_PLL_w             := io.npu_clk_PLL_w              
+    npuBlackBox.io.clk_PLL_cim           := io.npu_clk_PLL_cim         
 
-    // 连接控制信号到IO接口
-    npuBlackBox.io.PLL_CLK_SEL := io.npu_pin1  // 使用外部引脚1控制PLL时钟选择
-    npuBlackBox.io.TEST_MODE := io.npu_pin3    // 使用外部引脚3控制测试模式
-
-    // 连接FPGA系统接口 - 默认禁用外部加载/存储
-    npuBlackBox.io.FPGA_sys_load_en := false.B
-    npuBlackBox.io.FPGA_sys_load_addr := 0.U
-    npuBlackBox.io.FPGA_sys_store_en := false.B
-    npuBlackBox.io.FPGA_sys_store_addr := 0.U
-    npuBlackBox.io.FPGA_sys_store_data := 0.U
-
-    // 连接PLL时钟 - 使用系统时钟
-    npuBlackBox.io.clk_PLL_w := io.npu_pin1
-    npuBlackBox.io.clk_PLL_cim := io.npu_pin1
-
-    // 连接输出信号到IO接口
-    // npu_pin2用于指示NPU状态（从FPGA系统加载数据的有效性）
-    io.npu_pin2 := npuBlackBox.io.FPGA_sys_load_data.orR
-    // npu_pin4用于指示NPU计算完成状态
-    io.npu_pin4 := npuBlackBox.io.axi_rvalid && npuBlackBox.io.axi_rready
+    io.npu_FPGA_sys_load_data_vld        := npuBlackBox.io.FPGA_sys_load_data_vld
+    io.npu_FPGA_sys_load_data            := npuBlackBox.io.FPGA_sys_load_data    
     }
   }
 }
+
+   
 
 // Trait to add the NPU device to the subsystem
 trait CanHavePeripheryNPU { this: BaseSubsystem =>
@@ -269,8 +272,8 @@ trait CanHavePeripheryNPU { this: BaseSubsystem =>
           npuPeripheral.map { device =>
             npu <> device.module.io
       }.getOrElse {
-        npu.npu_pin2 := false.B
-        npu.npu_pin4 := false.B
+        npu.npu_FPGA_sys_load_data_vld := false.B
+        npu.npu_FPGA_sys_load_data := 0.U
       }
         npu
       }
