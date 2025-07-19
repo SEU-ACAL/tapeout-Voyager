@@ -33,8 +33,8 @@ case class BuckyBallConfig(
   
   sp_singleported: Boolean = true,
   
-  sp_capacity: BuckyBallMemCapacity = CapacityInKilobytes(128),
-  acc_capacity: BuckyBallMemCapacity = CapacityInKilobytes(64),
+  sp_capacity: BuckyBallMemCapacity = CapacityInKilobytes(32),
+  acc_capacity: BuckyBallMemCapacity = CapacityInKilobytes(8),
   
   max_in_flight_mem_reqs: Int = 16, // 未使用
   aligned_to: Int = 1, 
