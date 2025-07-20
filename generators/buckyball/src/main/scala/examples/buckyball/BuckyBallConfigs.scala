@@ -28,13 +28,13 @@ case class BuckyBallConfig(
   dma_maxbytes: Int = 64, // 未使用
   dma_buswidth: Int = 128,
   
-  sp_banks: Int = 2,
+  sp_banks: Int = 4,
   acc_banks: Int = 4,
   
   sp_singleported: Boolean = true,
   
   sp_capacity: BuckyBallMemCapacity = CapacityInKilobytes(16),
-  acc_capacity: BuckyBallMemCapacity = CapacityInKilobytes(8),
+  acc_capacity: BuckyBallMemCapacity = CapacityInKilobytes(4),
   
   max_in_flight_mem_reqs: Int = 16, // 未使用
   aligned_to: Int = 1, 

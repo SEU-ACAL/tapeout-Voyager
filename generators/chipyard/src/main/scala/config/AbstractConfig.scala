@@ -117,7 +117,7 @@ class AbstractConfig extends Config(
   new freechips.rocketchip.subsystem.WithDTS("ucb-bar,chipyard", Nil) ++ /** custom device name for DTS (embedded in BootROM) */
   new chipyard.config.WithBootROM ++                                     /** use default bootrom */
   new testchipip.soc.WithMbusScratchpad(base = 0x08000000,               /** add 64 KiB on-chip scratchpad */
-                                        size = 64 * 1024) ++
+                                        size = 8 * 1024) ++
 
   // Coherency settings
   new freechips.rocketchip.subsystem.WithInclusiveCache ++          /** use Sifive LLC cache as root of coherence */

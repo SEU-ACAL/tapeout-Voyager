@@ -9,7 +9,7 @@ static result_t input_matrixu32[DIM * DIM] __attribute__((aligned(64)));
 static result_t output_matrixu32[DIM  * DIM] __attribute__((aligned(64)));
 static elem_t output_matrixu8[DIM  * DIM] __attribute__((aligned(64)));
 
-#define BANK 512
+#define BANK 256
 
 void init_matrixu8(elem_t* matrix, int rows, int cols, int seed) {
     for (int i = 0; i < rows * cols; i++) {
