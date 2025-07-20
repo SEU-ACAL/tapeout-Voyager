@@ -129,7 +129,7 @@ class WithNSmallBooms(n: Int = 1) extends Config(
  * 2-wide BOOM.
  */
 class WithNMediumBooms(n: Int = 1) extends Config(
-  new WithTAGELBPD (128) ++ // Default to TAGE-L BPD, but with less BIM size.
+  new WithTAGELBPD (64) ++ // Default to TAGE-L BPD, but with less BIM size.
   new Config((site, here, up) => {
     case TilesLocated(InSubsystem) => {
       val prev = up(TilesLocated(InSubsystem), site)
@@ -445,21 +445,21 @@ class WithTAGELBPD (bimSets: Int = 2048) extends Config((site, here, up) => {
       localHistoryLength = 1,
       localHistoryNSets = 0,
       branchPredictor = ((resp_in: BranchPredictionBankResponse, p: Parameters) => {
-        val loop = Module(new LoopBranchPredictorBank()(p))
+        // val loop = Module(new LoopBranchPredictorBank()(p))
         val tage = Module(new TageBranchPredictorBank()(p))
         val btb = Module(new BTBBranchPredictorBank()(p))
         val bim = Module(new BIMBranchPredictorBank(BoomBIMParams(nSets = bimSets))(p))
         val ubtb = Module(new FAMicroBTBBranchPredictorBank()(p))
-        val preds = Seq(loop, tage, btb, ubtb, bim)
+        val preds = Seq(tage, btb, ubtb, bim)
         preds.map(_.io := DontCare)
 
         ubtb.io.resp_in(0)  := resp_in
         bim.io.resp_in(0)   := ubtb.io.resp
         btb.io.resp_in(0)   := bim.io.resp
         tage.io.resp_in(0)  := btb.io.resp
-        loop.io.resp_in(0)  := tage.io.resp
+        // loop.io.resp_in(0)  := tage.io.resp
 
-        (preds, loop.io.resp)
+        (preds, tage.io.resp)
       })
     )))
     case other => other
