@@ -27,13 +27,14 @@ module Macro_small #(
     input                          NNIN_SI,
     input                          PSUM_SI,
 
-    input [1:0]                    din_valid,
+    input                          din_valid,
 
     input                          adder_enb,
     input [3:0]                    buffer_row_addr,
     
     output [COL_NUM-1:0]           Q,
-    output [255:0]                 data_out
+    output [255:0]                 data_out,
+    output                         Macro_dout_valid
 );
 
     localparam PSUM_W = 4 + $clog2(ROW_NUM);
@@ -81,16 +82,17 @@ module Macro_small #(
     );
 
     psum_self_adder #(
-        .PSUM_W          (PSUM_W + 12),
-        .BUFFER_ROW      (BUFFER_ROW)
-    ) self_add(
-        .clk             (clk_cim),
-        .rstn            (rstn),
-        .adder_enb       (adder_enb),
-        .din_valid       (temp_psum_valid),
-        .buffer_row_addr (buffer_row_addr),
-        .Macro_out       (temp_psum),
-        .data_out        (data_out)
+        .PSUM_W           (PSUM_W + 12),
+        .BUFFER_ROW       (BUFFER_ROW)
+    ) self_add( 
+        .clk              (clk_cim),
+        .rstn             (rstn),
+        .adder_enb        (adder_enb),
+        .din_valid        (temp_psum_valid),
+        .buffer_row_addr  (buffer_row_addr),
+        .Macro_out        (temp_psum),
+        .data_out         (data_out),
+        .Macro_out_valid (Macro_dout_valid)
     );
 
 endmodule

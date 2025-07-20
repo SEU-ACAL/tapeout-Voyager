@@ -1,18 +1,4 @@
-
 `include "../gen-collateral/defines.v"
-
-// `define FM_WIDTH  64
-// `define WM_WIDTH  64
-// `define OB_WIDTH  64
-// `define CSR_WIDTH 64
-
-// `define FM_DEPTH 4096
-// `define WM_DEPTH_L 16384
-// `define WM_DEPTH_S 2048
-// `define OB_DEPTH 2048
-// `define CSR_DEPTH 16
-
-// `define offset 2048
 
 module mem_access_manager(
         input clk,
@@ -21,6 +7,7 @@ module mem_access_manager(
         input         sys_load_en      ,
         input  [19:0] sys_load_addr    ,
         output [63:0] sys_load_data    ,
+		output        sys_load_data_vld,
 
         input         sys_store_en  ,
         input  [19:0] sys_store_addr,
@@ -64,21 +51,38 @@ module mem_access_manager(
 
         // feature memory large access port
         output                                 fml_load_en,
-        output [$clog2(`FM_DEPTH)-1:0]         fml_load_addr,
+        output [$clog2(`FM_DEPTH_L)-1:0]       fml_load_addr,
         input  [`FM_WIDTH-1:0]                 fml_load_data,
         output                                 fml_store_en,
-        output [$clog2(`FM_DEPTH)-1:0]         fml_store_addr,
+        output [$clog2(`FM_DEPTH_L)-1:0]       fml_store_addr,
         output [`FM_WIDTH-1:0]                 fml_store_data,
 
         // feature memory small access port
         output                                 fms_load_en,
-        output [$clog2(`FM_DEPTH)-1:0]         fms_load_addr,
+        output [$clog2(`FM_DEPTH_S)-1:0]       fms_load_addr,
         input  [`FM_WIDTH-1:0]                 fms_load_data,
         output                                 fms_store_en,
-        output [$clog2(`FM_DEPTH)-1:0]         fms_store_addr,
+        output [$clog2(`FM_DEPTH_S)-1:0]       fms_store_addr,
         output [`FM_WIDTH-1:0]                 fms_store_data,
 
+        ///////////////////////////////////////////////////////
         // cim memory small access port
+        output                                 npul_store_en,
+        output [$clog2(`CIM_DEPTH_L)-1:0]      npul_store_addr,
+        output [`CIM_WIDTH-1:0]                npul_store_data,
+        output                                 npus_store_en,
+        output [$clog2(`CIM_DEPTH_S)-1:0]      npus_store_addr,
+        output [`CIM_WIDTH-1:0]                npus_store_data,
+
+        // exponent memory
+        output                                 exp_load_en,
+        output [$clog2(`EXP_DEPTH)-1:0]        exp_load_addr,
+        output [`EXP_WIDTH-1:0]                exp_load_data,
+        output                                 exp_store_en,
+        output [$clog2(`EXP_DEPTH)-1:0]        exp_store_addr,
+        output [`EXP_WIDTH-1:0]                exp_store_data,
+        ///////////////////////////////////////////////////////
+
 
         // configuration status registers access port
         output                                 csr_load_en,
@@ -97,18 +101,30 @@ module mem_access_manager(
     localparam OBL_Size = `OB_DEPTH;
     localparam OBS_Size = `OB_DEPTH;
 
-    localparam FML_Size = `FM_DEPTH;
-    localparam FMS_Size = `FM_DEPTH;
+    localparam FML_Size = `FM_DEPTH_L;
+    localparam FMS_Size = `FM_DEPTH_S;
 
     localparam CSR_Size = `CSR_DEPTH;
+    ////////////////////////////////
+    localparam NPUL_Size = `CIM_DEPTH_L;  // 4096
+    localparam NPUS_Size = `CIM_DEPTH_S;  // 512
+
+    localparam EXP_Size  = `EXP_DEPTH;    // 64
+    ////////////////////////////////
 
     localparam WML_Addr_Offset     = 'd0;
     localparam WMS_Addr_Offset     = WML_Addr_Offset    +    WML_Size;
     localparam OBL_Addr_Offset     = WMS_Addr_Offset    +    WMS_Size;
     localparam OBS_Addr_Offset     = OBL_Addr_Offset    +    OBL_Size;
-    localparam FML_Addr_Offset     = OBS_Addr_Offset    +    OBS_Size  +  `offset ;
+    localparam FML_Addr_Offset     = OBS_Addr_Offset    +    OBS_Size;
     localparam FMS_Addr_Offset     = FML_Addr_Offset    +    FML_Size;
-    localparam CSR_Addr_Offset     = FMS_Addr_Offset    +    FMS_Size;
+    //////////////////////////////////////////////////////////////////
+    localparam NPUL_Addr_Offset    = FMS_Addr_Offset    +    FMS_Size + `offset;
+    localparam NPUS_Addr_Offset    = NPUL_Addr_Offset   +    NPUL_Size;
+    localparam EXP_Addr_Offset     = NPUS_Addr_Offset   +    NPUS_Size;
+    localparam CSR_Addr_Offset     = EXP_Addr_Offset   +    EXP_Size;
+    // localparam CSR_Addr_Offset     = FMS_Addr_Offset    +    FMS_Size;
+    //////////////////////////////////////////////////////////////////
 
 
     localparam WML_Addr_Start = WML_Addr_Offset;
@@ -129,6 +145,17 @@ module mem_access_manager(
     localparam FMS_Addr_Start = FMS_Addr_Offset;
     localparam FMS_Addr_End   = FMS_Addr_Offset + FMS_Size - 1'b1;
 
+    ///////////////////////////////////////////
+    localparam NPUL_Addr_Start = NPUL_Addr_Offset;
+    localparam NPUL_Addr_End   = NPUL_Addr_Offset + NPUL_Size - 1'b1;
+
+    localparam NPUS_Addr_Start = NPUS_Addr_Offset;
+    localparam NPUS_Addr_End   = NPUS_Addr_Offset + NPUS_Size - 1'b1;
+
+    localparam EXP_Addr_Start  = EXP_Addr_Offset;
+    localparam EXP_Addr_End    = EXP_Addr_Offset + EXP_Size - 1'b1;
+    ///////////////////////////////////////////
+
     localparam CSR_Addr_Start = CSR_Addr_Offset;
     localparam CSR_Addr_End   = CSR_Addr_Offset + CSR_Size - 1'b1;
 
@@ -139,6 +166,8 @@ module mem_access_manager(
     wire is_load_fml_addr   ;
     wire is_load_fms_addr   ;
     wire is_load_csr_addr   ;
+    //**************************7.18添加 exp_load
+    wire is_load_exp_addr	;
 
     wire is_store_wml_addr  ;
     wire is_store_wms_addr  ;
@@ -146,6 +175,12 @@ module mem_access_manager(
     wire is_store_obs_addr  ;
     wire is_store_fml_addr  ;
     wire is_store_fms_addr  ;
+
+    /////////////////////////
+    wire is_store_npul_addr ;
+    wire is_store_npus_addr ;
+    wire is_store_exp_addr;
+    /////////////////////////
     wire is_store_csr_addr  ;
 
 
@@ -157,6 +192,8 @@ module mem_access_manager(
     assign is_load_fml_addr     = (sys_load_addr >= FML_Addr_Start)  && (sys_load_addr <= FML_Addr_End);
     assign is_load_fms_addr     = (sys_load_addr >= FMS_Addr_Start)  && (sys_load_addr <= FMS_Addr_End);
     assign is_load_csr_addr     = (sys_load_addr >= CSR_Addr_Start)  && (sys_load_addr <= CSR_Addr_End);
+    //******************************************************************************************************7.18添加 exp_load
+    assign is_load_exp_addr     = (sys_load_addr >= EXP_Addr_Start)  && (sys_load_addr <= EXP_Addr_End);
 
     assign is_store_wml_addr    = (sys_store_addr >= WML_Addr_Start)  && (sys_store_addr <= WML_Addr_End);
     assign is_store_wms_addr    = (sys_store_addr >= WMS_Addr_Start)  && (sys_store_addr <= WMS_Addr_End);
@@ -164,6 +201,11 @@ module mem_access_manager(
     assign is_store_obs_addr    = (sys_store_addr >= OBS_Addr_Start)  && (sys_store_addr <= OBS_Addr_End);
     assign is_store_fml_addr    = (sys_store_addr >= FML_Addr_Start)  && (sys_store_addr <= FML_Addr_End);
     assign is_store_fms_addr    = (sys_store_addr >= FMS_Addr_Start)  && (sys_store_addr <= FMS_Addr_End);
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
+    assign is_store_npul_addr   = (sys_store_addr >= NPUL_Addr_Start) && (sys_store_addr <= NPUL_Addr_End);
+    assign is_store_npus_addr   = (sys_store_addr >= NPUS_Addr_Start) && (sys_store_addr <= NPUS_Addr_End);
+    assign is_store_exp_addr    = (sys_store_addr >= EXP_Addr_Start)  && (sys_store_addr <= EXP_Addr_End);
+    /////////////////////////////////////////////////////////////////////////////////////////////////////
     assign is_store_csr_addr    = (sys_store_addr >= CSR_Addr_Start)  && (sys_store_addr <= CSR_Addr_End);
 
 
@@ -203,6 +245,22 @@ module mem_access_manager(
     assign fms_store_addr = fms_store_en ? (sys_store_addr - FMS_Addr_Start): 'd0;
     assign fms_store_data = fms_store_en ? sys_store_data : 'd0;
 
+    ///////////////////////////////////////////////////////////
+    assign npul_store_en   = sys_store_en && is_store_npul_addr;
+    assign npul_store_addr = npul_store_en ? (sys_store_addr - NPUL_Addr_Start) : 'd0;
+    assign npul_store_data = npul_store_en ? sys_store_data : 'd0;
+    assign npus_store_en   = sys_store_en && is_store_npus_addr;
+    assign npus_store_addr = npus_store_en ? (sys_store_addr - NPUS_Addr_Start) : 'd0;
+    assign npus_store_data = npus_store_en ? sys_store_data : 'd0;
+    //*********************************************************************************7.18添加 exp_load
+    assign exp_load_en     = sys_load_en  && is_load_exp_addr;
+    assign exp_load_addr   = exp_load_en  ? (sys_load_addr - EXP_Addr_Start) : 'd0;
+    assign exp_store_en    = sys_store_en && is_store_exp_addr;
+    assign exp_store_addr  = exp_store_en  ? (sys_store_addr - EXP_Addr_Start) : 'd0;
+    assign exp_store_data  = exp_store_en  ? sys_store_data : 'd0;
+    ///////////////////////////////////////////////////////////
+
+
     assign csr_load_en    = sys_load_en && is_load_csr_addr;
     assign csr_load_addr  = csr_load_en  ? (sys_load_addr - CSR_Addr_Start) : 'd0;
     assign csr_store_en   = sys_store_en && is_store_csr_addr;
@@ -216,9 +274,10 @@ module mem_access_manager(
     reg fml_load_en_d1;
     reg fms_load_en_d1;
     reg csr_load_en_d1;
+    reg exp_load_en_d1;
 
     wire is_load_en;
-    assign is_load_en = wml_load_en || wms_load_en || obl_load_en || obs_load_en ||fml_load_en || fms_load_en || csr_load_en;
+    assign is_load_en = wml_load_en || wms_load_en || obl_load_en || obs_load_en ||fml_load_en || fms_load_en || csr_load_en || exp_load_en;
     always @(posedge clk or negedge rstn)
         if(~rstn) begin
             wml_load_en_d1 <='b0;
@@ -228,6 +287,7 @@ module mem_access_manager(
             fml_load_en_d1 <='b0;
             fms_load_en_d1 <='b0;
             csr_load_en_d1 <='b0;
+            exp_load_en_d1 <='b0;
         end
         else if(is_load_en) begin
             wml_load_en_d1  <= wml_load_en;
@@ -237,15 +297,26 @@ module mem_access_manager(
             fml_load_en_d1  <= fml_load_en;
             fms_load_en_d1  <= fms_load_en;
             csr_load_en_d1  <= csr_load_en;
+            exp_load_en_d1  <= exp_load_en;
         end
 
-    assign sys_load_data = {64{wml_load_en_d1}}  &  wml_load_data  |
-           {64{wms_load_en_d1}}  &  wms_load_data  |
-           {64{obl_load_en_d1}}  &  obl_load_data  |
-           {64{obs_load_en_d1}}  &  obs_load_data  |
-           {64{fml_load_en_d1}}  &  fml_load_data  |
-           {64{fms_load_en_d1}}  &  fms_load_data  |
-           {64{csr_load_en_d1}}  &  csr_load_data  ;
+    assign sys_load_data =  ( {64{wml_load_en_d1}}  &  wml_load_data )  |
+           					( {64{wms_load_en_d1}}  &  wms_load_data )  |
+           					( {64{obl_load_en_d1}}  &  obl_load_data )  |
+           					( {64{obs_load_en_d1}}  &  obs_load_data )  |
+           					( {64{fml_load_en_d1}}  &  fml_load_data )  |
+           					( {64{fms_load_en_d1}}  &  fms_load_data )  |
+           					( {64{csr_load_en_d1}}  &  csr_load_data )  |
+           					( {64{exp_load_en_d1}}  &  exp_load_data )  ;
+
+	assign sys_load_data_vld =  wml_load_en_d1 ||
+    							wms_load_en_d1 ||
+    							obl_load_en_d1 ||
+    							obs_load_en_d1 ||
+    							fml_load_en_d1 ||
+    							fms_load_en_d1 ||
+    							csr_load_en_d1 ||
+    							exp_load_en_d1 ;
 
 
 endmodule

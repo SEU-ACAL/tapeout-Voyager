@@ -37,9 +37,9 @@ parameter  COL_NUM = 64;
 parameter  COL_GROUP_NUM = 8;   //8 column group
 parameter  WEIGHT_W = 8;        //WEIGHT_W * COL_GROUP_NUM = COL_NUM
 
-localparam PSUM_W = 4 + $clog2(ROW_NUM);
+localparam PSUM_W = 4 + $clog2(ROW_NUM);      //12
 localparam MAC_W = 16 + $clog2(ROW_NUM);
-localparam PSUM_GROUP_W = 4+$clog2(GROUP_ROW_NUM);
+localparam PSUM_GROUP_W = 4+$clog2(GROUP_ROW_NUM);      //9
 
 input                                       CLK_CIM;
 input                                       CLK_W;

@@ -39,7 +39,7 @@
 module DW_minmax (a ,tc ,min_max ,value ,index);
 
   parameter integer width = 8;
-  parameter integer num_inputs = 2;
+  parameter integer num_inputs = 32;
 
 `define DW_n (num_inputs)
 `define DW_ind_width ((`DW_n>4096)? ((`DW_n>262144)? ((`DW_n>2097152)? ((`DW_n>8388608)? 24 : ((`DW_n> 4194304)? 23 : 22)) : ((`DW_n>1048576)? 21 : ((`DW_n>524288)? 20 : 19))) : ((`DW_n>32768)? ((`DW_n>131072)?  18 : ((`DW_n>65536)? 17 : 16)) : ((`DW_n>16384)? 15 : ((`DW_n>8192)? 14 : 13)))) : ((`DW_n>64)? ((`DW_n>512)?  ((`DW_n>2048)? 12 : ((`DW_n>1024)? 11 : 10)) : ((`DW_n>256)? 9 : ((`DW_n>128)? 8 : 7))) : ((`DW_n>8)? ((`DW_n> 32)? 6 : ((`DW_n>16)? 5 : 4)) : ((`DW_n>4)? 3 : ((`DW_n>2)? 2 : 1)))))

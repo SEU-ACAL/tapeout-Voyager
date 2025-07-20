@@ -6,18 +6,42 @@ module NPU_top (
         input 				rstn,
         //from csr_ctrl
         input         		NPU_AXI_SEL,
+        //from CSR
+        input							start_en,
+        input							fp_en,
+        //large
+        input	[3:0]					MAC_INPUT_ROW_L,
+        input	[3:0]					MAC_LENGTH_L,			//MAX:6
+        input	[9:0]					FM_ADDR_START_L,
+        input	[7:0]					last_CIMADR_L,
+        input	[64*4-1:0]				E_most_L,
+        //small
+        input	[3:0]					MAC_INPUT_ROW_S,
+        input	[3:0]					MAC_LENGTH_S,			//MAX:6
+        input	[9:0]					FM_ADDR_START_S,
+        input	[64*4-1:0]				E_most_S,
+
+        input [`EXP_DEPTH*`EXP_WIDTH-1:0]  WD_E_all,
+
         //to_CIM_mem_interface
-        // input                            			CIM_store_en,
-        // input [$clog2(`CIM_DEPTH):0]	 			CIM_store_addr,
-        // input [`CIM_WIDTH-1:0]        	 			CIM_store_data,
+        //from AXI
+        //large
+        input                                       CIM_L_store_en,
+        input [$clog2(`CIM_DEPTH_L)-1:0]            CIM_L_store_addr,
+        input [`CIM_WIDTH-1:0]                      CIM_L_store_data,
+        //small
+        input                                       CIM_S_store_en,
+        input [$clog2(`CIM_DEPTH_S)-1:0]            CIM_S_store_addr,
+        input [`CIM_WIDTH-1:0]                      CIM_S_store_data,
+
         //to SRAM_mem_interface
         output 										wml_npu_load_en_pre ,
         output [$clog2(`WM_Bank_DEPTH_L)-1:0]       wml_npu_load_addr   ,
         input [`WM_WIDTH *`WM_Bank_NUM -1:0]       	wml_npu_load_data   ,
 
         output 										fml_npu_load_en_pre ,
-        output [$clog2(`FM_Bank_DEPTH)-1:0]         fml_npu_load_addr   ,
-        input [`FM_WIDTH *`FM_Bank_NUM -1:0]       	fml_npu_load_data   ,
+        output [$clog2(`FM_Bank_DEPTH_L)-1:0]       fml_npu_load_addr   ,
+        input [`FM_WIDTH *`FM_Bank_NUM_L -1:0]       	fml_npu_load_data   ,
 
         output 										obl_npu_store_en_pre,
         output [$clog2(`OB_Bank_DEPTH)-1:0]         obl_npu_store_addr  ,
@@ -28,15 +52,12 @@ module NPU_top (
         input [`WM_WIDTH *`WM_Bank_NUM -1:0]       	wms_npu_load_data   ,
 
         output 										fms_npu_load_en_pre ,
-        output [$clog2(`FM_Bank_DEPTH)-1:0]         fms_npu_load_addr   ,
-        input [`FM_WIDTH *`FM_Bank_NUM -1:0]       	fms_npu_load_data   ,
+        output [$clog2(`FM_Bank_DEPTH_S)-1:0]       fms_npu_load_addr   ,
+        input [`FM_WIDTH *`FM_Bank_NUM_S -1:0]       	fms_npu_load_data   ,
 
         output 										obs_npu_store_en_pre,
         output [$clog2(`OB_Bank_DEPTH)-1:0]         obs_npu_store_addr  ,
-        output reg[`OB_WIDTH *`OB_Bank_NUM -1:0]    obs_npu_store_data	,
-
-        //********************TEST
-        input [`CSR_WIDTH*`CSR_DEPTH-1:0]			TEST_reg
+        output reg[`OB_WIDTH *`OB_Bank_NUM -1:0]    obs_npu_store_data
     );
     localparam Macro_ROW_NUM_L    = 256;
     localparam ROW_NUM_2_L        = 32;
@@ -47,29 +68,7 @@ module NPU_top (
     localparam COL_GROUP_NUM_L    = 8;
     localparam WEIGHT_W_L         = 8;
     localparam BUFFER_ROW_L       = 16;
-    // NPU_core_large signals
-    //input
-    reg                                   din_valid_L;
-    reg [Macro_ROW_NUM_L*8-1:0]           NNIN_L;
-    reg [$clog2(Macro_ROW_NUM_L):0]       WADR_L;
-    reg [7:0]                             WEB_L;
-    reg [7:0]                             MEB_L;
-    reg                                   fp_en_L;
-    reg [64*8-1:0]                        E_most_L;
-    reg [64*8-1:0]                        WD_E_L;
-    reg [64*8-1:0]                        WD_M_L;
-    reg [7:0]                             buffer0_rst_L;
-    reg [7:0]                             buffer1_rst_L;
-    reg [7:0]                             compute_valid_L;
-    reg [$clog2(Macro_ROW_NUM_L):0]       CIMADR_L;
-    reg                                   sign_bit_L;
-    reg [7:0]                             adder_enb_L;
-    reg [3:0]                             buffer_row_addr_L;
-    //output
-    wire [32*8*8-1:0]                     outlier_sum_L;
-    wire [7:0]                            dout_valid_L;
-    wire [256*8-1:0]                      data_out_L;
-    wire                                  CIM_compute_ready_L;
+
     localparam Macro_ROW_NUM_S    = 32;
     localparam ROW_NUM_2_S        = 16;
     localparam ROW_NUM_4_S        = 4;
@@ -79,89 +78,182 @@ module NPU_top (
     localparam COL_GROUP_NUM_S    = 8;
     localparam WEIGHT_W_S         = 8;
     localparam BUFFER_ROW_S       = 16;
+
+    //CIM_mem_interface_large signals
+    wire                   					AXI_din_valid_L;
+    wire [Macro_ROW_NUM_L*8-1:0] 			AXI_NNIN_E_L;
+    wire [Macro_ROW_NUM_L*8-1:0] 			AXI_NNIN_M_L;
+    wire [$clog2(Macro_ROW_NUM_L):0] 		AXI_WADR_L;
+    wire 	            					AXI_WEB_L;
+    wire [3:0]            					AXI_MEB_L;
+    wire [63:0]       						AXI_WD_E_L;
+    wire [63:0]       						AXI_WD_M_L;
+    wire 	            					AXI_buffer0_rst_L;
+    wire 	            					AXI_buffer1_rst_L;
+    wire 	            					AXI_compute_valid_L;
+    wire [$clog2(Macro_ROW_NUM_L):0] 		AXI_CIMADR_L;
+    wire 	             					AXI_adder_enb_L;
+    wire [3:0]             					AXI_buffer_row_addr_L;
+
+    // NPU_core_large signals
+    //input
+    wire [3:0]                            	MEB_L;
+    //CIM_coumpute port
+    wire [Macro_ROW_NUM_L*8-1:0]			NNIN_E_L;
+    wire [Macro_ROW_NUM_L*8-1:0]		 	NNIN_M_L;
+    wire                                  	din_valid_L;
+    wire 	                             	compute_valid_L;
+    wire [$clog2(Macro_ROW_NUM_L):0]      	CIMADR_L;
+    wire 	                             	adder_enb_L;
+    wire [3:0]                            	buffer_row_addr_L;
+    //write_CIM port
+    wire [$clog2(Macro_ROW_NUM_L):0]      	WADR_L;
+    wire  	                             	WEB_L;
+    // reg [64*4-1:0]                    	   E_most_L;
+    wire [64*4-1:0]                       	WD_E_L;			//from CSR
+    wire [64*4-1:0] 						WD_M_L;
+    wire 	                            	buffer1_rst_L;
+    wire 	                            	buffer0_rst_L;
+    //output
+    wire [32*8*4-1:0]                    	outlier_sum_L;
+    wire                             	 	outlier_out_valid_L;
+    wire [256*4-1:0]                     	data_out_L;
+    wire 								 	Macro_out_valid_L;
+
+    // NPU_ctrl_large signals
+    wire                   					NPU_din_valid_L;
+    wire [Macro_ROW_NUM_L*8-1:0] 			NPU_NNIN_E_L;
+    wire [Macro_ROW_NUM_L*8-1:0] 			NPU_NNIN_M_L;
+    wire [$clog2(Macro_ROW_NUM_L):0] 		NPU_WADR_L;
+    wire [3:0]            					NPU_WEB_L;
+    wire [3:0]            					NPU_MEB_L;
+	wire [64*4-1:0]       					NPU_WD_E_L;
+    wire [64*4-1:0]       					NPU_WD_M_L;
+    wire 	            					NPU_buffer0_rst_L;
+    wire 	            					NPU_buffer1_rst_L;
+    wire 	            					NPU_compute_valid_L;
+    wire [$clog2(Macro_ROW_NUM_L):0] 		NPU_CIMADR_L;
+    wire 	             					NPU_adder_enb_L;
+    wire [3:0]             					NPU_buffer_row_addr_L;
+
+
+
+
+    // CIM_memory_interface_small signals
+    wire                                   AXI_din_valid_S;
+    wire [Macro_ROW_NUM_S*8-1:0]           AXI_NNIN_E_S;
+    wire [Macro_ROW_NUM_S*8-1:0]           AXI_NNIN_M_S;
+    wire [$clog2(Macro_ROW_NUM_S):0]       AXI_WADR_S;
+    wire [3:0]                             AXI_WEB_S;
+    wire [3:0]                             AXI_MEB_S;
+    wire [64-1:0]                          AXI_WD_E_S;
+    wire [64-1:0]                          AXI_WD_M_S;
+    wire 	                               AXI_buffer0_rst_S;
+    wire 	                               AXI_buffer1_rst_S;
+    wire [1:0]                             AXI_CIMADR_S;
+    wire 	                               AXI_adder_enb_S;
+    wire [3:0]                             AXI_buffer_row_addr_S;
+
     // NPU_core_small signals
     // input
-    reg                                   din_valid_S;
-    reg [Macro_ROW_NUM_S*8*8-1:0]         NNIN_all_S;
-    reg [1:0]                             combine_mode_S;
-    reg [2:0]                             NNIN_sel_S;
-    reg [$clog2(Macro_ROW_NUM_S):0]       WADR_S;
-    reg [7:0]                             WEB_S;
-    reg [7:0]                             MEB_S;
-    reg                                   fp_en_S;
-    reg [64*8-1:0]                        E_most_S;
-    reg [64*8-1:0]                        WD_E_S;
-    reg [64*8-1:0]                        WD_M_S;
-    reg [7:0]                             buffer0_rst_S;
-    reg [7:0]                             buffer1_rst_S;
-    reg [7:0]                             compute_valid_S;
-    reg [8*Macro_ROW_NUM_S-1:0]           full_NNIN_S;
-    reg [1:0]                             CIMADR_S;
-    reg                                   sign_bit_S;
-    reg [7:0]                             adder_enb_S;
-    reg [3:0]                             buffer_row_addr_S;
+    wire                                   din_valid_S;
+    wire [Macro_ROW_NUM_S*8-1:0]           NNIN_E_S;
+    wire [Macro_ROW_NUM_S*8-1:0]           NNIN_M_S;
+    wire [$clog2(Macro_ROW_NUM_S):0]       WADR_S;
+    wire [3:0]                             WEB_S;
+    wire [3:0]                             MEB_S;
+    wire [64*4-1:0]                        WD_E_S;
+    wire [64*4-1:0]                        WD_M_S;
+    wire 	                               buffer0_rst_S;
+    wire 	                               buffer1_rst_S;
+    wire [1:0]                             CIMADR_S;
+    wire 	                               adder_enb_S;
+    wire [3:0]                             buffer_row_addr_S;
     // output
-    wire [15*8*8-1:0]                     outlier_sum_S;
-    wire [7:0]                            dout_valid_S;
-    wire [256*8-1:0]                      data_out_S;
-    wire                                  CIM_store_ready_S;
+    wire [15*8*8-1:0]                      outlier_sum_S;
+    wire 	                               dout_valid_S;
+    wire [256*8-1:0]                       data_out_S;
+    wire                                   Macro_out_valid_S;
+
+    // NPU_ctrl_small signals
+    wire                                   NPU_din_valid_S;
+    wire [Macro_ROW_NUM_S*8-1:0]           NPU_NNIN_E_S;
+    wire [Macro_ROW_NUM_S*8-1:0]           NPU_NNIN_M_S;
+    wire [$clog2(Macro_ROW_NUM_S):0]       NPU_WADR_S;
+    wire [3:0]                             NPU_WEB_S;
+    wire [3:0]                             NPU_MEB_S;
+    // wire [64*8-1:0]                        NPU_E_most_S;
+    wire [64*4-1:0]                        NPU_WD_E_S;
+    wire [64*4-1:0]                        NPU_WD_M_S;
+    wire 	                               NPU_buffer0_rst_S;
+    wire 	                               NPU_buffer1_rst_S;
+    wire [1:0]                             NPU_CIMADR_S;
+    wire 	                               NPU_adder_enb_S;
+    wire [3:0]                             NPU_buffer_row_addr_S;
 
 
 
-    //********************TEST
-    always @(*) begin
-        {WD_E_L, WD_M_L} = wml_npu_load_data;
-        NNIN_L = fml_npu_load_data;
-        obl_npu_store_data = outlier_sum_L + data_out_L;
-        {WD_E_S, WD_M_S} = wms_npu_load_data;
-        full_NNIN_S = fms_npu_load_data;
-        obs_npu_store_data = outlier_sum_S+data_out_S;
-    end
-	// 随机分配 TEST_reg 的输出到这些信号
-	always @(*) begin
-		din_valid_L         = TEST_reg[0];
-		WADR_L              = TEST_reg[8 +: $clog2(Macro_ROW_NUM_L)+1];
-		WEB_L               = TEST_reg[16 +: 8];
-		MEB_L               = TEST_reg[24 +: 8];
-		fp_en_L             = TEST_reg[32];
-		E_most_L            = TEST_reg[40 +: 64*8];
-		buffer0_rst_L       = TEST_reg[552 +: 8];
-		buffer1_rst_L       = TEST_reg[560 +: 8];
-		compute_valid_L     = TEST_reg[568 +: 8];
-		CIMADR_L            = TEST_reg[576 +: $clog2(Macro_ROW_NUM_L)+1];
-		sign_bit_L          = TEST_reg[584];
-		adder_enb_L         = TEST_reg[592 +: 8];
-		buffer_row_addr_L   = TEST_reg[600 +: 4];
+    //large singal SEL
+    // MEB
+    assign MEB_L               = NPU_AXI_SEL ? NPU_MEB_L               : AXI_MEB_L;
+    // CIM_compute port
+    assign NNIN_E_L            = NPU_AXI_SEL ? NPU_NNIN_E_L            : AXI_NNIN_E_L;
+    assign NNIN_M_L            = NPU_AXI_SEL ? NPU_NNIN_M_L            : AXI_NNIN_M_L;
+    assign din_valid_L         = NPU_AXI_SEL ? NPU_din_valid_L         : AXI_din_valid_L;
+    assign compute_valid_L     = NPU_AXI_SEL ? NPU_compute_valid_L     : AXI_compute_valid_L;
+    assign CIMADR_L            = NPU_AXI_SEL ? NPU_CIMADR_L            : AXI_CIMADR_L;
+    assign adder_enb_L         = NPU_AXI_SEL ? NPU_adder_enb_L         : AXI_adder_enb_L;
+    assign buffer_row_addr_L   = NPU_AXI_SEL ? NPU_buffer_row_addr_L   : AXI_buffer_row_addr_L;
+    // write_CIM port
+    assign WADR_L              = NPU_AXI_SEL ? NPU_WADR_L              : AXI_WADR_L;
+    assign WEB_L               = NPU_AXI_SEL ? NPU_WEB_L               : AXI_WEB_L;
+    assign WD_E_L              = NPU_AXI_SEL ? NPU_WD_E_L              : {4{AXI_WD_E_L}};
+    assign WD_M_L              = NPU_AXI_SEL ? NPU_WD_M_L              : {4{AXI_WD_M_L}};
+    assign buffer0_rst_L       = NPU_AXI_SEL ? NPU_buffer0_rst_L       : AXI_buffer0_rst_L;
+    assign buffer1_rst_L       = NPU_AXI_SEL ? NPU_buffer1_rst_L       : AXI_buffer1_rst_L;
 
-		din_valid_S         = TEST_reg[608];
-		NNIN_all_S          = TEST_reg[616 +: Macro_ROW_NUM_S*8*8];
-		combine_mode_S      = TEST_reg[1816 +: 2];
-		NNIN_sel_S          = TEST_reg[1818 +: 3];
-		WADR_S              = TEST_reg[1821 +: $clog2(Macro_ROW_NUM_S)+1];
-		WEB_S               = TEST_reg[1829 +: 8];
-		MEB_S               = TEST_reg[1837 +: 8];
-		fp_en_S             = TEST_reg[1845];
-		E_most_S            = TEST_reg[1846 +: 64*8];
-		buffer0_rst_S       = TEST_reg[2358 +: 8];
-		buffer1_rst_S       = TEST_reg[2366 +: 8];
-		compute_valid_S     = TEST_reg[2374 +: 8];
-		CIMADR_S            = TEST_reg[2382 +: 2];
-		sign_bit_S          = TEST_reg[2384];
-		adder_enb_S         = TEST_reg[2385 +: 8];
-		buffer_row_addr_S   = TEST_reg[2393 +: 4];
-	end
-    //********************TEST
+    //small singal SEL
+    assign din_valid_S         = NPU_AXI_SEL ? NPU_din_valid_S        : AXI_din_valid_S;
+    assign NNIN_E_S            = NPU_AXI_SEL ? NPU_NNIN_E_S           : AXI_NNIN_E_S;
+    assign NNIN_M_S            = NPU_AXI_SEL ? NPU_NNIN_M_S           : AXI_NNIN_M_S;
+    assign WADR_S              = NPU_AXI_SEL ? NPU_WADR_S             : AXI_WADR_S;
+    assign WEB_S               = NPU_AXI_SEL ? NPU_WEB_S              : AXI_WEB_S;
+    assign MEB_S               = NPU_AXI_SEL ? NPU_MEB_S              : AXI_MEB_S;
+    assign WD_E_S              = NPU_AXI_SEL ? NPU_WD_E_S             : {4{AXI_WD_E_S}};
+    assign WD_M_S              = NPU_AXI_SEL ? NPU_WD_M_S             : {4{AXI_WD_M_S}};
+    assign buffer0_rst_S       = NPU_AXI_SEL ? NPU_buffer0_rst_S      : AXI_buffer0_rst_S;
+    assign buffer1_rst_S       = NPU_AXI_SEL ? NPU_buffer1_rst_S      : AXI_buffer1_rst_S;
+    assign CIMADR_S            = NPU_AXI_SEL ? NPU_CIMADR_S           : AXI_CIMADR_S;
+    assign adder_enb_S         = NPU_AXI_SEL ? NPU_adder_enb_S        : AXI_adder_enb_S;
+    assign buffer_row_addr_S   = NPU_AXI_SEL ? NPU_buffer_row_addr_S  : AXI_buffer_row_addr_S;
 
 
-
-
-
-
-
-
-
-
-
+    //CIM_large_memory_interface instantiation
+    CIM_memory_interface_large#(
+                                  .Macro_ROW_NUM       ( Macro_ROW_NUM_L )
+                              )u_CIM_memory_interface_large(
+                                  .clk                 ( clk_w                 ),
+                                  .rstn                ( rstn                ),
+                                  .CIM_store_en        ( CIM_L_store_en        ),
+                                  .CIM_store_addr      ( CIM_L_store_addr      ),
+                                  .CIM_store_data      ( CIM_L_store_data      ),
+                                  .exp_data            ( WD_E_all            ),
+                                  .fp_en               ( fp_en               ),
+                                  .AXI_din_valid_L     ( AXI_din_valid_L     ),
+                                  .AXI_NNIN_E_L        ( AXI_NNIN_E_L          ),
+                                  .AXI_NNIN_M_L        ( AXI_NNIN_M_L          ),
+                                  .AXI_WADR_L          ( AXI_WADR_L          ),
+                                  .AXI_WEB_L           ( AXI_WEB_L           ),
+                                  .AXI_MEB_L           ( AXI_MEB_L           ),
+                                  .AXI_WD_E_L          ( AXI_WD_E_L          ),
+                                  .AXI_WD_M_L          ( AXI_WD_M_L          ),
+                                  .AXI_buffer0_rst_L   ( AXI_buffer0_rst_L   ),
+                                  .AXI_buffer1_rst_L   ( AXI_buffer1_rst_L   ),
+                                  .AXI_compute_valid_L ( AXI_compute_valid_L ),
+                                  .AXI_CIMADR_L        ( AXI_CIMADR_L        ),
+                                  .AXI_adder_enb_L     ( AXI_adder_enb_L     ),
+                                  .AXI_buffer_row_addr_L  ( AXI_buffer_row_addr_L  )
+                              );
 
     // NPU_core_large instantiation
     NPU_core_large #(
@@ -179,11 +271,13 @@ module NPU_top (
                        .clk_cim           ( clk_cim           ),
                        .rstn              ( rstn              ),
                        .din_valid         ( din_valid_L         ),
-                       .NNIN              ( NNIN_L              ),
+                       //    .NNIN              ( NNIN_L              ),
+                       .NNIN_E            ( NNIN_E_L              ),
+                       .NNIN_M            ( NNIN_M_L              ),
                        .WADR              ( WADR_L              ),
                        .WEB               ( WEB_L               ),
                        .MEB               ( MEB_L               ),
-                       .fp_en             ( fp_en_L             ),
+                       .fp_en             ( fp_en             ),
                        .E_most            ( E_most_L            ),
                        .WD_E              ( WD_E_L              ),
                        .WD_M              ( WD_M_L              ),
@@ -191,14 +285,90 @@ module NPU_top (
                        .buffer1_rst       ( buffer1_rst_L       ),
                        .compute_valid     ( compute_valid_L     ),
                        .CIMADR            ( CIMADR_L            ),
-                       .sign_bit          ( sign_bit_L          ),
                        .adder_enb         ( adder_enb_L         ),
                        .buffer_row_addr   ( buffer_row_addr_L   ),
                        .outlier_sum       ( outlier_sum_L       ),
-                       .dout_valid        ( dout_valid_L        ),
+                       .outlier_out_valid ( outlier_out_valid_L ),
                        .data_out          ( data_out_L          ),
-                       .CIM_compute_ready ( CIM_compute_ready_L )
+                       .Macro_out_valid   ( Macro_out_valid_L	)
                    );
+
+    NPU_ctrl_large#(
+                      .Macro_ROW_NUM_L      ( Macro_ROW_NUM_L )
+                  )u_NPU_ctrl_large(
+                      .clk_w                ( clk_w                ),
+                      .clk_cim              ( clk_cim              ),
+                      .rstn                 ( rstn                 ),
+                      .NPU_AXI_SEL          ( NPU_AXI_SEL          ),
+                      .MAC_INPUT_ROW        ( MAC_INPUT_ROW_L        ),
+                      .MAC_LENGTH           ( MAC_LENGTH_L           ),
+                      .FM_ADDR_START_L      ( FM_ADDR_START_L      ),
+                      .start_en_L           ( start_en           ),
+                      .fp_en_L              ( fp_en              ),
+                      .last_CIMADR_L        ( last_CIMADR_L        ),
+                      .E_most_L             ( E_most_L             ),
+                      .MEB_L                ( NPU_MEB_L                ),
+                      .NNIN_E_L             ( NPU_NNIN_E_L               ),
+                      .NNIN_M_L             ( NPU_NNIN_M_L               ),
+                      .din_valid_L          ( NPU_din_valid_L          ),
+                      .compute_valid_L      ( NPU_compute_valid_L      ),
+                      .CIMADR_L             ( NPU_CIMADR_L             ),
+                      .adder_enb_L          ( NPU_adder_enb_L          ),
+                      .buffer_row_addr_L    ( NPU_buffer_row_addr_L    ),
+                      .WADR_L               ( NPU_WADR_L               ),
+                      .WEB_L                ( NPU_WEB_L                ),
+                      .WD_E_L               ( NPU_WD_E_L               ),
+                      .WD_M_L               ( NPU_WD_M_L               ),
+                      .buffer1_rst_L        ( NPU_buffer1_rst_L        ),
+                      .buffer0_rst_L        ( NPU_buffer0_rst_L        ),
+                      .outlier_sum_L        ( outlier_sum_L        ),
+                      .outlier_out_valid_L  ( outlier_out_valid_L  ),
+                      .data_out_L           ( data_out_L           ),
+                      .Macro_out_valid      ( Macro_out_valid_L    ),
+                      .wml_npu_load_en_pre  ( wml_npu_load_en_pre  ),
+                      .wml_npu_load_addr    ( wml_npu_load_addr    ),
+                      .wml_npu_load_data    ( wml_npu_load_data    ),
+                      .fml_npu_load_en_pre  ( fml_npu_load_en_pre  ),
+                      .fml_npu_load_addr    ( fml_npu_load_addr    ),
+                      .fml_npu_load_data    ( fml_npu_load_data    ),
+                      .obl_npu_store_en_pre ( obl_npu_store_en_pre ),
+                      .obl_npu_store_addr   ( obl_npu_store_addr   ),
+                      .obl_npu_store_data   ( obl_npu_store_data   )
+                  );
+
+
+
+    //CIM_memory_interface_small inst
+    CIM_memory_interface_small#(
+                                  .Macro_ROW_NUM    ( Macro_ROW_NUM_S )
+                              )u_CIM_memory_interface_small(
+                                  .clk              	 ( clk_w              		),
+                                  .rstn             	 ( rstn             		),
+
+                                  .CIM_store_en     	 ( CIM_S_store_en     		),
+                                  .CIM_store_addr   	 ( CIM_S_store_addr   		),
+                                  .CIM_store_data   	 ( CIM_S_store_data   		),
+                                  .exp_data              ( WD_E_all					 ),
+                                  .fp_en                 ( fp_en					),
+
+                                  .AXI_din_valid_S       ( AXI_din_valid_S		 ),
+                                  .AXI_NNIN_E_S            ( AXI_NNIN_E_S			 ),
+                                  .AXI_NNIN_M_S            ( AXI_NNIN_M_S			 ),
+
+                                  .AXI_WADR_S            ( AXI_WADR_S),
+                                  .AXI_WEB_S             ( AXI_WEB_S),
+                                  .AXI_MEB_S             ( AXI_MEB_S),
+
+                                  .AXI_WD_E_S            ( AXI_WD_E_S),
+                                  .AXI_WD_M_S            ( AXI_WD_M_S),
+                                  .AXI_buffer0_rst_S     ( AXI_buffer0_rst_S),
+                                  .AXI_buffer1_rst_S     ( AXI_buffer1_rst_S),
+
+                                  .AXI_CIMADR_S          ( AXI_CIMADR_S),
+                                  .AXI_adder_enb_S       ( AXI_adder_enb_S),
+                                  .AXI_buffer_row_addr_S ( AXI_buffer_row_addr_S)
+                              );
+
 
     // NPU_core_small instantiation
     NPU_core_small #(
@@ -212,31 +382,72 @@ module NPU_top (
                        .WEIGHT_W        ( WEIGHT_W_S        ),
                        .BUFFER_ROW      ( BUFFER_ROW_S      )
                    ) u_NPU_core_small (
-                       .clk_cim         ( clk_cim          ),
-                       .clk_w           ( clk_w            ),
-                       .rstn            ( rstn             ),
-                       .din_valid       ( din_valid_S      ),
-                       .NNIN_all        ( NNIN_all_S       ),
-                       .combine_mode    ( combine_mode_S   ),
-                       .NNIN_sel        ( NNIN_sel_S       ),
-                       .WADR            ( WADR_S           ),
-                       .WEB             ( WEB_S            ),
-                       .MEB             ( MEB_S            ),
-                       .fp_en           ( fp_en_S          ),
-                       .E_most          ( E_most_S         ),
-                       .WD_E            ( WD_E_S           ),
-                       .WD_M            ( WD_M_S           ),
-                       .buffer0_rst     ( buffer0_rst_S    ),
-                       .buffer1_rst     ( buffer1_rst_S    ),
-                       .compute_valid   ( compute_valid_S  ),
-                       .full_NNIN       ( full_NNIN_S      ),
-                       .CIMADR          ( CIMADR_S         ),
-                       .sign_bit        ( sign_bit_S       ),
-                       .adder_enb       ( adder_enb_S      ),
-                       .buffer_row_addr ( buffer_row_addr_S),
-                       .outlier_sum     ( outlier_sum_S    ),
-                       .dout_valid      ( dout_valid_S     ),
-                       .data_out        ( data_out_S       ),
-                       .CIM_store_ready ( CIM_store_ready_S )
+                       .clk_cim         		( clk_cim           ),
+                       .clk_w           		( clk_w             ),
+                       .rstn            		( rstn              ),
+                       .din_valid       		( din_valid_S       ),
+                       .NNIN_E        		( NNIN_E_S            ),
+                       .NNIN_M        		( NNIN_M_S            ),
+                       .WADR            		( WADR_S            ),
+                       .WEB             		( WEB_S             ),
+                       .MEB             		( MEB_S             ),
+                       .fp_en           		( fp_en             ),
+                       .E_most          		( E_most_S          ),
+                       .WD_E            		( WD_E_S            ),
+                       .WD_M            		( WD_M_S            ),
+                       .buffer0_rst     		( buffer0_rst_S     ),
+                       .buffer1_rst     		( buffer1_rst_S     ),
+                       .CIMADR          		( CIMADR_S          ),
+                       .adder_enb       		( adder_enb_S       ),
+                       .buffer_row_addr 		( buffer_row_addr_S ),
+                       .outlier_sum     		( outlier_sum_S     ),
+                       .outlier_out_valid       ( dout_valid_S      ),
+                       .data_out        		( data_out_S        ),
+                       .Macro_out_valid 		( Macro_out_valid_S )
                    );
+
+    NPU_ctrl_small
+        u_NPU_ctrl_small (
+            .clk_w                        ( clk_w                    ),
+            .clk_cim                      ( clk_cim                  ),
+            .rstn                         ( rstn                     ),
+            .MAC_INPUT_ROW                ( MAC_INPUT_ROW_S            ),
+            .MAC_LENGTH                   ( MAC_LENGTH_S               ),
+            // from CSR
+            .FM_ADDR_START_S              ( FM_ADDR_START_S          ),
+            .start_en_S                   ( start_en               ),
+            .fp_en_S                      ( fp_en                    ),
+            .E_most_S                     ( E_most_S                 ),
+
+            // to memory interface
+            .wms_npu_load_en_pre          ( wms_npu_load_en_pre      ),
+            .wms_npu_load_addr            ( wms_npu_load_addr        ),
+            .wms_npu_load_data            ( wms_npu_load_data        ),
+            // .wms_npu_load_valid           ( wms_npu_load_valid       ),
+            .fms_npu_load_en_pre          ( fms_npu_load_en_pre      ),
+            .fms_npu_load_addr            ( fms_npu_load_addr        ),
+            .fms_npu_load_data            ( fms_npu_load_data        ),
+            // .fms_npu_load_valid           ( fms_npu_load_valid       ),
+            .obs_npu_store_en_pre         ( obs_npu_store_en_pre     ),
+            .obs_npu_store_addr           ( obs_npu_store_addr       ),
+            .obs_npu_store_data           ( obs_npu_store_data       ),
+            // to npu core
+            .din_valid_S                  ( NPU_din_valid_S         ),
+            .NNIN_E_S                       ( NPU_NNIN_E_S              ),
+			.NNIN_M_S                       ( NPU_NNIN_M_S              ),
+            .WADR_S                       ( NPU_WADR_S              ),
+            .WEB_S                        ( NPU_WEB_S               ),
+            .MEB_S                        ( NPU_MEB_S               ),
+            .WD_E_S                       ( NPU_WD_E_S              ),
+            .WD_M_S                       ( NPU_WD_M_S              ),
+            .buffer1_rst_S                ( NPU_buffer1_rst_S       ),
+            .buffer0_rst_S                ( NPU_buffer0_rst_S       ),
+            .CIMADR_S                     ( NPU_CIMADR_S            ),
+            .adder_enb_S                  ( NPU_adder_enb_S         ),
+            .buffer_row_addr_S            ( NPU_buffer_row_addr_S   ),
+            .outlier_sum_S                ( outlier_sum_S       ),
+            .outlier_out_valid_S          ( dout_valid_S ),
+            .data_out_S                   ( data_out_S          ),
+            .Macro_out_valid_S            ( Macro_out_valid_S       )
+        );
 endmodule

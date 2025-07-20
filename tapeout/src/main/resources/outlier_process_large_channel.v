@@ -1,6 +1,6 @@
 module outlier_process_large_channel #(
         parameter ROW_NUM_Macro  = 256,
-        parameter ROW_NUM_2      = 64,
+        parameter ROW_NUM_2      = 32,
         parameter ROW_NUM_4      = 16,
         parameter BUFFER_2       = 2,     //bit
         parameter BUFFER_4       = 4
@@ -121,15 +121,13 @@ module outlier_process_large_channel #(
             cnt <= 3'b000;
             dout_valid <= 1'b1;
         end
-        // else if(cnt == 3'b0) begin
-        //     if(compute_valid) begin
-        //         cnt <= cnt + 1'b1;
-        //         dout_valid <= 1'b0;
-        //     end
-        // end
-        else begin
+        else if(cnt == 3'b0) begin
             if(compute_valid)
                 cnt <= cnt + 1'b1;
+            dout_valid <= 1'b0;
+        end
+        else begin
+            cnt <= cnt + 1'b1;
             dout_valid <= 1'b0;
         end
     end

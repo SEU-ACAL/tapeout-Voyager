@@ -27,16 +27,17 @@ module Macro_large #(
     input                          NNIN_SI,
     input                          PSUM_SI,
 
-    input [1:0]                    din_valid,
+    input                          din_valid,
 
     input                          adder_enb,
     input [3:0]                    buffer_row_addr,
     
     output [COL_NUM-1:0]           Q,
-    output [255:0]                 data_out
+    output [255:0]                 data_out,
+	output							Macro_out_valid
 );
 
-    localparam PSUM_W = 4 + $clog2(ROW_NUM);
+    localparam PSUM_W = 4 + $clog2(ROW_NUM);      //12
 
     wire [PSUM_W*2*COL_GROUP_NUM-1:0]   PSUM_4;
     // wire [COL_NUM-1:0]                  Q;
@@ -90,7 +91,8 @@ module Macro_large #(
         .din_valid       (temp_psum_valid),
         .buffer_row_addr (buffer_row_addr),
         .Macro_out       (temp_psum),
-        .data_out        (data_out)
+        .data_out        (data_out),
+		.Macro_out_valid (Macro_out_valid)
     );
 
 endmodule

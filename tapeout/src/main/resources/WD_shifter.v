@@ -1,5 +1,7 @@
 `timescale 1ns / 1ps
 
+// 7.12更新
+
 module WD_shifter #(
 	parameter ROW_NUM = 256,
 	parameter WD_E_W = 8,
@@ -28,23 +30,28 @@ reg 												delta_E_sign;
 reg	[7:0]											delta_E_man;            // 8bit
 reg [7:0]											WD_M_shifted;           // 8bit
 
+wire [8:0]											WD_M_sup1;              // 9bit, WD_M补1后的, 为了不损失精度用9bit
+wire [8:0]											WD_M_sup1_bu;           // 9bit, WD_M_bu1的补码
+
 assign delta_E = WD_E - E_most;
+assign WD_M_sup1 = {WD_M[7],1'b1,WD_M[6:0]};
+assign WD_M_sup1_bu = (!WD_M[7]) ? (WD_M_sup1) : ({1'b1,~WD_M_sup1[7:0]} + 9'b1);
 
 always @(*) begin
 	// 计算
 	delta_E_sign = delta_E[8];
 	delta_E_man = delta_E_sign ? (~delta_E[7:0]+1'b1):delta_E[7:0];
-	
+
 	// 给macro
 	case(delta_E_man)
-		8'd0:WD_M_shifted = {WD_M[7],1'b1,WD_M[6:1]};
-		8'd1:WD_M_shifted = (!delta_E_sign) ? WD_M								:	({{(8'd2){WD_M[7]}},1'b1,WD_M[6:2]});
-		8'd2:WD_M_shifted = (!delta_E_sign) ? ({WD_M[7],WD_M[5:0],1'b0})		:	({{(8'd3){WD_M[7]}},1'b1,WD_M[6:3]});
-		8'd3:WD_M_shifted = (!delta_E_sign) ? ({WD_M[7],WD_M[4:0],2'b00})		:	({{(8'd4){WD_M[7]}},1'b1,WD_M[6:4]});
-		8'd4:WD_M_shifted = (!delta_E_sign) ? ({WD_M[7],WD_M[3:0],3'b000})		:	({{(8'd5){WD_M[7]}},1'b1,WD_M[6:5]});
-		8'd5:WD_M_shifted = (!delta_E_sign) ? ({WD_M[7],WD_M[2:0],4'b0000})		:	({{(8'd6){WD_M[7]}},1'b1,WD_M[6]});
-		8'd6:WD_M_shifted = (!delta_E_sign) ? ({WD_M[7],WD_M[1:0],5'b000000})	:	({{(8'd7){WD_M[7]}},1'b1});
-		8'd7:WD_M_shifted = (!delta_E_sign) ? ({WD_M[7],WD_M[0],6'b000000})		:	8'b0;
+		8'd0:WD_M_shifted = {WD_M[7],WD_M_sup1_bu[7:1]};
+		8'd1:WD_M_shifted = (!delta_E_sign) ? ({WD_M[7],WD_M_sup1_bu[6:0]})		        :	({{(8'd2){WD_M[7]}},WD_M_sup1_bu[7:2]});
+		8'd2:WD_M_shifted = (!delta_E_sign) ? ({WD_M[7],WD_M_sup1_bu[5:0],1'b0})        :	({{(8'd3){WD_M[7]}},WD_M_sup1_bu[7:3]});
+		8'd3:WD_M_shifted = (!delta_E_sign) ? ({WD_M[7],WD_M_sup1_bu[4:0],2'b00})	    :	({{(8'd4){WD_M[7]}},WD_M_sup1_bu[7:4]});
+		8'd4:WD_M_shifted = (!delta_E_sign) ? ({WD_M[7],WD_M_sup1_bu[3:0],3'b000})	    :	({{(8'd5){WD_M[7]}},WD_M_sup1_bu[7:5]});
+		8'd5:WD_M_shifted = (!delta_E_sign) ? ({WD_M[7],WD_M_sup1_bu[2:0],4'b0000})	    :	({{(8'd6){WD_M[7]}},WD_M_sup1_bu[7:6]});
+		8'd6:WD_M_shifted = (!delta_E_sign) ? ({WD_M[7],WD_M_sup1_bu[1:0],5'b00000})	:	({{(8'd7){WD_M[7]}},WD_M_sup1_bu[7]});
+		8'd7:WD_M_shifted = (!delta_E_sign) ? ({WD_M[7],WD_M_sup1_bu[0],6'b000000})		:	8'b0;
 		default:WD_M_shifted = 8'b0;
 	endcase
 	
@@ -59,15 +66,15 @@ always @(*) begin
 	if(!delta_E_sign) begin
 		case(delta_E_man)
 			8'd1:begin outlier_value_2b = {WD_M[7],1'b1}; outlier_value_4b = 4'b0; end
-			8'd2:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M[7],1'b1,WD_M[6]}; end
-			8'd3:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],1'b1,WD_M[6:5]}; end
-			8'd4:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M[6:4]}; end    //从这里开始已经有cover不到的了
-			8'd5:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M[5:3]}; end 
-			8'd6:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M[4:2]}; end
-			8'd7:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M[3:1]}; end
-			8'd8:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M[2:0]}; end
-			8'd9:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M[1:0],1'b0}; end
-			8'd10:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M[0],2'b00}; end
+			8'd2:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M[7],WD_M_sup1_bu[7:6]}; end
+			8'd3:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M_sup1_bu[7:5]}; end
+			8'd4:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M_sup1_bu[6:4]}; end    //从这里开始已经有cover不到的了
+			8'd5:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M_sup1_bu[5:3]}; end 
+			8'd6:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M_sup1_bu[4:2]}; end
+			8'd7:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M_sup1_bu[3:1]}; end
+			8'd8:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M_sup1_bu[2:0]}; end
+			8'd9:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M_sup1_bu[1:0],1'b0}; end
+			8'd10:begin outlier_value_2b = 2'b0; outlier_value_4b = {WD_M[7],WD_M_sup1_bu[0],2'b00}; end
 			default:begin outlier_value_2b = 2'b0; outlier_value_4b = 8'b0; end
 		endcase
 	end

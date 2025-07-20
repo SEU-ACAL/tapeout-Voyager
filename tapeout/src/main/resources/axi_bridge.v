@@ -7,7 +7,7 @@ module axi_bridge(
     input clk,
     input rstn,
 
-    input [28:0] axi_awaddr,
+    input [19:0] axi_awaddr,
     input [7:0]  axi_awlen,  // 8 bit
     input [2:0]  axi_awsize, // 3 bit
     input [1:0]  axi_awburst,
@@ -26,7 +26,7 @@ module axi_bridge(
     output reg       axi_bvalid,
     input            axi_bready,
 
-    input  [28:0] axi_araddr,
+    input  [19:0] axi_araddr,
     input  [7:0]  axi_arlen,
     input  [2:0]  axi_arsize,
     input  [1:0]  axi_arburst,
@@ -43,19 +43,16 @@ module axi_bridge(
 
     // output control to npu_sys_top
     output                         sys_load_en,
-    output [19:0]                  sys_load_addr,
+    output [16:0]                  sys_load_addr,
     input  [63:0]                  sys_load_data,
 
     output                         sys_store_en,
-    output [19:0]                  sys_store_addr,
+    output [16:0]                  sys_store_addr,
     output [63:0]                  sys_store_data
 );
 
-
-
 reg axi_awv_awr_flag;
 reg axi_arv_arr_flag; 
-
 
 // Implement axi_awready generation
 
@@ -87,7 +84,7 @@ end
 // This process is used to latch the address when both 
 // S_AXI_AWVALID and S_AXI_WVALID are valid. 
 
-reg [28:0] awaddr;
+reg [19:0] awaddr;
 reg [7:0]  awlen_cntr;
 reg [1:0]  awburst;
 reg [7:0]  awlen;
@@ -101,7 +98,7 @@ always @(posedge clk or negedge rstn) begin
     end 
     else begin
         if (~axi_awready && axi_awvalid && ~axi_awv_awr_flag) begin
-            awaddr <= axi_awaddr;
+            awaddr <= axi_awaddr[19:0];
             awburst <= axi_awburst;
             awlen <= axi_awlen;
             awlen_cntr <= 'b0;
@@ -113,14 +110,14 @@ always @(posedge clk or negedge rstn) begin
                     awaddr <= awaddr;
                 end
                 2'b01: begin
-                    awaddr[28:3] <= awaddr[28:3] + 1'b1;
+                    awaddr[19:3] <= awaddr[19:3] + 1'b1;
                     awaddr[2:0]  <= 3'b0;
                 end
                 2'b10: begin
                     // npu system dont need wrapping burst mode
                 end
                 default: begin
-                    awaddr[28:3] <= awaddr[28:3] + 1'b1;
+                    awaddr[19:3] <= awaddr[19:3] + 1'b1;
                     awaddr[2:0]  <= 3'b0;
                 end
             endcase
@@ -189,7 +186,7 @@ end
 // de-asserted when reset (active low) is asserted. 
 // The read address is also latched when S_AXI_ARVALID is 
 // asserted. axi_araddr is reset to zero on reset assertion.
-reg [28:0] araddr;
+reg [19:0] araddr;
 reg [7:0]  arlen_cntr;
 reg [7:0]  arlen;
 reg [1:0]  arburst;
@@ -245,14 +242,14 @@ always @(posedge clk or negedge rstn) begin
                     araddr <= araddr;
                 end
                 2'b01: begin
-                    araddr[28:3] <= araddr[28:3] + 1'b1;
-                    araddr[2:0]  <= 3'b0;
+                    araddr[19:3] <= araddr[19:3] + 1'b1;
+                    araddr[1:0]  <= 2'b0;
                 end
                 2'b10: begin
                     // npu dont need wrapping burst mode
                 end
                 default: begin
-                    araddr[28:3] <= araddr[28:3] + 1'b1;
+                    araddr[19:3] <= araddr[19:3] + 1'b1;
                     araddr[2:0]  <= 3'b0;
                 end
             endcase
@@ -294,12 +291,8 @@ end
 
 
 
-// ID信号连接
-assign axi_bid = axi_awid;
-assign axi_rid = axi_arid;
-
 assign sys_store_en = axi_wvalid && axi_wready;
-assign sys_store_addr = awaddr[3+:20];
+assign sys_store_addr = awaddr[3+:17];
 assign sys_store_data = axi_wdata;
 
 //一直拉高？要不要用边沿触发
@@ -314,20 +307,20 @@ assign sys_store_data = axi_wdata;
 //        sys_load_en_d <= 1'b0;
 //        sys_load_en_d1 <= 1'b0;
 //        araddr_d      <=  'd0;
-//   end else begin
+//   end else begin 
 //        sys_load_en_d <= axi_arv_arr_flag && axi_rvalid;
 //        sys_load_en_d1 <= sys_load_en_d;
 //        araddr_d <= araddr[3+:13];
 //    end
 //end
 //
-//assign sys_load_en = sys_load_en_d1;
+//assign sys_load_en = sys_load_en_d1; 
 //assign sys_load_addr = araddr_d;
 
 
 //assign sys_load_en = axi_arv_arr_flag && axi_rvalid;
 assign sys_load_en = axi_rready && axi_rvalid;
-assign sys_load_addr = araddr[3+:20];
+assign sys_load_addr = araddr[3+:17];
 assign axi_rdata = sys_load_data;
 
 // reg [63:0] axi_rdata_reg;

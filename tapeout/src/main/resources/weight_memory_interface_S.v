@@ -5,15 +5,15 @@ module weight_memory_interface_S(
     input rstn,
 
     input                                 wm_load_en, 
-    input  [$clog2(`WM_DEPTH_L)-1:0]        wm_load_addr,
+    input  [$clog2(`WM_DEPTH_S)-1:0]      wm_load_addr,
     output [`WM_WIDTH-1:0]                wm_load_data,
     
     input                                 wm_store_en,
-    input [$clog2(`WM_DEPTH_L)-1:0]         wm_store_addr,
+    input [$clog2(`WM_DEPTH_S)-1:0]       wm_store_addr,
     input [`WM_WIDTH-1:0]                 wm_store_data,
 
     input                                    wm_npu_load_en, 
-    input  [$clog2(`WM_Bank_DEPTH_S)-1:0]      wm_npu_load_addr,
+    input  [$clog2(`WM_Bank_DEPTH_S)-1:0]    wm_npu_load_addr,
     output [`WM_WIDTH *`WM_Bank_NUM -1:0]    wm_npu_load_data   
 
 );

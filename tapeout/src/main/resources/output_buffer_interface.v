@@ -18,7 +18,7 @@ module output_buffer_interface(
     input [`OB_WIDTH-1:0]                    ob_store_data,
 
     input                                    ob_npu_store_en, 
-    input  [$clog2(`OB_DEPTH)-1:0]           ob_npu_store_addr,
+    input  [$clog2(`OB_Bank_DEPTH)-1:0]          ob_npu_store_addr,
     input [`OB_WIDTH *`OB_Bank_NUM -1:0]     ob_npu_store_data   
 
 );
