@@ -15,7 +15,7 @@ void init_matrix(elem_t* matrix, int rows, int cols, int seed) {
 static elem_t input_matrix[DIM * DIM] __attribute__((aligned(64)));
 static elem_t weight_matrix[DIM * DIM] __attribute__((aligned(64)));
 static result_t output_matrix[DIM * DIM] __attribute__((aligned(64)));
-#define BANK 256
+#define BANK 512
 #define OP1_ADDR 0
 #define OP2_ADDR (BANK + DIM)
 #define WR_ADDR (DIM + 2 * BANK)
