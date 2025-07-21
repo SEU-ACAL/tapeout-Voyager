@@ -131,7 +131,7 @@ class AbstractConfig extends Config(
 
   // ChipTop clock IO/PLL/Divider/Mux settings
   new chipyard.clocking.WithClockTapIOCells ++                      /** Default generate a clock tapio */
-  new chipyard.clocking.WithPLLSelectorDividerClockGenerator(false) ++
+  new chipyard.clocking.WithPassthroughClockGenerator ++
 
   // DigitalTop-internal clocking settings
   new freechips.rocketchip.subsystem.WithDontDriveBusClocksFromSBus ++  /** leave the bus clocks undriven by sbus */

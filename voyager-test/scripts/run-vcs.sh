@@ -140,7 +140,7 @@ mkdir -p "${LOG_DIR}"
 
 source ${CYDIR}/voyager-test/scripts/env-source.sh vcs
 
-cd ${CYDIR}/voyager-test/output/vcs/
+cd ${CYDIR}/sims/vcs/
 ./simv-chipyard.harness-${CONFIG}${DEBUG} $PK $full_binary_path \
   $([ $debug -eq 1 ] && echo "+fsdbfile=${WAVEFORM}") \
   +verbose +loadmem=${full_binary_path} +loadmem_addr=80000000 \

@@ -15,6 +15,7 @@ class VoyagerClockSourceIO extends Bundle {
   val power = Input(Bool())
   val gate = Input(Bool())
   val clk = Output(Clock())
+  val lock = Output(Bool()) // PLL lock status
   val VSSA = Analog(1.W)
   val VDDP = Analog(1.W)
   val VDDB = Analog(1.W)
@@ -22,73 +23,79 @@ class VoyagerClockSourceIO extends Bundle {
 }
 
 
-class VoyagerClockSourceAtFreqFromPlusArg(val plusArgName: String) extends BlackBox
-    with HasBlackBoxInline {
+class PLL extends BlackBox
+    with HasBlackBoxResource {
   val io = IO(new VoyagerClockSourceIO)
 
-  override def desiredName = s"ClockSourceAtFreqFromPlusArg$plusArgName"
-/* 
-	I_PLL_PD = 1'b1;
-	I_PLL_FRPD = 1'b1;
-	I_PLL_VCO_OUT_PD = 1'b1;
-	I_PLL_CLKDIVPD = 1'b1;
-	I_PLL_CLKPHASEPD = 1'b1;
-	I_PLL_BYPASS_CLKDIVPD = 1'b0;	// divided down from VCO
-	I_PLL_V2I_PD = 1'b1;
-  PD类似于power
-  //2g VCO 100MHZ input
-	I_PLL_REFDIV = 6'b000100;
-	I_PLL_FBDIV_INT = 12'b10_1000;
-	I_PLL_FBDIV_FRA = 24'h00_0000;   
- */
-  setInline(s"$desiredName.v",
-    s"""
-      |module $desiredName (
-      |    input clk0,
-      |    input power,
-      |    inout VSSA,
-      |    inout VDDP,
-      |    inout VDDB,
-      |    inout VDDA, 
-      |    input gate,
-      |    output clk);
-      |
-      |   //PLL6GS28		PLL6GS28(
-      |   // .VSSA							(VSSA),
-      |   // .VDDP							(VDDP),
-      |   // .VDDB							(VDDB),
-      |   // .VDDA							(VDDA),
-      |   // .I_PLL_BYPASS_CLKDIVPD         	(1'b0                          ),
-      |   // .I_PLL_CKREF                   	(clk0                          ),
-      |   // .I_PLL_CLKDIV1                 	('b1                           ),
-      |   // .I_PLL_CLKDIV2                 	('b1                           ),
-      |   // .I_PLL_CLKDIVPD                	(1'b0                          ),
-      |   // .I_PLL_CLKPHASEPD              	(1'b0                          ),
-      |   // .I_PLL_FBDIV_FRA               	(24'h00_0000                   ),
-      |   // .I_PLL_FBDIV_INT               	(12'b10_1000                   ),
-      |   // .I_PLL_PD                      	(!power                        ),
-      |   // .I_PLL_REFDIV                  	(6'b000100                     ),
-      |   // .I_PLL_V2I_PD                  	(1'b0                          ),
-      |   // .I_PLL_FRPD                    	(1'b0                          ),
-      |   // .I_PLL_VCO_OUT_PD              	(1'b0                          ),
-      |   // .O_PLL_CLK2                    	(                              ),
-      |   // .O_PLL_CLK3                    	(                              ),
-      |   // .O_PLL_CLK4                    	(                              ),
-      |   // .O_PLL_CLK5                    	(                              ),
-      |   // .O_PLL_CLKDIV                  	(                              ),
-      |   // .O_PLL_CLKN                    	(                              ),
-      |   // .O_PLL_CLKP                    	(                              ),
-      |   // .O_PLL_CLKSSC                  	(                              ),
-      |   // .O_PLL_CLK_IN                  	(                              ),
-      |   // .O_PLL_CLK_IP                  	(                              ),
-      |   // .O_PLL_CLK_QN                  	(                              ),
-      |   // .O_PLL_CLK_QP                  	(                              ),
-      |   // .O_PLL_LOCK                    	(                              ),
-      |   // .O_PLL_VCO_OUT_CLK             	(clk)
-      |   //);
-      |   assign clk = clk0;
-      |endmodule
-      |""".stripMargin)
+  override def desiredName = s"PLL"
+  /* 
+    I_PLL_PD = 1'b1;
+    I_PLL_FRPD = 1'b1;
+    I_PLL_VCO_OUT_PD = 1'b1;
+    I_PLL_CLKDIVPD = 1'b1;
+    I_PLL_CLKPHASEPD = 1'b1;
+    I_PLL_BYPASS_CLKDIVPD = 1'b0;	// divided down from VCO
+    I_PLL_V2I_PD = 1'b1;
+    PD类似于power
+    //2g VCO 100MHZ input
+    I_PLL_REFDIV = 6'b000100;
+    I_PLL_FBDIV_INT = 12'b10_1000;
+    I_PLL_FBDIV_FRA = 24'h00_0000;
+    TODO：PLL的输出是否需要缓冲，接pad？
+  */
+  addResource("PLL.v")
+  addResource("PLL6GS28.v")
+  addResource("phy_defines.v")
+  // setInline(s"$desiredName.v",
+  //   s"""
+  //     |module $desiredName (
+  //     |    input clk0,
+  //     |    input power,
+  //     |    inout VSSA,
+  //     |    inout VDDP,
+  //     |    inout VDDB,
+  //     |    inout VDDA, 
+  //     |    input gate,
+  //     |    output clk);
+  //     |
+  //     |   //PLL6GS28		PLL6GS28(
+  //     |   // .VSSA							(VSSA),
+  //     |   // .VDDP							(VDDP),
+  //     |   // .VDDB							(VDDB),
+  //     |   // .VDDA							(VDDA),
+  //     |   // .I_PLL_BYPASS_CLKDIVPD         	(1'b0                          ),
+  //     |   // .I_PLL_CKREF                   	(clk0                          ),
+  //     |   // .I_PLL_CLKDIV1                 	('b1                           ),
+  //     |   // .I_PLL_CLKDIV2                 	('b1                           ),
+  //     |   // .I_PLL_CLKDIVPD                	(1'b0                          ),
+  //     |   // .I_PLL_CLKPHASEPD              	(1'b0                          ),
+  //     |   // .I_PLL_FBDIV_FRA               	(24'h00_0000                   ),
+  //     |   // .I_PLL_FBDIV_INT               	(12'b10_1000                   ),
+  //     |   // .I_PLL_PD                      	(!power                        ),
+  //     |   // .I_PLL_REFDIV                  	(6'b000100                     ),
+  //     |   // .I_PLL_V2I_PD                  	(1'b0                          ),
+  //     |   // .I_PLL_FRPD                    	(1'b0                          ),
+  //     |   // .I_PLL_VCO_OUT_PD              	(1'b0                          ),
+  //     |   // .O_PLL_CLK2                    	(                              ),
+  //     |   // .O_PLL_CLK3                    	(                              ),
+  //     |   // .O_PLL_CLK4                    	(                              ),
+  //     |   // .O_PLL_CLK5                    	(                              ),
+  //     |   // .O_PLL_CLKDIV                  	(                              ),
+  //     |   // .O_PLL_CLKN                    	(                              ),
+  //     |   // .O_PLL_CLKP                    	(                              ),
+  //     |   // .O_PLL_CLKSSC                  	(                              ),
+  //     |   // .O_PLL_CLK_IN                  	(                              ),
+  //     |   // .O_PLL_CLK_IP                  	(                              ),
+  //     |   // .O_PLL_CLK_QN                  	(                              ),
+  //     |   // .O_PLL_CLK_QP                  	(                              ),
+  //     |   // .O_PLL_LOCK                    	(                              ),
+  //     |   // .O_PLL_VCO_OUT_CLK             	(clk)
+  //     |   //);
+  //     |   assign clk = clk0;
+  //     |endmodule
+  //     |""".stripMargin)
+
+
 
 }
 
@@ -121,7 +128,9 @@ class WithVoyagerPLLSelectorDividerClockGenerator(enable: Boolean = true) extend
     clockSelector.clockNode := pllClockSource
 
     val pllCtrlSink = BundleBridgeSink[FakePLLCtrlBundle]()
+    val pllCtrlSource = BundleBridgeSource[FakePLLCtrlInBundle]()
     pllCtrlSink := pllCtrl.ctrlNode
+    pllCtrl.ctrlInNode := pllCtrlSource
 
     InModuleBody {
       val clock_wire = Wire(Input(Clock())) // 连接digitaltop
@@ -137,11 +146,11 @@ class WithVoyagerPLLSelectorDividerClockGenerator(enable: Boolean = true) extend
 
       // For a real chip you should replace this ClockSourceAtFreqFromPlusArg
       // with a blackbox of whatever PLL is being integrated
-      val fake_pll = Module(new VoyagerClockSourceAtFreqFromPlusArg("pll_freq_mhz"))
+      val fake_pll = Module(new PLL())
       fake_pll.io.power := pllCtrlSink.in(0)._1.power
       fake_pll.io.gate := pllCtrlSink.in(0)._1.gate
       fake_pll.io.clk0  := clock_wire
-      
+      pllCtrlSource.out(0)._1.lock := fake_pll.io.lock // Connect PLL lock status to the output
       // 创建 PLL 电源引脚的顶层 IO（不通过 IOCell）
       val vssa_io = IO(Analog(1.W)).suggestName("PLL_VSSA")
       val vddp_io = IO(Analog(1.W)).suggestName("PLL_VDDP")

@@ -39,8 +39,7 @@ class MEEKConfig extends Config(
   new chipyard.config.WithTileFrequency(1000, Some(0)) ++
   new chipyard.config.WithTileFrequency(1000, Some(1)) ++
   new chipyard.config.WithTileFrequency(1000, Some(2)) ++
-  new chipyard.config.WithTileFrequency(1000, Some(3)) ++
-  new chipyard.config.WithTileFrequency(1000, Some(4)) ++
+
   new freechips.rocketchip.guardiancouncil.WithGuardianCouncilNodes++
   // new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
   // AsynchronousCrossing().depth,
@@ -53,11 +52,12 @@ class MEEKConfig extends Config(
   //                                                     )++
   // new freechips.rocketchip.guardiancouncil.WithGHE ++
   new chipyard.config.WithMultiRoCCMEEK ++
-  new chipyard.config.WithMultiSingleRoCCGHE(0, 1, 2, 3, 4) ++ //put custom RoCC on hart0-4 for custom0 ISA extension ++
+  new chipyard.config.WithMultiSingleRoCCGHE(0, 1, 2) ++ //put custom RoCC on hart0-4 for custom0 ISA extension ++
   //  Crossing specifications
   
   new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1)++
   new boom.meek.common.WithNLargeBooms(1) ++
+  new chipyard.config.WithGPIO(width=12)  ++
   // new freechips.rocketchip.rocket.WithNGCCheckers(GH_GlobalParams.GH_NUM_CORES - 1, overrideIdOffset=Some(1)) ++
   new chipyard.config.AbstractConfig
 )

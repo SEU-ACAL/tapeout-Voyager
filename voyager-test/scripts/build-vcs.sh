@@ -98,6 +98,17 @@ CYDIR=$(git rev-parse --show-toplevel)
 # 切换环境变量
 source ${CYDIR}/voyager-test/scripts/env-source.sh vcs
 
+export PATH="/usr/bin:$PATH"          # 系统 gcc/g++/ld 优先
+export CC=/usr/bin/gcc
+export CXX=/usr/bin/g++
+export LD=/usr/bin/ld
+
+# 编译阶段只让 ld 找到系统基础库 + VCS 私有库
+export LIBRARY_PATH="$VCS_LIB:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu"
+unset LD_LIBRARY_PATH
+export LDFLAGS="-L$VCS_LIB -Wl,--no-as-needed \
+      -lvcsnew -lvirsim -lvcsucli -lvfs -lsnpsmalloc -lerrorinf -lzerosoft_rt_stubs \
+      -lsimprofile -luclinative -lpthread -ldl -lrt -lm -lstdc++ -lpthread"
 cd ${CYDIR}/sims/vcs/ || { echo "Cannot enter the directory: ${CYDIR}/sims/vcs/"; exit 1; }
 make -j$j ${debug} CONFIG=$CONFIG \
   USE_FST=$USE_FST \
@@ -107,4 +118,4 @@ make -j$j ${debug} CONFIG=$CONFIG \
 mkdir -p ${CYDIR}/voyager-test/output/vcs
 cp ${CYDIR}/sims/vcs/simv-chipyard.harness-${CONFIG}${DASH_DEBUG_POSTFIX} ${CYDIR}/voyager-test/output/vcs/
 # cp ${CYDIR}/sims/vcs/simv-chipyard.harness-${CONFIG}${DEBUG_POSTFIX}.daidir/ ${CYDIR}/voyager-test/output/vcs/ -r
-cp ${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}${POINT_DEBUG_POSTFIX}/gen-collateral ${CYDIR}/voyager-test/output/vcs/ -r
+cp ${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/chipyard.harness.TestHarness.${CONFIG}${POINT_DEBUG_POSTFIX} ${CYDIR}/voyager-test/output/vcs/ -r

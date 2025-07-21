@@ -27,7 +27,7 @@ RESET_DELAY ?= 777.7
 include $(base_dir)/sims/common-sim-flags.mk
 
 VCS_CXXFLAGS = $(SIM_CXXFLAGS)
-VCS_LDFLAGS = $(SIM_LDFLAGS)
+VCS_LDFLAGS = $(SIM_LDFLAGS) 
 
 # vcs requires LDFLAGS to not include library names (i.e. -l needs to be separate)
 VCS_CC_OPTS = \

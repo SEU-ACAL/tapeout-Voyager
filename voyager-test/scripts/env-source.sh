@@ -16,10 +16,10 @@ setup_vcs() {
     # export DISPLAY="localhost:10.0" // Config yourself if you want to use verdi
     #export SYNOPSYS="/usr/software/synopsys"
     export VCS_TARGET_ARCH="amd64"
-    export PATH="/usr/stone/software/vcs2018/vcs/O-2018.09-SP2/gui/dve/bin:"$PATH
-    export DVE_HOME="/usr/stone/software/vcs2018/vcs/O-2018.09-SP2/gui/dve"
-    export PATH="/usr/stone/software/vcs2018/vcs/O-2018.09-SP2/bin:"$PATH
-    export VCS_HOME="/usr/stone/software/vcs2018/vcs/O-2018.09-SP2"
+    export PATH="/usr/stone/software/vcs2018/vcs-mx/O-2018.09-SP2/gui/dve/bin:"$PATH
+    export DVE_HOME="/usr/stone/software/vcs2018/vcs-mx/O-2018.09-SP2/gui/dve"
+    export PATH="/usr/stone/software/vcs2018/vcs-mx/O-2018.09-SP2/bin:"$PATH
+    export VCS_HOME="/usr/stone/software/vcs2018/vcs-mx/O-2018.09-SP2"
     #export VCS_ARCH_OVERRIDE="linux"
     #verdi
     export PATH="/usr/stone/software/verdi/verdi/Verdi_O-2018.09-SP2/bin:"$PATH

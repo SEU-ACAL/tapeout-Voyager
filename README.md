@@ -242,6 +242,11 @@ Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `
 - gemmini/src
 - bar-fetchers/src: 存放预取器代码
 
+## 十.注意事项
+
+在运行p2e必须将bootrom的wait_pll_open注释掉，但最后的流片代码必须把注释删除
+
+
 <!-- **9.3 专用测试**
 
 为了尽可能增大CI的覆盖范围，可以通过在commit message中包含特定的tag，来触发特定的测试；测试用例在batch-test.sh中自行添加即可。
@@ -284,7 +289,7 @@ module GenericDigitalInIOCell(
 
 其余具体可见 `docs`下的文档，欢迎大家多写文档，记录下用法和一些坑.
 
-- [[Q&amp;A List](docs/Q&A.md)] 仓库使用遇到问题可以在群里询问，问题解决后将解决方法记录在这里.
+- [[Q&A List](docs/Q&A.md)] 仓库使用遇到问题可以在群里询问，问题解决后将解决方法记录在这里.
 - [[firesim](docs/firesim-README.md)] firesim 的简略文档，求补充.
 - [[NPU-README](docs/NPU-README.md)] 主要关于buddy-mlir的使用.
 - [[sram_README](docs/sram_readme.md)] 主要关于sram替换的文档.

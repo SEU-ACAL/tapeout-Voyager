@@ -199,6 +199,7 @@ def main():
 
   # rename modules that are common
   uniquify_modules_under_model(modules_under_model, common_modules, verilog_module_filename)
+  print(args.out_model_hier_json)
   uniquified_modules_under_model = get_modules_under_hier(args.out_model_hier_json, args.dut)
 
   # write model filelist
