@@ -46,8 +46,10 @@ class PeripheralNPUIOCell extends Bundle {
 // NPU AXI从设备BlackBox - 包装Verilog NPU模块
 class AXISlaveNPUWrapperBlackBox extends BlackBox with HasBlackBoxResource {
   val io = IO(new Bundle {
+    val clk        = Input(Clock())
+    val rstn       = Input(Bool())
     // AXI4从设备接口 - 用于CPU访问NPU寄存器和内存
-    val axi_awaddr = Input(UInt(29.W))
+    val axi_awaddr = Input(UInt(20.W))
     val axi_awlen = Input(UInt(8.W))
     val axi_awsize = Input(UInt(3.W))
     val axi_awburst = Input(UInt(2.W))
@@ -66,7 +68,7 @@ class AXISlaveNPUWrapperBlackBox extends BlackBox with HasBlackBoxResource {
     val axi_bvalid = Output(Bool())
     val axi_bready = Input(Bool())
 
-    val axi_araddr = Input(UInt(29.W))
+    val axi_araddr = Input(UInt(20.W))
     val axi_arlen = Input(UInt(8.W))
     val axi_arsize = Input(UInt(3.W))
     val axi_arburst = Input(UInt(2.W))
@@ -93,10 +95,10 @@ class AXISlaveNPUWrapperBlackBox extends BlackBox with HasBlackBoxResource {
     // FPGA系统接口 - 用于外部数据加载和存储
     val FPGA_sys_load_data_vld = Output(Bool())
     val FPGA_sys_load_en       = Input(Bool())
-    val FPGA_sys_load_addr     = Input(UInt(20.W))
+    val FPGA_sys_load_addr     = Input(UInt(17.W))
     val FPGA_sys_load_data     = Output(UInt(64.W))
     val FPGA_sys_store_en      = Input(Bool())
-    val FPGA_sys_store_addr    = Input(UInt(20.W))
+    val FPGA_sys_store_addr    = Input(UInt(17.W))
     val FPGA_sys_store_data    = Input(UInt(64.W))
 
     // PLL时钟输入
@@ -181,13 +183,16 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
     val (axi, _) = outer.regnode.in(0)
     
     withClockAndReset(clock, reset) {
-     val npuBlackBox = Module(new AXISlaveNPUWrapperBlackBox)
+    val npuBlackBox = Module(new AXISlaveNPUWrapperBlackBox)
 
+      //clk
+    npuBlackBox.io.clk  := clock
+    npuBlackBox.io.rstn := ~reset.asBool
     // 连接AXI4接口到BlackBox
     // 写地址通道 - 处理位宽转换
-    require(axi.aw.bits.addr.getWidth >= 29, s"AXI4 address width (${axi.aw.bits.addr.getWidth}) must be >= 29 bits")
+    // require(axi.aw.bits.addr.getWidth >= 29, s"AXI4 address width (${axi.aw.bits.addr.getWidth}) must be >= 29 bits")
     require(axi.aw.bits.id.getWidth >= 1, s"AXI4 ID width (${axi.aw.bits.id.getWidth}) must be >= 1 bits")
-    npuBlackBox.io.axi_awaddr := axi.aw.bits.addr(28, 0)  // BlackBox期望29位地址
+    npuBlackBox.io.axi_awaddr := axi.aw.bits.addr(19, 0)  // BlackBox期望29位地址
     npuBlackBox.io.axi_awlen := axi.aw.bits.len
     npuBlackBox.io.axi_awsize := axi.aw.bits.size
     npuBlackBox.io.axi_awburst := axi.aw.bits.burst
@@ -212,7 +217,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
     // 读地址通道 - 处理位宽转换
     // require(axi.ar.bits.addr.getWidth >= 29, s"AXI4 address width (${axi.ar.bits.addr.getWidth}) must be >= 29 bits")
     // require(axi.ar.bits.id.getWidth >= 1, s"AXI4 ID width (${axi.ar.bits.id.getWidth}) must be >= 1 bits")
-    npuBlackBox.io.axi_araddr := axi.ar.bits.addr(28, 0)  // BlackBox期望29位地址
+    npuBlackBox.io.axi_araddr := axi.ar.bits.addr(19, 0)  // BlackBox期望29位地址
     npuBlackBox.io.axi_arlen := axi.ar.bits.len
     npuBlackBox.io.axi_arsize := axi.ar.bits.size
     npuBlackBox.io.axi_arburst := axi.ar.bits.burst
@@ -235,9 +240,9 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
     npuBlackBox.io.PLL_CLK_SEL           := io.npu_PLL_CLK_SEL            
     npuBlackBox.io.TEST_MODE	           := io.npu_TEST_MODE	             
     npuBlackBox.io.FPGA_sys_load_en      := io.npu_FPGA_sys_load_en       
-    npuBlackBox.io.FPGA_sys_load_addr    := io.npu_FPGA_sys_load_addr     
+    npuBlackBox.io.FPGA_sys_load_addr    := io.npu_FPGA_sys_load_addr(16,0)     
     npuBlackBox.io.FPGA_sys_store_en     := io.npu_FPGA_sys_store_en      
-    npuBlackBox.io.FPGA_sys_store_addr   := io.npu_FPGA_sys_store_addr    
+    npuBlackBox.io.FPGA_sys_store_addr   := io.npu_FPGA_sys_store_addr(16,0)    
     npuBlackBox.io.FPGA_sys_store_data   := io.npu_FPGA_sys_store_data    
     npuBlackBox.io.clk_PLL_w             := io.npu_clk_PLL_w              
     npuBlackBox.io.clk_PLL_cim           := io.npu_clk_PLL_cim         
@@ -248,7 +253,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
   }
 }
 
-   
+
 
 // Trait to add the NPU device to the subsystem
 trait CanHavePeripheryNPU { this: BaseSubsystem =>
