@@ -42,7 +42,8 @@ object EXDecodeFields extends Enumeration {
 }
 object FENCEDecodeFields extends Enumeration {
   type Field = Value
-  val PID, PSTART, PEND = Value
+  val PID, PSTART, PEND,
+      FN_EN = Value
 }
 
 class PostDecodeCmd(implicit bbconfig: BuckyBallConfig) extends Bundle {
@@ -52,6 +53,7 @@ class PostDecodeCmd(implicit bbconfig: BuckyBallConfig) extends Bundle {
   val is_ex         = Bool()
   val is_vec        = Bool()
   val is_bbfp       = Bool()
+  val is_fence      = Bool() 
   // 内存地址 - 只用于load/store
   val mem_addr      = UInt(bbconfig.memAddrLen.W)
   
@@ -60,11 +62,11 @@ class PostDecodeCmd(implicit bbconfig: BuckyBallConfig) extends Bundle {
   
   // Scratchpad读取地址和bank信息 - store源地址
   val rd_bank       = UInt(log2Up(bbconfig.sp_banks+ bbconfig.acc_banks).W)
-  val rd_bank_addr  = UInt(log2Up(bbconfig.sp_bank_entries+ bbconfig.acc_bank_entries).W)
+  val rd_bank_addr  = UInt(log2Up(bbconfig.spad_bank_entries+ bbconfig.acc_bank_entries).W)
   
   // Scratchpad写入地址和bank信息 - load目标地址，execute结果地址(后续拆到acc中)
   val wr_bank       = UInt(log2Up(bbconfig.sp_banks + bbconfig.acc_banks).W)
-  val wr_bank_addr  = UInt(log2Up(bbconfig.sp_bank_entries + bbconfig.acc_bank_entries).W)
+  val wr_bank_addr  = UInt(log2Up(bbconfig.spad_bank_entries + bbconfig.acc_bank_entries).W)
   val is_acc        = Bool() // 是否是acc bank的操作    
   
   // Execute专用字段
@@ -76,9 +78,9 @@ class PostDecodeCmd(implicit bbconfig: BuckyBallConfig) extends Bundle {
   
   // Execute的操作数地址（保留原始字段名）
   val op1_bank      = UInt(log2Up(bbconfig.sp_banks).W)
-  val op1_bank_addr = UInt(log2Up(bbconfig.sp_bank_entries).W)
+  val op1_bank_addr = UInt(log2Up(bbconfig.spad_bank_entries).W)
   val op2_bank      = UInt(log2Up(bbconfig.sp_banks).W)
-  val op2_bank_addr = UInt(log2Up(bbconfig.sp_bank_entries).W)
+  val op2_bank_addr = UInt(log2Up(bbconfig.spad_bank_entries).W)
 
   // 流水线控制
   val pid           = UInt(8.W)   // 流水线ID
@@ -128,11 +130,18 @@ class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
 // -----------------------------------------------------------------------------
 // Fence instructions
 // -----------------------------------------------------------------------------
+  import FENCEDecodeFields._
+  val fence_default_decode = List(N,N,N,N)
+  val fence_decode_list = ListLookup(func7, fence_default_decode, Array(
+    FENCE  -> List(N,N,N,Y)
+  ))
+
   io.id_rs.valid              := io.id_i.valid
   io.id_rs.bits.is_load       := ls_decode_list(3).asBool
   io.id_rs.bits.is_store      := ls_decode_list(4).asBool
   io.id_rs.bits.mem_addr      := ls_decode_list(5).asUInt
-  io.id_rs.bits.is_ex         := !ls_decode_list(3).asBool && !ls_decode_list(4).asBool
+  io.id_rs.bits.is_ex         := !ls_decode_list(3).asBool && !ls_decode_list(4).asBool && !fence_decode_list(3).asBool
+  io.id_rs.bits.is_fence      := fence_decode_list(3).asBool
   io.id_rs.bits.iter          := Mux(io.id_rs.bits.is_ex, ex_decode_list(11).asUInt, 
                                   Mux(io.id_rs.bits.is_load || io.id_rs.bits.is_store, ls_decode_list(7).asUInt, 0.U))
 

@@ -44,6 +44,7 @@ class ReservationStation(implicit bbconfig: BuckyBallConfig, p: Parameters) exte
     val id_i = Flipped(Decoupled(new PostDecodeCmd))
     val rs_rocc_o = new Bundle {      
       val resp      = Decoupled(new RoCCResponseBB()(p))
+      val busy      = Output(Bool())  // 是否有指令在ROB中等待提交
     }
     // ================================ 连接后端    
     val issue_o  = new RSISSInterface(cmd_t, rob_id_width)
@@ -69,6 +70,7 @@ class ReservationStation(implicit bbconfig: BuckyBallConfig, p: Parameters) exte
 
 
   io.rs_rocc_o.resp <> ROB.io.rob_cmt_o.resp
+  io.rs_rocc_o.busy := ROB.io.rob_cmt_o.busy
 
   // ROB -> RobIdCounter
   RobIdCounter.io.rob_cmt_i <> ROB.io.rob_robcnt_o

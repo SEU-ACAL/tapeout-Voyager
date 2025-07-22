@@ -17,18 +17,16 @@ void init_matrix(elem_t* matrix, int rows, int cols, int seed) {
         matrix[i] = 1;  
     }
 }
-
 void print_matrix(const char* name, result_t* matrix, int rows, int cols) {
-	printf("Matrix %s:\n", name);
-	for (int i = 0; i < rows; i++) {
-			for (int j = 0; j < cols; j++) {
-					printf("%4d ", matrix[i * cols + j]);
-			}
-			printf("\n");
-	}
-	printf("\n");
+    printf("Matrix %s:\n", name);
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            printf("%4d ", matrix[i * cols + j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
 }
-
 
 #define OP1_ADDR 0
 #define OP2_ADDR (BANK + DIM)
@@ -39,12 +37,11 @@ int main() {
 #endif
     
     // Initialize input matrix
-    init_matrix(input_matrix, DIM, DIM * 4, 42);
+    init_u8_random_matrix(input_matrix, DIM, DIM * 4, 42);
     
     // Clear output matrix
     memset(output_matrix, 0, sizeof(output_matrix));
     
-    //print_matrix("Input", input_matrix, DIM, DIM);
     
     // Move input to scratchpad
     bb_mvin((uintptr_t)output_matrix, WR_ADDR, DIM * 4);
@@ -52,16 +49,17 @@ int main() {
     bb_mvin((uintptr_t)input_matrix, OP2_ADDR, DIM * 4);
 
     
-    printf("perform Matmul\n");
+    //printf("perform Matmul\n");
+    bb_fence();
     bb_mul_warp16(OP1_ADDR, OP2_ADDR, WR_ADDR, DIM * 4);
-    printf("Matmul Done\n");
+    bb_fence();
+    //printf("Matmul Done\n");
     
 
     // Move back from scratchpad to output
-    bb_mvout((uintptr_t)output_matrix, WR_ADDR, DIM * 4);
-    printf("Finished\n");
+    bb_mvout((uintptr_t)output_matrix, WR_ADDR, 4 * 4);
+    //printf("Finished\n");
    
-    // print_matrix("Output", output_matrix, DIM, DIM);
 
 #ifdef MULTICORE 
     exit(0);

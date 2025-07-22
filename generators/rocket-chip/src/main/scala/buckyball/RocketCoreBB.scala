@@ -926,7 +926,7 @@ class RocketBB(tile: RocketTileBB)(implicit p: Parameters) extends CoreModule()(
     id_ctrl.rocc && rocc_blocked || // reduce activity while RoCC is busy
     id_ctrl.div && (!(div.io.req.ready || (div.io.resp.valid && !wb_wxd)) || div.io.req.valid) || // reduce odds of replay
     !clock_en ||
-    id_do_fence ||
+    id_do_fence || io.rocc.busy ||
     csr.io.csr_stall ||
     id_reg_pause ||
     io.traceStall

@@ -83,7 +83,7 @@ else
   PK=""
 fi
 
-WAVEFORM="${WAVEFORM_DIR}/${TIMESTAMP}-${binary}-waveform.vcd"
+WAVEFORM="${WAVEFORM_DIR}/${TIMESTAMP}-waveform.vcd"
 # WAVEFORM="${WAVEFORM_DIR}/waveform.vcd"
 
 if [ $debug -eq 1 ]; then
@@ -142,6 +142,25 @@ mkdir -p "${LOG_DIR}"
 
 
 cd ${CYDIR}/voyager-test/output/verilator/
+
+# 替换原来的 echo 语句
+echo "Running Verilator simulation with configuration:"
+echo "  Simulator: ./simulator-chipyard.harness-${CONFIG}${DEBUG}"
+echo "  Binary: ${full_binary_path}"
+echo "  PK mode: $([ $pk -eq 1 ] && echo "enabled" || echo "disabled")"
+echo "  Debug mode: $([ $debug -eq 1 ] && echo "enabled" || echo "disabled")"
+echo "  Waveform: $([ $debug -eq 1 ] && echo "${WAVEFORM}" || echo "disabled")"
+echo "  Log directory: ${LOG_DIR}"
+echo ""
+echo "Command line:"
+echo "./simulator-chipyard.harness-${CONFIG}${DEBUG} $PK +permissive \\"
+echo $([ $debug -eq 1 ] && echo "  +vcdfile=${WAVEFORM} \\")
+echo $([ $debug -eq 1 ] && echo "  +verbose \\")
+echo "  +loadmem=${full_binary_path} \\"
+echo "  +loadmem_addr=80000000 \\"
+echo "  +permissive-off \\"
+echo "  ${full_binary_path}"
+echo ""
 ./simulator-chipyard.harness-${CONFIG}${DEBUG} $PK +permissive \
   $([ $debug -eq 1 ] && echo "+vcdfile=${WAVEFORM}") \
   $([ $debug -eq 1 ] && echo "+verbose") \
@@ -150,6 +169,7 @@ cd ${CYDIR}/voyager-test/output/verilator/
   ${full_binary_path} \
   &> >(tee ${LOG_DIR}/stdout.log) \
   2> >(spike-dasm > ${LOG_DIR}/disasm.log)
+
 
 # 如果启用了调试模式并且需要转换波形文件
 if [ $debug -eq 1 ] && [ $vcd2fst -eq 1 ]; then

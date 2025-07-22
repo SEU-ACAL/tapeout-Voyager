@@ -30,11 +30,11 @@ class CascadeOp(implicit p: Parameters) extends Module {
   reg2 := reg1
   valid2 := valid1
 
-  val valid = valid1 || valid2
+  val valid = valid1 
 
   when (io.out.ready && valid) {
     io.out.valid := true.B
-    io.out.bits.out := reg2
+    io.out.bits.out := reg1
   }.otherwise {
     io.out.valid := false.B
     io.out.bits.out := VecInit(Seq.fill(lane)(0.U(outputWidth.W)))

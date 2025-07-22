@@ -19,7 +19,7 @@ module CIM_memory_interface_large #(
 
         output [$clog2(Macro_ROW_NUM):0]        AXI_WADR_L,
         output                                  AXI_WEB_L,
-        output                                  AXI_MEB_L,
+        output [3:0]                            AXI_MEB_L,
 
         output [63:0]                           AXI_WD_E_L,
         output [63:0]                           AXI_WD_M_L,

@@ -143,5 +143,6 @@ class BuckyBallModule(outer: BuckyBall) extends LazyRoCCModuleImpBB(outer)
 // 返回RoCC接口连接
 //---------------------------------------------------------------------------
   io.resp <> rs.io.rs_rocc_o.resp
+  io.busy := rs.io.rs_rocc_o.busy
 
 }

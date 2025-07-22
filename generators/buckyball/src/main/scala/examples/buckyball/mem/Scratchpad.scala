@@ -8,12 +8,11 @@ import freechips.rocketchip.tile._
 import buckyball.util.Util._
 import buckyball.BuckyBallConfig
 
+import buckyball.mem.AccWriteIO
+
 
 class Scratchpad(config: BuckyBallConfig)(implicit val p: Parameters) extends Module with HasCoreParameters {
   import config._
-
-  val spad_w = inputType.getWidth * veclane
-  val acc_w  = accType.getWidth * accveclane
 
   // 断言：确保配置一致性
   assert(sp_singleported, "Scratchpad expects single-ported SRAM banks")
@@ -21,23 +20,27 @@ class Scratchpad(config: BuckyBallConfig)(implicit val p: Parameters) extends Mo
   val io = IO(new Bundle {
     // SRAM读写接口 - load/store使用
     val dma = new Bundle {
-      val sramread = Flipped(Vec(sp_banks, new SramReadIO(sp_bank_entries, spad_w)))
-      val sramwrite = Flipped(Vec(sp_banks, new SramWriteIO(sp_bank_entries, spad_w, (spad_w / (aligned_to * 8)) max 1)))
-      val accread = Flipped(Vec(acc_banks, new SramReadIO(acc_bank_entries, acc_w)))
-      val accwrite = Flipped(Vec(acc_banks, new AccWriteIO(acc_bank_entries, acc_w, (acc_w / (aligned_to * 8)) max 1)))
+      val sramread  = Vec(sp_banks, new SramReadIO(spad_bank_entries, spad_w))
+      val sramwrite = Vec(sp_banks, new SramWriteIO(spad_bank_entries, spad_w, spad_mask_len))
+      val accread   = Vec(acc_banks, new SramReadIO(acc_bank_entries, acc_w))
+      val accwrite  = Vec(acc_banks, new SramWriteIO(acc_bank_entries, acc_w, acc_mask_len))
     }
     // 执行单元读写接口 - 每个bank一个read和write，OpA和OpB保证访问不同bank
     val exec = new Bundle {
-      val sramread = Flipped(Vec(sp_banks, new SramReadIO(sp_bank_entries, spad_w)))
-      val sramwrite = Flipped(Vec(sp_banks, new SramWriteIO(sp_bank_entries, spad_w, (spad_w / (aligned_to * 8)) max 1)))
-      val accread = Flipped(Vec(acc_banks, new SramReadIO(acc_bank_entries, acc_w)))
-      val accwrite = Flipped(Vec(acc_banks, new AccWriteIO(acc_bank_entries, acc_w, (acc_w / (aligned_to * 8)) max 1)))
+      val sramread  = Vec(sp_banks, new SramReadIO(spad_bank_entries, spad_w))
+      val sramwrite = Vec(sp_banks, new SramWriteIO(spad_bank_entries, spad_w, spad_mask_len))
+      val accread   = Vec(acc_banks, new SramReadIO(acc_bank_entries, acc_w))
+      val accwrite  = Vec(acc_banks, new SramWriteIO(acc_bank_entries, acc_w, acc_mask_len))
     }
   })
 
+// -----------------------------------------------------------------------------
+// Scratchpad
+// -----------------------------------------------------------------------------
+
   // SRAM banks - 每个bank只有一个端口，支持同时读写
   val spad_mems = Seq.fill(sp_banks) { Module(new SramBank(
-    sp_bank_entries, spad_w,
+    spad_bank_entries, spad_w,
     aligned_to, sp_singleported // 使用配置参数
   )) }
 
@@ -53,7 +56,7 @@ class Scratchpad(config: BuckyBallConfig)(implicit val p: Parameters) extends Mo
     val exec_write = io.exec.sramwrite(i)
     
     // 断言：OpA和OpB不应同时访问同一个bank
-    assert(!(exec_read_req.valid && exec_write.en), 
+    assert(!(exec_read_req.valid && exec_write.req.valid), 
       s"Bank ${i}: exec and write cannot access the same bank simultaneously")
     
     // 读请求仲裁：优先级 exec > main
@@ -61,7 +64,7 @@ class Scratchpad(config: BuckyBallConfig)(implicit val p: Parameters) extends Mo
     val main_read_sel = main_read_req.valid && !exec_read_sel
     
     // 写请求仲裁：exec有更高优先级
-    val exec_write_sel = exec_write.en
+    val exec_write_sel = exec_write.req.valid
     
     // 连接读请求到SramBank
     bank.io.read.req.valid := exec_read_sel || main_read_sel
@@ -88,11 +91,19 @@ class Scratchpad(config: BuckyBallConfig)(implicit val p: Parameters) extends Mo
       (resp_to_exec && io.exec.sramread(i).resp.ready)
     
     // 连接写请求到SramBank
-    bank.io.write.en := Mux(exec_write_sel, exec_write.en, main_write.en)
-    bank.io.write.addr := Mux(exec_write_sel, exec_write.addr, main_write.addr)
-    bank.io.write.data := Mux(exec_write_sel, exec_write.data, main_write.data)
-    bank.io.write.mask := Mux(exec_write_sel, exec_write.mask, main_write.mask)
+    bank.io.write.req.valid     := Mux(exec_write_sel, exec_write.req.valid, main_write.req.valid)
+    bank.io.write.req.bits.addr := Mux(exec_write_sel, exec_write.req.bits.addr, main_write.req.bits.addr)
+    bank.io.write.req.bits.data := Mux(exec_write_sel, exec_write.req.bits.data, main_write.req.bits.data)
+    bank.io.write.req.bits.mask := Mux(exec_write_sel, exec_write.req.bits.mask, main_write.req.bits.mask)
+
+    // 写请求的ready反向连接
+    main_write.req.ready := !exec_write_sel && bank.io.write.req.ready
+    exec_write.req.ready := exec_write_sel && bank.io.write.req.ready
   }
+
+// -----------------------------------------------------------------------------
+// Accumulator
+// -----------------------------------------------------------------------------
 
   val acc_mems = Seq.fill(acc_banks) { Module(new AccBank(
     acc_bank_entries, acc_w,
@@ -110,7 +121,7 @@ class Scratchpad(config: BuckyBallConfig)(implicit val p: Parameters) extends Mo
     val exec_write = io.exec.accwrite(i)
 
     // 断言：OpA和OpB不应同时访问同一个bank
-    assert(!(exec_read_req.valid && exec_write.en), 
+    assert(!(exec_read_req.valid && exec_write.req.valid), 
       s"Bank ${i}: exec and write cannot access the same bank simultaneously")
     
     // 读请求仲裁：优先级 exec > main
@@ -118,7 +129,7 @@ class Scratchpad(config: BuckyBallConfig)(implicit val p: Parameters) extends Mo
     val main_read_sel = main_read_req.valid && !exec_read_sel
     
     // 写请求仲裁：exec有更高优先级
-    val exec_write_sel = exec_write.en
+    val exec_write_sel = exec_write.req.valid
     
     // 连接读请求到SramBank
     bank.io.read.req.valid := exec_read_sel || main_read_sel
@@ -145,10 +156,16 @@ class Scratchpad(config: BuckyBallConfig)(implicit val p: Parameters) extends Mo
       (resp_to_exec && io.exec.accread(i).resp.ready)
 
     // 连接写请求到SramBank
-    bank.io.write.en := Mux(exec_write_sel, exec_write.en, main_write.en)
-    bank.io.write.addr := Mux(exec_write_sel, exec_write.addr, main_write.addr)
-    bank.io.write.data := Mux(exec_write_sel, exec_write.data, main_write.data)
-    bank.io.write.mask := Mux(exec_write_sel, exec_write.mask, main_write.mask)
-    bank.io.write.acc := Mux(exec_write_sel, exec_write.acc, main_write.acc)
+    bank.io.write.req.valid       := Mux(exec_write_sel, exec_write.req.valid,     main_write.req.valid)
+    bank.io.write.req.bits.addr   := Mux(exec_write_sel, exec_write.req.bits.addr, main_write.req.bits.addr)
+    bank.io.write.req.bits.data   := Mux(exec_write_sel, exec_write.req.bits.data, main_write.req.bits.data)
+    bank.io.write.req.bits.mask   := Mux(exec_write_sel, exec_write.req.bits.mask, main_write.req.bits.mask)
+    bank.io.write.is_acc          := Mux(exec_write_sel, true.B, false.B)
+
+    // 写请求的ready反向连接
+    main_write.req.ready := !exec_write_sel && bank.io.write.req.ready
+    exec_write.req.ready := exec_write_sel && bank.io.write.req.ready
   }
 }
+
+

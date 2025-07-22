@@ -8,7 +8,7 @@ import buckyball.frontend.PostDecodeCmd
 class BuckyBallCmd(implicit bbconfig: BuckyBallConfig) extends Bundle {
   val post_decode_cmd = new PostDecodeCmd
   val rob_id          = UInt(log2Up(bbconfig.rob_entries).W)
-  val cmd_type        = UInt(2.W) // 01: Load, 10: Store, 11: Ex
+  val cmd_type        = UInt(3.W) // 01: Load, 10: Store, 11: Ex, 100: Fence
 }
 
 class NextROBIdCounter(implicit bbconfig: BuckyBallConfig) extends Module {
@@ -31,9 +31,9 @@ class NextROBIdCounter(implicit bbconfig: BuckyBallConfig) extends Module {
   val empty = tail_ptr === head_ptr
 
   // id->ROBCounter
-  io.post_decode_cmd_i.ready := !full
+  io.post_decode_cmd_i.ready := !full && io.post_index_cmd_o.cmd.ready
   // ROBCounter
-  when(io.post_decode_cmd_i.fire) {
+  when(io.post_decode_cmd_i.fire && !io.post_decode_cmd_i.bits.is_fence) {
     tail_ptr               := (tail_ptr + 1.U) % rob_entries.U
   }
   // ROBCounter->ROB
@@ -42,7 +42,8 @@ class NextROBIdCounter(implicit bbconfig: BuckyBallConfig) extends Module {
     io.post_index_cmd_o.cmd.bits.rob_id          := tail_ptr
     io.post_index_cmd_o.cmd.bits.cmd_type        := Mux(io.post_decode_cmd_i.bits.is_load, 1.U, 
                                                      Mux(io.post_decode_cmd_i.bits.is_store, 2.U, 
-                                                       Mux(io.post_decode_cmd_i.bits.is_ex, 3.U, 0.U)))
+                                                       Mux(io.post_decode_cmd_i.bits.is_ex, 3.U, 
+                                                       Mux(io.post_decode_cmd_i.bits.is_fence, 4.U,0.U))))
     io.post_index_cmd_o.cmd.bits.post_decode_cmd := io.post_decode_cmd_i.bits
     io.post_index_cmd_o.new_head_ptr             := head_ptr
   }.otherwise {
@@ -52,6 +53,7 @@ class NextROBIdCounter(implicit bbconfig: BuckyBallConfig) extends Module {
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_load       := false.B
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_store      := false.B
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_ex         := false.B
+    io.post_index_cmd_o.cmd.bits.post_decode_cmd.is_fence      := false.B
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.mem_addr      := 0.U
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.iter          := 0.U
     io.post_index_cmd_o.cmd.bits.post_decode_cmd.rd_bank       := 0.U

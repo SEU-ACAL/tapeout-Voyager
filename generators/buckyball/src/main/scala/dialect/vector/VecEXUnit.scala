@@ -7,7 +7,7 @@ import org.chipsalliance.cde.config.Parameters
 
 import dialect.vector._
 import buckyball.frontend.rs.{ReservationStationIssue, ReservationStationComplete, BuckyBallCmd}
-import buckyball.mem.{SramReadIO, SramWriteIO, SramReadResp, AccWriteIO}
+import buckyball.mem.{SramReadIO, SramWriteIO, SramReadResp}
 import buckyball.BuckyBallConfig
 import warp.VecBall
 
