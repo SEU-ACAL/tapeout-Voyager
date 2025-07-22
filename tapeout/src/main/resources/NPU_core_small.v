@@ -44,7 +44,7 @@ module NPU_core_small #(
         input [3:0]                             buffer_row_addr,        // 修改为共用
 
         // output
-        output [15*8*4-1:0]                     outlier_sum,            // 每个macro不一样，位宽x4
+        output [32*8*4-1:0]                     outlier_sum,            // 每个macro不一样，位宽x4
 
 
         output 		                            outlier_out_valid,      // 每个macro不一样，位宽x4
@@ -118,14 +118,14 @@ module NPU_core_small #(
                                         .E_most         ( E_most[i*64+:64]           ),
                                         .WD_E           ( WD_E[i*64+:64]             ),
                                         .WD_M           ( WD_M[i*64+:64]             ),
-                                        .buffer0_rst    ( buffer0_rst             ),
-                                        .buffer1_rst    ( buffer1_rst             ),
+                                        .buffer0_rst    ( buffer0_rst	             ),
+                                        .buffer1_rst    ( buffer1_rst	             ),
                                         .WEB            ( WEB[i]                     ),
                                         .MEB            ( MEB[i]                     ),
                                         .CIMADR_MSB     ( CIMADR[1]                  ),
                                         .full_NNIN      ( NNIN_data                  ),
                                         .WD_out         ( WD[i*COL_NUM+:COL_NUM]     ),
-                                        .outlier_sum    ( outlier_sum[i*15*8+:15*8]  ),
+                                        .outlier_sum    ( outlier_sum[i*32*8+:32*8]  ),
                                         .dout_valid     ( dout_valid[i]              )
                                     );
         end
@@ -161,7 +161,7 @@ module NPU_core_small #(
                             .NNIN_SI                    ( NNIN_SI                        ),
                             .PSUM_SI                    ( PSUM_SI                        ),
                             .din_valid                  ( din_valid                      ),
-                            .adder_enb                  ( adder_enb                   ),
+                            .adder_enb                  ( adder_enb	                     ),
                             .buffer_row_addr            ( buffer_row_addr                ),
                             .Q                          (                                ),
                             .data_out                   ( data_out[j*256+:256]           ),

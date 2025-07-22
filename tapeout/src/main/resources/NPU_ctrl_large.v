@@ -1,4 +1,6 @@
-`include "../gen-collateral/defines.v"
+// `include "../0-RTL/AXI_SLAVE/defines.v"
+`include "./defines.v"
+
 module NPU_ctrl_large #(
         parameter Macro_ROW_NUM_L = 256
     )(
@@ -11,11 +13,8 @@ module NPU_ctrl_large #(
         input							start_en_L,
         input							fp_en_L,
 
-        input	[3:0]					MAC_INPUT_ROW,
-        input	[3:0]					MAC_LENGTH,			//MAX:6
-        // input	[3:0]					MAC_COL,		//MAX:6
-        //MAC_LENGTH	*	MAC_COL	 <= 6
-        //MAC_INPUT_ROW	*	MAC_COL	 <= 16
+        input	[4:0]					MAC_INPUT_ROW,
+        input	[4:0]					MAC_LENGTH,			//MAX:6
         input	[9:0]					FM_ADDR_START_L,
         input	[7:0]					last_CIMADR_L,
         input	[64*4-1:0]				E_most_L,
@@ -59,7 +58,6 @@ module NPU_ctrl_large #(
 
     reg [3:0] 								MAC_INPUT_ROW_cnt;
     reg [3:0] 								MAC_LENGTH_cnt;
-    reg [3:0] 								MAC_COL_cnt;
 
     //counter ctrl
     reg [2:0] 								bit_cyc_cnt;
@@ -77,7 +75,7 @@ module NPU_ctrl_large #(
     reg 									wm_addr_L_MSB;
     reg 								    wml_npu_load_valid  ;
 
-    assign first_start = (MAC_INPUT_ROW_cnt == 0) && (MAC_LENGTH_cnt == 0) && (MAC_COL_cnt == 0) && start_en_L;
+    assign first_start = (MAC_INPUT_ROW_cnt == 0) && (MAC_LENGTH_cnt == 0) && start_en_L;
     assign ready = write_ready&cim_ready;
     assign last_en = MAC_LENGTH_cnt == MAC_LENGTH;
 
@@ -96,11 +94,11 @@ module NPU_ctrl_large #(
 
     always @(posedge clk_cim or negedge rstn) begin
         if (!rstn)
-            bit_cyc_cnt <= 0;
+            bit_cyc_cnt <= 'd0;
         else if (bit_cyc_cnt == 3'd7)
-            bit_cyc_cnt <= 0;
+            bit_cyc_cnt <= 'd0;
         else if (bit_cyc_cnt == 3'd0) begin
-            if ((fml_npu_load_valid) & ready)
+            if(fml_npu_load_valid)
                 bit_cyc_cnt <= bit_cyc_cnt + 1'b1;
         end
         else
@@ -109,36 +107,21 @@ module NPU_ctrl_large #(
 
     always @(posedge clk_cim or negedge rstn) begin
         if (!rstn)
-            MAC_INPUT_ROW_cnt <= 0;
+            MAC_INPUT_ROW_cnt <= 'd0;
         else if (bit_cyc_cnt == 3'd7)
-            if (MAC_INPUT_ROW_cnt == MAC_INPUT_ROW) begin
-                if(ready)
-                    MAC_INPUT_ROW_cnt <= 'b0;
+            if (MAC_INPUT_ROW_cnt == MAC_INPUT_ROW-1) begin
+                MAC_INPUT_ROW_cnt <= 'd0;
             end
             else
                 MAC_INPUT_ROW_cnt <= MAC_INPUT_ROW_cnt + 1'b1;
     end
 
-    // always @(posedge clk_w or negedge rstn) begin
-    //     if (!rstn)
-    //         MAC_COL_cnt <= 0;
-    //     else if (MAC_INPUT_ROW_cnt == MAC_INPUT_ROW)
-    //         if (MAC_COL_cnt == MAC_COL) begin
-    //             if(ready)
-    //                 MAC_COL_cnt <= 'b0;
-    //         end
-    //         else
-    //             MAC_COL_cnt <= MAC_COL_cnt + 1'b1;
-    // end
-
     always @(posedge clk_cim or negedge rstn) begin
         if (!rstn)
-            MAC_LENGTH_cnt <= 0;
-        // else if (MAC_COL_cnt == MAC_COL)
-        else if (MAC_INPUT_ROW_cnt == MAC_INPUT_ROW)
-            if (MAC_LENGTH_cnt == MAC_LENGTH) begin
-                if(ready)
-                    MAC_LENGTH_cnt <= 'b0;
+            MAC_LENGTH_cnt <= 'd0;
+        else if (bit_cyc_cnt == 3'd7 && MAC_INPUT_ROW_cnt == MAC_INPUT_ROW-1)
+            if (MAC_LENGTH_cnt == MAC_LENGTH-1) begin
+                MAC_LENGTH_cnt <= 'd0;
             end
             else
                 MAC_LENGTH_cnt <= MAC_LENGTH + 1'b1;
@@ -146,7 +129,7 @@ module NPU_ctrl_large #(
 
 
     //FM ctrl
-    assign fml_npu_load_en_pre		 =  ((bit_cyc_cnt == 3'd7)&MAC_INPUT_ROW_cnt < MAC_INPUT_ROW) | ((bit_cyc_cnt == 3'd7)&ready) | first_start;
+    assign fml_npu_load_en_pre		 = ( (bit_cyc_cnt == 3'd7) && MAC_INPUT_ROW_cnt < MAC_INPUT_ROW ) | first_start;
     assign fml_npu_load_addr_next	 = FM_ADDR_START_L + MAC_LENGTH_cnt * MAC_INPUT_ROW + MAC_INPUT_ROW_cnt + 1'b1;
     assign fml_npu_load_addr		 = first_start? FM_ADDR_START_L: fml_npu_load_addr_next;
     assign cim_ready				 = MAC_INPUT_ROW_cnt == MAC_INPUT_ROW;
@@ -160,24 +143,18 @@ module NPU_ctrl_large #(
             wm_addr_L_MSB <= 1'b0;
         end
         else if(wm_addr_L == Macro_ROW_NUM_L-1) begin
-            if(ready) begin
-                wm_addr_L <= 'b0;
-                wm_addr_L_MSB <= !wm_addr_L_MSB;
-            end
-        end
-        else begin		
-			if(wml_npu_load_valid)
 			wm_addr_L <= wm_addr_L + 1'b1;
-		end
+            wm_addr_L_MSB <= !wm_addr_L_MSB;
+        end
     end
-    assign wml_npu_load_en_pre		 = ready  || wm_addr_L;
-    assign wml_npu_load_addr		 = MAC_LENGTH_cnt + wm_addr_L;
+    assign wml_npu_load_en_pre		 = 'b1;
+    assign wml_npu_load_addr		 = MAC_LENGTH_cnt*Macro_ROW_NUM_L + wm_addr_L;
     assign write_ready				 = (wm_addr_L == Macro_ROW_NUM_L-1);
 
 
     //OBL ctrl
-    assign obl_npu_store_en_pre	 = (MAC_LENGTH_cnt == MAC_LENGTH)&&Macro_out_valid;
-    assign obl_npu_store_addr	 = MAC_INPUT_ROW_cnt*MAC_INPUT_ROW + MAC_COL_cnt;
+    assign obl_npu_store_en_pre	 = bit_cyc_cnt == 3'd7 && MAC_INPUT_ROW_cnt == MAC_INPUT_ROW-1;
+    assign obl_npu_store_addr	 = MAC_INPUT_ROW_cnt;
     genvar i;
     generate
         for (i = 0; i < 32; i = i + 1) begin : gen_obl_add
@@ -190,16 +167,16 @@ module NPU_ctrl_large #(
     endgenerate
 
     always @(*) begin
-        MEB_L				= {  4{((bit_cyc_cnt == 3'd7)&ready)}  };			//=7之后延迟1周期
+        MEB_L				= 'b0;			//=7之后延迟1周期
         {WD_E_L, WD_M_L} 	= wml_npu_load_data;
-        NNIN_E_L			= fp_en_L? fml_npu_load_data[`FM_WIDTH *`FM_Bank_NUM_L/2+:`FM_WIDTH *`FM_Bank_NUM_L/2]: 'd0;
-        NNIN_M_L			= !fp_en_L? fml_npu_load_data[`FM_WIDTH *`FM_Bank_NUM_L/2+:`FM_WIDTH *`FM_Bank_NUM_L/2]: fml_npu_load_data[0+:`FM_WIDTH *`FM_Bank_NUM_L/2];
+        NNIN_E_L			= fml_npu_load_data[`FM_WIDTH *`FM_Bank_NUM_L/2	+:`FM_WIDTH *`FM_Bank_NUM_L/2];
+        NNIN_M_L			= fml_npu_load_data[0							+:`FM_WIDTH *`FM_Bank_NUM_L/2];
         din_valid_L			= fml_npu_load_valid;
         compute_valid_L		= fml_npu_load_valid;
 
         CIMADR_L			= {MAC_INPUT_ROW_cnt[0], last_en? last_CIMADR_L: {$clog2(Macro_ROW_NUM_L){1'b1}} };//要多延迟两个周期
-        adder_enb_L			= MAC_LENGTH_cnt > 'b0;						//延迟一cyc
-        buffer_row_addr_L	= MAC_INPUT_ROW_cnt*MAC_INPUT_ROW + MAC_COL_cnt;
+        adder_enb_L			= !(MAC_LENGTH_cnt > 'b0);						//延迟一cyc
+        buffer_row_addr_L	= MAC_INPUT_ROW_cnt*MAC_INPUT_ROW;
 
         WADR_L				= wm_addr_L;
         WEB_L				= {4{!MAC_INPUT_ROW_cnt[0]}};

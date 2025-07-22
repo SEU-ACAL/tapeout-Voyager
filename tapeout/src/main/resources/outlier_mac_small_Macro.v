@@ -25,8 +25,8 @@ module outlier_mac_small_Macro #(
     input [31:0]                        outlier_value4,
     input [$clog2(ROW_NUM)-1:0]         outlier_index_2bit,
     input [$clog2(ROW_NUM)-1:0]         outlier_index_4bit,
-    output [15*8-1:0]                   outlier_mac_out,
-    output reg                          dout_valid
+    output [32*8-1:0]                   outlier_mac_out,
+    output                           dout_valid
 );
 
 genvar i;
@@ -56,7 +56,7 @@ generate
             .outlier_value4             (outlier_value4[i*4 +: 4]                           ) ,
             .outlier_index_2bit         (outlier_index_2bit                                 ) ,
             .outlier_index_4bit         (outlier_index_4bit                                 ) ,
-            .outlier_mac_out            (outlier_mac_out[i*15 +: 15]                        ) ,
+            .outlier_mac_out            (outlier_mac_out[i*32 +: 32]                        ) ,
             .dout_valid                 (dout_valid                                         )
         );
     end

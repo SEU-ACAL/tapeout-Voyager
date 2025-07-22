@@ -1,4 +1,5 @@
-`include "../gen-collateral/defines.v"
+`include "./defines.v"
+// `include "../0-RTL/AXI_SLAVE/defines.v"
 
 module sys_top(
         input clk_w,
@@ -73,11 +74,11 @@ module sys_top(
 
     wire                                      fml_npu_load_en    ;
     wire [$clog2(`FM_Bank_DEPTH_L)-1:0]       fml_npu_load_addr  ;
-    wire [`FM_WIDTH *`FM_Bank_NUM_L -1:0]       fml_npu_load_data  ;
+    wire [`FM_WIDTH *`FM_Bank_NUM_L -1:0]      fml_npu_load_data  ;
 
     wire                                      fms_npu_load_en    ;
     wire [$clog2(`FM_Bank_DEPTH_S)-1:0]       fms_npu_load_addr  ;
-    wire [`FM_WIDTH *`FM_Bank_NUM_S -1:0]       fms_npu_load_data  ;
+    wire [`FM_WIDTH *`FM_Bank_NUM_S -1:0]      fms_npu_load_data  ;
 
     wire                                      obl_npu_store_en   ;
     wire [$clog2(`OB_Bank_DEPTH)-1:0]         obl_npu_store_addr ;
@@ -181,8 +182,12 @@ module sys_top(
     assign obl_load_en		 = !NPU_AXI_SEL && obl_load_en_pre;
     assign obs_load_en		 = !NPU_AXI_SEL && obs_load_en_pre;
 
+	assign obl_store_en      = !NPU_AXI_SEL && obl_store_en_pre;
+    assign obs_store_en      = !NPU_AXI_SEL && obs_store_en_pre;  
+
     assign obl_npu_store_en	 =  NPU_AXI_SEL && obl_npu_store_en_pre;
     assign obs_npu_store_en	 =  NPU_AXI_SEL && obs_npu_store_en_pre;
+
 
 
     weight_memory_interface_L
@@ -197,7 +202,8 @@ module sys_top(
             .wm_store_data      ( wml_store_data      ),
             .wm_npu_load_en     ( wml_npu_load_en     ),
             .wm_npu_load_addr   ( wml_npu_load_addr   ),
-            .wm_npu_load_data   ( wml_npu_load_data   )
+            .wm_npu_load_data   ( wml_npu_load_data   ),
+            .NPU_AXI_SEL        ( NPU_AXI_SEL         )
         );
 
     weight_memory_interface_S
@@ -212,7 +218,8 @@ module sys_top(
             .wm_store_data      ( wms_store_data      ),
             .wm_npu_load_en     ( wms_npu_load_en     ),
             .wm_npu_load_addr   ( wms_npu_load_addr   ),
-            .wm_npu_load_data   ( wms_npu_load_data   )
+            .wm_npu_load_data   ( wms_npu_load_data   ),
+            .NPU_AXI_SEL        ( NPU_AXI_SEL         )
         );
 
     output_buffer_interface
@@ -249,30 +256,32 @@ module sys_top(
         feature_memory_interface_L_inst (
             .clk                ( clk_cim             ),
             .rstn               ( rstn                ),
-            .fml_load_en         ( fml_load_en         ),
-            .fml_load_addr       ( fml_load_addr       ),
-            .fml_load_data       ( fml_load_data       ),
-            .fml_store_en        ( fml_store_en        ),
-            .fml_store_addr      ( fml_store_addr      ),
-            .fml_store_data      ( fml_store_data      ),
-            .fml_npu_load_en     ( fml_npu_load_en     ),
-            .fml_npu_load_addr   ( fml_npu_load_addr   ),
-            .fml_npu_load_data   ( fml_npu_load_data   )
+            .fml_load_en        ( fml_load_en         ),
+            .fml_load_addr      ( fml_load_addr       ),
+            .fml_load_data      ( fml_load_data       ),
+            .fml_store_en       ( fml_store_en        ),
+            .fml_store_addr     ( fml_store_addr      ),
+            .fml_store_data     ( fml_store_data      ),
+            .fml_npu_load_en    ( fml_npu_load_en     ),
+            .fml_npu_load_addr  ( fml_npu_load_addr   ),
+            .fml_npu_load_data  ( fml_npu_load_data   ),
+            .NPU_AXI_SEL        ( NPU_AXI_SEL         )
         );
 
     feature_memory_interface_small
         feature_memory_interface_S_inst (
             .clk                ( clk_cim             ),
             .rstn               ( rstn                ),
-            .fms_load_en         ( fms_load_en         ),
-            .fms_load_addr       ( fms_load_addr       ),
-            .fms_load_data       ( fms_load_data       ),
-            .fms_store_en        ( fms_store_en        ),
-            .fms_store_addr      ( fms_store_addr      ),
-            .fms_store_data      ( fms_store_data      ),
-            .fms_npu_load_en     ( fms_npu_load_en     ),
-            .fms_npu_load_addr   ( fms_npu_load_addr   ),
-            .fms_npu_load_data   ( fms_npu_load_data   )
+            .fms_load_en        ( fms_load_en         ),
+            .fms_load_addr      ( fms_load_addr       ),
+            .fms_load_data      ( fms_load_data       ),
+            .fms_store_en       ( fms_store_en        ),
+            .fms_store_addr     ( fms_store_addr      ),
+            .fms_store_data     ( fms_store_data      ),
+            .fms_npu_load_en    ( fms_npu_load_en     ),
+            .fms_npu_load_addr  ( fms_npu_load_addr   ),
+            .fms_npu_load_data  ( fms_npu_load_data   ),
+            .NPU_AXI_SEL        ( NPU_AXI_SEL         )
         );
 
 
@@ -290,14 +299,14 @@ module sys_top(
             .fp_en              ( fp_en              ),
             .start_en           ( start_en           ),
 
-            // Large		//***************************************add
+            // Large
             .MAC_INPUT_ROW_L     ( MAC_INPUT_ROW_L     ),
             .MAC_LENGTH_L        ( MAC_LENGTH_L        ),
             .FM_ADDR_START_L     ( FM_ADDR_START_L     ),
             .last_CIMADR_L       ( last_CIMADR_L       ),
             .E_most_L            ( E_most_L            ),
 
-            // Small		//***************************************add
+            // Small
             .MAC_INPUT_ROW_S     ( MAC_INPUT_ROW_S     ),
             .MAC_LENGTH_S        ( MAC_LENGTH_S        ),
             .FM_ADDR_START_S     ( FM_ADDR_START_S     ),
@@ -377,8 +386,10 @@ module sys_top(
             .exp_store_addr   ( exp_store_addr     ),
             .exp_store_data   ( exp_store_data     ),
             .csr_load_en      ( csr_load_en       ),
+			.csr_load_addr    ( csr_load_addr     ),
             .csr_load_data    ( csr_load_data     ),
             .csr_store_en     ( csr_store_en      ),
+			.csr_store_addr   ( csr_store_addr    ),
             .csr_store_data   ( csr_store_data    ),
 			.sys_load_data_vld( sys_load_data_vld )
         );

@@ -67,7 +67,7 @@ generate
     for (k=0; k<COL_GROUP_NUM; k=k+1) begin
         always @(posedge clk or negedge rstn) begin
             if (!rstn) begin
-                psum_temp[(k+1)*(PSUM_8_W + 7)-1 -: (PSUM_8_W + 7)] <= 'd0;  //24λ
+                psum_temp[(k+1)*(PSUM_8_W + 7)-1 -: (PSUM_8_W + 7)] <= 21'd0;  //24λ
             end
             else if (bitcount == 3'b000) begin
                 psum_temp[(k+1)*(PSUM_8_W + 7)-1 -: (PSUM_8_W + 7)] <= $signed(PSUM_8[(k+1)*PSUM_8_W-1 -: PSUM_8_W]);

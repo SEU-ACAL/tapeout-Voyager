@@ -1,16 +1,17 @@
-`include "../gen-collateral/defines.v"
+// `include "../0-RTL/AXI_SLAVE/defines.v"
+`include "./defines.v"
 
 module mem_access_manager(
         input clk,
         input rstn,
 
         input         sys_load_en      ,
-        input  [19:0] sys_load_addr    ,
+        input  [16:0] sys_load_addr    ,
         output [63:0] sys_load_data    ,
 		output        sys_load_data_vld,
 
         input         sys_store_en  ,
-        input  [19:0] sys_store_addr,
+        input  [16:0] sys_store_addr,
         input  [63:0] sys_store_data,
 
 

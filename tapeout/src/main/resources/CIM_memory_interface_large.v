@@ -1,4 +1,5 @@
-`include "../gen-collateral/defines.v"
+// `include "../0-RTL/AXI_SLAVE/defines.v"
+`include "./defines.v"
 
 module CIM_memory_interface_large #(
         parameter Macro_ROW_NUM = 256
@@ -18,7 +19,7 @@ module CIM_memory_interface_large #(
 		output [Macro_ROW_NUM*8-1:0]            AXI_NNIN_M_L,
 
         output [$clog2(Macro_ROW_NUM):0]        AXI_WADR_L,
-        output                                  AXI_WEB_L,
+        output [3:0]                            AXI_WEB_L,
         output [3:0]                            AXI_MEB_L,
 
         output [63:0]                           AXI_WD_E_L,
@@ -27,7 +28,7 @@ module CIM_memory_interface_large #(
         output                                  AXI_buffer1_rst_L,
         output                                  AXI_compute_valid_L,
 
-        output [8:0]                            AXI_CIMADR_L,
+        output [$clog2(Macro_ROW_NUM):0]        AXI_CIMADR_L,
         output                                  AXI_adder_enb_L,
         output [3:0]                            AXI_buffer_row_addr_L
     );

@@ -14,12 +14,12 @@ module CustomDigitalGPIOCell(
         ie=1 oe=1 ,recieve
     */
     // PBCD2RNC_X u_PAD_IO (
-    //     .PAD(pad),        // 连接到外部 pad
-    //     .I(o),        // 输出数据线
-    //     .OEN(!oe),           // 输出使能，高电平表示禁用输出（即输入模式）
+    //     .PAD(pad),        // ????? pad
+    //     .I(o),        // ?????
+    //     .OEN(!oe),           // ?????????????????????
     //     .REN(1'b0),
-    //     .IE(!ie),            // 输入使能
-    //     .C(i)          // 从 PAD 读入的值
+    //     .IE(!ie),            // ????
+    //     .C(i)          // ? PAD ????
     // );
     // PBCD2RNC_X (PAD,IE,OEN,REN,I,C);
 endmodule
