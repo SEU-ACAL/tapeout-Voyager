@@ -22,7 +22,7 @@ class AccPipe(val n: Int, val w: Int, val mask_len: Int) extends Module {
   val data_reg  = RegInit(0.U(w.W))
   val mask_reg  = RegInit(VecInit(Seq.fill(mask_len)(false.B)))
   
-  when (io.write_in.is_acc || valid_reg) {
+  when (io.write_in.is_acc) {
 // -----------------------------------------------------------------------------
 // exec->AccPipe->SramBank
 // -----------------------------------------------------------------------------
