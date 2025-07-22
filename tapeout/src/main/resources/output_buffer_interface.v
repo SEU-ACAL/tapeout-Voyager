@@ -1,3 +1,4 @@
+//`include "defines.v"
 `include "../gen-collateral/defines.v"
 
 // `define OB_WIDTH 64

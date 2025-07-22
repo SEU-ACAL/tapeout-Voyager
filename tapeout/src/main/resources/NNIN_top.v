@@ -17,7 +17,7 @@ module NNIN_top #(
 
 
 NNIN_pre_align #(
-    .Macro_ROW_NUM(256)
+    .Macro_ROW_NUM(Macro_ROW_NUM)
 ) u_NNIN_pre_align (
     .fp_en      (fp_en      ),
     .NNIN_E_all (NNIN_E_all ),

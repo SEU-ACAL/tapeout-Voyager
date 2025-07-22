@@ -19,7 +19,7 @@ class VoyagerVerilatorConfig extends Config(
   new voyager_tapeout.custom.WithCustomDigitalTop ++
   new voyager_tapeout.custom.OurHeterSoCConfig ++
   // new voyager_tapeout.custom.iobinders.WithVoyagerPLLSelectorDividerClockGenerator(enable=true)++
-  // new voyager_tapeout.custom.WithNPU ++
+  new voyager_tapeout.custom.WithNPU ++
   new chipyard.config.AbstractConfig)
 
 

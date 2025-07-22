@@ -1,3 +1,4 @@
+//`include "defines.v"
 `include "../gen-collateral/defines.v"
 
 module NPU_top (
@@ -84,7 +85,7 @@ module NPU_top (
     wire [Macro_ROW_NUM_L*8-1:0] 			AXI_NNIN_E_L;
     wire [Macro_ROW_NUM_L*8-1:0] 			AXI_NNIN_M_L;
     wire [$clog2(Macro_ROW_NUM_L):0] 		AXI_WADR_L;
-    wire 	            					AXI_WEB_L;
+    wire [3:0]	            				AXI_WEB_L;
     wire [3:0]            					AXI_MEB_L;
     wire [63:0]       						AXI_WD_E_L;
     wire [63:0]       						AXI_WD_M_L;
@@ -108,7 +109,7 @@ module NPU_top (
     wire [3:0]                            	buffer_row_addr_L;
     //write_CIM port
     wire [$clog2(Macro_ROW_NUM_L):0]      	WADR_L;
-    wire  	                             	WEB_L;
+    wire [3:0] 	                            WEB_L;
     // reg [64*4-1:0]                    	   E_most_L;
     wire [64*4-1:0]                       	WD_E_L;			//from CSR
     wire [64*4-1:0] 						WD_M_L;
@@ -170,9 +171,9 @@ module NPU_top (
     wire 	                               adder_enb_S;
     wire [3:0]                             buffer_row_addr_S;
     // output
-    wire [15*8*8-1:0]                      outlier_sum_S;
+    wire [32*8*4-1:0]                      outlier_sum_S;
     wire 	                               dout_valid_S;
-    wire [256*8-1:0]                       data_out_S;
+    wire [256*4-1:0]                       data_out_S;
     wire                                   Macro_out_valid_S;
 
     // NPU_ctrl_small signals
@@ -423,11 +424,11 @@ module NPU_top (
             .wms_npu_load_en_pre          ( wms_npu_load_en_pre      ),
             .wms_npu_load_addr            ( wms_npu_load_addr        ),
             .wms_npu_load_data            ( wms_npu_load_data        ),
-            // .wms_npu_load_valid           ( wms_npu_load_valid       ),
+            //.wms_npu_load_valid           ( wms_npu_load_valid       ),
             .fms_npu_load_en_pre          ( fms_npu_load_en_pre      ),
             .fms_npu_load_addr            ( fms_npu_load_addr        ),
             .fms_npu_load_data            ( fms_npu_load_data        ),
-            // .fms_npu_load_valid           ( fms_npu_load_valid       ),
+            //.fms_npu_load_valid           ( fms_npu_load_valid       ),
             .obs_npu_store_en_pre         ( obs_npu_store_en_pre     ),
             .obs_npu_store_addr           ( obs_npu_store_addr       ),
             .obs_npu_store_data           ( obs_npu_store_data       ),

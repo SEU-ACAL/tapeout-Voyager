@@ -1,4 +1,4 @@
-//`include "../gen-collateral/defines.v"
+//`include "defines.v"
 
 // `define FM_WIDTH 64
 // `define FM_DEPTH 4096
@@ -11,7 +11,7 @@ module axi_bridge(
     input [7:0]  axi_awlen,  // 8 bit
     input [2:0]  axi_awsize, // 3 bit
     input [1:0]  axi_awburst,
-    input [0:0]  axi_awid,
+    input        axi_awid,
     input        axi_awvalid,
     output reg   axi_awready,
 
@@ -22,7 +22,7 @@ module axi_bridge(
     output reg   axi_wready,
 
     output reg [1:0] axi_bresp,
-    output     [0:0] axi_bid,
+    output           axi_bid,
     output reg       axi_bvalid,
     input            axi_bready,
 
@@ -30,12 +30,12 @@ module axi_bridge(
     input  [7:0]  axi_arlen,
     input  [2:0]  axi_arsize,
     input  [1:0]  axi_arburst,
-    input  [0:0]  axi_arid,
+    input         axi_arid,
     input         axi_arvalid,
     output reg    axi_arready,
 
     output     [63:0] axi_rdata,
-    output     [ 0:0] axi_rid,
+    output            axi_rid,
     output reg [1:0]  axi_rresp,
     output reg        axi_rlast,
     output reg        axi_rvalid,
@@ -51,8 +51,11 @@ module axi_bridge(
     output [63:0]                  sys_store_data
 );
 
+
+
 reg axi_awv_awr_flag;
 reg axi_arv_arr_flag; 
+
 
 // Implement axi_awready generation
 

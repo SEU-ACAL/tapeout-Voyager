@@ -6,7 +6,7 @@ module axi_slave_npu_wrapper(
         input [7:0]  axi_awlen,  // 8 bit
         input [2:0]  axi_awsize, // 3 bit
         input [1:0]  axi_awburst,
-        input [0:0]  axi_awid,
+        input 	     axi_awid,
         input        axi_awvalid,
         output       axi_awready,
 
@@ -17,7 +17,7 @@ module axi_slave_npu_wrapper(
         output       axi_wready,
 
         output     [1:0] axi_bresp,
-        output     [0:0] axi_bid,
+        output           axi_bid,
         output           axi_bvalid,
         input            axi_bready,
 
@@ -25,12 +25,12 @@ module axi_slave_npu_wrapper(
         input  [7:0]  axi_arlen,
         input  [2:0]  axi_arsize,
         input  [1:0]  axi_arburst,
-        input  [0:0]  axi_arid,
+        input         axi_arid,
         input         axi_arvalid,
         output        axi_arready,
 
         output     [63:0] axi_rdata,
-        output     [ 0:0] axi_rid,
+        output            axi_rid,
         output     [1:0]  axi_rresp,
         output            axi_rlast,
         output            axi_rvalid,
@@ -42,6 +42,7 @@ module axi_slave_npu_wrapper(
         input 				rstn_FPGA,
         input  		 		PLL_CLK_SEL,					//0:original , 1:PLL_CLK
         input 				TEST_MODE,						//0:CPU  	 , 1:TEST_MODE
+        // input			load_store_OEN,					//0:load 	 , 1:store			in PAD port
 		//PAD output port
 		output 				FPGA_sys_load_data_vld,
         //PAD port reuse
@@ -67,6 +68,13 @@ module axi_slave_npu_wrapper(
     wire        sys_store_en;
     wire [16:0] sys_store_addr;
     wire [63:0] sys_store_data;
+
+	wire		AXI_sys_load_en;
+	wire [16:0] AXI_sys_load_addr;
+	wire [63:0] AXI_sys_load_data;
+	wire 		AXI_sys_store_en;
+	wire [16:0] AXI_sys_store_addr;
+	wire [63:0] AXI_sys_store_data;
 
 	wire 	  clk_w;
 	wire 	  clk_cim;
@@ -160,7 +168,7 @@ module axi_slave_npu_wrapper(
                          .NPU_AXI_SEL         		( NPU_AXI_SEL         ),
                          .clk_w               		( clk_w               ),
                          .clk_cim             		( clk_cim             ),
-                         .rstn_NPU            		( rstn_NPU			  ),
+                         .rstn_NPU            		( rstn_NPU				),
                          .sys_load_en         		( sys_load_en         ),
                          .sys_load_addr       		( sys_load_addr       ),
                          .sys_load_data       		( sys_load_data       ),

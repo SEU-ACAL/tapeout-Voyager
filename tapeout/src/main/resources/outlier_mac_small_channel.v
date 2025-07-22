@@ -24,7 +24,7 @@ module outlier_mac_small_channel #(
     input [3:0]                         outlier_value4,
     input [$clog2(ROW_NUM)-1:0]         outlier_index_2bit,
     input [$clog2(ROW_NUM)-1:0]         outlier_index_4bit,
-    output signed[14:0]                 outlier_mac_out,
+    output signed[31:0]                 outlier_mac_out,
     output reg                          dout_valid
 );
 

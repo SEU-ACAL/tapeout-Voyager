@@ -1,3 +1,4 @@
+// `include "../gen-collateral/defines.v"
 `include "../gen-collateral/defines.v"
 
 module weight_memory_interface_L(

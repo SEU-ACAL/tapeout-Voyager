@@ -1,4 +1,6 @@
+// `include "../gen-collateral/defines.v"
 `include "../gen-collateral/defines.v"
+
 module NPU_ctrl_large #(
         parameter Macro_ROW_NUM_L = 256
     )(
@@ -96,49 +98,34 @@ module NPU_ctrl_large #(
 
     always @(posedge clk_cim or negedge rstn) begin
         if (!rstn)
-            bit_cyc_cnt <= 0;
+            bit_cyc_cnt <= 'd0;
         else if (bit_cyc_cnt == 3'd7)
-            bit_cyc_cnt <= 0;
-        else if (bit_cyc_cnt == 3'd0) begin
-            if ((fml_npu_load_valid) & ready)
-                bit_cyc_cnt <= bit_cyc_cnt + 1'b1;
-        end
+            bit_cyc_cnt <= 'd0;
+        else if (bit_cyc_cnt == 3'd0)
+            bit_cyc_cnt <= bit_cyc_cnt + 1'b1;
         else
             bit_cyc_cnt <= bit_cyc_cnt + 1'b1;
     end
 
     always @(posedge clk_cim or negedge rstn) begin
         if (!rstn)
-            MAC_INPUT_ROW_cnt <= 0;
+            MAC_INPUT_ROW_cnt <= 'd0;
         else if (bit_cyc_cnt == 3'd7)
-            if (MAC_INPUT_ROW_cnt == MAC_INPUT_ROW) begin
-                if(ready)
-                    MAC_INPUT_ROW_cnt <= 'b0;
+            if (MAC_INPUT_ROW_cnt == MAC_INPUT_ROW-1) begin
+                // if(ready)
+                MAC_INPUT_ROW_cnt <= 'd0;
             end
             else
                 MAC_INPUT_ROW_cnt <= MAC_INPUT_ROW_cnt + 1'b1;
     end
 
-    // always @(posedge clk_w or negedge rstn) begin
-    //     if (!rstn)
-    //         MAC_COL_cnt <= 0;
-    //     else if (MAC_INPUT_ROW_cnt == MAC_INPUT_ROW)
-    //         if (MAC_COL_cnt == MAC_COL) begin
-    //             if(ready)
-    //                 MAC_COL_cnt <= 'b0;
-    //         end
-    //         else
-    //             MAC_COL_cnt <= MAC_COL_cnt + 1'b1;
-    // end
-
     always @(posedge clk_cim or negedge rstn) begin
         if (!rstn)
-            MAC_LENGTH_cnt <= 0;
-        // else if (MAC_COL_cnt == MAC_COL)
-        else if (MAC_INPUT_ROW_cnt == MAC_INPUT_ROW)
-            if (MAC_LENGTH_cnt == MAC_LENGTH) begin
-                if(ready)
-                    MAC_LENGTH_cnt <= 'b0;
+            MAC_LENGTH_cnt <= 'd0;
+        else if (bit_cyc_cnt == 3'd7 && MAC_INPUT_ROW_cnt == MAC_INPUT_ROW-1)
+            if (MAC_LENGTH_cnt == MAC_LENGTH-1) begin
+                // if(ready)
+                MAC_LENGTH_cnt <= 'd0;
             end
             else
                 MAC_LENGTH_cnt <= MAC_LENGTH + 1'b1;
@@ -146,7 +133,7 @@ module NPU_ctrl_large #(
 
 
     //FM ctrl
-    assign fml_npu_load_en_pre		 =  ((bit_cyc_cnt == 3'd7)&MAC_INPUT_ROW_cnt < MAC_INPUT_ROW) | ((bit_cyc_cnt == 3'd7)&ready) | first_start;
+    assign fml_npu_load_en_pre		 = ( (bit_cyc_cnt == 3'd7) && MAC_INPUT_ROW_cnt < MAC_INPUT_ROW ) | first_start;
     assign fml_npu_load_addr_next	 = FM_ADDR_START_L + MAC_LENGTH_cnt * MAC_INPUT_ROW + MAC_INPUT_ROW_cnt + 1'b1;
     assign fml_npu_load_addr		 = first_start? FM_ADDR_START_L: fml_npu_load_addr_next;
     assign cim_ready				 = MAC_INPUT_ROW_cnt == MAC_INPUT_ROW;
@@ -165,10 +152,10 @@ module NPU_ctrl_large #(
                 wm_addr_L_MSB <= !wm_addr_L_MSB;
             end
         end
-        else begin		
-			if(wml_npu_load_valid)
-			wm_addr_L <= wm_addr_L + 1'b1;
-		end
+        else begin
+            if(wml_npu_load_valid)
+                wm_addr_L <= wm_addr_L + 1'b1;
+        end
     end
     assign wml_npu_load_en_pre		 = ready  || wm_addr_L;
     assign wml_npu_load_addr		 = MAC_LENGTH_cnt + wm_addr_L;

@@ -23,7 +23,7 @@ module outlier_small_Macro_top #(
     input [8*ROW_NUM_Macro-1:0]      full_NNIN,
 
     output [63:0]                    WD_out,
-    output [15*8-1:0]                outlier_sum,
+    output [32*8-1:0]                outlier_sum,
     output                           dout_valid    
 );
 

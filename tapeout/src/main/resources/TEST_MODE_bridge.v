@@ -1,10 +1,11 @@
 module TEST_MODE_bridge (
-        //PAD input port						//OEN		0:load 	 , 1:store			in PAD port
+        //PAD input port
         input 				clk_FPGA_w,
         input 				clk_FPGA_cim,
         input 				rstn_FPGA,
         input  		 		PLL_CLK_SEL,					//0:original , 1:PLL_CLK
         input 				TEST_MODE,						//0:CPU  	 , 1:TEST_MODE
+        // input				load_store_OEN,				//0:load 	 , 1:store			in PAD port
 		//PAD output port
 		output 				FPGA_sys_load_data_vld,
         //PAD port reuse

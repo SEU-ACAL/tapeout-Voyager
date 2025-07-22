@@ -1,3 +1,5 @@
+//`include "defines.v"
+// `include "../gen-collateral/defines.v"
 `include "../gen-collateral/defines.v"
 
 module csr_ctrl_memory_interface(

@@ -1,3 +1,4 @@
+// `include "../gen-collateral/defines.v"
 `include "../gen-collateral/defines.v"
 
 module CIM_memory_interface_small #(
