@@ -78,7 +78,7 @@ add_dependencies(sync-bin
   peripheral-build 
   embench-build
   cpu_linux_pthread-build
-  parsecv3-build
+  #parsecv3-build
   boardtest-build
   coremark-build)
 add_custom_target(build-all ALL 
