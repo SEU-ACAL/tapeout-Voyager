@@ -1,8 +1,3 @@
-//`include "defines.v"
-
-// `define FM_WIDTH 64
-// `define FM_DEPTH 4096
-
 module axi_bridge(
     input clk,
     input rstn,
@@ -275,6 +270,7 @@ end
 // is deasserted on reset (active low). axi_rresp and axi_rdata are 
 // cleared to zero on reset (active low). 
 
+
 always @(posedge clk or negedge rstn) begin
     if (~rstn) begin
         axi_rvalid <= 'b0;
@@ -286,7 +282,7 @@ always @(posedge clk or negedge rstn) begin
             axi_rresp  <= 2'b0;
             // "OKAY" respones
         end
-        else if (axi_rvalid && axi_rready) begin
+        else if (axi_rvalid && axi_rready && (arlen_cntr >= arlen)) begin
             axi_rvalid <= 1'b0;
         end
     end

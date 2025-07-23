@@ -1,22 +1,22 @@
-// `include "../gen-collateral/defines.v"
+// `include "defines.v"
 `include "../gen-collateral/defines.v"
 
 module feature_memory_interface_small(
         input clk,
         input rstn,
 
-        input                                 fms_load_en,
-        input  [$clog2(`FM_DEPTH_S)-1:0]      fms_load_addr,
-        output [`FM_WIDTH-1:0]                fms_load_data,
+        input                                   fms_load_en,
+        input  [$clog2(`FM_DEPTH_S)-1:0]        fms_load_addr,
+        output [`FM_WIDTH-1:0]                  fms_load_data,
 
-        input                                 fms_store_en,
-        input [$clog2(`FM_DEPTH_S)-1:0]       fms_store_addr,
-        input [`FM_WIDTH-1:0]                 fms_store_data,
+        input                                   fms_store_en,
+        input [$clog2(`FM_DEPTH_S)-1:0]         fms_store_addr,
+        input [`FM_WIDTH-1:0]                   fms_store_data,
 
-        input                                 fms_npu_load_en,
-        input  [$clog2(`FM_Bank_DEPTH_S)-1:0] fms_npu_load_addr,
-        output [`FM_WIDTH *`FM_Bank_NUM_S -1:0] fms_npu_load_data
-
+        input                                   fms_npu_load_en,
+        input  [$clog2(`FM_Bank_DEPTH_S)-1:0]   fms_npu_load_addr,
+        output [`FM_WIDTH *`FM_Bank_NUM_S -1:0] fms_npu_load_data,
+        input                                   NPU_AXI_SEL
     );
 
     localparam BANK_SEL_W  = $clog2(`FM_Bank_NUM_S);
@@ -29,14 +29,14 @@ module feature_memory_interface_small(
     // assign bank_idx  = fm_store_en ? fm_store_addr[ADDR_WIDTH-1 -: BANK_SEL_W] :
     //                    fm_load_en  ? fm_load_addr[ADDR_WIDTH-1 -: BANK_SEL_W]  : 'd0;
     assign bank_idx  =  fms_store_en ? fms_store_addr[0 +: BANK_SEL_W] :
-           				fms_load_en  ? fms_load_addr[0 +: BANK_SEL_W]  : 'd0;
+           fms_load_en  ? fms_load_addr[0 +: BANK_SEL_W]  : 'd0;
 
     // assign local_addr =fm_npu_load_en ? fm_npu_load_addr :
     //                    fm_store_en ? fm_store_addr[LOCAL_ADDR_W-1:0]  :
     //                    fm_load_en  ? fm_load_addr[LOCAL_ADDR_W-1:0]   : 'd0;
     assign local_addr = fms_npu_load_en ? fms_npu_load_addr :
-           				fms_store_en ? fms_store_addr[LOCAL_ADDR_W-1 -:LOCAL_ADDR_W]  :
-           				fms_load_en  ? fms_load_addr[LOCAL_ADDR_W-1 -:LOCAL_ADDR_W]   : 'd0;
+           fms_store_en ? fms_store_addr[ADDR_WIDTH-1 -:LOCAL_ADDR_W]  :
+           fms_load_en  ? fms_load_addr[ADDR_WIDTH-1 -:LOCAL_ADDR_W]   : 'd0;
 
     wire [`FM_Bank_NUM_S-1:0] cen;
     wire [`FM_Bank_NUM_S-1:0] wen;
@@ -48,7 +48,7 @@ module feature_memory_interface_small(
     generate
         for (i = 0; i < `FM_Bank_NUM_S; i = i + 1) begin : BANK
             // assign cen[i] = ((bank_idx == i) && (fm_store_en || fm_load_en)) || fm_npu_load_en;
-			assign cen[i] = ((bank_idx == i) && (fms_store_en)) || fms_load_en || fms_npu_load_en;
+            assign cen[i] = ((bank_idx == i) && (fms_store_en)) || fms_load_en || fms_npu_load_en;
             assign wen[i] = (bank_idx == i) && fms_store_en && !fms_npu_load_en;
             assign din[i *`FM_WIDTH +: `FM_WIDTH] = wen[i] ? fms_store_data : 'd0;
 
@@ -60,7 +60,7 @@ module feature_memory_interface_small(
                     .A(local_addr),
                     .D(din[i *`FM_WIDTH +: `FM_WIDTH]),
                     .Q(dout[i *`FM_WIDTH +: `FM_WIDTH]),
-                    .BWEN('d0),
+                    .BWEN(64'b0),
                     .SD(1'b0),
                     .SLP(1'b0),
                     .PUDLY_SD(),
@@ -72,6 +72,14 @@ module feature_memory_interface_small(
         end
     endgenerate
 
-    assign fms_load_data = fms_load_en ? dout[bank_idx *`FM_WIDTH +: `FM_WIDTH] : 'd0;
-    assign fms_npu_load_data = fms_npu_load_en ? dout : 'd0;
+    reg [BANK_SEL_W-1:0]bank_idx_d;
+    always @(posedge clk or negedge rstn) begin
+        if(~rstn)
+            bank_idx_d <= 'b0;
+        else
+            bank_idx_d <= bank_idx;
+    end
+
+    assign fms_load_data = !NPU_AXI_SEL ? dout[bank_idx_d *`FM_WIDTH +: `FM_WIDTH] : 'd0;
+    assign fms_npu_load_data = NPU_AXI_SEL ? dout : 'd0;
 endmodule

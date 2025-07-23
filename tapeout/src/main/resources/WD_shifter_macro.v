@@ -39,7 +39,7 @@ generate
 		end
 	end
 	else begin
-		for(j=0;j<8;j=j+1) begin
+		for(j=0;j<5;j=j+1) begin
 			assign input_idx_2b[j] = input_idx_2b_all[j] | input_idx_2b_all[j+5] | input_idx_2b_all[j+10] | input_idx_2b_all[j+15] | input_idx_2b_all[j+20] | input_idx_2b_all[j+25] | input_idx_2b_all[j+30] | input_idx_2b_all[j+35];
 			assign input_idx_4b[j] = input_idx_4b_all[j] | input_idx_4b_all[j+5] | input_idx_4b_all[j+10] | input_idx_4b_all[j+15] | input_idx_4b_all[j+20] | input_idx_4b_all[j+25] | input_idx_4b_all[j+30] | input_idx_4b_all[j+35];
 		end

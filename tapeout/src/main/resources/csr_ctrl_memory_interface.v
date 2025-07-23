@@ -34,7 +34,7 @@ module csr_ctrl_memory_interface(
 
     genvar i;
     generate
-        for (i = 0; i < `CSR_DEPTH; i = i + 1) begin : gen_CSR_REG
+        for (i = 0; i < `CSR_DEPTH-1; i = i + 1) begin : gen_CSR_REG
             always @(posedge clk or negedge rstn) begin
                 if (~rstn)
                     ctrl_reg[i] <= 'b0;
@@ -43,6 +43,14 @@ module csr_ctrl_memory_interface(
             end
         end
     endgenerate
+
+	//for CPU read test
+	always @(posedge clk or negedge rstn) begin
+		if (~rstn)
+			ctrl_reg[`CSR_DEPTH-1] <= 'b0;
+		else if (csr_store_en && (csr_store_addr == `CSR_DEPTH-1))
+			ctrl_reg[`CSR_DEPTH-1] <= 64'h0123456789ABCDEF; // Default value for the last CSR register
+	end
 
     always @(posedge clk or negedge rstn) begin
         if (~rstn)
@@ -63,9 +71,10 @@ module csr_ctrl_memory_interface(
     assign MAC_LENGTH_S		 = ctrl_reg[10][4  +:4];
     assign FM_ADDR_START_S	 = ctrl_reg[10][8  +:10];
 
+
     wire pulse_en;
     reg signal_d;
-    assign pulse_en			 =ctrl_reg[11][0];
+    assign pulse_en			 = ctrl_reg[11][0];
     always @(posedge clk or negedge rstn) begin
         if (!rstn)
             signal_d <= 1'b0;
