@@ -297,6 +297,7 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   val icsl_if_overtaking = Wire(UInt(1.W))
   // val icsl_just_overtaking = Wire(UInt(1.W))
   val icsl_if_ret_special_pc = Wire(UInt(1.W))
+  val if_ret_special = icsl_if_ret_special_pc.asBool && (!RegNext(icsl_if_ret_special_pc.asBool))
   val if_overtaking_next_cycle = Wire(UInt(1.W))
 //===== GuardianCouncil Function: End   ====//
   val id_illegal_insn = !id_ctrl.legal ||
@@ -734,14 +735,18 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   lsl_resp_replay_csr := Mux(checker_mode.asBool, wb_csr && !lsl_req_ready_csr, false.B)
 
   /* IN GC, ROCC IS NOT A LONG-LATENCY INSTRUCTION ANY MORE */
+  val rsu_slave = Module(new R_RSUSL_kernel(R_RSUSLParams(xLen, 32)))
+  val lsl = Module(new R_LSL(R_LSLParams(128, xLen)))
+  val icsl = Module(new R_ICSL_kernel(R_ICSLParams(16)))
 
   val replay_wb_common = Mux((checker_mode === 1.U) || (checker_priv_mode === 1.U), false.B, io.dmem.s2_nack) || wb_reg_replay
   val replay_wb_without_overtaken = replay_wb_common || replay_wb_rocc
   val wb_should_be_valid_but_be_overtaken = Mux((checker_mode === 1.U) || (checker_priv_mode === 1.U), icsl_if_overtaking.asBool && wb_reg_valid && !replay_wb_without_overtaken && !replay_wb_lsl && !wb_xcpt && !io.rocc.resp.valid, false.B)
   val let_ret_s_commit = wb_reg_valid && !wb_xcpt && !io.rocc.resp.valid && (wb_reg_pc === pc_special)
   val wb_r_replay = ((wb_should_be_valid_but_be_overtaken || replay_wb_lsl) && !let_ret_s_commit)
-  val replay_wb = replay_wb_without_overtaken || wb_r_replay
-  take_pc_wb := replay_wb || wb_xcpt || csr.io.eret || wb_reg_flush_pipe || check_exception_rise || check_privret
+  val replay_wb = replay_wb_without_overtaken || (wb_r_replay && (icsl.io.debug_state =/= 6.U)) || replay_wb_csr || replay_wb_vec
+  // val replay_wb = replay_wb_without_overtaken || (wb_r_replay) || replay_wb_csr || replay_wb_vec
+  take_pc_wb := replay_wb || wb_xcpt || csr.io.eret || wb_reg_flush_pipe || check_exception_rise || check_privret || if_ret_special
 
   /*
   if (GH_GlobalParams.GH_DEBUG == 1) {
@@ -825,9 +830,7 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
                        Mux(wb_ctrl.csr =/= CSR.N, Mux((checker_mode.asBool || checker_priv_mode.asBool) && wb_csr, true.B, false.B), false.B))), false.B)
          
   dontTouch(lsl_req_valid_csr) 
-  val rsu_slave = Module(new R_RSUSL_kernel(R_RSUSLParams(xLen, 32)))
-  val lsl = Module(new R_LSL(R_LSLParams(128, xLen)))
-  val icsl = Module(new R_ICSL_kernel(R_ICSLParams(16)))
+  
   val arfs_shadow = Reg(Vec(32, UInt(xLen.W))) 
   // Instantiate RSU
   val self_xcpt_flag = RegInit(0.U(32.W))
@@ -970,6 +973,7 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   val debug_perf_val = WireInit(0.U(64.W))
   
   icsl.io.excpt_mode     := excpt_mode
+  icsl.io.crnt_priv      := csr.io.status.prv
 
   icsl.io.debug_perf_reset := io.debug_perf_ctrl(0)
   icsl.io.debug_perf_sel := io.debug_perf_ctrl(4,1)
@@ -1373,8 +1377,13 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   io.imem.req.bits.speculative := !take_pc_wb
   io.imem.req.bits.pc :=
     Mux(wb_xcpt || csr.io.eret || check_exception_rise || check_privret, csr.io.evec, // exception or [m|s]ret
-    Mux(replay_wb,              Mux(icsl_if_ret_special_pc.asBool && wb_r_replay.asBool, pc_special, wb_reg_pc),   // replay
-                                mem_npc))    // flush or branch misprediction
+    Mux(icsl_if_ret_special_pc.asBool, pc_special, 
+    Mux(replay_wb,  wb_reg_pc,   // replay
+                              mem_npc)))   // flush or branch misprediction
+  // io.imem.req.bits.pc :=
+  //   Mux(wb_xcpt || csr.io.eret || check_exception_rise || check_privret, csr.io.evec, // exception or [m|s]ret
+  //   Mux(replay_wb,              Mux(icsl_if_ret_special_pc.asBool && wb_r_replay.asBool, pc_special, wb_reg_pc),   // replay
+  //                               mem_npc))    // flush or branch misprediction
   io.imem.flush_icache := wb_reg_valid && wb_ctrl.fence_i && (Mux(checker_mode === 1.U || checker_priv_mode === 1.U, false.B, !io.dmem.s2_nack))
   io.imem.might_request := {
     imem_might_request_reg := ex_pc_valid || mem_pc_valid || io.ptw.customCSRs.disableICacheClockGate || io.vector.map(_.trap_check_busy).getOrElse(false.B) || true.B
@@ -1637,14 +1646,14 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   //   }
   // }
   val ex_trace_inst  = (if(usingCompressed) Cat(Mux(ex_reg_raw_inst(1, 0).andR, ex_reg_inst >> 16, 0.U), ex_reg_raw_inst(15, 0)) else ex_reg_inst)
-  midas.targetutils.SynthesizePrintf(printf("C%d: p:%d xpt:%d%d%d ca:%x c:%d%d " +
-    "kil:%d sta:%d%d%d rpl:%d%d %d ot:%d " +
+  midas.targetutils.SynthesizePrintf(printf("C%d: p:%d xpt:%d%d ca:%x c:%d%d " +
+    "kil:%d sta:%d%d%d rpl:%d%d %d%d ot:%d " +
     "e_v:%d e_pc:%x e_ist:%x m_v:%d wr_v:%d " +
-    "iq:%d iqc:%x csr:%d%d %x%x\n",
-    io.hartid, RegNext(csr.io.status.prv), csr.io.trace(0).exception, csr.io.eret, csr.io.eret_nocall, csr.io.trace(0).cause, checker_mode, checker_priv_mode, 
-    ctrl_killd, ctrl_stalld, icsl.io.icsl_stalld, rsu_slave.io.core_hang_up.asBool, replay_wb, wb_r_replay, icsl_if_ret_special_pc, icsl_if_overtaking,
+    "iq:%d iqc:%x\n",
+    io.hartid, RegNext(csr.io.status.prv), csr.io.trace(0).exception, csr.io.eret_nocall, csr.io.trace(0).cause, checker_mode, checker_priv_mode, 
+    ctrl_killd, ctrl_stalld, icsl.io.icsl_stalld, rsu_slave.io.core_hang_up.asBool, replay_wb, wb_r_replay, icsl_if_ret_special_pc, if_ret_special, icsl_if_overtaking,
     ex_reg_valid, ex_reg_pc, ex_trace_inst, mem_reg_valid, wb_reg_valid,
-    io.imem.req.valid, io.imem.req.bits.pc, lsl_index(0)(2,0), lsl_index(1)(2,0), lsl.io.m_csr_data(0), lsl.io.m_csr_data(1)
+    io.imem.req.valid, io.imem.req.bits.pc
   ))
   midas.targetutils.SynthesizePrintf(printf("C%d: prs:%d chk:%d %d fg:%d %d " +
     "sta:%x cnt:%x %x " +
@@ -1661,11 +1670,11 @@ class RocketMEEK_kernel(tile: RocketTileMeek)(implicit p: Parameters) extends Co
   ))
 
 
-  when((lsl.io.req_valid || lsl.io.resp_valid || lsl.io.vec_enq_valid(0) || lsl.io.vec_enq_valid(1) || wb_csr)){
-    midas.targetutils.SynthesizePrintf(printf("C%d: ptr:%d qv:%d%d rv:%d adr:%x dt:%x %x enq:%d%d %x%x\n",
-      io.hartid, lsl.io.lsl_deq_ptr, lsl.io.req_valid, wb_csr, lsl.io.resp_valid, lsl.io.resp_addr, lsl.io.resp_data, lsl_resp_data_csr, lsl.io.vec_enq_valid(0), lsl.io.vec_enq_valid(1), lsl.io.vec_enq_data(0), lsl.io.vec_enq_data(1)
-    ))
-  }
+  // when((lsl.io.req_valid || lsl.io.resp_valid || lsl.io.vec_enq_valid(0) || lsl.io.vec_enq_valid(1) || wb_csr)){
+  //   midas.targetutils.SynthesizePrintf(printf("C%d: ptr:%d qv:%d%d rv:%d adr:%x dt:%x %x enq:%d%d %x%x\n",
+  //     io.hartid, lsl.io.lsl_deq_ptr, lsl.io.req_valid, wb_csr, lsl.io.resp_valid, lsl.io.resp_addr, lsl.io.resp_data, lsl_resp_data_csr, lsl.io.vec_enq_valid(0), lsl.io.vec_enq_valid(1), lsl.io.vec_enq_data(0), lsl.io.vec_enq_data(1)
+  //   ))
+  // }
   
 
 
