@@ -2,13 +2,13 @@ module axi_slave_npu_wrapper(
         input               clk,
         input               rstn,
 
-        input [19:0] axi_awaddr,
-        input [7:0]  axi_awlen,  // 8 bit
-        input [2:0]  axi_awsize, // 3 bit
-        input [1:0]  axi_awburst,
-        input 	     axi_awid,
-        input        axi_awvalid,
-        output       axi_awready,
+        input      [19:0]   axi_awaddr,
+        input      [7:0]    axi_awlen,      // 8 bit
+        input      [2:0]    axi_awsize,     // 3 bit
+        input      [1:0]    axi_awburst,
+        input               axi_awid,
+        input               axi_awvalid,
+        output              axi_awready,
 
         input      [63:0]   axi_wdata,
         input      [7:0]    axi_wstrb,
@@ -16,39 +16,41 @@ module axi_slave_npu_wrapper(
         input               axi_wvalid,
         output              axi_wready,
 
-        output     [1:0] axi_bresp,
-        output           axi_bid,
-        output           axi_bvalid,
-        input            axi_bready,
+        output     [1:0]    axi_bresp,
+        output              axi_bid,
+        output              axi_bvalid,
+        input               axi_bready,
 
-        input  [19:0] axi_araddr,
-        input  [7:0]  axi_arlen,
-        input  [2:0]  axi_arsize,
-        input  [1:0]  axi_arburst,
-        input         axi_arid,
-        input         axi_arvalid,
-        output        axi_arready,
+        input      [19:0]   axi_araddr,
+        input      [7:0]    axi_arlen,
+        input      [2:0]    axi_arsize,
+        input      [1:0]    axi_arburst,
+        input               axi_arid,
+        input               axi_arvalid,
+        output              axi_arready,
 
-        output     [63:0] axi_rdata,
-        output            axi_rid,
-        output     [1:0]  axi_rresp,
-        output            axi_rlast,
-        output            axi_rvalid,
-        input             axi_rready,
+        output     [63:0]   axi_rdata,
+        output              axi_rid,
+        output     [1:0]    axi_rresp,
+        output              axi_rlast,
+        output              axi_rvalid,
+        input               axi_rready,
 
-        //PAD input port
-        input 				clk_FPGA_w,
-        input 				clk_FPGA_cim,
-        input 				rstn_FPGA,
-        input  		 		PLL_CLK_SEL,					//0:original , 1:PLL_CLK
-        input 				TEST_MODE,						//0:CPU  	 , 1:TEST_MODE
-        // input			load_store_OEN,					//0:load 	 , 1:store			in PAD port
-		//PAD output port
-		output 				FPGA_sys_load_data_vld,
-        //PAD port reuse
-        input        	  	FPGA_sys_load_en,
-        input  [16:0]	  	FPGA_sys_load_addr,
-        output [63:0]  		FPGA_sys_load_data,
+        // PAD input port
+        input               clk_FPGA_w,
+        input               clk_FPGA_cim,
+        input               rstn_FPGA,
+        input               PLL_CLK_SEL,        // 0:original , 1:PLL_CLK
+        input               TEST_MODE,          // 0:CPU      , 1:TEST_MODE
+        // input            load_store_OEN,      // 0:load     , 1:store in PAD port
+
+        // PAD output port
+        output              FPGA_sys_load_data_vld,
+
+        // PAD port reuse
+        input               FPGA_sys_load_en,
+        input      [16:0]   FPGA_sys_load_addr,
+        output     [63:0]   FPGA_sys_load_data,
 
         input               FPGA_sys_store_en,
         input      [16:0]   FPGA_sys_store_addr,
@@ -68,18 +70,17 @@ module axi_slave_npu_wrapper(
     wire [16:0]  sys_store_addr;
     wire [63:0]  sys_store_data;
 
-	wire		AXI_sys_load_en;
-	wire [16:0] AXI_sys_load_addr;
-	wire [63:0] AXI_sys_load_data;
-	wire 		AXI_sys_store_en;
-	wire [16:0] AXI_sys_store_addr;
-	wire [63:0] AXI_sys_store_data;
+    wire         AXI_sys_load_en;
+    wire [16:0]  AXI_sys_load_addr;
+    wire [63:0]  AXI_sys_load_data;
+    wire         AXI_sys_store_en;
+    wire [16:0]  AXI_sys_store_addr;
+    wire [63:0]  AXI_sys_store_data;
 
-	wire 	  clk_w;
-	wire 	  clk_cim;
-	wire 	  rstn_NPU;
-	wire 	  NPU_AXI_SEL;
-
+    wire         clk_w;
+    wire         clk_cim;
+    wire         rstn_NPU;
+    wire         NPU_AXI_SEL;
 
     // axi transfer
     axi_bridge axi_bridge_inst (

@@ -1,4 +1,4 @@
-// `include "../gen-collateral/defines.v"
+// `include "defines.v"
 `include "../gen-collateral/defines.v"
 
 module feature_memory_interface_small(
@@ -60,7 +60,7 @@ module feature_memory_interface_small(
                     .A(local_addr),
                     .D(din[i *`FM_WIDTH +: `FM_WIDTH]),
                     .Q(dout[i *`FM_WIDTH +: `FM_WIDTH]),
-                    .BWEN(64'd0),
+                    .BWEN(64'b0),
                     .SD(1'b0),
                     .SLP(1'b0),
                     .PUDLY_SD(),

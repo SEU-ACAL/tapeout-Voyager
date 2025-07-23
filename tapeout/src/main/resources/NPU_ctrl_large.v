@@ -97,8 +97,10 @@ module NPU_ctrl_large #(
             bit_cyc_cnt <= 'd0;
         else if (bit_cyc_cnt == 3'd7)
             bit_cyc_cnt <= 'd0;
-        else if (bit_cyc_cnt == 3'd0)
-            bit_cyc_cnt <= bit_cyc_cnt + 1'b1;
+        else if (bit_cyc_cnt == 3'd0) begin
+            if(fml_npu_load_valid)
+                bit_cyc_cnt <= bit_cyc_cnt + 1'b1;
+        end
         else
             bit_cyc_cnt <= bit_cyc_cnt + 1'b1;
     end
@@ -108,7 +110,6 @@ module NPU_ctrl_large #(
             MAC_INPUT_ROW_cnt <= 'd0;
         else if (bit_cyc_cnt == 3'd7)
             if (MAC_INPUT_ROW_cnt == MAC_INPUT_ROW-1) begin
-                // if(ready)
                 MAC_INPUT_ROW_cnt <= 'd0;
             end
             else
@@ -120,7 +121,6 @@ module NPU_ctrl_large #(
             MAC_LENGTH_cnt <= 'd0;
         else if (bit_cyc_cnt == 3'd7 && MAC_INPUT_ROW_cnt == MAC_INPUT_ROW-1)
             if (MAC_LENGTH_cnt == MAC_LENGTH-1) begin
-                // if(ready)
                 MAC_LENGTH_cnt <= 'd0;
             end
             else
@@ -143,14 +143,8 @@ module NPU_ctrl_large #(
             wm_addr_L_MSB <= 1'b0;
         end
         else if(wm_addr_L == Macro_ROW_NUM_L-1) begin
-            if(ready) begin
-                wm_addr_L <= 'b0;
-                wm_addr_L_MSB <= !wm_addr_L_MSB;
-            end
-        end
-        else begin
-            if(wml_npu_load_valid)
-                wm_addr_L <= wm_addr_L + 1'b1;
+			wm_addr_L <= wm_addr_L + 1'b1;
+            wm_addr_L_MSB <= !wm_addr_L_MSB;
         end
     end
     assign wml_npu_load_en_pre		 = 'b1;
