@@ -16,11 +16,11 @@ class MulOp(implicit p: Parameters) extends Module {
   val reg1 = RegInit(VecInit(Seq.fill(lane)(0.U(inputWidth.W))))
   val reg2 = RegInit(VecInit(Seq.fill(lane)(0.U(inputWidth.W))))
 
-  io.out.valid := io.in.valid
-  io.in.ready := io.out.ready
-
   val cnt = RegInit(0.U(log2Ceil(lane).W))
   val active = RegInit(false.B)
+
+  io.out.valid := active
+  io.in.ready := io.out.ready
 
   when (io.in.fire) {
     reg1 := io.in.bits.in1
@@ -35,7 +35,7 @@ class MulOp(implicit p: Parameters) extends Module {
   }
 
   for (i <- 0 until lane) {
-    io.out.bits.out(i) := reg1(i) * reg2(cnt)
+    io.out.bits.out(i) := reg1(cnt) * reg2(i)
   }
 
 }

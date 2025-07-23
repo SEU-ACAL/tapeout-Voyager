@@ -7,7 +7,7 @@ import org.chipsalliance.cde.config.Parameters
 
 import dialect.bbfp._
 import buckyball.frontend.rs.{ReservationStationIssue, ReservationStationComplete, BuckyBallCmd}
-import buckyball.mem.{SramReadIO, SramWriteIO, SramReadResp, AccWriteIO}
+import buckyball.mem.{SramReadIO, SramWriteIO, SramReadResp}
 import buckyball.BuckyBallConfig
 
 class BBFP_EX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
@@ -15,27 +15,25 @@ class BBFP_EX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
     val spad_w = bbconfig.veclane * bbconfig.inputType.getWidth
 
     val io = IO(new Bundle {
-        val sramWrite = Vec(bbconfig.sp_banks, new SramWriteIO(bbconfig.sp_bank_entries, spad_w, spad_w/8))
+        val sramWrite = Vec(bbconfig.sp_banks, Flipped(new SramWriteIO(bbconfig.spad_bank_entries, spad_w, bbconfig.spad_mask_len)))
         val lu_ex_i = Flipped(Decoupled(new lu_ex_req))
         val sramReadResp = Vec(bbconfig.sp_banks, Flipped(Decoupled(new SramReadResp(spad_w))))
         val is_matmul_ws = Input(Bool())
-        val accWrite = Vec(bbconfig.acc_banks, new AccWriteIO(bbconfig.acc_bank_entries, bbconfig.acc_width, bbconfig.acc_width/8))
+        val accWrite = Vec(bbconfig.acc_banks, Flipped(new SramWriteIO(bbconfig.acc_bank_entries, bbconfig.acc_w, bbconfig.acc_mask_len)))
   })
 
        for(i <- 0 until bbconfig.sp_banks) {
-        io.sramWrite(i).en := false.B
-        io.sramWrite(i).addr := 0.U
-        io.sramWrite(i).data := 0.U
-        io.sramWrite(i).mask := VecInit(Seq.fill(spad_w / 8)(false.B))
+        io.sramWrite(i).req.valid := false.B
+        io.sramWrite(i).req.bits.addr := 0.U
+        io.sramWrite(i).req.bits.data := 0.U
+        io.sramWrite(i).req.bits.mask := VecInit(Seq.fill(spad_w / 8)(false.B))
     }
 
      for(i <- 0 until bbconfig.acc_banks) {
-        io.accWrite(i).en := false.B
-        io.accWrite(i).addr := DontCare
-        io.accWrite(i).data := DontCare
-        io.accWrite(i).mask := VecInit(Seq.fill(bbconfig.acc_width / 8)(true.B))
-       
-        io.accWrite(i).acc := false.B
+        io.accWrite(i).req.valid := false.B
+        io.accWrite(i).req.bits.addr := DontCare
+        io.accWrite(i).req.bits.data := DontCare
+        io.accWrite(i).req.bits.mask := VecInit(Seq.fill(bbconfig.acc_mask_len)(true.B))
     }
     val idle::weight_load::data_compute::Nil = Enum(3)
     val weight_cycles = RegInit(0.U(10.W))
@@ -126,10 +124,10 @@ class BBFP_EX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
 
     // 默认SRAM写端口赋值
     for(i <- 0 until bbconfig.sp_banks){
-        io.sramWrite(i).en := false.B
-        io.sramWrite(i).addr := 0.U
-        io.sramWrite(i).data := 0.U
-        io.sramWrite(i).mask := VecInit(Seq.fill(spad_w / 8)(false.B))
+        io.sramWrite(i).req.valid := false.B
+        io.sramWrite(i).req.bits.addr := 0.U
+        io.sramWrite(i).req.bits.data := 0.U
+        io.sramWrite(i).req.bits.mask := VecInit(Seq.fill(spad_w / 8)(false.B))
     }
 
     // 当输出准备好时，开始写入SRAM
@@ -144,17 +142,16 @@ class BBFP_EX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
        
         
          for(i <- 0 until bbconfig.acc_banks) {
-        io.accWrite(i).en := true.B
-        io.accWrite(i).addr := (wr_bank_addr_base >> log2Ceil(bbconfig.acc_banks)) + write_cycles
+        io.accWrite(i).req.valid := true.B
+        io.accWrite(i).req.bits.addr := (wr_bank_addr_base >> log2Ceil(bbconfig.acc_banks)) + write_cycles
         val idx = (write_cycles * 4.U + i.U)(5,0) // 6 bits for 64 elements
-        io.accWrite(i).data := Cat(
+        io.accWrite(i).req.bits.data := Cat(
           output_buffer(idx)(3),
           output_buffer(idx)(2),
           output_buffer(idx)(1),
           output_buffer(idx)(0)
         )
-        io.accWrite(i).mask := VecInit(Seq.fill(bbconfig.acc_width / 8)(true.B))
-        io.accWrite(i).acc := true.B & io.is_matmul_ws
+        io.accWrite(i).req.bits.mask := VecInit(Seq.fill(bbconfig.acc_mask_len)(true.B))
     }
         write_cycles := write_cycles + 1.U
       }.otherwise {                                                                                                                            

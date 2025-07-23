@@ -1,3 +1,8 @@
+//`include "defines.v"
+
+// `define FM_WIDTH 64
+// `define FM_DEPTH 4096
+
 module axi_bridge(
     input clk,
     input rstn,

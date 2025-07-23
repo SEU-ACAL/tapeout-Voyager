@@ -1,5 +1,5 @@
-`include "defines.v"
-// `include "../0-RTL/AXI_SLAVE/defines.v"
+// `include "../gen-collateral/defines.v"
+`include "../gen-collateral/defines.v"
 
 module weight_memory_interface_S(
         input clk,
@@ -20,9 +20,9 @@ module weight_memory_interface_S(
 
     );
 
-    localparam BANK_SEL_W  = $clog2(`WM_Bank_NUM);
-    localparam LOCAL_ADDR_W  = $clog2(`WM_Bank_DEPTH_S);
-    localparam ADDR_WIDTH  = $clog2(`WM_DEPTH_S);
+localparam BANK_SEL_W  = $clog2(`WM_Bank_NUM);
+localparam LOCAL_ADDR_W  = $clog2(`WM_Bank_DEPTH_S);
+localparam ADDR_WIDTH  = $clog2(`WM_DEPTH_S);
 
     wire [BANK_SEL_W-1:0] bank_idx;
     wire [LOCAL_ADDR_W-1:0] local_addr;

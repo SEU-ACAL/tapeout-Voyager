@@ -1,5 +1,6 @@
-`include "./defines.v"
-// `include "../0-RTL/AXI_SLAVE/defines.v"
+//`include "defines.v"
+// `include "../gen-collateral/defines.v"
+`include "../gen-collateral/defines.v"
 
 module sys_top(
         input clk_w,
@@ -111,10 +112,10 @@ module sys_top(
     wire [`CSR_WIDTH-1:0]                  	  csr_store_data;
 
     // CIM interface
-    // wire [$clog2(`CIM_DEPTH_L)-1:0]   		  CIM_L_store_addr;
-    // wire [`CIM_WIDTH-1:0]             		  CIM_L_store_data;
-    // wire [$clog2(`CIM_DEPTH_S)-1:0]   		  CIM_S_store_addr;
-    // wire [`CIM_WIDTH-1:0]             		  CIM_S_store_data;
+    wire [$clog2(`CIM_DEPTH_L)-1:0]   		  CIM_L_store_addr;
+    wire [`CIM_WIDTH-1:0]             		  CIM_L_store_data;
+    wire [$clog2(`CIM_DEPTH_S)-1:0]   		  CIM_S_store_addr;
+    wire [`CIM_WIDTH-1:0]             		  CIM_S_store_data;
 
     //from MA&NPU_top
     wire  	wml_load_en_pre    ;
@@ -138,8 +139,8 @@ module sys_top(
     wire  	obl_npu_store_en_pre;
     wire  	obs_npu_store_en_pre;
 
-    // wire    CIM_L_store_en;
-    // wire    CIM_S_store_en;
+    wire    CIM_L_store_en;
+    wire    CIM_S_store_en;
 
     //Intermediate Variable
     //from CSR
@@ -264,8 +265,7 @@ module sys_top(
             .fml_store_data     ( fml_store_data      ),
             .fml_npu_load_en    ( fml_npu_load_en     ),
             .fml_npu_load_addr  ( fml_npu_load_addr   ),
-            .fml_npu_load_data  ( fml_npu_load_data   ),
-            .NPU_AXI_SEL        ( NPU_AXI_SEL         )
+            .fml_npu_load_data  ( fml_npu_load_data   )
         );
 
     feature_memory_interface_small
@@ -280,8 +280,7 @@ module sys_top(
             .fms_store_data     ( fms_store_data      ),
             .fms_npu_load_en    ( fms_npu_load_en     ),
             .fms_npu_load_addr  ( fms_npu_load_addr   ),
-            .fms_npu_load_data  ( fms_npu_load_data   ),
-            .NPU_AXI_SEL        ( NPU_AXI_SEL         )
+            .fms_npu_load_data  ( fms_npu_load_data   )
         );
 
 
@@ -415,12 +414,12 @@ module sys_top(
 				//FROM exe_mem
                 .WD_E_all               ( WD_E_all               ),
                 //MEM_interface
-                .CIM_L_store_en       	( npul_store_en     	 ),
-                .CIM_L_store_addr     	( npul_store_addr     	 ),
-                .CIM_L_store_data     	( npul_store_data     	 ),
-                .CIM_S_store_en       	( npus_store_en     	 ),
-                .CIM_S_store_addr     	( npus_store_addr     	 ),
-                .CIM_S_store_data     	( npus_store_data     	 ),
+                .CIM_L_store_en       	( CIM_L_store_en       	 ),
+                .CIM_L_store_addr     	( CIM_L_store_addr     	 ),
+                .CIM_L_store_data     	( CIM_L_store_data     	 ),
+                .CIM_S_store_en       	( CIM_S_store_en       	 ),
+                .CIM_S_store_addr     	( CIM_S_store_addr     	 ),
+                .CIM_S_store_data     	( CIM_S_store_data     	 ),
                 .wml_npu_load_en_pre    ( wml_npu_load_en_pre    ),
                 .wml_npu_load_addr      ( wml_npu_load_addr      ),
                 .wml_npu_load_data      ( wml_npu_load_data      ),

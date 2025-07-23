@@ -19,7 +19,7 @@ object RoBState extends ChiselEnum {
 class RoBEntry(implicit bbconfig: BuckyBallConfig) extends Bundle {
   val state    = RoBState()  // 声明类型而不是赋予默认值
   val cmd      = new BuckyBallCmd
-  val cmd_type = UInt(2.W)
+  val cmd_type = UInt(3.W)
   val ready    = Bool()  // 前置指令是否发射完成
   
   def is_ready = ready && (state === RoBState.sWaiting)
@@ -47,6 +47,7 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
     // to top
     val rob_cmt_o     = new Bundle {      
       val resp        = Decoupled(new RoCCResponseBB()(p))
+      val busy        = Output(Bool())  // 是否有指令在ROB中等待提交
     }
     // to ROBCounter
     val rob_robcnt_o  = Decoupled(UInt(log2Up(bbconfig.rob_entries).W))
@@ -54,6 +55,7 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
 
   // ROB条目数组
   val RobEntries = Reg(Vec(rob_entries, new RoBEntry))
+  val fence_waiting = RegInit(false.B)  // 用于标志等待Fence指令完成
   
   // 初始化ROB entries为无效状态
   for (i <- 0 until rob_entries) {
@@ -65,23 +67,28 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
 // -----------------------------------------------------------------------------
 // 入队
 // -----------------------------------------------------------------------------
-  io.post_indexed_cmd_i.cmd.ready := true.B
+  io.post_indexed_cmd_i.cmd.ready := !fence_waiting
   val cmd_i        = io.post_indexed_cmd_i.cmd.bits
   val rob_id       = io.post_indexed_cmd_i.cmd.bits.rob_id
   val cmd_type     = io.post_indexed_cmd_i.cmd.bits.cmd_type
   val head_ptr     = io.post_indexed_cmd_i.new_head_ptr
 
-  when(io.post_indexed_cmd_i.cmd.fire) {
+  when(io.post_indexed_cmd_i.cmd.fire && !fence_waiting) {
     assert(RobEntries(rob_id).state === RoBState.sInvalid || 
         RobEntries(rob_id).state === RoBState.sWaiting || 
         RobEntries(rob_id).state === RoBState.sIssued, "Inserting to non-empty ROB entry")
-    
-    RobEntries(rob_id).state    := RoBState.sWaiting
-    RobEntries(rob_id).cmd      := cmd_i
-    RobEntries(rob_id).cmd_type := cmd_type
-    RobEntries(rob_id).ready    := true.B
+    when(cmd_type === 4.U) { // Fence指令
+      fence_waiting := RobEntries.map((entry: RoBEntry) => (entry.state === RoBState.sWaiting) || (entry.state === RoBState.sIssued)).reduce(_ || _)
+    }.otherwise {
+      RobEntries(rob_id).state    := RoBState.sWaiting
+      RobEntries(rob_id).cmd      := cmd_i
+      RobEntries(rob_id).cmd_type := cmd_type
+      RobEntries(rob_id).ready    := true.B
+    }
   }
-
+  when(fence_waiting){
+   fence_waiting := RobEntries.map((entry: RoBEntry) => (entry.state === RoBState.sWaiting) || (entry.state === RoBState.sIssued)).reduce(_ || _)
+  }
 // -----------------------------------------------------------------------------
 // 发射：按顺序发射到ISSQueue，考虑Load/Store互斥约束
 // -----------------------------------------------------------------------------
@@ -161,7 +168,7 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
       ex_in_flight := false.B
     }
   }
-//test
+
   // to ROBCounter
   io.rob_robcnt_o.valid       := io.commit_i.valid
   io.rob_robcnt_o.bits        := io.commit_i.bits
@@ -176,4 +183,6 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
   io.rob_cmt_o.resp.valid     := io.commit_i.valid
   io.rob_cmt_o.resp.bits.rd   := 0.U
   io.rob_cmt_o.resp.bits.data := 0.U
+
+  io.rob_cmt_o.busy           := RobEntries.map(_.state =/= RoBState.sInvalid).reduce(_ || _)
 } 

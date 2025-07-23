@@ -1,5 +1,5 @@
-// `include "../0-RTL/AXI_SLAVE/defines.v"
-`include "./defines.v"
+//`include "defines.v"
+`include "../gen-collateral/defines.v"
 
 module NPU_top (
 		input                  clk_w,
@@ -419,33 +419,35 @@ module NPU_top (
 			.fp_en_S                      ( fp_en                    ),
 			.E_most_S                     ( E_most_S                 ),
 
-			// to memory interface
-			.wms_npu_load_en_pre          ( wms_npu_load_en_pre      ),
-			.wms_npu_load_addr            ( wms_npu_load_addr        ),
-			.wms_npu_load_data            ( wms_npu_load_data        ),
-			.fms_npu_load_en_pre          ( fms_npu_load_en_pre      ),
-			.fms_npu_load_addr            ( fms_npu_load_addr        ),
-			.fms_npu_load_data            ( fms_npu_load_data        ),
-			.obs_npu_store_en_pre         ( obs_npu_store_en_pre     ),
-			.obs_npu_store_addr           ( obs_npu_store_addr       ),
-			.obs_npu_store_data           ( obs_npu_store_data       ),
-			// to npu core
-			.din_valid_S                  ( NPU_din_valid_S          ),
-			.NNIN_E_S                     ( NPU_NNIN_E_S             ),
-			.NNIN_M_S                     ( NPU_NNIN_M_S             ),
-			.WADR_S                       ( NPU_WADR_S               ),
-			.WEB_S                        ( NPU_WEB_S                ),
-			.MEB_S                        ( NPU_MEB_S                ),
-			.WD_E_S                       ( NPU_WD_E_S               ),
-			.WD_M_S                       ( NPU_WD_M_S               ),
-			.buffer1_rst_S                ( NPU_buffer1_rst_S        ),
-			.buffer0_rst_S                ( NPU_buffer0_rst_S        ),
-			.CIMADR_S                     ( NPU_CIMADR_S             ),
-			.adder_enb_S                  ( NPU_adder_enb_S          ),
-			.buffer_row_addr_S            ( NPU_buffer_row_addr_S    ),
-			.outlier_sum_S                ( outlier_sum_S            ),
-			.outlier_out_valid_S          ( dout_valid_S             ),
-			.data_out_S                   ( data_out_S               ),
-			.Macro_out_valid_S            ( Macro_out_valid_S        )
-		);
+            // to memory interface
+            .wms_npu_load_en_pre          ( wms_npu_load_en_pre      ),
+            .wms_npu_load_addr            ( wms_npu_load_addr        ),
+            .wms_npu_load_data            ( wms_npu_load_data        ),
+            //.wms_npu_load_valid           ( wms_npu_load_valid       ),
+            .fms_npu_load_en_pre          ( fms_npu_load_en_pre      ),
+            .fms_npu_load_addr            ( fms_npu_load_addr        ),
+            .fms_npu_load_data            ( fms_npu_load_data        ),
+            //.fms_npu_load_valid           ( fms_npu_load_valid       ),
+            .obs_npu_store_en_pre         ( obs_npu_store_en_pre     ),
+            .obs_npu_store_addr           ( obs_npu_store_addr       ),
+            .obs_npu_store_data           ( obs_npu_store_data       ),
+            // to npu core
+            .din_valid_S                  ( NPU_din_valid_S         ),
+            .NNIN_E_S                       ( NPU_NNIN_E_S              ),
+			.NNIN_M_S                       ( NPU_NNIN_M_S              ),
+            .WADR_S                       ( NPU_WADR_S              ),
+            .WEB_S                        ( NPU_WEB_S               ),
+            .MEB_S                        ( NPU_MEB_S               ),
+            .WD_E_S                       ( NPU_WD_E_S              ),
+            .WD_M_S                       ( NPU_WD_M_S              ),
+            .buffer1_rst_S                ( NPU_buffer1_rst_S       ),
+            .buffer0_rst_S                ( NPU_buffer0_rst_S       ),
+            .CIMADR_S                     ( NPU_CIMADR_S            ),
+            .adder_enb_S                  ( NPU_adder_enb_S         ),
+            .buffer_row_addr_S            ( NPU_buffer_row_addr_S   ),
+            .outlier_sum_S                ( outlier_sum_S       ),
+            .outlier_out_valid_S          ( dout_valid_S ),
+            .data_out_S                   ( data_out_S          ),
+            .Macro_out_valid_S            ( Macro_out_valid_S       )
+        );
 endmodule

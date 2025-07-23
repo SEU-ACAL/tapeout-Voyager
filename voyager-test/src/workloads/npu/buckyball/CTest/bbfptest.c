@@ -67,7 +67,7 @@ int main() {
     init_matrixv2(input_matrix, 16, 16, 42, 4);
     bb_matmul_ws(WR_ADDR, OP2_ADDR, WR_ADDR, 16);
     printf("Matmul Done\n");
-    bb_mvout(((uintptr_t)output_matrix), WR_ADDR, DIM*4);
+    bb_mvout(((uintptr_t)output_matrix), WR_ADDR, 16);
 
     print_result_matrix("Output", output_matrix, DIM, DIM);
     

@@ -1,5 +1,10 @@
-`include "defines.v"
-// `include "../0-RTL/AXI_SLAVE/defines.v"
+//`include "defines.v"
+`include "../gen-collateral/defines.v"
+
+// `define OB_WIDTH 64
+// `define OB_DEPTH 2048
+// `define OB_Bank_NUM 32
+// `define OB_Bank_DEPTH 64
 
 module output_buffer_interface(
         input clk,

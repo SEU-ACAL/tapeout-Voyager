@@ -14,7 +14,7 @@ class BBFP_LoadUnit(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
     val rob_id_width = log2Up(bbconfig.rob_entries)
     val spad_w = bbconfig.veclane * bbconfig.inputType.getWidth
     val io = IO(new Bundle {
-        val sramReadReq = Vec(bbconfig.sp_banks,Decoupled(new SramReadReq(bbconfig.sp_bank_entries)))
+        val sramReadReq = Vec(bbconfig.sp_banks,Decoupled(new SramReadReq(bbconfig.spad_bank_entries)))
         val id_lu_i = Flipped(Decoupled(new id_lu_req))
         val lu_ex_o = Decoupled(new lu_ex_req)
   })

@@ -1,5 +1,5 @@
-// `include "../0-RTL/AXI_SLAVE/defines.v"
-`include "./defines.v"
+// `include "../gen-collateral/defines.v"
+`include "../gen-collateral/defines.v"
 
 module NPU_ctrl_small (
         input clk_w,
@@ -140,16 +140,20 @@ module NPU_ctrl_small (
     //WML ctrl
     reg [$clog2(Macro_ROW_NUM_S)-1:0] 	wm_addr_S;
     reg 								wm_addr_S_MSB;
-	always @(posedge clk_w or negedge rstn) begin
-		if(!rstn) begin
-			wm_addr_S <= 'b0;
-			wm_addr_S_MSB <= 1'b0;
-		end
-		else if(wm_addr_S == Macro_ROW_NUM_S-1) begin
-			wm_addr_S <= wm_addr_S + 1'b1;
-			wm_addr_S_MSB <= !wm_addr_S_MSB;
-		end
-	end
+    always @(posedge clk_w or negedge rstn) begin
+        if(!rstn) begin
+            wm_addr_S <= 'b0;
+            wm_addr_S_MSB <= 1'b0;
+        end
+        else if(wm_addr_S == Macro_ROW_NUM_S-1) begin
+            if(ready) begin
+                wm_addr_S <= 'b0;
+                wm_addr_S_MSB <= !wm_addr_S_MSB; //写满macro之后，换另一块ping-pong memory写
+            end
+        end
+        else
+            wm_addr_S <= wm_addr_S + 1'b1;
+    end
     assign wms_npu_load_en_pre		 =  ready || wm_addr_S;
 
     assign wms_npu_load_addr		 = MAC_LENGTH_cnt * 32 + wm_addr_S;
@@ -183,8 +187,8 @@ module NPU_ctrl_small (
     always @(*) begin
         MEB_S				= {  4{((bit_cyc_cnt == 3'd7) & cim_ready)}  }; // =7说明8bit的feature全部传输完毕，之后延迟1周期
         {WD_E_S, WD_M_S} 	= wms_npu_load_data;
-        NNIN_E_S			= fms_npu_load_data[`FM_WIDTH *`FM_Bank_NUM_S/2	+:`FM_WIDTH *`FM_Bank_NUM_S/2];
-        NNIN_M_S			= fms_npu_load_data[0							+:`FM_WIDTH *`FM_Bank_NUM_S/2];
+        NNIN_E_S			= fp_en_S? fms_npu_load_data[`FM_WIDTH *`FM_Bank_NUM_S/2+:`FM_WIDTH *`FM_Bank_NUM_S/2]: 'd0;
+		NNIN_M_S			= !fp_en_S? fms_npu_load_data[`FM_WIDTH *`FM_Bank_NUM_S/2+:`FM_WIDTH *`FM_Bank_NUM_S/2]: fms_npu_load_data[0+:`FM_WIDTH *`FM_Bank_NUM_S/2];
         din_valid_S			= fms_npu_load_valid & ready;
         //************************************************************//
         //有问题，需要后面修改

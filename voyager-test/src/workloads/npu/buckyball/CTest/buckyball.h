@@ -26,9 +26,10 @@
 // Buckyball function codes (funct7 field)
 #define BB_MVIN_FUNCT 24         // 0x18 - Move in function code
 #define BB_MVOUT_FUNCT 25        // 0x19 - Move out function code  
+#define BB_FENCE_FUNCT 31        // 0x1F - Fence function code
 #define BB_MUL_FUNCT 32          // 0x20 - Matrix multiply function code
 #define BB_FLUSH_FUNCT 7         // 0x07 - Flush function code
-#define BB_BBFP_MUL_FUNCT 26     // 0x18 - BBFP matrix multiply function code
+#define BB_BBFP_MUL_FUNCT 26     // 0x1A - BBFP matrix multiply function code
 #define BB_MATMUL_WS_FUNCT 27    // 0x1B - Matrix multiply with warp16 function code
 // Data type for matrix elements
 typedef int8_t elem_t;
@@ -70,7 +71,12 @@ typedef int32_t result_t;
         uint64_t rs2_val = ((rows) << SPAD_ADDR_LEN) | ((sp_addr) & ((1UL << SPAD_ADDR_LEN) - 1)); \
         BUCKYBALL_INSTRUCTION_R_R(rs1_val, rs2_val, BB_MVOUT_FUNCT); \
     } while(0)
-
+#define bb_fence() \
+    do { \
+        uint64_t rs1_val = 0; \
+        uint64_t rs2_val = 0; \
+        BUCKYBALL_INSTRUCTION_R_R(rs1_val, rs2_val, BB_FENCE_FUNCT); \
+    } while(0)
 // Matrix multiplication with warp16 pattern
 // op1_addr: first operand scratchpad address, op2_addr: second operand scratchpad address  
 // wr_addr: write result scratchpad address, iter: number of iterations
@@ -119,11 +125,25 @@ static inline void multicore(int target_hart_id) {
 }
 
 // Utility functions
-void print_result_matrix(const char* name, result_t* matrix, int rows, int cols);
-void init_matrix(elem_t* matrix, int rows, int cols, int seed);
-void print_matrix(const char* name, result_t* matrix, int rows, int cols);
-int compare_matrices(result_t* a, result_t* b, int rows, int cols);
-int compare_matricesu8(elem_t* a, elem_t* b, int rows, int cols);
-void init_matrixv2(elem_t* matrix, int rows, int cols, int seed,int value);
+void print_u32_matrix(const char* name, result_t* matrix, int rows, int cols);
+void print_u8_matrix(const char* name, elem_t* matrix, int rows, int cols);
 
+void init_u8_random_matrix(elem_t* matrix, int rows, int cols, int seed);
+void init_u32_random_matrix(result_t* matrix, int rows, int cols, int seed);
+
+int compare_u8_matrices(elem_t* a, elem_t* b, int rows, int cols);
+int compare_u32_matrices(result_t* a, result_t* b, int rows, int cols);
+
+void clear_u32_matrix(result_t* matrix, int rows, int cols);
+void clear_u8_matrix(elem_t* matrix, int rows, int cols);
+
+void init_ones_matrix(elem_t* matrix, int rows, int cols);
+void init_identity_matrix(elem_t* matrix, int size);
+void init_row_vector(elem_t* matrix, int cols, elem_t value);
+void init_col_vector(elem_t* matrix, int rows, elem_t value);
+void init_random_matrix(elem_t* matrix, int rows, int cols, int seed);
+
+/* 矩阵运算函数 */
+void transpose_matrix(elem_t* src, elem_t* dst, int rows, int cols);
+void cpu_matmul(elem_t* a, elem_t* b, result_t* c, int rows, int cols, int inner);
 #endif

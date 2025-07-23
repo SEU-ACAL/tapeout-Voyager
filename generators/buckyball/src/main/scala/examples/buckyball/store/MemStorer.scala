@@ -14,10 +14,9 @@ import buckyball.frontend.FrontendTLBIO
 import freechips.rocketchip.rocket.MStatus
 import buckyball.mem.{SimpleReadRequest, SimpleReadResponse, SramReadIO}
 
-class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module {
-  val rob_id_width = log2Up(bbconfig.rob_entries)
-  val spad_w = bbconfig.veclane * bbconfig.inputType.getWidth
-  val line_bytes = spad_w / 8  // 一行数据的字节数
+class MemStorer(implicit b: BuckyBallConfig, p: Parameters) extends Module {
+  val rob_id_width = log2Up(b.rob_entries)
+  val line_bytes = b.spad_w / 8  // 一行数据的字节数
   val align_bytes = 16  // 16字节对齐
   
   val io = IO(new Bundle {
@@ -26,30 +25,30 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
     // 发送给ReservationStation的完成信号
     val cmdResp = Decoupled(new ReservationStationComplete(rob_id_width))
     // 直接连接DMA写入接口
-    val dmaReq = Decoupled(new SimpleWriteRequest(spad_w))
+    val dmaReq = Decoupled(new SimpleWriteRequest(b.spad_w))
     val dmaResp = Flipped(Decoupled(new SimpleWriteResponse))
     // 连接到Scratchpad的SRAM读取接口
-    val sramRead = Vec(bbconfig.sp_banks, new SramReadIO(bbconfig.sp_bank_entries, spad_w))
-    val accRead = Vec(bbconfig.acc_banks, new SramReadIO(bbconfig.acc_bank_entries, bbconfig.accveclane * bbconfig.accType.getWidth))
+    val sramRead = Vec(b.sp_banks, Flipped(new SramReadIO(b.spad_bank_entries, b.spad_w)))
+    val accRead = Vec(b.acc_banks, Flipped(new SramReadIO(b.acc_bank_entries, b.acc_w)))
   })
 
   val s_idle :: s_sram_req :: s_dma_wait :: Nil = Enum(3)
   val state = RegInit(s_idle)
   
   val rob_id_reg = RegInit(0.U(rob_id_width.W))
-  val mem_addr_reg = Reg(UInt(bbconfig.memAddrLen.W))
+  val mem_addr_reg = Reg(UInt(b.memAddrLen.W))
   val iter_reg = Reg(UInt(10.W))
   val sram_count = Reg(UInt(10.W))
   val acc_reg = RegInit(false.B)  // 是否是acc bank的操作
   
   // 缓存解码好的bank信息
-  val rd_bank_reg = Reg(UInt(log2Up(bbconfig.sp_banks).W))
-  val rd_bank_addr_reg = Reg(UInt(log2Up(bbconfig.sp_bank_entries).W))
+  val rd_bank_reg = Reg(UInt(log2Up(b.sp_banks).W))
+  val rd_bank_addr_reg = Reg(UInt(log2Up(b.spad_bank_entries).W))
 
   // 数据缓存相关寄存器
   val data_buffer = Reg(UInt((align_bytes * 8).W))  // 16字节缓存
   val buffer_valid_bytes = Reg(UInt(log2Ceil(align_bytes + 1).W))  // 缓存中有效字节数
-  val buffer_start_addr = Reg(UInt(bbconfig.memAddrLen.W))  // 缓存对应的起始地址
+  val buffer_start_addr = Reg(UInt(b.memAddrLen.W))  // 缓存对应的起始地址
   
   // 接收store指令
   io.cmdReq.ready := state === s_idle
@@ -74,15 +73,15 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   val target_bank = rd_bank_reg  // 所有读取都来自同一个bank
   val target_row = current_bank_addr
   
-  for (i <- 0 until bbconfig.sp_banks) {
+  for (i <- 0 until b.sp_banks) {
     io.sramRead(i).req.valid := (state === s_sram_req) && (target_bank === i.U) && !acc_reg
     io.sramRead(i).req.bits.addr := target_row
     io.sramRead(i).req.bits.fromDMA := true.B
   }
 
-  for(i <- 0 until bbconfig.acc_banks){
-    io.accRead(i).req.valid := (state === s_sram_req) && acc_reg && (i.U === target_row(log2Ceil(bbconfig.acc_banks) - 1, 0))
-    io.accRead(i).req.bits.addr := rd_bank_addr_reg + (sram_count >> log2Ceil(bbconfig.acc_banks))
+  for(i <- 0 until b.acc_banks){
+    io.accRead(i).req.valid := (state === s_sram_req) && acc_reg && (i.U === target_row(log2Ceil(b.acc_banks) - 1, 0))
+    io.accRead(i).req.bits.addr := rd_bank_addr_reg + (sram_count >> log2Ceil(b.acc_banks))
     io.accRead(i).req.bits.fromDMA := true.B
   }
 
@@ -95,7 +94,7 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   // 计算当前行对应的内存地址
   val current_mem_addr = mem_addr_reg + (sram_count * line_bytes.U)
   val addr_offset = current_mem_addr(log2Ceil(align_bytes) - 1, 0)  // 地址的低4位，16字节对齐时为0
-  val aligned_addr = Cat(current_mem_addr(bbconfig.memAddrLen - 1, log2Ceil(align_bytes)), 0.U(log2Ceil(align_bytes).W))
+  val aligned_addr = Cat(current_mem_addr(b.memAddrLen - 1, log2Ceil(align_bytes)), 0.U(log2Ceil(align_bytes).W))
   val is_aligned = addr_offset === 0.U
   dontTouch(is_aligned)
   dontTouch(aligned_addr)
@@ -134,7 +133,7 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   
   // 确定发送地址 - 始终使用对齐地址
   val send_addr = Mux(buffer_valid_bytes === 0.U, aligned_addr, 
-    Cat(buffer_start_addr(bbconfig.memAddrLen - 1, log2Ceil(align_bytes)), 0.U(log2Ceil(align_bytes).W)))
+    Cat(buffer_start_addr(b.memAddrLen - 1, log2Ceil(align_bytes)), 0.U(log2Ceil(align_bytes).W)))
   
   // DMA请求逻辑
   val should_send_normal = (sram_resp_valid || acc_resp_valid) && can_send_full_line
@@ -169,7 +168,7 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
   
   // DMA请求信号控制逻辑 - 只有在DMA ready时才能更新
   val dma_req_valid_reg = RegInit(false.B)
-  val dma_req_vaddr_reg = RegInit(0.U(bbconfig.memAddrLen.W))
+  val dma_req_vaddr_reg = RegInit(0.U(b.memAddrLen.W))
   val dma_req_data_reg = RegInit(0.U((align_bytes * 8).W))
   val dma_req_len_reg = RegInit(0.U(8.W))
   val dma_req_mask_reg = RegInit(0.U(align_bytes.W))
@@ -276,39 +275,3 @@ class MemStorer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Modul
     task_complete := false.B
   }
 }
-
-class MemStorerSisyphus(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Sisyphus {
-  val memStorer = Module(new MemStorer())
-  
-  def getProcessingCycles(): UInt = io.cmd.Iteration
-  def getOperation(): UInt = io.cmd.Operation.bits
-  def getIteration(): UInt = io.cmd.Iteration
-  
-  def processData(cycle: UInt): Vec[UInt] = {
-    // 开始信号：当收到store指令并且MemStorer准备好时
-    startSignal := io.cmd.Operation.fire && memStorer.io.cmdReq.ready
-    
-    // 到达信号：当SRAM读取开始时
-    arriveSignal := memStorer.io.sramRead.map(_.req.fire).reduce(_ || _)
-    
-    // 完成信号：当DMA写入完成时
-    finishSignal := memStorer.io.cmdResp.fire
-    
-    // 输出操作状态信息
-    val status = Cat(
-      memStorer.io.sramRead.map(_.req.valid).reduce(_ || _),
-      memStorer.io.dmaReq.valid,
-      finishSignal,
-      0.U(29.W)
-    )
-    VecInit(Seq.fill(16)(status))
-  }
-  
-  // 暴露接口给外部连接
-  val memStorerCmdReq = memStorer.io.cmdReq
-  val memStorerCmdResp = memStorer.io.cmdResp
-  val memStorerDmaReq = memStorer.io.dmaReq
-  val memStorerDmaResp = memStorer.io.dmaResp
-  val memStorerSramRead = memStorer.io.sramRead
-}
-

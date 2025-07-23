@@ -13,9 +13,9 @@ import buckyball.BuckyBallConfig
 
 class ctrl_ld_req(implicit b: BuckyBallConfig, p: Parameters) extends Bundle {
   val op1_bank      = UInt(log2Up(b.sp_banks).W)
-  val op1_bank_addr = UInt(log2Up(b.sp_bank_entries).W)
+  val op1_bank_addr = UInt(log2Up(b.spad_bank_entries).W)
   val op2_bank      = UInt(log2Up(b.sp_banks).W)
-  val op2_bank_addr = UInt(log2Up(b.sp_bank_entries).W)
+  val op2_bank_addr = UInt(log2Up(b.spad_bank_entries).W)
   val iter          = UInt(10.W)
 }
 
@@ -23,7 +23,7 @@ class VecLoadUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
   val rob_id_width = log2Up(b.rob_entries)
 	val spad_w = b.veclane * b.inputType.getWidth
   val io = IO(new Bundle {
-    val sramReadReq = Vec(b.sp_banks, Decoupled(new SramReadReq(b.sp_bank_entries)))
+    val sramReadReq = Vec(b.sp_banks, Decoupled(new SramReadReq(b.spad_bank_entries)))
 		val sramReadResp = Vec(b.sp_banks, Flipped(Decoupled(new SramReadResp(spad_w))))
     val ctrl_ld_i = Flipped(Decoupled(new ctrl_ld_req))
     val ld_ex_o = Decoupled(new ld_ex_req)
@@ -34,8 +34,8 @@ class VecLoadUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
 
 	val op1_bank 		 = RegInit(0.U(log2Up(b.sp_banks).W))
 	val op2_bank 		 = RegInit(0.U(log2Up(b.sp_banks).W))
-	val op1_addr 		 = RegInit(0.U(log2Up(b.sp_bank_entries).W))
-	val op2_addr 		 = RegInit(0.U(log2Up(b.sp_bank_entries).W))
+	val op1_addr 		 = RegInit(0.U(log2Up(b.spad_bank_entries).W))
+	val op2_addr 		 = RegInit(0.U(log2Up(b.spad_bank_entries).W))
   val iter 				 = RegInit(0.U(10.W))
   val iter_counter = RegInit(0.U(10.W))
 
@@ -69,7 +69,7 @@ class VecLoadUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
 // -----------------------------------------------------------------------------
 // 发送SRAM读请求
 // -----------------------------------------------------------------------------
-	when(state === busy){
+	when(state === busy) {
 		io.sramReadReq(op1_bank).valid        := true.B
 		io.sramReadReq(op1_bank).bits.fromDMA := false.B
 		io.sramReadReq(op1_bank).bits.addr    := op1_addr + iter_counter
@@ -77,6 +77,7 @@ class VecLoadUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
 		io.sramReadReq(op2_bank).valid        := true.B
 		io.sramReadReq(op2_bank).bits.fromDMA := false.B
 		io.sramReadReq(op2_bank).bits.addr    := op2_addr + iter_counter
+		iter_counter 				 := iter_counter + 1.U
   }
 
 // -----------------------------------------------------------------------------
@@ -91,7 +92,6 @@ class VecLoadUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
     io.ld_ex_o.bits.op1  := io.sramReadResp(op1_bank).bits.data.asTypeOf(Vec(b.veclane, UInt(b.inputType.getWidth.W)))
     io.ld_ex_o.bits.op2  := io.sramReadResp(op2_bank).bits.data.asTypeOf(Vec(b.veclane, UInt(b.inputType.getWidth.W)))
 		io.ld_ex_o.bits.iter := iter_counter
-		iter_counter 				 := iter_counter + 1.U
   }.otherwise {
 		io.ld_ex_o.valid 		 := false.B
 		io.ld_ex_o.bits.op1  := VecInit(Seq.fill(b.veclane)(0.U(b.inputType.getWidth.W)))
@@ -108,7 +108,7 @@ class VecLoadUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
 // iter_counter归零，回归idle状态
 // -----------------------------------------------------------------------------
 
-	when(state === busy && iter_counter === iter) {
+	when(state === busy && iter_counter === iter - 1.U) {
 		state 				:= idle
 		iter_counter 	:= 0.U
 	}

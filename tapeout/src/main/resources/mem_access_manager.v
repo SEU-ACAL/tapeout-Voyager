@@ -1,5 +1,5 @@
-// `include "../0-RTL/AXI_SLAVE/defines.v"
-`include "./defines.v"
+// `include "../gen-collateral/defines.v"
+`include "../gen-collateral/defines.v"
 
 module mem_access_manager(
         input clk,
