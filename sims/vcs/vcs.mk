@@ -39,7 +39,6 @@ VCS_NONCC_OPTS = \
 	-notice \
 	-line \
 	+lint=all,noVCDE,noONGS,noUI \
-	-error=PCWM-L \
 	-error=noZMMCM \
 	-timescale=1ns/10ps \
 	-quiet \
