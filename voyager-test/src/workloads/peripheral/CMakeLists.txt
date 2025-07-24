@@ -1,18 +1,21 @@
 project(peripheral C)
 
+# 定义工作目录路径
+set(PERIPHERAL_WORKLOAD_DIR ${CMAKE_CURRENT_SOURCE_DIR})
+
 #-------------------------------------------------------------------------------
 # build linux version workload
 #-------------------------------------------------------------------------------
-set(LINK_FLAGS "-static -Wl,--no-dynamic-linker")
-set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINK_FLAGS}")
+#set(LINK_FLAGS "-static -Wl,--no-dynamic-linker")
+#set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINK_FLAGS}")
 
-set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-g++")  
+#set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-g++")  
 
-add_executable(peripheral-linux ${PERIPHERAL_WORKLOAD_DIR}/peripheral-linux.c)
-add_custom_target(peripheral-linux-build ALL DEPENDS
-    peripheral-linux
-    COMMENT "Building linux workloads for tutorial"
-    VERBATIM)
+#add_executable(peripheral-linux ${PERIPHERAL_WORKLOAD_DIR}/peripheral-linux.c)
+#add_custom_target(peripheral-linux-build ALL DEPENDS
+#    peripheral-linux
+#    COMMENT "Building linux workloads for tutorial"
+#    VERBATIM)
 
 #-------------------------------------------------------------------------------
 # build baremetal version workload
@@ -32,6 +35,6 @@ add_custom_target(peripheral-baremetal-build ALL
 # build all version workload
 #-------------------------------------------------------------------------------
 add_custom_target(peripheral-build ALL DEPENDS
-    peripheral-linux-build
+#    peripheral-linux-build
     peripheral-baremetal-build
     VERBATIM)
