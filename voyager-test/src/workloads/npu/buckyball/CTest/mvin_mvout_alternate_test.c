@@ -21,6 +21,7 @@ int alternately_mvin_mvout_pressure_test() {
         bb_mvin((uintptr_t)input_matrix_a, OP1_ADDR + DIM * i, DIM);
         clear_u8_matrix(input_matrix_b, DIM, DIM);
         bb_mvout((uintptr_t)input_matrix_b, OP1_ADDR + DIM * i, DIM);
+        bb_fence();
         if(!compare_u8_matrices(input_matrix_a, input_matrix_b, DIM, DIM)) {
             printf("Test alternately mvin/mvout pressure %d FAILED\n", i);
             return 0;

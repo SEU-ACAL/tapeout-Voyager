@@ -124,8 +124,8 @@ class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
   val ex_default_decode = List(N,N,N,N,N,N,N,N,DADDR,DADDR,DADDR,DITER)
   val ex_decode_list = ListLookup(func7, ex_default_decode, Array(
     MATMUL_WARP16_BITPAT -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(2*spAddrLen - 1,spAddrLen), rs2(spAddrLen-1,0), rs2(spAddrLen + 9,spAddrLen)), // bb_matmul_warp16
-    BB_BBFP_MUL -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(2*spAddrLen - 1,spAddrLen), rs2(spAddrLen-1,0), rs2(spAddrLen + 9,spAddrLen)), // bb_bbfp_mul
-    MATMUL_WS -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(2*spAddrLen - 1,spAddrLen), rs2(spAddrLen-1,0), rs2(spAddrLen + 9,spAddrLen)), // matmul_ws
+    BB_BBFP_MUL          -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(2*spAddrLen - 1,spAddrLen), rs2(spAddrLen-1,0), rs2(spAddrLen + 9,spAddrLen)), // bb_bbfp_mul
+    MATMUL_WS            -> List(N,N,N,Y,Y,Y,Y,Y,rs1(spAddrLen-1,0), rs1(2*spAddrLen - 1,spAddrLen), rs2(spAddrLen-1,0), rs2(spAddrLen + 9,spAddrLen)), // matmul_ws
   ))
 // -----------------------------------------------------------------------------
 // Fence instructions
@@ -150,9 +150,9 @@ class Decoder(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
   io.id_rs.bits.pstart        := ex_decode_list(1).asBool || ls_decode_list(1).asBool 
   io.id_rs.bits.pend          := ex_decode_list(2).asBool || ls_decode_list(2).asBool
 
-  io.id_rs.bits.op1_en        := ex_decode_list(3).asBool
-  io.id_rs.bits.op2_en        := ex_decode_list(4).asBool
-  io.id_rs.bits.wr_spad_en    := ex_decode_list(5).asBool
+  io.id_rs.bits.op1_en        := ex_decode_list(3).asBool && io.id_i.valid
+  io.id_rs.bits.op2_en        := ex_decode_list(4).asBool && io.id_i.valid
+  io.id_rs.bits.wr_spad_en    := ex_decode_list(5).asBool && io.id_i.valid
   io.id_rs.bits.op1_from_spad := ex_decode_list(6).asBool
   io.id_rs.bits.op2_from_spad := ex_decode_list(7).asBool
   io.id_rs.bits.is_vec        := func7 === MATMUL_WARP16_BITPAT

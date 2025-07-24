@@ -129,7 +129,7 @@ class WithNSmallBooms(n: Int = 1) extends Config(
  * 2-wide BOOM.
  */
 class WithNMediumBooms(n: Int = 1) extends Config(
-  new WithTAGELBPD (64) ++ // Default to TAGE-L BPD, but with less BIM size.
+  new WithBoom2BPD (64) ++ // Default to TAGE-L BPD, but with BPD
   new Config((site, here, up) => {
     case TilesLocated(InSubsystem) => {
       val prev = up(TilesLocated(InSubsystem), site)
@@ -151,8 +151,9 @@ class WithNMediumBooms(n: Int = 1) extends Config(
               numStqEntries = 10,
               maxBrCount = 12,
               numFetchBufferEntries = 10,
+              // enablePrefetching = true,
               ftq = FtqParameters(nEntries=20),
-              nPerfCounters = 6,
+              nPerfCounters = 4,
               fpu = Some(freechips.rocketchip.tile.FPUParams(sfmaLatency=4, dfmaLatency=4, divSqrt=true))
             ),
             dcache = Some(
@@ -466,7 +467,7 @@ class WithTAGELBPD (bimSets: Int = 2048) extends Config((site, here, up) => {
   }
 })
 
-class WithBoom2BPD extends Config((site, here, up) => {
+class WithBoom2BPD (bimSets: Int = 2048) extends Config((site, here, up) => {
   case TilesLocated(InSubsystem) => up(TilesLocated(InSubsystem), site) map {
     case tp: BoomTileAttachParams => tp.copy(tileParams = tp.tileParams.copy(core = tp.tileParams.core.copy(
       bpdMaxMetaLength = 45,
@@ -479,7 +480,7 @@ class WithBoom2BPD extends Config((site, here, up) => {
           BoomTageParams(tableInfo = Seq((256, 16, 7)))
         )(p))
         val btb = Module(new BTBBranchPredictorBank()(p))
-        val bim = Module(new BIMBranchPredictorBank()(p))
+        val bim = Module(new BIMBranchPredictorBank(BoomBIMParams(nSets = bimSets))(p))
         val preds = Seq(bim, btb, gshare)
         preds.map(_.io := DontCare)
 

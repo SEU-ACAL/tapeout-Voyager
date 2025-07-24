@@ -23,6 +23,7 @@ int sram_mvin_mvout_pressure_test() {
     for(int i = 0; i < 16; i++){
         clear_u8_matrix(input_matrix_b, DIM, DIM);
         bb_mvout((uintptr_t)input_matrix_b, OP1_ADDR + DIM * i, DIM);
+        bb_fence();
         if(!compare_u8_matrices(input_matrix_a, input_matrix_b, DIM, DIM)) {
             printf("Test SRAM mvin/mvout pressure %d FAILED\n", i);
             return 0;

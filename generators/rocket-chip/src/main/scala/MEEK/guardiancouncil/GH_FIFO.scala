@@ -104,7 +104,7 @@ class GH_FIFO(val params: FIFOParams) extends Module with HasFIFOIO {
   io.debug_fcounter            := debug_fcounter
   io.debug_fdcounter           := debug_fdcounter
   if (params.depth > 100){
-    io.high_watermark          := Mux(num_contentReg >= ((params.depth).U - 50.U),
+    io.high_watermark          := Mux(num_contentReg >= ((params.depth).U - 20.U),
                                       1.U, 
                                       0.U)
   } else {
@@ -209,7 +209,7 @@ class GH_MemFIFO(val params: FIFOParams) extends Module with HasFIFOIO {
   io.debug_fdcounter           := debug_fdcounter
 
   if (params.depth > 100){
-    io.high_watermark          := Mux(num_contentReg >= ((params.depth).U - 50.U),
+    io.high_watermark          := Mux(num_contentReg >= ((params.depth).U - 20.U),
                                       1.U, 
                                       0.U)
   } else {

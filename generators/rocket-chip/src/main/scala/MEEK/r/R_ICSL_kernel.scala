@@ -4,6 +4,7 @@ import chisel3._
 import chisel3.util._
 import chisel3.experimental.{BaseModule}
 import freechips.rocketchip.guardiancouncil._
+import freechips.rocketchip.rocket._
 
 class R_ICSLIO_kernel(params: R_ICSLParams) extends Bundle {
   val ic_counter                                 = Input(UInt((params.width_of_ic).W))
@@ -22,6 +23,7 @@ class R_ICSLIO_kernel(params: R_ICSLParams) extends Bundle {
   val if_check_privret                           = Output(Bool())
 
   val excpt_mode                                 = Input(Bool())
+  val crnt_priv                                  = Input(UInt(2.W))
 
   val fsm_reset                                  = Output(Bool())
 
@@ -174,7 +176,7 @@ class R_ICSL_kernel (val params: R_ICSLParams) extends Module with HasR_ICSLIO_k
       icsl_checkerpriv_mode                     := 0.U
       if_rh_cp_pc                               := 0.U
       if_rh_cp_pc_priv                          := 0.U
-      fsm_state                                 := Mux(io.self_ret && (self_xcpt_flag === self_eret_flag), fsm_checking, fsm_self_xcpt)
+      fsm_state                                 := Mux((io.self_ret && (self_xcpt_flag === self_eret_flag)) || (io.crnt_priv === PRV.U.U), fsm_checking, fsm_self_xcpt)
     }
     is (fsm_self_xcpt_priv){
       self_xcpt_flag                            := Mux(io.self_xcpt, self_xcpt_flag + 1.U, self_xcpt_flag)
@@ -185,7 +187,7 @@ class R_ICSL_kernel (val params: R_ICSLParams) extends Module with HasR_ICSLIO_k
       icsl_checkerpriv_mode                     := 0.U
       if_rh_cp_pc                               := 0.U
       if_rh_cp_pc_priv                          := 0.U
-      fsm_state                                 := Mux(io.self_ret && (self_xcpt_flag === self_eret_flag), fsm_checking_priv, fsm_self_xcpt_priv)
+      fsm_state                                 := Mux((io.self_ret && (self_xcpt_flag === self_eret_flag)), fsm_checking_priv, fsm_self_xcpt_priv)
     }
     is (fsm_postchecking){//post check阶段会去将流水线指令执行完成，然后去return
       self_xcpt_flag                            := 0.U

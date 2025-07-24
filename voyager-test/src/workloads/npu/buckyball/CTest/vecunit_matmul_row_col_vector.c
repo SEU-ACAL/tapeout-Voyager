@@ -22,7 +22,7 @@ void hw_matmul(const char* test_name, elem_t* a, elem_t* b, result_t* c, int siz
     bb_mul_warp16(OP1_ADDR, OP2_ADDR, WR_ADDR, size);
     bb_fence();
     bb_mvout((uintptr_t)c, WR_ADDR, size << 2);
-    printf("Finish test: %s\n", test_name);
+    bb_fence();
 }
 
 int run_test(const char* test_name, elem_t* a, elem_t* b, int size) {

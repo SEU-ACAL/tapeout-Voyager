@@ -27,7 +27,7 @@ int compare_u8_matrices(elem_t* a, elem_t* b, int rows, int cols) {
     return 1;
 }
 int compare_u32_matrices(result_t* a, result_t* b, int rows, int cols) {
-    for (int i = 0; i <= rows * cols - 1; i++) {
+    for (int i = 0; i < rows * cols; i++) {
         if (a[i] != b[i]) {
             printf("Mismatch at index %d: expected %d, got %d\n", i, b[i], a[i]);
             return 0;

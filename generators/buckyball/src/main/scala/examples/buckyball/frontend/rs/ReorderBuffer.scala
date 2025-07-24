@@ -184,5 +184,5 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
   io.rob_cmt_o.resp.bits.rd   := 0.U
   io.rob_cmt_o.resp.bits.data := 0.U
 
-  io.rob_cmt_o.busy           := RobEntries.map(_.state =/= RoBState.sInvalid).reduce(_ || _)
+  io.rob_cmt_o.busy           := fence_waiting && RobEntries.map(_.state =/= RoBState.sInvalid).reduce(_ || _)
 } 
