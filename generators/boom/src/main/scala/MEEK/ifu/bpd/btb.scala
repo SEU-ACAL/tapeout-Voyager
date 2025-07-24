@@ -69,10 +69,37 @@ class BTBBranchPredictorBank(params: BoomBTBParams = BoomBTBParams())(implicit p
   val mems = (((0 until nWays) map ({w:Int => Seq(
     (f"btb_meta_way$w", nSets, bankWidth * btbMetaSz),
     (f"btb_data_way$w", nSets, bankWidth * btbEntrySz))})).flatten ++ Seq(("ebtb", extendedNSets, vaddrBitsExtended)))
+  val s1_update_cfi_idx = s1_update.bits.cfi_idx.bits
+  val s1_update_meta    = s1_update.bits.meta.asTypeOf(new BTBPredictMeta)
 
-  val s1_req_rbtb  = VecInit(btb.map { b => VecInit(b.read(s0_idx , s0_valid).map(_.asTypeOf(new BTBEntry))) })
-  val s1_req_rmeta = VecInit(meta.map { m => VecInit(m.read(s0_idx, s0_valid).map(_.asTypeOf(new BTBMeta))) })
-  val s1_req_rebtb = ebtb.read(s0_idx, s0_valid)
+  val max_offset_value = Cat(0.B, ~(0.U((offsetSz-1).W))).asSInt
+  val min_offset_value = Cat(1.B,  (0.U((offsetSz-1).W))).asSInt
+  val new_offset_value = (s1_update.bits.target.asSInt -
+    (s1_update.bits.pc + (s1_update.bits.cfi_idx.bits << 1)).asSInt)
+  val offset_is_extended = (new_offset_value > max_offset_value ||
+                            new_offset_value < min_offset_value)
+
+
+  val s1_update_wbtb_data  = Wire(new BTBEntry)
+  s1_update_wbtb_data.extended := offset_is_extended
+  s1_update_wbtb_data.offset   := new_offset_value
+  val s1_update_wbtb_mask = (UIntToOH(s1_update_cfi_idx) &
+    Fill(bankWidth, s1_update.bits.cfi_idx.valid && s1_update.valid && s1_update.bits.cfi_taken && s1_update.bits.is_commit_update))
+
+  val s1_update_wmeta_mask = ((s1_update_wbtb_mask | s1_update.bits.br_mask) &
+    (Fill(bankWidth, s1_update.valid && s1_update.bits.is_commit_update) |
+     (Fill(bankWidth, s1_update.valid) & s1_update.bits.btb_mispredicts)
+    )
+  )
+  val s1_update_wmeta_data = Wire(Vec(bankWidth, new BTBMeta))
+  //TODO: to pass smic sram sim model test 
+  val s0_rbtb_valid = s0_valid && ((s1_update_wbtb_mask === 0.U) ||(s1_update_wbtb_mask =/= 0.U) && s1_update_idx =/= s0_idx)
+  val s0_rmeta_valid= s0_valid && ((s1_update_wmeta_mask === 0.U)||(s1_update_wmeta_mask =/= 0.U)&& s1_update_idx =/= s0_idx)
+  val s1_rmeta_valid = RegNext(s0_rmeta_valid)
+
+  val s1_req_rbtb  = VecInit(btb.map { b => VecInit(b.read(s0_idx , s0_rbtb_valid).map(_.asTypeOf(new BTBEntry))) })
+  val s1_req_rmeta = VecInit(meta.map { m => VecInit(m.read(s0_idx, s0_rmeta_valid).map(_.asTypeOf(new BTBMeta))) })
+  val s1_req_rebtb = ebtb.read(s0_idx, s0_rbtb_valid)
   val s1_req_tag   = s1_idx >> log2Ceil(nSets)
 
   val s1_resp   = Wire(Vec(bankWidth, Valid(UInt(vaddrBitsExtended.W))))
@@ -90,7 +117,7 @@ class BTBBranchPredictorBank(params: BoomBTBParams = BoomBTBParams())(implicit p
   for (w <- 0 until bankWidth) {
     val entry_meta = s1_req_rmeta(s1_hit_ways(w))(w)
     val entry_btb  = s1_req_rbtb(s1_hit_ways(w))(w)
-    s1_resp(w).valid := !doing_reset && s1_valid && s1_hits(w)
+    s1_resp(w).valid := !doing_reset && s1_valid && s1_hits(w) && (s1_rmeta_valid)
     s1_resp(w).bits  := Mux(
       entry_btb.extended,
       s1_req_rebtb,
@@ -134,29 +161,8 @@ class BTBBranchPredictorBank(params: BoomBTBParams = BoomBTBParams())(implicit p
     PriorityEncoder(s1_hit_ohs.map(_.asUInt).reduce(_|_)),
     alloc_way)
 
-  val s1_update_cfi_idx = s1_update.bits.cfi_idx.bits
-  val s1_update_meta    = s1_update.bits.meta.asTypeOf(new BTBPredictMeta)
-
-  val max_offset_value = Cat(0.B, ~(0.U((offsetSz-1).W))).asSInt
-  val min_offset_value = Cat(1.B,  (0.U((offsetSz-1).W))).asSInt
-  val new_offset_value = (s1_update.bits.target.asSInt -
-    (s1_update.bits.pc + (s1_update.bits.cfi_idx.bits << 1)).asSInt)
-  val offset_is_extended = (new_offset_value > max_offset_value ||
-                            new_offset_value < min_offset_value)
-
-
-  val s1_update_wbtb_data  = Wire(new BTBEntry)
-  s1_update_wbtb_data.extended := offset_is_extended
-  s1_update_wbtb_data.offset   := new_offset_value
-  val s1_update_wbtb_mask = (UIntToOH(s1_update_cfi_idx) &
-    Fill(bankWidth, s1_update.bits.cfi_idx.valid && s1_update.valid && s1_update.bits.cfi_taken && s1_update.bits.is_commit_update))
-
-  val s1_update_wmeta_mask = ((s1_update_wbtb_mask | s1_update.bits.br_mask) &
-    (Fill(bankWidth, s1_update.valid && s1_update.bits.is_commit_update) |
-     (Fill(bankWidth, s1_update.valid) & s1_update.bits.btb_mispredicts)
-    )
-  )
-  val s1_update_wmeta_data = Wire(Vec(bankWidth, new BTBMeta))
+  assert(!(s0_rmeta_valid&&(s1_update_wmeta_mask=/=0.U)&&(s0_idx === s1_update_idx)),
+    "BTB update should not happen on the same index as a read")
 
   for (w <- 0 until bankWidth) {
     s1_update_wmeta_data(w).tag     := Mux(s1_update.bits.btb_mispredicts(w), 0.U, s1_update_idx >> log2Ceil(nSets))
