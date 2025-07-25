@@ -1,6 +1,21 @@
 #include <stdio.h>
 #include <stdint.h>
-#include <unistd.h>
+#include <unistd.h> 
+#include <stdlib.h>
+#include <stdint.h>
+
+
+static inline void multicore(int target_hart_id) {
+    int hart_id;
+    __asm__ volatile("csrr %0, mhartid" : "=r"(hart_id));
+    
+    if (hart_id != target_hart_id) {
+      while (1) {
+        __asm__ volatile("wfi");  // Wait for interrupt
+      }
+    }
+    // If hart_id == target_hart_id, continue execution
+  }
 
 // base address
 #define PERIPHERAL_BASE     0x10050000
@@ -77,6 +92,9 @@ void test_csr() {
 }
 
 int main() {    
+    #ifdef MULTICORE 
+    multicore(MULTICORE);
+    #endif
     printf("===============================================\n");
     printf("peripheral memory access test\n");
     printf("===============================================\n\n");
@@ -91,4 +109,7 @@ int main() {
     printf("===============================================\n");
     
     return 0;
+    #ifdef MULTICORE 
+    exit(0);
+    #endif
 }

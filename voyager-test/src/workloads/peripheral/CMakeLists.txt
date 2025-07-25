@@ -26,7 +26,7 @@ set(C_FLAGS -std=c11 -g -fno-common -O2 -static
             -fno-builtin-printf -specs=htif_nano.specs)
 
 add_custom_target(peripheral-baremetal-build ALL
-    COMMAND ${ELF_CC} ${C_FLAGS} -o peripheral-baremetal ${PERIPHERAL_WORKLOAD_DIR}/peripheral-baremetal.c
+    COMMAND ${ELF_CC} ${C_FLAGS} -o peripheral-baremetal ${PERIPHERAL_WORKLOAD_DIR}/peripheral-baremetal.c ${PERIPHERAL_WORKLOAD_DIR}/start.S -DMULTICORE=3
     DEPENDS ${PERIPHERAL_WORKLOAD_DIR}/peripheral-baremetal.c
     COMMENT "Building baremetal workloads for tutorial"
     VERBATIM)
