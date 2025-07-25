@@ -196,7 +196,7 @@ class R_ICSL_kernel (val params: R_ICSLParams) extends Module with HasR_ICSLIO_k
       clear_ic_status                           := 0.U
       icsl_checkermode                          := Mux(io.if_correct_process.asBool && !(io.excpt_mode), 1.U, 0.U)
       icsl_checkerpriv_mode                     := 0.U
-      if_rh_cp_pc                               := !io.excpt_mode.asUInt
+      if_rh_cp_pc                               := !(io.excpt_mode || io.self_xcpt).asUInt
       if_rh_cp_pc_priv                          := 0.U
       fsm_state                                 := Mux(io.returned_to_special_address_valid.asBool, fsm_reset, fsm_postchecking)
     }

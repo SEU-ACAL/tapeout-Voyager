@@ -1,148 +1,133 @@
-# MyAXI4Device 测试程序
+## 外设内存映射
 
-本目录包含用于测试MyAXI4Device外设的C语言程序。
-
-## 📋 文件说明
-
-| 文件 | 描述 |
-|------|------|
-| `myaxi4_test.c` | 完整的功能测试程序 |
-| `simple_example.c` | 简单的使用示例程序 |
-| `Makefile` | 编译脚本 |
-| `README.md` | 使用说明文档 |
-
-## 🔧 外设寄存器映射
-
-MyAXI4Device外设包含4个32位寄存器：
-
-| 偏移地址 | 寄存器名 | 访问权限 | 功能描述 |
-|----------|----------|----------|----------|
-| `0x00` | Control | 读写 | 控制寄存器 |
-| `0x04` | Status | 只读 | 状态寄存器 (自动递增的计数器) |
-| `0x08` | Data0 | 读写 | 数据寄存器0 |
-| `0x0C` | Data1 | 读写 | 数据寄存器1 |
+本测试程序用于验证外设内存映射区域的读写功能。
 
 **设备基地址**: `0x10050000`
 
-## 🚀 编译和运行
+## 内存映射区域
 
-### 1. 编译程序
+系统包含以下主要测试区域:
 
-```bash
-# 编译所有程序
-make all
+| 地址范围 | 描述 |
+|----------|------|
+| 0x00000~0x0FFFF | 权重内存大区域 (Weight Memory Large) |
+| 0x24A00~0x24A7F | 控制状态寄存器 (CSR) |
 
-# 或者单独编译
-make myaxi4_test      # 完整测试程序
-make simple_example   # 简单示例程序
-```
+**特殊地址**: 地址 0x24A7F (CSR最后地址) 存储特殊值 0x0123456789ABCDEF
 
-### 2. 运行测试
+## 编译和运行
 
-```bash
-# 运行完整测试 (推荐)
-./myaxi4_test
-
-# 运行简单示例
-./simple_example
-```
-
-### 3. 清理编译文件
+### 编译程序
 
 ```bash
-make clean
+# 编译程序
+make peripheral-baremetal
 ```
 
-## 📖 程序功能
+### 运行测试
 
-### myaxi4_test.c - 完整测试程序
+```bash
+# 运行内存映射访问测试
+./peripheral-baremetal
+```
 
-这是一个全面的测试程序，包含以下测试：
+## 程序功能
 
-- ✅ **寄存器读写测试** - 验证Control、Data0、Data1寄存器的读写功能
-- ✅ **Status只读测试** - 验证Status寄存器的只读特性
-- ✅ **计数器功能测试** - 观察Status寄存器的自动递增
-- ✅ **数据完整性测试** - 验证数据读写的正确性
-- ✅ **寄存器独立性测试** - 确保各寄存器互不影响
+peripheral-baremetal.c 是一个内存映射访问测试程序，包含：
 
-### simple_example.c - 简单示例程序
+- 权重内存大区域测试 - 验证Weight Memory Large区域的读写功能
+- CSR寄存器测试 - 测试控制状态寄存器的读写功能
+- 多地址顺序访问 - 验证连续内存区域的读写操作
+- 64位数据访问 - 测试64位数据读写功能
 
-这是一个简单的使用示例，展示：
-
-- 📖 基本的寄存器读写操作
-- 📊 Status寄存器计数器的观察
-- ✅ 只读特性的验证
-- 📝 基本的编程模式
-
-## 🎯 预期输出
-
-### 成功运行示例
+## 运行示例输出
 
 ```
 ===============================================
-MyAXI4Device 功能测试程序
-设备基地址: 0x10050000
+peripheral memory access test
 ===============================================
 
->> 初始寄存器状态:
-=== MyAXI4Device Register Status ===
-Control Register (0x10050000): 0x00000000
-Status Register  (0x10050004): 0x00001234
-Data0 Register   (0x10050008): 0x00000000
-Data1 Register   (0x1005000C): 0x00000000
-=====================================
+test the weight memory large area (Weight Memory Large):
+---------------------------------------------
+write the address 0x00000000: 0xABCD1234
+address 0x00000000: 0xABCD1234
+result: success
 
->> 测试寄存器读写功能...
-测试Control寄存器 (读写):
-  写入: 0x12345678, 读出: 0x12345678 ✓
-  ...
+test multiple address...
+address 0x00000000: write 0xA0000000, read 0xA0000000
+address 0x00000004: write 0xA0000001, read 0xA0000001
+address 0x00000008: write 0xA0000002, read 0xA0000002
+address 0x0000000C: write 0xA0000003, read 0xA0000003
+address 0x00000010: write 0xA0000004, read 0xA0000004
+---------------------------------------------
 
-🎉 所有测试通过! MyAXI4Device工作正常
+CSR:
+---------------------------------------------
+CSR last register value: 0x0123456789ABCDEF
+
+test csr write and read...
+CSR 0x00024A00: write 0xC5000000, read 0xC5000000
+CSR 0x00024A04: write 0xC5000001, read 0xC5000001
+CSR 0x00024A08: write 0xC5000002, read 0xC5000002
+---------------------------------------------
+
+all tests done!
 ===============================================
 ```
 
-## 🔍 编程要点
+## 编程参考
 
-### 1. 寄存器访问
+### 1. 内存地址定义
 
 ```c
-// 基地址定义
-#define MYAXI4_BASE     0x10050000
-#define CONTROL_REG     (MYAXI4_BASE + 0x00)
+// 基地址
+#define PERIPHERAL_BASE     0x10050000
+// 内存映射
+#define WEIGHT_MEM_LARGE_BASE   0x00000     // 20'h00000~20'h0FFFF
+#define CSR_BASE                0x24A00     // 20'h24A00~20'h24A7F
+#define CSR_LAST_ADDR           0x24A7F     // CSR区域最后地址
+```
 
-// 读写函数
-uint32_t read32(uint32_t addr) {
+### 2. 内存访问函数
+
+```c
+// 32位读写
+static inline uint32_t read32(uint32_t addr) {
     return *(volatile uint32_t*)addr;
 }
 
-void write32(uint32_t addr, uint32_t value) {
+static inline void write32(uint32_t addr, uint32_t value) {
     *(volatile uint32_t*)addr = value;
+}
+
+// 64位读写
+static inline uint64_t read64(uint64_t addr) {
+    return *(volatile uint64_t*)addr;
+}
+
+static inline void write64(uint64_t addr, uint64_t value) {
+    *(volatile uint64_t*)addr = value;
 }
 ```
 
-### 2. 使用示例
+### 3. 访问示例
 
 ```c
-// 写入控制寄存器
-write32(CONTROL_REG, 0x12345678);
+// 写入测试数据
+uint32_t test_addr = WEIGHT_MEM_LARGE_BASE;
+uint32_t test_data = 0xABCD1234;
+write32(test_addr, test_data);
 
-// 读取状态寄存器
-uint32_t status = read32(STATUS_REG);
+// 读取并验证
+uint32_t read_data = read32(test_addr);
+if (read_data == test_data) {
+    printf("success");
+}
 
-// 读取数据寄存器
-uint32_t data = read32(DATA0_REG);
+// 读取64位特殊值
+uint64_t csr_last_value = read64(CSR_LAST_ADDR);
 ```
 
-### 3. 注意事项
-
-- **Status寄存器只读** - 写入操作会被忽略
-- **Status寄存器自动递增** - 作为计数器使用
-- **地址对齐** - 所有寄存器都是32位对齐
-- **volatile关键字** - 确保编译器不会优化掉寄存器访问
-
-
-## 📚 参考资料
-
-- [MyAXI4Device硬件实现](../generators/peripheral-example/peripheral.scala)
-- [IOBinder配置](../generators/chipyard/src/main/scala/iobinders/IOBinders.scala)
-- [地址映射文档](../docs/soc-README.md)
+- 所有内存访问使用 volatile 关键字，确保编译器不会优化掉寄存器访问
+- 地址对齐 - 所有32位访问应该是4字节对齐
+- CSR特殊地址 (0x24A7F) 存储64位预设值
