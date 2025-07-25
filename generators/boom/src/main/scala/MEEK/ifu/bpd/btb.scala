@@ -93,8 +93,8 @@ class BTBBranchPredictorBank(params: BoomBTBParams = BoomBTBParams())(implicit p
   )
   val s1_update_wmeta_data = Wire(Vec(bankWidth, new BTBMeta))
   //TODO: to pass smic sram sim model test 
-  val s0_rbtb_valid = s0_valid && ((s1_update_wbtb_mask === 0.U) ||(s1_update_wbtb_mask =/= 0.U) && s1_update_idx =/= s0_idx)
-  val s0_rmeta_valid= s0_valid && ((s1_update_wmeta_mask === 0.U)||(s1_update_wmeta_mask =/= 0.U)&& s1_update_idx =/= s0_idx)
+  val s0_rbtb_valid = s0_valid && ((s1_update_wbtb_mask === 0.U) ||(s1_update_wbtb_mask =/= 0.U) && s1_update_idx =/= s0_idx)&&(!doing_reset)
+  val s0_rmeta_valid= s0_valid && ((s1_update_wmeta_mask === 0.U)||(s1_update_wmeta_mask =/= 0.U)&& s1_update_idx =/= s0_idx)&&(!doing_reset)
   val s1_rmeta_valid = RegNext(s0_rmeta_valid)
 
   val s1_req_rbtb  = VecInit(btb.map { b => VecInit(b.read(s0_idx , s0_rbtb_valid).map(_.asTypeOf(new BTBEntry))) })
@@ -162,6 +162,12 @@ class BTBBranchPredictorBank(params: BoomBTBParams = BoomBTBParams())(implicit p
     alloc_way)
 
   assert(!(s0_rmeta_valid&&(s1_update_wmeta_mask=/=0.U)&&(s0_idx === s1_update_idx)),
+    "BTB update should not happen on the same index as a read")
+  assert(!(s0_rmeta_valid&&(doing_reset)&&(s0_idx === reset_idx)),
+    "BTB update should not happen on the same index as a read")
+  assert(!(s0_rbtb_valid&&(s1_update_wbtb_mask=/=0.U)&&(s0_idx === s1_update_idx)),
+    "BTB update should not happen on the same index as a read")
+  assert(!(s0_rbtb_valid&&(doing_reset)&&(s0_idx === reset_idx)),
     "BTB update should not happen on the same index as a read")
 
   for (w <- 0 until bankWidth) {
