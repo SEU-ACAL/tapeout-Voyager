@@ -6,7 +6,7 @@ module axi_slave_npu_wrapper(
         input      [7:0]    axi_awlen,      // 8 bit
         input      [2:0]    axi_awsize,     // 3 bit
         input      [1:0]    axi_awburst,
-        input               axi_awid,
+        input      [11:0]    axi_awid,
         input               axi_awvalid,
         output              axi_awready,
 
@@ -17,7 +17,7 @@ module axi_slave_npu_wrapper(
         output              axi_wready,
 
         output     [1:0]    axi_bresp,
-        output              axi_bid,
+        output     [11:0]    axi_bid,
         output              axi_bvalid,
         input               axi_bready,
 
@@ -25,12 +25,12 @@ module axi_slave_npu_wrapper(
         input      [7:0]    axi_arlen,
         input      [2:0]    axi_arsize,
         input      [1:0]    axi_arburst,
-        input               axi_arid,
+        input      [11:0]    axi_arid,
         input               axi_arvalid,
         output              axi_arready,
 
         output     [63:0]   axi_rdata,
-        output              axi_rid,
+        output     [11:0]    axi_rid,
         output     [1:0]    axi_rresp,
         output              axi_rlast,
         output              axi_rvalid,

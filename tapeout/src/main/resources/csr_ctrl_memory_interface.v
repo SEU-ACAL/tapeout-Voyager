@@ -1,5 +1,5 @@
 //`include "defines.v"
-// `include "../gen-collateral/defines.v"
+// `include "../0-RTL/AXI_SLAVE/defines.v"
 `include "../gen-collateral/defines.v"
 
 module csr_ctrl_memory_interface(
@@ -18,15 +18,17 @@ module csr_ctrl_memory_interface(
         output 		   							fp_en,
         output									start_en,
 
-        output	[3:0]							MAC_INPUT_ROW_L,
-        output	[3:0]							MAC_LENGTH_L,
+        output	[4:0]							MAC_INPUT_ROW_L,
+        output	[4:0]							MAC_LENGTH_L,
         output	[9:0]							FM_ADDR_START_L,
+        output	[3:0]							CSR_MEB_L,
         output	[7:0]							last_CIMADR_L,
         output	[64*4-1:0]						E_most_L,
 
-        output	[3:0]							MAC_INPUT_ROW_S,
-        output	[3:0]							MAC_LENGTH_S,
+        output	[4:0]							MAC_INPUT_ROW_S,
+        output	[4:0]							MAC_LENGTH_S,
         output	[9:0]							FM_ADDR_START_S,
+        output	[3:0]							CSR_MEB_S,
         output	[64*4-1:0]						E_most_S
     );
 
@@ -44,13 +46,16 @@ module csr_ctrl_memory_interface(
         end
     endgenerate
 
-	//for CPU read test
-	always @(posedge clk or negedge rstn) begin
-		if (~rstn)
-			ctrl_reg[`CSR_DEPTH-1] <= 'b0;
-		else if (csr_store_en && (csr_store_addr == `CSR_DEPTH-1))
-			ctrl_reg[`CSR_DEPTH-1] <= 64'h0123456789ABCDEF; // Default value for the last CSR register
-	end
+    // for CPU read test
+    always @(posedge clk or negedge rstn) begin
+    	if (~rstn)
+    		ctrl_reg[`CSR_DEPTH-1] <= 64'h0123456789ABCDEF;
+    	else if (csr_store_en && (csr_store_addr == `CSR_DEPTH-1))
+    		ctrl_reg[`CSR_DEPTH-1] <= 64'h0123456789ABCDEF; // Default value for the last CSR register
+    end
+    // always @(*) begin
+    //     ctrl_reg[`CSR_DEPTH-1] = 64'h0123456789ABCDEF; // Default value for the last CSR register
+    // end
 
     always @(posedge clk or negedge rstn) begin
         if (~rstn)
@@ -62,26 +67,18 @@ module csr_ctrl_memory_interface(
     assign NPU_AXI_SEL		 = ctrl_reg[8][0];
     assign fp_en			 = ctrl_reg[8][1];
 
-    assign MAC_INPUT_ROW_L	 = ctrl_reg[9][0  +:4];
-    assign MAC_LENGTH_L		 = ctrl_reg[9][4  +:4];
-    assign FM_ADDR_START_L	 = ctrl_reg[9][8  +:10];
-    assign last_CIMADR_L	 = ctrl_reg[9][18 +:8];
+    assign MAC_INPUT_ROW_L	 = ctrl_reg[9][0  +:5];
+    assign MAC_LENGTH_L		 = ctrl_reg[9][5  +:5];
+    assign FM_ADDR_START_L	 = ctrl_reg[9][10 +:10];
+    assign CSR_MEB_L		 = ctrl_reg[9][20 +:4];
+    assign last_CIMADR_L	 = ctrl_reg[9][24 +:8];
 
-    assign MAC_INPUT_ROW_S	 = ctrl_reg[10][0  +:4];
-    assign MAC_LENGTH_S		 = ctrl_reg[10][4  +:4];
-    assign FM_ADDR_START_S	 = ctrl_reg[10][8  +:10];
+    assign MAC_INPUT_ROW_S	 = ctrl_reg[10][0  +:5];
+    assign MAC_LENGTH_S		 = ctrl_reg[10][5  +:5];
+    assign FM_ADDR_START_S	 = ctrl_reg[10][10 +:10];
+    assign CSR_MEB_S		 = ctrl_reg[10][20 +:4];
 
-
-    wire pulse_en;
-    reg signal_d;
-    assign pulse_en			 = ctrl_reg[11][0];
-    always @(posedge clk or negedge rstn) begin
-        if (!rstn)
-            signal_d <= 1'b0;
-        else
-            signal_d <= pulse_en;  // 对原始信号打一拍
-    end
-    assign start_en = pulse_en & ~signal_d;  // 检测上升沿，生成1周期脉冲
+    assign start_en			 = ctrl_reg[11][0];
 
 
     generate
