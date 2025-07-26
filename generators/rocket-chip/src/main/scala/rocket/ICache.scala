@@ -641,7 +641,8 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
       require(dECC.isInstanceOf[IdentityCode])
       require(outer.icacheParams.itimAddr.isEmpty)
       // reply data to CPU at stage 2. no replay.
-      io.resp.bits.data := Mux1H(s1_tag_hit, s1_dout)
+      //TODO:to support smic sram model(by GB)
+      io.resp.bits.data := Mux(s1_valid && s1_hit,Mux1H(s1_tag_hit, s1_dout),0.U)
       io.resp.bits.ae := s1_tl_error.asUInt.orR
       io.resp.valid := s1_valid && s1_hit
       io.resp.bits.replay := false.B
@@ -653,7 +654,8 @@ class ICacheModule(outer: ICache) extends LazyModuleImp(outer)
       when (s2_valid && s2_disparity) { invalidate := true.B }
 
       // reply data to CPU at stage 2.
-      io.resp.bits.data := s2_data_decoded.uncorrected
+      //TODO:to support smic sram model(by GB)
+      io.resp.bits.data := Mux(s2_valid && s2_hit,s2_data_decoded.uncorrected,0.U)
       io.resp.bits.ae := s2_tl_error
       io.resp.bits.replay := s2_disparity
       io.resp.valid := s2_valid && s2_hit
