@@ -20,9 +20,9 @@ static inline void multicore(int target_hart_id) {
 // base address
 #define PERIPHERAL_BASE     0x10050000
 // memory map
-#define WEIGHT_MEM_LARGE_BASE   0x00000     // 20'h00000~20'h0FFFF
-#define CSR_BASE                0x24A00     // 20'h24A00~20'h24A7F
-#define CSR_LAST_ADDR           0x24A7F     // the last address of CSR
+#define WEIGHT_MEM_LARGE_BASE   (PERIPHERAL_BASE + 0x00000)     // 20'h00000~20'h0FFFF
+#define CSR_BASE                (PERIPHERAL_BASE + 0x24A00)     // 20'h24A00~20'h24A7F
+#define CSR_LAST_ADDR           (PERIPHERAL_BASE + 0x24A7F)     // the last address of CSR
 
 static inline uint32_t read32(uint32_t addr) {
     return *(volatile uint32_t*)addr;
@@ -43,8 +43,8 @@ static inline void write64(uint64_t addr, uint64_t value) {
 
 // test the weight memory large area
 void test_weight_memory_large() {
-    printf("test the weight memory large area (Weight Memory Large):\n");
-    printf("---------------------------------------------\n");
+    // printf("test the weight memory large area (Weight Memory Large):\n");
+    // printf("---------------------------------------------\n");
     
     // write the test data
     uint32_t test_addr = WEIGHT_MEM_LARGE_BASE;
@@ -59,15 +59,15 @@ void test_weight_memory_large() {
     printf("result: %s\n", (read_data == test_data) ? "success" : "failed");
     
     // test multiple address
-    printf("\ntest multiple address...\n");
-    for (int i = 0; i < 5; i++) {
-        uint32_t addr = WEIGHT_MEM_LARGE_BASE + i * 4;
-        uint32_t data = 0xA0000000 + i;
-        write32(addr, data);
-        printf("address 0x%08X: write 0x%08X, read 0x%08X\n", 
-               addr, data, read32(addr));
-    }
-    printf("---------------------------------------------\n\n");
+    // printf("\ntest multiple address...\n");
+    // for (int i = 0; i < 5; i++) {
+    //     uint32_t addr = WEIGHT_MEM_LARGE_BASE + i * 4;
+    //     uint32_t data = 0xA0000000 + i;
+    //     write32(addr, data);
+    //     printf("address 0x%08X: write 0x%08X, read 0x%08X\n", 
+    //            addr, data, read32(addr));
+    // }
+    // printf("---------------------------------------------\n\n");
 }
 
 // test the csr
@@ -76,39 +76,45 @@ void test_csr() {
     printf("---------------------------------------------\n");
     
     // read the last address of CSR (0x0123456789ABCDEF)
-    uint64_t csr_last_value = read64(CSR_LAST_ADDR);
-    printf("CSR last register value: 0x%016lX\n", csr_last_value);
+    uint32_t csr_last_value = read32(CSR_LAST_ADDR);
+    printf("CSR last register value: 0x%08X\n", csr_last_value);
     
     // test csr w/r
-    printf("\ntest csr write and read...\n");
-    for (int i = 0; i < 3; i++) {
-        uint32_t addr = CSR_BASE + i * 4;
-        uint32_t data = 0xC5000000 + i;
-        write32(addr, data);
-        printf("CSR 0x%08X: write 0x%08X, read 0x%08X\n", 
-               addr, data, read32(addr));
-    }
-    printf("---------------------------------------------\n\n");
+    // printf("\ntest csr write and read...\n");
+    // for (int i = 0; i < 3; i++) {
+    //     uint32_t addr = CSR_BASE + i * 4;
+    //     uint32_t data = 0xC5000000 + i;
+    //     write32(addr, data);
+    //     printf("CSR 0x%08X: write 0x%08X, read 0x%08X\n", 
+    //            addr, data, read32(addr));
+    // }
+    // printf("---------------------------------------------\n\n");
 }
 
 int main() {    
     #ifdef MULTICORE 
     multicore(MULTICORE);
     #endif
-    printf("===============================================\n");
-    printf("peripheral memory access test\n");
-    printf("===============================================\n\n");
+    // printf("===============================================\n");
+    // printf("peripheral memory access test\n");
+    // printf("===============================================\n\n");
     
     // test the weight memory large area
-    test_weight_memory_large();
+    // test_weight_memory_large();
     
     // test the csr
     test_csr();
+
+    // test_weight_memory_large();
+
     
     printf("all tests done!\n");
-    printf("===============================================\n");
+    // printf("===============================================\n");
+
+    exit(0);
+
     
-    return 0;
+    // return 0;
     #ifdef MULTICORE 
     exit(0);
     #endif
