@@ -10,6 +10,8 @@ import freechips.rocketchip.subsystem._
 import freechips.rocketchip.amba.axi4._
 import freechips.rocketchip.util._
 import freechips.rocketchip.prci._
+import voyager_tapeout.custom.uncore._
+
 
 // Configuration parameters for NPU
 case class PeripheralNPUParams(
@@ -53,7 +55,7 @@ class AXISlaveNPUWrapperBlackBox extends BlackBox with HasBlackBoxResource {
     val axi_awlen = Input(UInt(8.W))
     val axi_awsize = Input(UInt(3.W))
     val axi_awburst = Input(UInt(2.W))
-    val axi_awid = Input(UInt(1.W))
+    val axi_awid = Input(UInt(12.W))
     val axi_awvalid = Input(Bool())
     val axi_awready = Output(Bool())
 
@@ -64,7 +66,7 @@ class AXISlaveNPUWrapperBlackBox extends BlackBox with HasBlackBoxResource {
     val axi_wready = Output(Bool())
 
     val axi_bresp = Output(UInt(2.W))
-    val axi_bid = Output(UInt(1.W))
+    val axi_bid = Output(UInt(12.W))
     val axi_bvalid = Output(Bool())
     val axi_bready = Input(Bool())
 
@@ -72,14 +74,14 @@ class AXISlaveNPUWrapperBlackBox extends BlackBox with HasBlackBoxResource {
     val axi_arlen = Input(UInt(8.W))
     val axi_arsize = Input(UInt(3.W))
     val axi_arburst = Input(UInt(2.W))
-    val axi_arid = Input(UInt(1.W))
+    val axi_arid = Input(UInt(12.W))
     val axi_arvalid = Input(Bool())
     val axi_arready = Output(Bool())
 
     val axi_rdata = Output(UInt(64.W))
     val axi_rresp = Output(UInt(2.W))
     val axi_rlast = Output(Bool())
-    val axi_rid = Output(UInt(1.W))
+    val axi_rid = Output(UInt(12.W))
     val axi_rvalid = Output(Bool())
     val axi_rready = Input(Bool())
 
@@ -180,7 +182,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
   
   class PeripheralNPUModuleImp(outer: PeripheralNPU) extends Impl {
     val io = IO(new PeripheralNPUIOCell) // to chiptop
-    val (axi, _) = outer.regnode.in(0)
+    val (axi, edge) = outer.regnode.in(0)
     
     withClockAndReset(clock, reset) {
     val npuBlackBox = Module(new AXISlaveNPUWrapperBlackBox)
@@ -196,7 +198,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
     npuBlackBox.io.axi_awlen := axi.aw.bits.len
     npuBlackBox.io.axi_awsize := axi.aw.bits.size
     npuBlackBox.io.axi_awburst := axi.aw.bits.burst
-    npuBlackBox.io.axi_awid := axi.aw.bits.id(0, 0)  // BlackBox期望1位ID
+    npuBlackBox.io.axi_awid := axi.aw.bits.id(11, 0)
     npuBlackBox.io.axi_awvalid := axi.aw.valid
     axi.aw.ready := npuBlackBox.io.axi_awready
 
@@ -210,7 +212,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
     // 写响应通道 - 处理位宽转换
     // require(axi.b.bits.id.getWidth >= 1, s"AXI4 response ID width (${axi.b.bits.id.getWidth}) must be >= 1 bits")
     axi.b.bits.resp := npuBlackBox.io.axi_bresp
-    axi.b.bits.id := Cat(0.U((axi.b.bits.id.getWidth - 1).W), npuBlackBox.io.axi_bid)  // 扩展1位ID到系统宽度
+    axi.b.bits.id := npuBlackBox.io.axi_bid
     axi.b.valid := npuBlackBox.io.axi_bvalid
     npuBlackBox.io.axi_bready := axi.b.ready
 
@@ -221,7 +223,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
     npuBlackBox.io.axi_arlen := axi.ar.bits.len
     npuBlackBox.io.axi_arsize := axi.ar.bits.size
     npuBlackBox.io.axi_arburst := axi.ar.bits.burst
-    npuBlackBox.io.axi_arid := axi.ar.bits.id(0, 0)  // BlackBox期望1位ID
+    npuBlackBox.io.axi_arid := axi.ar.bits.id(11, 0)
     npuBlackBox.io.axi_arvalid := axi.ar.valid
     axi.ar.ready := npuBlackBox.io.axi_arready
 
@@ -230,7 +232,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
     axi.r.bits.data := npuBlackBox.io.axi_rdata
     axi.r.bits.resp := npuBlackBox.io.axi_rresp
     axi.r.bits.last := npuBlackBox.io.axi_rlast
-    axi.r.bits.id := Cat(0.U((axi.r.bits.id.getWidth - 1).W), npuBlackBox.io.axi_rid)  // 扩展1位ID到系统宽度
+    axi.r.bits.id := npuBlackBox.io.axi_rid
     axi.r.valid := npuBlackBox.io.axi_rvalid
     npuBlackBox.io.axi_rready := axi.r.ready
 
@@ -267,8 +269,11 @@ trait CanHavePeripheryNPU { this: BaseSubsystem =>
     // Connect to peripheral bus using AXI4 protocol
     pbus.coupleTo(portName) {
       device.regnode :=
+      AXI4UserYanker() :=
       AXI4Buffer() :=
       TLToAXI4() :=
+      TLRequestFifoFalse() :=
+      TLSourceShrinker(1 << 12) :=
       TLFragmenter(pbus.beatBytes, pbus.blockBytes, holdFirstDeny = true) := _
     }
     device
