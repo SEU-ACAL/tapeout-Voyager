@@ -23,13 +23,21 @@ terminal_assign  -add {my_uart A3 uart_txd} -IOSTANDARD LVCMOS18
 terminal_assign  -add {my_uart A2 uart_rxd} -IOSTANDARD LVCMOS18
 
 terminal_assign  -add {my_sdio A0 spi_pins_sck} -IOSTANDARD LVCMOS18
-###CMD
-terminal_assign  -add {my_sdio A1 spi_pins_cs0} -IOSTANDARD LVCMOS18
+
+terminal_assign  -add {my_sdio A7 spi_pins_cs_0} -IOSTANDARD LVCMOS18
 ###D0 D1 D2 D3
-terminal_assign  -add {my_sdio A4 spi_pins_dat_0} -IOSTANDARD LVCMOS18
-terminal_assign  -add {my_sdio A5 spi_pins_dat_1} -IOSTANDARD LVCMOS18
-terminal_assign  -add {my_sdio A6 spi_pins_dat_2} -IOSTANDARD LVCMOS18
-terminal_assign  -add {my_sdio A7 spi_pins_dat_3} -IOSTANDARD LVCMOS18
+terminal_assign  -add {my_sdio A2 spi_pins_dq_0} -IOSTANDARD LVCMOS18
+terminal_assign  -add {my_sdio A4 spi_pins_dq_1} -IOSTANDARD LVCMOS18
+terminal_assign  -add {my_sdio A6 spi_pins_dq_2} -IOSTANDARD LVCMOS18
+terminal_assign  -add {my_sdio A5 spi_pins_dq_3} -IOSTANDARD LVCMOS18
+#
+###CMD
+# terminal_assign  -add {my_sdio A2 spi_pins_cs0} -IOSTANDARD LVCMOS18
+# ###D0 D1 D2 D3
+# terminal_assign  -add {my_sdio A4 spi_pins_dat_0} -IOSTANDARD LVCMOS18
+# terminal_assign  -add {my_sdio A5 spi_pins_dat_1} -IOSTANDARD LVCMOS18
+# terminal_assign  -add {my_sdio A6 spi_pins_dat_2} -IOSTANDARD LVCMOS18
+# terminal_assign  -add {my_sdio A7 spi_pins_dat_3} -IOSTANDARD LVCMOS18
 ###D1 D2 CD WP RESET
 # terminal_assign  -add {my_sdio A11 sdio_sel} -IOSTANDARD LVCMOS18
 
@@ -63,7 +71,7 @@ dynamic_trigger -enable
 # trigger_net -add {VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.tile_reset_domain_tile.core.mem_reg_pc} -clk clock
 # trigger_net -add {VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.tile_reset_domain_tile.core.ex_reg_pc} -clk clock
 # trigger_net -add {VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.tile_reset_domain_tile.core.wb_reg_pc} -clk clock
-trace_net -add VCU118FPGATestHarness -depth 6
+trace_net -add VCU118FPGATestHarness -depth 1
 # trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.element_reset_domain_boom_tile.core.rob -depth 4
 # trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.element_reset_domain_boom_tile.core.ic_master -depth 4
 # trace_net -add VCU118FPGATestHarness.chiptop0.system.tile_prci_domain.element_reset_domain_boom_tile.core.rsu_master -depth 4
@@ -82,3 +90,4 @@ trace_net -add VCU118FPGATestHarness -depth 6
 #the design generation flow includes 4 steps. pre-generation, partitioning, routing and implementation. result files are netlists and some related databases.
  design_generation
  xram_io_constraints_gen
+
