@@ -251,7 +251,7 @@ class WithSPIFlashIOCells extends OverrideIOBinder({
   (system: HasPeripherySPIFlash) => {
     val (ports: Seq[SPIFlashPort], cells2d) = system.qspi.zipWithIndex.map({ case (s, i) =>
       val p = system.asInstanceOf[BaseSubsystem].p
-      val name = s"spi_${i}"
+      val name = s"spi_flash_${i}"
       val port = IO(new SPIChipIO(s.c.csWidth)).suggestName(name)
       val iocellBase = s"iocell_${name}"
 
