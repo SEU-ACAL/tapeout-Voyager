@@ -123,4 +123,3 @@ void cpu_matmul(elem_t* a, elem_t* b, result_t* c, int rows, int cols, int inner
         }
     }
 }
-
