@@ -108,7 +108,7 @@ export LIBRARY_PATH="$VCS_LIB:/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu"
 unset LD_LIBRARY_PATH
 export LDFLAGS="-L$VCS_LIB -Wl,--no-as-needed \
       -lvcsnew -lvirsim -lvcsucli -lvfs -lsnpsmalloc -lerrorinf -lzerosoft_rt_stubs \
-      -lsimprofile -luclinative -lpthread -ldl -lrt -lm -lstdc++ -lpthread"
+      -lsimprofile -luclinative -lpthread -ldl -lrt -lm -lstdc++  "
 cd ${CYDIR}/sims/vcs/ || { echo "Cannot enter the directory: ${CYDIR}/sims/vcs/"; exit 1; }
 make -j$j ${debug} CONFIG=$CONFIG \
   USE_FST=$USE_FST \
