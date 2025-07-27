@@ -32,8 +32,8 @@ endmodule"""
 
 class CustomDigitalGPIOCell extends BlackBox with HasBlackBoxResource with DigitalGPIOCell {
   val io = IO(new DigitalGPIOCellBundle)
-    addResource("CustomDigitalGPIOCell.v")
-    // addResource("SPC28NHKCPD18RNP.v")
+    addResource("ip/pad/CustomDigitalGPIOCell.v")
+    addResource("ip/pad/SPC28NHKCPD18RNP.v")
 }
 
 // class CustomDigitalInIOCell extends BlackBox with HasBlackBoxResource with DigitalInIOCell {
@@ -53,8 +53,6 @@ class CustomDigitalGPIOCell extends BlackBox with HasBlackBoxResource with Digit
 
 class CustomDigitalOutIOCell extends BlackBox with HasBlackBoxResource with DigitalOutIOCell {
   val io = IO(new DigitalOutIOCellBundle)
-    addResource("CustomDigitalOutIOCell.v")
-    // addResource("SPC28NHKCPD18RNP.v")
-    
-    
+    addResource("ip/pad/CustomDigitalOutIOCell.v")
+    addResource("ip/pad/SPC28NHKCPD18RNP.v")
 }

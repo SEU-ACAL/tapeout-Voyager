@@ -16,7 +16,9 @@
 //	 1.5					 Jan_31_2024  gongzf	Add the pll vco frequency limit
 //	 1.6					 Jun_13_2024  gongzf	add reference clock detection function
 //-------------------------------------------------------------------------------------
-`include "phy_defines.v"
+`ifndef verilator
+
+`include "../gen-collateral/phy_defines.v"
 `timescale 1fs/1fs
 `define PLL_D #10
 
@@ -829,3 +831,5 @@ Rg[)QWG2_?D0PFV5]@R=2_deI57[-C@?Ag-D1;KB1W?IC$
 `endprotected
 
 endmodule
+
+`endif

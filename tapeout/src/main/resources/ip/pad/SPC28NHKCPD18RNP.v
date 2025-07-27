@@ -55,6 +55,7 @@
 //                        Place for chip x-orientation
 //
 //
+`ifndef verilator
 `celldefine
 `suppress_faults
 `enable_portfaults
@@ -124,7 +125,6 @@ endmodule
 `endcelldefine
 `disable_portfaults
 `nosuppress_faults
-
 
 // ****** (C) Copyright 2018 SMIC   Inc. ********
 //  --    SMIC   Verilog Models
@@ -4763,3 +4763,6 @@ endmodule
 `nosuppress_faults
 `disable_portfaults
 `endcelldefine
+
+
+`endif // verilator
