@@ -41,19 +41,13 @@ class VecStoreUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
 
   val idle :: busy :: Nil = Enum(2)
   val state = RegInit(idle)
-  val deq_reg = RegInit(false.B)
-
-  val VecStoreQueue = Module(new Queue(chiselTypeOf(io.ex_st_i.bits), b.veclane))
-  VecStoreQueue.io.enq.bits := io.ex_st_i.bits
-  VecStoreQueue.io.enq.valid := io.ex_st_i.valid  
-
-  deq_reg := VecStoreQueue.io.deq.valid && !deq_reg
-  VecStoreQueue.io.deq.ready := deq_reg
+  val ready_reg = RegInit(false.B)
+  ready_reg := !ready_reg
 
 // -----------------------------------------------------------------------------
 // Ctrl指令到来设置寄存器
 // -----------------------------------------------------------------------------
-  io.ctrl_st_i.ready := state === idle && VecStoreQueue.io.enq.ready  
+  io.ctrl_st_i.ready := state === idle
 
   when(io.ctrl_st_i.fire) {
 		// wr_bank 			:= io.ctrl_st_i.bits.wr_bank
@@ -66,14 +60,14 @@ class VecStoreUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
 // -----------------------------------------------------------------------------
 // 接受来自EX单元的计算结果，进行写回
 // -----------------------------------------------------------------------------
-	io.ex_st_i.ready := state === busy && VecStoreQueue.io.enq.ready  
+	io.ex_st_i.ready := state === busy && !ready_reg 
   // for(i <- 0 until b.sp_banks) {
   //   io.sramWrite(i).en := false.B
   //   io.sramWrite(i).addr := 0.U
   //   io.sramWrite(i).data := 0.U
   //   io.sramWrite(i).mask := VecInit(Seq.fill(spad_w / 8)(false.B))
   // }
-	when(VecStoreQueue.io.deq.fire) {
+	when(io.ex_st_i.fire) {
 		for(i <- 0 until b.acc_banks) {
 			io.accWrite(i).req.valid := true.B
 			io.accWrite(i).req.bits.addr := wr_bank_addr + iter_counter(log2Ceil(b.veclane) - 1, 0)
@@ -84,7 +78,7 @@ class VecStoreUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
 			val endIdx = startIdx + elementsPerBank - 1
 
 			// 将对应的元素打包成一个UInt
-			val bankData = Cat(VecStoreQueue.io.deq.bits.rst.slice(startIdx, endIdx + 1).reverse)
+			val bankData = Cat(io.ex_st_i.bits.rst.slice(startIdx, endIdx + 1).reverse)
 			io.accWrite(i).req.bits.data := bankData
 
 			io.accWrite(i).req.bits.mask := VecInit(Seq.fill(b.acc_mask_len)(true.B))

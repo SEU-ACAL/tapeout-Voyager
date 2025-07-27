@@ -69,7 +69,7 @@ class VecLoadUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
 // -----------------------------------------------------------------------------
 // 发送SRAM读请求
 // -----------------------------------------------------------------------------
-	when(state === busy) {
+	when(state === busy && io.ld_ex_o.ready) {
 		io.sramReadReq(op1_bank).valid        := true.B
 		io.sramReadReq(op1_bank).bits.fromDMA := false.B
 		io.sramReadReq(op1_bank).bits.addr    := op1_addr + iter_counter
@@ -87,7 +87,7 @@ class VecLoadUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
 		resp.ready := io.ld_ex_o.ready
 	}
 
-  when(io.sramReadResp(op1_bank).fire && io.sramReadResp(op2_bank).fire) {
+  when(io.sramReadResp(op1_bank).valid && io.sramReadResp(op2_bank).valid) {
 		io.ld_ex_o.valid 		 := true.B
     io.ld_ex_o.bits.op1  := io.sramReadResp(op1_bank).bits.data.asTypeOf(Vec(b.veclane, UInt(b.inputType.getWidth.W)))
     io.ld_ex_o.bits.op2  := io.sramReadResp(op2_bank).bits.data.asTypeOf(Vec(b.veclane, UInt(b.inputType.getWidth.W)))
@@ -108,7 +108,7 @@ class VecLoadUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
 // iter_counter归零，回归idle状态
 // -----------------------------------------------------------------------------
 
-	when(state === busy && iter_counter === iter - 1.U) {
+	when(state === busy && iter_counter === iter - 1.U && io.ld_ex_o.ready) {
 		state 				:= idle
 		iter_counter 	:= 0.U
 	}

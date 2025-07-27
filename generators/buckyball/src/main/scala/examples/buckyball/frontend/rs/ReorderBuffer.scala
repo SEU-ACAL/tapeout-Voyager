@@ -56,6 +56,7 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
   // ROB条目数组
   val RobEntries = Reg(Vec(rob_entries, new RoBEntry))
   val fence_waiting = RegInit(false.B)  // 用于标志等待Fence指令完成
+  val rs_timer = RegInit(0.U(16.W))  // 用于跟踪RS的计时器
   
   // 初始化ROB entries为无效状态
   for (i <- 0 until rob_entries) {
@@ -89,6 +90,12 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
   when(fence_waiting){
    fence_waiting := RobEntries.map((entry: RoBEntry) => (entry.state === RoBState.sWaiting) || (entry.state === RoBState.sIssued)).reduce(_ || _)
   }
+  when(RobEntries.map((entry: RoBEntry) => (entry.state === RoBState.sWaiting) || (entry.state === RoBState.sIssued)).reduce(_ || _)){
+    rs_timer := rs_timer + 1.U
+  } .otherwise {
+    rs_timer := 0.U
+  }
+  assert(rs_timer < 3000.U, "RS timer exceeded 3000 cycles without completion")
 // -----------------------------------------------------------------------------
 // 发射：按顺序发射到ISSQueue，考虑Load/Store互斥约束
 // -----------------------------------------------------------------------------

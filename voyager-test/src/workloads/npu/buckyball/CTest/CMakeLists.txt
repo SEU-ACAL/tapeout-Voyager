@@ -150,6 +150,10 @@ add_custom_target(buckyball-CTest-multicore-baremetal ALL
             -DMULTICORE=3
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_16xn_zero_random.c
             ${BUCKYBALL_CTEST_DIR}/buckyball.c
+    COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_simple_nn_test_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
+            -DMULTICORE=3
+            ${BUCKYBALL_CTEST_DIR}/simple_nn_test.c
+            ${BUCKYBALL_CTEST_DIR}/buckyball.c
     DEPENDS ${BUCKYBALL_CTEST_DIR}/mvin_mvout_sram_test.c
             ${BUCKYBALL_CTEST_DIR}/mvin_mvout_acc_test.c
             ${BUCKYBALL_CTEST_DIR}/mvin_mvout_alternate_test.c
@@ -166,6 +170,7 @@ add_custom_target(buckyball-CTest-multicore-baremetal ALL
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_16xn_random2.c
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_16xn_random3.c
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_16xn_zero_random.c
+            ${BUCKYBALL_CTEST_DIR}/simple_nn_test.c
             ${BUCKYBALL_CTEST_DIR}/start.S
             ${BUCKYBALL_CTEST_DIR}/buckyball.c
     COMMENT "Building baremetal workloads for Buckyball"

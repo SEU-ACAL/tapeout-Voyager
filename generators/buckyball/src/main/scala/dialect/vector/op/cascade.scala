@@ -20,15 +20,15 @@ class CascadeOp(implicit p: Parameters) extends Module {
   
   io.in.ready := io.out.ready
   
-  when (io.in.fire) {
+  when (io.in.valid) {
     valid1 := true.B
     reg1 := io.in.bits.in1.zip(io.in.bits.in2).map { case (a, b) => a + b }
+  }.elsewhen(!io.in.ready){
+    valid1 := valid1
   }.otherwise {
     valid1 := false.B
   }
 
-  reg2 := reg1
-  valid2 := valid1
 
   val valid = valid1 
 

@@ -19,10 +19,10 @@ class MulOp(implicit p: Parameters) extends Module {
   val cnt = RegInit(0.U(log2Ceil(lane).W))
   val active = RegInit(false.B)
 
-  io.out.valid := active
+  io.out.valid := active && io.out.ready
   io.in.ready := io.out.ready
 
-  when (io.in.fire) {
+  when (io.in.valid) {
     reg1 := io.in.bits.in1
     reg2 := io.in.bits.in2
     cnt := 0.U

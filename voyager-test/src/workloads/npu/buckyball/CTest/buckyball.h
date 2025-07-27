@@ -133,7 +133,8 @@ void init_u32_random_matrix(result_t* matrix, int rows, int cols, int seed);
 
 int compare_u8_matrices(elem_t* a, elem_t* b, int rows, int cols);
 int compare_u32_matrices(result_t* a, result_t* b, int rows, int cols);
-
+int compare_u32_matrices_with_tolerance(result_t *a, result_t *b, 
+                                       int rows, int cols, double tolerance);
 void clear_u32_matrix(result_t* matrix, int rows, int cols);
 void clear_u8_matrix(elem_t* matrix, int rows, int cols);
 
@@ -146,4 +147,7 @@ void init_random_matrix(elem_t* matrix, int rows, int cols, int seed);
 /* 矩阵运算函数 */
 void transpose_matrix(elem_t* src, elem_t* dst, int rows, int cols);
 void cpu_matmul(elem_t* a, elem_t* b, result_t* c, int rows, int cols, int inner);
+void cpu_nn_forward(elem_t* input, elem_t* w1, elem_t* w2, 
+                   result_t* hidden, result_t* output, int size);
+void relu(result_t* matrix, int rows, int cols);
 #endif

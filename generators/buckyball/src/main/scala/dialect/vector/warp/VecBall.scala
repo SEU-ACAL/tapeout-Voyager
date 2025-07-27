@@ -8,7 +8,7 @@ class BallIO extends Bundle {
   // val start = Output(Bool())
   // val arrive = Output(Bool())
   // val done = Output(Bool())
-  val iterIn = Flipped(Valid(UInt(10.W)))
+  val iterIn = Flipped(Decoupled(UInt(10.W)))
   val iterOut = Valid(UInt(10.W))
 }
 
@@ -50,7 +50,7 @@ class VecBall(implicit p: Parameters) extends Module {
   meshWarp.io.out.ready := io.rstOut.ready
 
   // 处理迭代输入
-  when (io.iterIn.valid) {iterCounter := 0.U; iter := io.iterIn.bits}
+  when (io.iterIn.fire) {iterCounter := 0.U; iter := io.iterIn.bits}
   // 当外部输入来临时start拉高
   when (io.op1In.valid && io.op2In.valid) {start := true.B}
   // 当第一个输出开始valid后arrive拉高
@@ -61,7 +61,7 @@ class VecBall(implicit p: Parameters) extends Module {
   when (iterCounter === iter) {done := true.B}
 
   // 重置逻辑
-  when (io.iterIn.valid) {
+  when (io.iterIn.fire) {
     start   := false.B
     arrive  := false.B
     done    := false.B
@@ -76,6 +76,7 @@ class VecBall(implicit p: Parameters) extends Module {
   // 输出当前迭代计数
   io.iterOut.valid := io.rstOut.valid
   io.iterOut.bits := iterCounter
+  io.iterIn.ready := meshWarp.io.in.ready
 
   // def get_iterCounter(): UInt = {
   //   iterCounter
