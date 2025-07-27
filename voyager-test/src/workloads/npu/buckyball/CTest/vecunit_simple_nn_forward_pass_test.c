@@ -30,6 +30,14 @@ void relu(result_t* matrix, int rows, int cols) {
         }
     }
 }
+
+// 量化函数（将int32结果量化为elem_t类型）
+void quantize_matrix(result_t* src, elem_t* dst, int size) {
+    for (int i = 0; i < size * size; i++) {
+        dst[i] = (src[i] > 127) ? 127 : (src[i] < -128) ? -128 : (elem_t)src[i];
+    }
+}
+
 // CPU上的神经网络前向传播
 void cpu_nn_forward(elem_t* input, elem_t* w1, elem_t* w2, 
                    result_t* hidden, result_t* output, int size) {
@@ -37,15 +45,14 @@ void cpu_nn_forward(elem_t* input, elem_t* w1, elem_t* w2,
     cpu_matmul(input, w1, hidden, size, size, size);
     relu(hidden, size, size);  // 应用ReLU激活
     
-    // 隐藏层 -> 输出层
-    // 注意：需要将隐藏层输出（int32）量化为8位输入
+    // 量化隐藏层输出作为下一层输入
     static elem_t hidden_quantized[DIM * DIM];
-    for (int i = 0; i < size*size; i++) {
-        hidden_quantized[i] = (hidden[i] > 127)? 127 : (elem_t)hidden[i];
-    }
+    quantize_matrix(hidden, hidden_quantized, size);
     
+    // 隐藏层 -> 输出层
     cpu_matmul(hidden_quantized, w2, output, size, size, size);
 }
+
 // 执行硬件矩阵乘法
 void hw_matmul(elem_t* a, elem_t* b, result_t* c, int size) {
     // 转置左矩阵
@@ -57,74 +64,87 @@ void hw_matmul(elem_t* a, elem_t* b, result_t* c, int size) {
     bb_mvin((uintptr_t)b, OP2_ADDR, size);
     bb_mvin((uintptr_t)c, WR_ADDR, size << 2);
     bb_fence();
+    
     // 执行矩阵乘法
     bb_mul_warp16(OP1_ADDR, OP2_ADDR, WR_ADDR, size);
     bb_fence();
+    
     // 移回结果
     bb_mvout((uintptr_t)c, WR_ADDR, size << 2);
+    bb_fence();
 }
+
+void hw_nn_forward(elem_t* input, elem_t* w1, elem_t* w2, 
+                   result_t* hidden, result_t* output, int size) {
+    // 输入层 -> 隐藏层
+    hw_matmul(input, w1, hidden, size);
+    relu(hidden, size, size);  // 在CPU上应用ReLU
+    
+    // 量化隐藏层输出作为下一层输入
+    static elem_t hidden_quantized[DIM * DIM];
+    quantize_matrix(hidden, hidden_quantized, size);
+    
+    // 隐藏层 -> 输出层
+    hw_matmul(hidden_quantized, w2, output, size);
+}
+
 // 执行神经网络测试
 int test_neural_network() {
-    printf("=== Neural Network Test Starting ===\n");
-    
     // 初始化数据
+    printf("Initializing random input data and weights...\n");
     init_u8_random_matrix(input_data, DIM, DIM, 123);
     
-// 初始化权重 (神经网络参数)
-
+    // 初始化权重
+    srand(114); 
     for (int i = 0; i < HIDDEN_SIZE * INPUT_SIZE; i++) {
         weights1[i] = rand() % 128;  
     }
-
+    srand(514);
     for (int i = 0; i < OUTPUT_SIZE * HIDDEN_SIZE; i++) {
         weights2[i] = rand() % 128; 
     }
     
     // 清空输出缓冲区
     clear_u32_matrix(hidden_output, DIM, DIM);
-    clear_u32_matrix(final_output, DIM, DIM);
     clear_u32_matrix(expected_output, DIM, DIM);
     
     // 在CPU上生成预期结果
+    printf("Running CPU Neural Network Forward Pass...\n");
     cpu_nn_forward(input_data, weights1, weights2, 
                   hidden_output, expected_output, DIM);
     
     // 重新清空hidden_output用于硬件计算
     clear_u32_matrix(hidden_output, DIM, DIM);
-    
-    // 硬件加速的前向传播 ------------------------------
-    printf("=== Hardware Forward Pass ===\n");
+    clear_u32_matrix(final_output, DIM, DIM);
 
-     // 第一步: 输入层 -> 隐藏层 (H = relu(X * W1))
-    hw_matmul(input_data, weights1, hidden_output, DIM);
-    relu(hidden_output, DIM, DIM);  // 在CPU上应用ReLU
+    // 在硬件上执行神经网络前向传播
+    printf("Running Hardware Neural Network Forward Pass...\n");
+    hw_nn_forward(input_data, weights1, weights2, 
+                  hidden_output, final_output, DIM);
     
-    // 量化隐藏层输出作为下一层的输入
-    static elem_t hidden_quantized[DIM * DIM];
-    for (int i = 0; i < DIM*DIM; i++) {
-        hidden_quantized[i] = (hidden_output[i] > 127)? 127 : (elem_t)hidden_output[i];
+    // 比较硬件输出和预期输出
+    printf("Comparing hardware output with expected output...\n");
+    if (compare_u32_matrices(final_output, expected_output, DIM, DIM)) {
+        return 1;  
+    } else {
+        return 0;  
     }
-    
-    
-    // 第二步: 隐藏层 -> 输出层 (Y = H * W2)
-    hw_matmul(hidden_quantized, weights2, final_output, DIM);
-    
-    // --------------------------------------------------
-    return 0;
 }
 
 int main() {
 #ifdef MULTICORE 
     multicore(MULTICORE);
 #endif
-    printf("Neural Network Test Starting\n");
-    int passed = test_neural_network();
-    if (compare_u32_matrices(final_output, expected_output, DIM, DIM)) {
+    printf("Neural Network Test Starting...\n");
+    int pass = test_neural_network();
+    if(pass){
         printf("Neural Network Test PASSED\n");
     } else {
         printf("Neural Network Test FAILED\n");
     }
+    
 #ifdef MULTICORE 
     exit(0);
 #endif
-} 
+    return 0;
+}

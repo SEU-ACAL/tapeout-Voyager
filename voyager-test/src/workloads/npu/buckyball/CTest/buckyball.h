@@ -147,7 +147,4 @@ void init_random_matrix(elem_t* matrix, int rows, int cols, int seed);
 /* 矩阵运算函数 */
 void transpose_matrix(elem_t* src, elem_t* dst, int rows, int cols);
 void cpu_matmul(elem_t* a, elem_t* b, result_t* c, int rows, int cols, int inner);
-void cpu_nn_forward(elem_t* input, elem_t* w1, elem_t* w2, 
-                   result_t* hidden, result_t* output, int size);
-void relu(result_t* matrix, int rows, int cols);
 #endif
