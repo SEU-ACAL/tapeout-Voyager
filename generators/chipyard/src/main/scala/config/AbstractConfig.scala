@@ -92,7 +92,7 @@ class AbstractConfig extends Config(
 
   // Boot Select Pins
   new testchipip.boot.WithCustomBootPin(testchipip.boot.CustomBootPinParams(
-    customBootAddress = 0x00000001L
+    customBootAddress = 0x20000000L
   )) ++                          /** add a custom-boot-pin to support pin-driven boot address */
   new testchipip.boot.WithBootAddrReg ++                            /** add a boot-addr-reg for configurable boot address */
 
@@ -116,7 +116,7 @@ class AbstractConfig extends Config(
   // On-chip memory section
   new freechips.rocketchip.subsystem.WithDTS("ucb-bar,chipyard", Nil) ++ /** custom device name for DTS (embedded in BootROM) */
   new chipyard.config.WithBootROM ++                                     /** use default bootrom */
-  new testchipip.soc.WithMbusScratchpad(base = 0x08000000,               /** add 64 KiB on-chip scratchpad */
+  new testchipip.soc.WithMbusScratchpad(base = 0x08000000,               /** add 8 KiB on-chip scratchpad */
                                         size = 8 * 1024) ++
 
   // Coherency settings

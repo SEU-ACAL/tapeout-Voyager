@@ -55,6 +55,8 @@ add_executable(ctest_vecunit_matmul_16xn_random3-linux ${BUCKYBALL_CTEST_DIR}/ve
 target_link_libraries(ctest_vecunit_matmul_16xn_random3-linux buckyball-lib)
 add_executable(ctest_vecunit_matmul_16xn_zero_random-linux ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_16xn_zero_random.c)
 target_link_libraries(ctest_vecunit_matmul_16xn_zero_random-linux buckyball-lib)
+add_executable(ctest_vecunit_simple_nn_forward_pass_test-linux ${BUCKYBALL_CTEST_DIR}/vecunit_simple_nn_forward_pass_test.c)
+target_link_libraries(ctest_vecunit_simple_nn_forward_pass_test-linux buckyball-lib)
 
 add_custom_target(buckyball-CTest-linux ALL DEPENDS
     ctest_mvin_mvout_sram_test-linux
@@ -73,6 +75,7 @@ add_custom_target(buckyball-CTest-linux ALL DEPENDS
     ctest_vecunit_matmul_16xn_random2-linux
     ctest_vecunit_matmul_16xn_random3-linux
     ctest_vecunit_matmul_16xn_zero_random-linux
+    ctest_vecunit_simple_nn_forward_pass_test-linux
     COMMENT "Building linux workloads for Buckyball"
     VERBATIM)
 
@@ -150,6 +153,10 @@ add_custom_target(buckyball-CTest-multicore-baremetal ALL
             -DMULTICORE=3
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_16xn_zero_random.c
             ${BUCKYBALL_CTEST_DIR}/buckyball.c
+    COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_vecunit_simple_nn_forward_pass_test_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
+            -DMULTICORE=3
+            ${BUCKYBALL_CTEST_DIR}/vecunit_simple_nn_forward_pass_test.c
+            ${BUCKYBALL_CTEST_DIR}/buckyball.c
     DEPENDS ${BUCKYBALL_CTEST_DIR}/mvin_mvout_sram_test.c
             ${BUCKYBALL_CTEST_DIR}/mvin_mvout_acc_test.c
             ${BUCKYBALL_CTEST_DIR}/mvin_mvout_alternate_test.c
@@ -166,6 +173,7 @@ add_custom_target(buckyball-CTest-multicore-baremetal ALL
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_16xn_random2.c
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_16xn_random3.c
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_16xn_zero_random.c
+            ${BUCKYBALL_CTEST_DIR}/vecunit_simple_nn_forward_pass_test.c
             ${BUCKYBALL_CTEST_DIR}/start.S
             ${BUCKYBALL_CTEST_DIR}/buckyball.c
     COMMENT "Building baremetal workloads for Buckyball"
@@ -220,6 +228,9 @@ add_custom_target(buckyball-CTest-singlecore-baremetal ALL
     COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_vecunit_matmul_16xn_zero_random_singlecore-baremetal 
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_16xn_zero_random.c
             ${BUCKYBALL_CTEST_DIR}/buckyball.c
+    COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_vecunit_simple_nn_forward_pass_test_singlecore-baremetal 
+            ${BUCKYBALL_CTEST_DIR}/vecunit_simple_nn_forward_pass_test.c
+            ${BUCKYBALL_CTEST_DIR}/buckyball.c
     DEPENDS ${BUCKYBALL_CTEST_DIR}/mvin_mvout_sram_test.c
             ${BUCKYBALL_CTEST_DIR}/mvin_mvout_acc_test.c
             ${BUCKYBALL_CTEST_DIR}/mvin_mvout_alternate_test.c
@@ -236,6 +247,7 @@ add_custom_target(buckyball-CTest-singlecore-baremetal ALL
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_16xn_random2.c
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_16xn_random3.c
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_16xn_zero_random.c
+            ${BUCKYBALL_CTEST_DIR}/vecunit_simple_nn_forward_pass_test.c
             ${BUCKYBALL_CTEST_DIR}/buckyball.c
     COMMENT "Building baremetal workloads for Buckyball"
     VERBATIM)

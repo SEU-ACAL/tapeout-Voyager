@@ -20,9 +20,9 @@ static inline void multicore(int target_hart_id) {
 // base address
 #define PERIPHERAL_BASE     0x10050000
 // memory map
-#define WEIGHT_MEM_LARGE_BASE   0x00000     // 20'h00000~20'h0FFFF
-#define CSR_BASE                0x24A00     // 20'h24A00~20'h24A7F
-#define CSR_LAST_ADDR           0x24A7F     // the last address of CSR
+#define WEIGHT_MEM_LARGE_BASE   (PERIPHERAL_BASE + 0x00000)     // 20'h00000~20'h0FFFF
+#define CSR_BASE                (PERIPHERAL_BASE + 0x24A00)     // 20'h24A00~20'h24A7F
+#define CSR_LAST_ADDR           (PERIPHERAL_BASE + 0x24A7F)     // the last address of CSR
 
 static inline uint32_t read32(uint32_t addr) {
     return *(volatile uint32_t*)addr;
@@ -74,20 +74,29 @@ void test_weight_memory_large() {
 void test_csr() {
     printf("CSR:\n");
     printf("---------------------------------------------\n");
-    
-    // read the last address of CSR (0x0123456789ABCDEF)
-    uint64_t csr_last_value = read64(CSR_LAST_ADDR);
-    printf("CSR last register value: 0x%016lX\n", csr_last_value);
-    
-    // test csr w/r
-    printf("\ntest csr write and read...\n");
-    for (int i = 0; i < 3; i++) {
-        uint32_t addr = CSR_BASE + i * 4;
-        uint32_t data = 0xC5000000 + i;
-        write32(addr, data);
-        printf("CSR 0x%08X: write 0x%08X, read 0x%08X\n", 
-               addr, data, read32(addr));
-    }
+
+    // original
+    uint64_t original_val = read64(CSR_LAST_ADDR);
+    printf("read64(0x%08X) ---> 0x%016lX\n\n", CSR_LAST_ADDR, original_val);
+
+    // aligned 64-bit 
+    uint64_t aligned_addr_64 = CSR_LAST_ADDR - 7; // This is 0x...A78
+    uint64_t aligned_val_64 = read64(aligned_addr_64);
+    printf("read64(0x%08lX) ---> 0x%016lX\n\n", aligned_addr_64, aligned_val_64);
+
+    // divide
+    uint32_t addr_low  = CSR_LAST_ADDR - 7; // 0x...A78
+    uint32_t addr_high = CSR_LAST_ADDR - 3; // 0x...A7C
+
+    uint32_t val_low  = read32(addr_low);
+    uint32_t val_high = read32(addr_high);
+
+    printf("read32(0x%08X) ---> 0x%08X\n", addr_low, val_low);
+    printf("read32(0x%08X) ---> 0x%08X\n", addr_high, val_high);
+
+    // in little-endian system, the high address is the high byte
+    uint64_t combined_val = ((uint64_t)val_high << 32) | val_low;
+    printf("Combined 32-bit reads ---> 0x%016lX\n", combined_val);
     printf("---------------------------------------------\n\n");
 }
 
@@ -99,17 +108,17 @@ int main() {
     printf("peripheral memory access test\n");
     printf("===============================================\n\n");
     
-    // test the weight memory large area
-    test_weight_memory_large();
     
     // test the csr
     test_csr();
+
+    // test_weight_memory_large();
+
     
     printf("all tests done!\n");
     printf("===============================================\n");
-    
-    return 0;
-    #ifdef MULTICORE 
+
     exit(0);
-    #endif
+
+    
 }

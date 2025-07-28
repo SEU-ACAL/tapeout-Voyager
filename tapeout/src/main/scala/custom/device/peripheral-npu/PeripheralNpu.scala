@@ -10,6 +10,8 @@ import freechips.rocketchip.subsystem._
 import freechips.rocketchip.amba.axi4._
 import freechips.rocketchip.util._
 import freechips.rocketchip.prci._
+import voyager_tapeout.custom.uncore._
+
 
 // Configuration parameters for NPU
 case class PeripheralNPUParams(
@@ -53,7 +55,7 @@ class AXISlaveNPUWrapperBlackBox extends BlackBox with HasBlackBoxResource {
     val axi_awlen = Input(UInt(8.W))
     val axi_awsize = Input(UInt(3.W))
     val axi_awburst = Input(UInt(2.W))
-    val axi_awid = Input(UInt(1.W))
+    val axi_awid = Input(UInt(12.W))
     val axi_awvalid = Input(Bool())
     val axi_awready = Output(Bool())
 
@@ -64,7 +66,7 @@ class AXISlaveNPUWrapperBlackBox extends BlackBox with HasBlackBoxResource {
     val axi_wready = Output(Bool())
 
     val axi_bresp = Output(UInt(2.W))
-    val axi_bid = Output(UInt(1.W))
+    val axi_bid = Output(UInt(12.W))
     val axi_bvalid = Output(Bool())
     val axi_bready = Input(Bool())
 
@@ -72,14 +74,14 @@ class AXISlaveNPUWrapperBlackBox extends BlackBox with HasBlackBoxResource {
     val axi_arlen = Input(UInt(8.W))
     val axi_arsize = Input(UInt(3.W))
     val axi_arburst = Input(UInt(2.W))
-    val axi_arid = Input(UInt(1.W))
+    val axi_arid = Input(UInt(12.W))
     val axi_arvalid = Input(Bool())
     val axi_arready = Output(Bool())
 
     val axi_rdata = Output(UInt(64.W))
     val axi_rresp = Output(UInt(2.W))
     val axi_rlast = Output(Bool())
-    val axi_rid = Output(UInt(1.W))
+    val axi_rid = Output(UInt(12.W))
     val axi_rvalid = Output(Bool())
     val axi_rready = Input(Bool())
 
@@ -109,54 +111,54 @@ class AXISlaveNPUWrapperBlackBox extends BlackBox with HasBlackBoxResource {
   // 指定BlackBox使用的Verilog模块名称
   override def desiredName = "axi_slave_npu_wrapper"
 
-  addResource("AsyncResetSynchronizerPrimitiveShiftReg_d3_i0.sv")
-  addResource("AsyncResetSynchronizerShiftReg_w1_d3_i0_3.sv")
-  addResource("axi_bridge.v")
-  addResource("axi_slave_npu_wrapper.v")
-  addResource("CIML2P_512X64_DR_M2_A1.fpga.v")
-  addResource("CIML2P_64X64_DR_M2_A1.fpga.v")
-  addResource("ciml_mac.v")
-  addResource("CIM_memory_interface_large.v")
-  addResource("CIM_memory_interface_small.v")
-  addResource("clk_selector.v")
-  addResource("ClockMutexMux.sv")
-  addResource("ClockUtil.v")
-  addResource("csr_ctrl_memory_interface.v")
-  addResource("defines.v")
-  addResource("DW_minmax.v")
-  addResource("EICG_wrapper.v")
-  addResource("exponent_memory_interface.v")
-  addResource("feature_memory_interface_large.v")
-  addResource("feature_memory_interface_small.v")
-  addResource("Macro_large.v")
-  addResource("Macro_small.v")
-  addResource("mem_access_manager.v")
-  addResource("NNIN_pre_align.v")
-  addResource("NNIN_shifter.v")
-  addResource("NNIN_top.v")
-  addResource("NPU_core_large.v")
-  addResource("NPU_core_small.v")
-  addResource("NPU_ctrl_large.v")
-  addResource("NPU_ctrl_small.v")
-  addResource("NPU_top.v")
-  addResource("outlier_large_Macro_top.v")
-  addResource("outlier_mac_small_channel.v")
-  addResource("outlier_mac_small_Macro.v")
-  addResource("outlier_process_large_channel.v")
-  addResource("outlier_process_large_Macro.v")
-  addResource("outlier_small_Macro_top.v")
-  addResource("output_buffer_interface.v")
-  addResource("psum_self_adder.v")
-  addResource("psum_shift_adder.v")
-  addResource("smic281prf1024x64m4.v")
-  addResource("smic281prf128x64m4.v")
-  addResource("smic281prf64x64m4.v")
-  addResource("sys_top.v")
-  addResource("TEST_MODE_bridge.v")
-  addResource("WD_shifter_macro.v")
-  addResource("WD_shifter.v")
-  addResource("weight_memory_interface_L.v")
-  addResource("weight_memory_interface_S.v")
+  addResource("npu/AsyncResetSynchronizerPrimitiveShiftReg_d3_i0.sv")
+  addResource("npu/AsyncResetSynchronizerShiftReg_w1_d3_i0_3.sv")
+  addResource("npu/axi_bridge.v")
+  addResource("npu/axi_slave_npu_wrapper.v")
+  addResource("npu/CIML2P_512X64_DR_M2_A1.fpga.v")
+  addResource("npu/CIML2P_64X64_DR_M2_A1.fpga.v")
+  addResource("npu/ciml_mac.v")
+  addResource("npu/CIM_memory_interface_large.v")
+  addResource("npu/CIM_memory_interface_small.v")
+  addResource("npu/clk_selector.v")
+  addResource("npu/ClockMutexMux.sv")
+  addResource("npu/ClockUtil.v")
+  addResource("npu/csr_ctrl_memory_interface.v")
+  addResource("npu/defines.v")
+  addResource("npu/DW_minmax.v")
+  addResource("npu/EICG_wrapper.v")
+  addResource("npu/exponent_memory_interface.v")
+  addResource("npu/feature_memory_interface_large.v")
+  addResource("npu/feature_memory_interface_small.v")
+  addResource("npu/Macro_large.v")
+  addResource("npu/Macro_small.v")
+  addResource("npu/mem_access_manager.v")
+  addResource("npu/NNIN_pre_align.v")
+  addResource("npu/NNIN_shifter.v")
+  addResource("npu/NNIN_top.v")
+  addResource("npu/NPU_core_large.v")
+  addResource("npu/NPU_core_small.v")
+  addResource("npu/NPU_ctrl_large.v")
+  addResource("npu/NPU_ctrl_small.v")
+  addResource("npu/NPU_top.v")
+  addResource("npu/outlier_large_Macro_top.v")
+  addResource("npu/outlier_mac_small_channel.v")
+  addResource("npu/outlier_mac_small_Macro.v")
+  addResource("npu/outlier_process_large_channel.v")
+  addResource("npu/outlier_process_large_Macro.v")
+  addResource("npu/outlier_small_Macro_top.v")
+  addResource("npu/output_buffer_interface.v")
+  addResource("npu/psum_self_adder.v")
+  addResource("npu/psum_shift_adder.v")
+  addResource("npu/smic281prf1024x64m4.v")
+  addResource("npu/smic281prf128x64m4.v")
+  addResource("npu/smic281prf64x64m4.v")
+  addResource("npu/sys_top.v")
+  addResource("npu/TEST_MODE_bridge.v")
+  addResource("npu/WD_shifter_macro.v")
+  addResource("npu/WD_shifter.v")
+  addResource("npu/weight_memory_interface_L.v")
+  addResource("npu/weight_memory_interface_S.v")
 }
 
 class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends ClockSinkDomain(ClockSinkParameters())(p) {
@@ -180,7 +182,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
   
   class PeripheralNPUModuleImp(outer: PeripheralNPU) extends Impl {
     val io = IO(new PeripheralNPUIOCell) // to chiptop
-    val (axi, _) = outer.regnode.in(0)
+    val (axi, edge) = outer.regnode.in(0)
     
     withClockAndReset(clock, reset) {
     val npuBlackBox = Module(new AXISlaveNPUWrapperBlackBox)
@@ -196,7 +198,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
     npuBlackBox.io.axi_awlen := axi.aw.bits.len
     npuBlackBox.io.axi_awsize := axi.aw.bits.size
     npuBlackBox.io.axi_awburst := axi.aw.bits.burst
-    npuBlackBox.io.axi_awid := axi.aw.bits.id(0, 0)  // BlackBox期望1位ID
+    npuBlackBox.io.axi_awid := axi.aw.bits.id(11, 0)
     npuBlackBox.io.axi_awvalid := axi.aw.valid
     axi.aw.ready := npuBlackBox.io.axi_awready
 
@@ -210,7 +212,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
     // 写响应通道 - 处理位宽转换
     // require(axi.b.bits.id.getWidth >= 1, s"AXI4 response ID width (${axi.b.bits.id.getWidth}) must be >= 1 bits")
     axi.b.bits.resp := npuBlackBox.io.axi_bresp
-    axi.b.bits.id := Cat(0.U((axi.b.bits.id.getWidth - 1).W), npuBlackBox.io.axi_bid)  // 扩展1位ID到系统宽度
+    axi.b.bits.id := npuBlackBox.io.axi_bid
     axi.b.valid := npuBlackBox.io.axi_bvalid
     npuBlackBox.io.axi_bready := axi.b.ready
 
@@ -221,7 +223,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
     npuBlackBox.io.axi_arlen := axi.ar.bits.len
     npuBlackBox.io.axi_arsize := axi.ar.bits.size
     npuBlackBox.io.axi_arburst := axi.ar.bits.burst
-    npuBlackBox.io.axi_arid := axi.ar.bits.id(0, 0)  // BlackBox期望1位ID
+    npuBlackBox.io.axi_arid := axi.ar.bits.id(11, 0)
     npuBlackBox.io.axi_arvalid := axi.ar.valid
     axi.ar.ready := npuBlackBox.io.axi_arready
 
@@ -230,7 +232,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
     axi.r.bits.data := npuBlackBox.io.axi_rdata
     axi.r.bits.resp := npuBlackBox.io.axi_rresp
     axi.r.bits.last := npuBlackBox.io.axi_rlast
-    axi.r.bits.id := Cat(0.U((axi.r.bits.id.getWidth - 1).W), npuBlackBox.io.axi_rid)  // 扩展1位ID到系统宽度
+    axi.r.bits.id := npuBlackBox.io.axi_rid
     axi.r.valid := npuBlackBox.io.axi_rvalid
     npuBlackBox.io.axi_rready := axi.r.ready
 
@@ -267,8 +269,11 @@ trait CanHavePeripheryNPU { this: BaseSubsystem =>
     // Connect to peripheral bus using AXI4 protocol
     pbus.coupleTo(portName) {
       device.regnode :=
+      AXI4UserYanker() :=
       AXI4Buffer() :=
       TLToAXI4() :=
+      TLRequestFifoFalse() :=
+      TLSourceShrinker(1 << 12) :=
       TLFragmenter(pbus.beatBytes, pbus.blockBytes, holdFirstDeny = true) := _
     }
     device

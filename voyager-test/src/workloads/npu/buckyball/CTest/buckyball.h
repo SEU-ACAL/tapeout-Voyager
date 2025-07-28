@@ -133,7 +133,8 @@ void init_u32_random_matrix(result_t* matrix, int rows, int cols, int seed);
 
 int compare_u8_matrices(elem_t* a, elem_t* b, int rows, int cols);
 int compare_u32_matrices(result_t* a, result_t* b, int rows, int cols);
-
+int compare_u32_matrices_with_tolerance(result_t *a, result_t *b, 
+                                       int rows, int cols, double tolerance);
 void clear_u32_matrix(result_t* matrix, int rows, int cols);
 void clear_u8_matrix(elem_t* matrix, int rows, int cols);
 

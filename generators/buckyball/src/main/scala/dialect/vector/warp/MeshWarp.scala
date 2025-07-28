@@ -66,8 +66,8 @@ class MeshWarp(implicit p: Parameters) extends Module {
     Module(new CasThread()(threadParams))
   }
 
-  io.in.ready := false.B
-
+  io.in.ready := mulThreads(0).vvvBond.get.in.ready
+  
   for (i <- 0 until 16) {
    val mulThread = mulThreads(i)
     val casThread = casThreads(i)

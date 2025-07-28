@@ -6,7 +6,7 @@ module axi_slave_npu_wrapper(
         input      [7:0]    axi_awlen,      // 8 bit
         input      [2:0]    axi_awsize,     // 3 bit
         input      [1:0]    axi_awburst,
-        input               axi_awid,
+        input      [11:0]    axi_awid,
         input               axi_awvalid,
         output              axi_awready,
 
@@ -17,7 +17,7 @@ module axi_slave_npu_wrapper(
         output              axi_wready,
 
         output     [1:0]    axi_bresp,
-        output              axi_bid,
+        output     [11:0]    axi_bid,
         output              axi_bvalid,
         input               axi_bready,
 
@@ -25,12 +25,12 @@ module axi_slave_npu_wrapper(
         input      [7:0]    axi_arlen,
         input      [2:0]    axi_arsize,
         input      [1:0]    axi_arburst,
-        input               axi_arid,
+        input      [11:0]    axi_arid,
         input               axi_arvalid,
         output              axi_arready,
 
         output     [63:0]   axi_rdata,
-        output              axi_rid,
+        output     [11:0]    axi_rid,
         output     [1:0]    axi_rresp,
         output              axi_rlast,
         output              axi_rvalid,
@@ -82,11 +82,19 @@ module axi_slave_npu_wrapper(
     wire         rstn_NPU;
     wire         NPU_AXI_SEL;
 
+    wire [19:0]  axi_awaddr_ofst;
+    wire [19:0]  axi_araddr_ofst;
+
+    assign axi_awaddr_ofst = {axi_awaddr[19:16] - 3'b101, axi_awaddr[15:0]};
+    assign axi_araddr_ofst = {axi_araddr[19:16] - 3'b101, axi_araddr[15:0]};
+
+
+
     // axi transfer
     axi_bridge axi_bridge_inst (
                    .clk              ( clk           ),
                    .rstn             ( rstn              ),
-                   .axi_awaddr       ( axi_awaddr        ),
+                   .axi_awaddr       ( axi_awaddr_ofst ),
                    .axi_awlen        ( axi_awlen         ),
                    .axi_awsize       ( axi_awsize        ),
                    .axi_awburst      ( axi_awburst       ),
@@ -102,7 +110,7 @@ module axi_slave_npu_wrapper(
                    .axi_bid          ( axi_bid           ),
                    .axi_bvalid       ( axi_bvalid        ),
                    .axi_bready       ( axi_bready        ),
-                   .axi_araddr       ( axi_araddr        ),
+                   .axi_araddr       ( axi_araddr_ofst ),
                    .axi_arlen        ( axi_arlen         ),
                    .axi_arsize       ( axi_arsize        ),
                    .axi_arburst      ( axi_arburst       ),

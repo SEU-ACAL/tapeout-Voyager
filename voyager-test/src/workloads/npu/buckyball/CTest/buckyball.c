@@ -2,6 +2,11 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#define BANK 512
+#define OP1_ADDR 0
+#define OP2_ADDR (BANK + DIM)
+#define WR_ADDR (DIM + 2 * BANK)
+
 void init_u8_random_matrix(elem_t* matrix, int rows, int cols, int seed) {
     srand(seed);  
     for (int i = 0; i < rows * cols; i++) {
@@ -27,7 +32,7 @@ int compare_u8_matrices(elem_t* a, elem_t* b, int rows, int cols) {
     return 1;
 }
 int compare_u32_matrices(result_t* a, result_t* b, int rows, int cols) {
-    for (int i = 0; i < rows * cols; i++) {
+    for (int i = 0; i <= rows * cols - 1; i++) {
         if (a[i] != b[i]) {
             printf("Mismatch at index %d: expected %d, got %d\n", i, b[i], a[i]);
             return 0;

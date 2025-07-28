@@ -126,7 +126,7 @@ class SimpleStreamReader(nXacts: Int, beatBits: Int, maxBytes: Int, dataWidth: I
     translate_q.io.deq.ready := tl.a.ready || io.tlb.resp.miss
 
     // TileLink 连接
-    tl.a.valid := translate_q.io.deq.valid && !io.tlb.resp.miss
+    tl.a.valid := translate_q.io.deq.valid
     tl.a.bits := translate_q.io.deq.bits.tl_a
     tl.a.bits.address := io.tlb.resp.paddr
 

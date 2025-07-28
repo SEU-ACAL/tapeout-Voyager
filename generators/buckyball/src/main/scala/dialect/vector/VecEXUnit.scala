@@ -63,8 +63,8 @@ class VecEXUnit(implicit b: BuckyBallConfig, p: Parameters) extends Module {
 // -----------------------------------------------------------------------------
 // 接受来自load unit的读结果, 并进行计算
 // -----------------------------------------------------------------------------
-	io.ld_ex_i.ready := state === busy
-	when(io.ld_ex_i.fire) {
+	io.ld_ex_i.ready := state === busy && VecBall.io.iterIn.ready
+	when(io.ld_ex_i.valid) {
 		VecBall.io.op1In.valid := true.B
 		VecBall.io.op1In.bits := io.ld_ex_i.bits.op1
 		VecBall.io.op2In.valid := true.B

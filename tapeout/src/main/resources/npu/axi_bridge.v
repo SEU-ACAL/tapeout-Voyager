@@ -6,7 +6,7 @@ module axi_bridge(
     input [7:0]  axi_awlen,  // 8 bit
     input [2:0]  axi_awsize, // 3 bit
     input [1:0]  axi_awburst,
-    input        axi_awid,
+    input [11:0]  axi_awid,
     input        axi_awvalid,
     output reg   axi_awready,
 
@@ -17,7 +17,7 @@ module axi_bridge(
     output reg   axi_wready,
 
     output reg [1:0] axi_bresp,
-    output           axi_bid,
+    output [11:0]     axi_bid,
     output reg       axi_bvalid,
     input            axi_bready,
 
@@ -25,12 +25,12 @@ module axi_bridge(
     input  [7:0]  axi_arlen,
     input  [2:0]  axi_arsize,
     input  [1:0]  axi_arburst,
-    input         axi_arid,
+    input  [11:0]  axi_arid,
     input         axi_arvalid,
     output reg    axi_arready,
 
     output     [63:0] axi_rdata,
-    output            axi_rid,
+    output     [11:0]  axi_rid,
     output reg [1:0]  axi_rresp,
     output reg        axi_rlast,
     output reg        axi_rvalid,
@@ -46,6 +46,12 @@ module axi_bridge(
     output [63:0]                  sys_store_data
 );
 
+
+reg [11:0] axi_bid_reg;
+assign axi_bid = axi_bid_reg;
+
+reg [11:0] axi_rid_reg;
+assign axi_rid = axi_rid_reg;
 
 
 reg axi_awv_awr_flag;
@@ -93,6 +99,7 @@ always @(posedge clk or negedge rstn) begin
         awlen_cntr <= 'b0;
         awburst <= 'b0;
         awlen   <= 'b0;
+        axi_bid_reg <= 12'b0;
     end 
     else begin
         if (~axi_awready && axi_awvalid && ~axi_awv_awr_flag) begin
@@ -100,6 +107,7 @@ always @(posedge clk or negedge rstn) begin
             awburst <= axi_awburst;
             awlen <= axi_awlen;
             awlen_cntr <= 'b0;
+            axi_bid_reg <= axi_awid;
         end
         else if ((awlen_cntr <= awlen) && axi_wready && axi_wvalid) begin
             awlen_cntr <= awlen_cntr + 1'b1;
@@ -222,12 +230,14 @@ always @(posedge clk or negedge rstn) begin
         arburst <= 'b0;
         arlen <= 'b0;
         axi_rlast <= 'b0;
+        axi_rid_reg <= 12'b0;
     end
     else begin
         if(~axi_arready && axi_arvalid && ~axi_arv_arr_flag) begin
             araddr <= axi_araddr;
             arburst <= axi_arburst;
             arlen <= axi_arlen;
+            axi_rid_reg <= axi_arid;
             arlen_cntr <= 'b0;
             axi_rlast <= 'b0;
         end
