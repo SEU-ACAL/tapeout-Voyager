@@ -83,7 +83,7 @@ else
   PK=""
 fi
 
-WAVEFORM="${WAVEFORM_DIR}/${TIMESTAMP}-${binary}-waveform.fsdb"
+WAVEFORM="${WAVEFORM_DIR}/${TIMESTAMP}-waveform.fsdb"
 
 if [ $debug -eq 1 ]; then
   DEBUG="-debug"

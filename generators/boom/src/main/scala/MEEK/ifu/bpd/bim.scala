@@ -50,17 +50,17 @@ class BIMBranchPredictorBank(params: BoomBIMParams = BoomBIMParams())(implicit p
   val data  = SyncReadMem(nSets, Vec(bankWidth, UInt(2.W)))
 
   val mems = Seq(("bim", nSets, bankWidth * 2))
-
-  val s2_req_rdata    = RegNext(data.read(s0_idx   , s0_valid))
+  val data_rvalid     = WireInit(false.B)
+  val s2_data_rvalid  = RegNext(RegNext(data_rvalid))
+  val s2_req_rdata    = RegNext(data.read(s0_idx   , data_rvalid))
 
   val s2_resp         = Wire(Vec(bankWidth, Bool()))
 
   for (w <- 0 until bankWidth) {
 
-    s2_resp(w)        := s2_valid && s2_req_rdata(w)(1) && !doing_reset
-    s2_meta.bims(w)   := s2_req_rdata(w)
+    s2_resp(w)        := s2_valid && s2_req_rdata(w)(1) && !doing_reset && s2_data_rvalid
+    s2_meta.bims(w)   := s2_req_rdata(w) 
   }
-
 
   val s1_update_wdata   = Wire(Vec(bankWidth, UInt(2.W)))
   val s1_update_wmask   = Wire(Vec(bankWidth, Bool()))
@@ -113,6 +113,12 @@ class BIMBranchPredictorBank(params: BoomBIMParams = BoomBIMParams())(implicit p
       Mux(doing_reset, (~(0.U(bankWidth.W))), s1_update_wmask.asUInt).asBools
     )
   }
+
+  // val rw_check = (!doing_reset) && s1_update.valid
+  data_rvalid := s0_valid&&((!(s1_update.valid && s1_update.bits.is_commit_update))||(s1_update.valid && s1_update.bits.is_commit_update&&(s1_update_index(log2Ceil(nSets)-1,0)=/=s0_idx(log2Ceil(nSets)-1,0))))&&(!doing_reset)
+  assert(!(data_rvalid&&doing_reset&&(reset_idx(log2Ceil(nSets)-1,0)===s0_idx(log2Ceil(nSets)-1,0))),"BIM RW the same idx(reset)")
+  assert(!(data_rvalid&&s1_update.valid && s1_update.bits.is_commit_update&&(s1_update_index(log2Ceil(nSets)-1,0)===s0_idx(log2Ceil(nSets)-1,0))),"BIM RW the same idx(update)")
+  
   when (s1_update_wmask.reduce(_||_) && s1_update.valid && s1_update.bits.is_commit_update) {
     when (wrbypass_hit) {
       wrbypass(wrbypass_hit_idx) := s1_update_wdata

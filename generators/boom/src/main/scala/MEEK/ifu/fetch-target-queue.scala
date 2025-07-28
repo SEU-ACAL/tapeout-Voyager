@@ -242,6 +242,9 @@ class FetchTargetQueue(implicit p: Parameters) extends BoomModule
   val bpd_pc    = RegNext(pcs(bpd_idx))
   val bpd_target = RegNext(pcs(WrapInc(bpd_idx, num_entries)))
 
+  // assert(!(do_enq&&(enq_ptr===bpd_idx)),"FTQ meta RW the same idx(enq)")
+  // assert(!(do_enq&&(enq_ptr===bpd_idx)),"FTQ ghist0 RW the same idx(enq)")
+  
   when (io.redirect.valid) {
     bpd_update_mispredict := false.B
     bpd_update_repair     := false.B
@@ -358,7 +361,7 @@ class FetchTargetQueue(implicit p: Parameters) extends BoomModule
     io.get_ftq_pc(i).next_val  := RegNext(next_idx =/= enq_ptr || next_is_enq)
     io.get_ftq_pc(i).com_pc    := RegNext(pcs(Mux(io.deq.valid, io.deq.bits, deq_ptr)))
   }
-
+  // assert(!(do_enq&&(io.get_ftq_pc(1).ftq_idx===enq_ptr)),"FTQ ghist1 RW the same idx(enq)")
   for (w <- 0 until coreWidth) {
     io.debug_fetch_pc(w) := RegNext(pcs(io.debug_ftq_idx(w)))
   }

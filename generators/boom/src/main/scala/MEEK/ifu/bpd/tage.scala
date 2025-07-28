@@ -93,11 +93,18 @@ class TageTable(val nRows: Int, val tagSz: Int, val histLength: Int, val uBitPer
   val mems = Seq((f"tage_l$histLength", nRows, bankWidth * tageEntrySz))
 
   val s2_tag       = RegNext(s1_tag)
+  //TODO : change it to bypass logic to reduce the latency(by GB)
+  val rtage_valid  = WireInit(false.B)
+  val rhius_valid  = WireInit(false.B)
+  val rlous_valid  = WireInit(false.B)
 
-  val s2_req_rtage = VecInit(table.read(s1_hashed_idx, io.f1_req_valid).map(_.asTypeOf(new TageEntry)))
-  val s2_req_rhius = hi_us.read(s1_hashed_idx, io.f1_req_valid)
-  val s2_req_rlous = lo_us.read(s1_hashed_idx, io.f1_req_valid)
-  val s2_req_rhits = VecInit(s2_req_rtage.map(e => e.valid && e.tag === s2_tag && !doing_reset))
+  val s2_rtage_valid= RegNext(rtage_valid) 
+  val s2_req_rtage = VecInit(table.read(s1_hashed_idx, rtage_valid).map(_.asTypeOf(new TageEntry)))
+  val s2_req_rhius = hi_us.read(s1_hashed_idx, rhius_valid)
+  val s2_req_rlous = lo_us.read(s1_hashed_idx, rlous_valid)
+
+  val s2_req_rhits = VecInit(s2_req_rtage.map(e => e.valid && e.tag === s2_tag && !doing_reset &&(!s2_rtage_valid)))
+
 
   for (w <- 0 until bankWidth) {
     // This bit indicates the TAGE table matched here
@@ -117,7 +124,9 @@ class TageTable(val nRows: Int, val tagSz: Int, val histLength: Int, val uBitPer
   val (update_idx, update_tag) = compute_tag_and_hash(fetchIdx(io.update_pc), io.update_hist)
 
   val update_wdata = Wire(Vec(bankWidth, new TageEntry))
-
+  rtage_valid := io.f1_req_valid && (!doing_reset)&&(!io.update_mask.reduce(_||_) || io.update_mask.reduce(_||_) && (update_idx(log2Ceil(nRows)-1,0) =/= s1_hashed_idx(log2Ceil(nRows)-1,0)))
+  rhius_valid := io.f1_req_valid && (!doing_reset) && (!doing_clear_u_hi) && (!io.update_u_mask.reduce(_||_) || io.update_u_mask.reduce(_||_) && (update_idx(log2Ceil(nRows)-1,0) =/= s1_hashed_idx(log2Ceil(nRows)-1,0)))
+  rlous_valid := io.f1_req_valid && (!doing_reset) && (!doing_clear_u_lo) && (!io.update_u_mask.reduce(_||_) || io.update_u_mask.reduce(_||_) && (update_idx(log2Ceil(nRows)-1,0) =/= s1_hashed_idx(log2Ceil(nRows)-1,0)))
   table.write(
     Mux(doing_reset, reset_idx                                          , update_idx),
     Mux(doing_reset, VecInit(Seq.fill(bankWidth) { 0.U(tageEntrySz.W) }), VecInit(update_wdata.map(_.asUInt))),
@@ -137,7 +146,11 @@ class TageTable(val nRows: Int, val tagSz: Int, val histLength: Int, val uBitPer
     Mux(doing_reset || doing_clear_u_lo, VecInit((0.U(bankWidth.W)).asBools), update_lo_wdata),
     Mux(doing_reset || doing_clear_u_lo, ~(0.U(bankWidth.W)), io.update_u_mask.asUInt).asBools
   )
-
+  assert(!((rhius_valid||rlous_valid||rtage_valid)&&(doing_reset)&&(s1_hashed_idx(log2Ceil(nRows)-1,0)===reset_idx(log2Ceil(nRows)-1,0))), "TAGE HIUS rw the same idx(reset)")
+  assert(!((rhius_valid)&&(doing_clear_u_hi)&&(s1_hashed_idx(log2Ceil(nRows)-1,0)===clear_u_idx(log2Ceil(nRows)-1,0))), "TAGE HI  US rw the same idx(clear)")
+assert(!((rlous_valid)&&(doing_clear_u_lo)&&(s1_hashed_idx(log2Ceil(nRows)-1,0)===clear_u_idx(log2Ceil(nRows)-1,0))), "TAGE  LO US rw the same idx(clear)")
+  assert(!((rhius_valid||rlous_valid)&&(io.update_u_mask.reduce(_||_))&&(s1_hashed_idx(log2Ceil(nRows)-1,0)===update_idx(log2Ceil(nRows)-1,0))), "TAGE HI LO US rw the same idx(update)")
+  assert(!((rtage_valid)&&(io.update_mask.reduce(_||_))&&(s1_hashed_idx(log2Ceil(nRows)-1,0)===update_idx(log2Ceil(nRows)-1,0))), "TAGE Table rw the same idx(update)")
   val wrbypass_tags    = Reg(Vec(nWrBypassEntries, UInt(tagSz.W)))
   val wrbypass_idxs    = Reg(Vec(nWrBypassEntries, UInt(log2Ceil(nRows).W)))
   val wrbypass         = Reg(Vec(nWrBypassEntries, Vec(bankWidth, UInt(3.W))))
