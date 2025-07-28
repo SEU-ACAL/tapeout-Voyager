@@ -13,15 +13,15 @@ import sifive.blocks.devices.spi.{PeripherySPIKey, SPIParams, PeripherySPIFlashK
 
 
 // Custom SPI configurations to avoid name conflicts
-class WithSPIForFlash(address: BigInt = 0x10030000, fAddress: BigInt = 0x20000000, size: BigInt = 0x800000) extends Config((site, here, up) => {
-  case PeripherySPIFlashKey => up(PeripherySPIFlashKey) ++ Seq(
-    SPIFlashParams(rAddress = address, fAddress = fAddress, fSize = size))
-})
+// class WithSPIForFlash(address: BigInt = 0x10030000, fAddress: BigInt = 0x20000000, size: BigInt = 0x800000) extends Config((site, here, up) => {
+//   case PeripherySPIFlashKey => up(PeripherySPIFlashKey) ++ Seq(
+//     SPIFlashParams(rAddress = address, fAddress = fAddress, fSize = size))
+// })
 
-class WithSPIForSD(address: BigInt = 0x10031000) extends Config((site, here, up) => {
-  case PeripherySPIKey => up(PeripherySPIKey) ++ Seq(
-    SPIParams(rAddress = address))
-})
+// class WithSPIForSD(address: BigInt = 0x10031000) extends Config((site, here, up) => {
+//   case PeripherySPIKey => up(PeripherySPIKey) ++ Seq(
+//     SPIParams(rAddress = address))
+// })
 
 
 
@@ -41,14 +41,11 @@ class OurHeterSoCConfig extends Config(
   new chipyard.config.WithMultiSingleRoCCGHE(0, 1, 2) ++ //put custom RoCC on hart0-2 for custom0 ISA extension ++
   new freechips.rocketchip.subsystem.WithInclusiveCache(capacityKB = 32) ++ // 64 KB L2Cache
   new chipyard.config.WithSystemBusWidth(128) ++
-  // new freechips.rocketchip.rocket.WithMEEKAsynchronousCDCs(
-  //   AsynchronousCrossing().depth,
-  //   AsynchronousCrossing().sourceSync) ++
-  //  Crossing specifications+-
   new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1) ++
   new boom.meek.common.WithNMediumBooms(1) ++
   new chipyard.config.WithGPIO(width=12) ++
-  new voyager_tapeout.custom.WithSPIForSD ++
+  new chipyard.config.WithSPI ++
+  // new voyager_tapeout.custom.WithSPIForSD ++
   new voyager_tapeout.custom.iobinders.WithSPISDIOCells
   // NPUPeripheral
   // new chipyard.config.AbstractConfig

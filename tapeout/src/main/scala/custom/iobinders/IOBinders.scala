@@ -104,39 +104,6 @@ class WithSPISDIOCells extends OverrideIOBinder({
   }
 })
 
-// class WithSPIFlashIOCells extends OverrideIOBinder({
-//   (system: HasPeripherySPIFlash) => {
-//     val (ports: Seq[SPIFlashPort], cells2d) = system.qspi.zipWithIndex.map({ case (s, i) =>
-//       val p = system.asInstanceOf[BaseSubsystem].p
-//       val name = s"spiflash_${i}"
-//       val port = IO(new SPIFlashIO()).suggestName(name)
-//       val iocellBase = s"iocell_${name}"
-
-//       // SCK and CS are unidirectional outputs
-//       val sckIOs = IOCell.generateFromSignal(s.sck, port.sck, Some(s"${iocellBase}_sck"), p(IOCellKey), IOCell.toAsyncReset)
-//       val csIOs = IOCell.generateFromSignal(s.cs, port.cs, Some(s"${iocellBase}_cs"), p(IOCellKey), IOCell.toAsyncReset)
-
-//       // DQ are bidirectional, so then need special treatment
-//       val dqIOs = s.dq.zip(port.dq).zipWithIndex.map { case ((pin, ana), j) =>
-//         val iocell = p(IOCellKey).gpio().suggestName(s"${iocellBase}_dq_${j}")
-//         iocell.io.o := pin.o
-//         iocell.io.oe := pin.oe
-//         iocell.io.ie := true.B
-//         pin.i := iocell.io.i
-//         iocell.io.pad <> ana
-//         iocell
-//       }
-
-//       // Drive the reset signal for SPIFlashIO
-//       port.reset := false.B
-
-//       (SPIFlashPort(() => port), dqIOs ++ csIOs ++ sckIOs)
-//     }).unzip
-//     (ports, cells2d.flatten)
-//   }
-// })
-
-
 class WithSPIFlashIOCells extends OverrideIOBinder({
   (system: HasPeripherySPIFlash) => {
     val (ports: Seq[SPIFlashPort], cells2d) = system.qspi.zipWithIndex.map({ case (s, i) =>
