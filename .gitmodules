@@ -55,9 +55,9 @@
 [submodule "generators/shuttle"]
 	path = generators/shuttle
 	url = https://github.com/ucb-bar/shuttle.git
-[submodule "generators/testchipip"]
-	path = generators/testchipip
-	url = https://github.com/ucb-bar/testchipip.git
+# [submodule "generators/testchipip"]
+# 	path = generators/testchipip
+# 	url = https://github.com/ucb-bar/testchipip.git
 [submodule "sims/firesim"]
 	path = sims/firesim
 	url = https://github.com/firesim/firesim.git
