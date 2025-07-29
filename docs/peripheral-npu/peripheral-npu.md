@@ -51,10 +51,33 @@ chipyard_exec
 
 ```
 chipyard_exec
-./voyager-test/scripts/run-verilator.sh --config VoyagerVerilatorConfig --debug ctest_acc_matmul_multicore
+./voyager-test/scripts/run-verilator.sh --config VoyagerVerilatorConfig --debug peripheral
 ```
 
-workload书写见`` ./voyager-test/src/workload`` 
+如果需要编译vcs的仿真，可执行以下命令，代码生成
+```
+chipyard_exec
+./voyager-test/scripts/build-vcs.sh --config VoyagerVcsConfig --debug --project voyager_tapeout --sub-project voyager_tapeout
+```
+
+如果需要执行vcs的仿真，可执行以下命令，运行测试workload
+```
+chipyard_exec
+./voyager-test/scripts/run-vcs.sh   --config VoyagerVcsConfig --debug peripheral 
+```
+
+如果需要查看生成的代码或者波形文件，在目录`` ./voyager-test/output``
+
+若遇到vcs无法重新编译的问题，可到`` ./sims/vcs``目录执行make clean
+
+workload书写见`` ./voyager-test/src/workloads/peripheral`` 
+
+编译workload的操作如下：
+```
+chipyard_exec
+cd ./voyager-test/build
+make
+```
 
 
 
@@ -65,3 +88,7 @@ workload书写见`` ./voyager-test/src/workload``
 ### 代码更新与提交
 
 记得定时git pull拉取总体仓库代码进行同步
+
+如果需要更新代码到仓库，建议先pull最新代码，再在最近的代码上进行修改，后更新，执行git push更新代码到仓库
+
+#### 尽量不要Merge！
