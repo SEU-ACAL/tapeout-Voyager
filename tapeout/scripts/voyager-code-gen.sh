@@ -4,11 +4,11 @@ CYDIR=$(git rev-parse --show-toplevel)
 
 #-------------------------------------------------------------------
 # 已知Verilator，VCS代码与流片代码以下文件存在不同
-#            Verilator              VCS            Chip
-# PLL:   直接连线(无法验证)    厂商提供的行为模型      db
-# pad:   直接连线(无法验证)    厂商提供的行为模型      db
-# SRAM:  Verilator行为模型    厂商提供的行为模型      db
-# ROM:  
+#            Verilator              VCS          FPGA    Chip 
+# PLL:   直接连线(无法验证)    厂商提供的行为模型            db
+# pad:   直接连线(无法验证)    厂商提供的行为模型            db
+# SRAM:  Verilator行为模型    厂商提供的行为模型            db
+# ROM:   Verilator行为模型    厂商提供的行为模型            db
 #-------------------------------------------------------------------
 TOOL=""
 CONFIG=""
