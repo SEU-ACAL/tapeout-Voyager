@@ -1,10 +1,9 @@
 //==================================================================//
-`define verilator
+`define vcs
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `ifdef vcs
 
-`include "arm28hkcpdpsram128x31m4.v"
 module split_meta_0_ext(
   input  [6:0]  R0_addr,
   input         R0_clk,

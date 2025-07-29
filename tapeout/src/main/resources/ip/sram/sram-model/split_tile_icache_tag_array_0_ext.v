@@ -1,10 +1,9 @@
 //==================================================================//
-`define verilator
+`define vcs
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `ifdef vcs
 
-`include "smic281prf64x21m4.v"
 module split_tile_icache_tag_array_0_ext(
   input  [5:0]   RW0_addr,
   input          RW0_clk,

@@ -1,10 +1,10 @@
 //==================================================================//
-`define verilator
+`define vcs
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `ifdef vcs
 
-`include "smic281prf512x64m4.v"
+
 module split_cc_banks_0_ext (
   input  [8:0]   RW0_addr,
   input          RW0_clk,
