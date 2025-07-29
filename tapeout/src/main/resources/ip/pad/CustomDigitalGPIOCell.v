@@ -5,7 +5,7 @@
 `timescale 1ns/1ps
 
 `ifdef vcs
-`include "../gen-collateral/SPC28NHKCPD18RNP.v"
+// `include "../gen-collateral/SPC28NHKCPD18RNP.v"
 module CustomDigitalGPIOCell(
     inout pad,
     output i,
