@@ -451,7 +451,7 @@ def test_verilator_ctest_bbfptest_multicore_debug(script_runner, caplog):
 def test_verilator_ctest_vecunit_matmul_ones_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_ones_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_ones_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -469,7 +469,7 @@ def test_verilator_ctest_vecunit_matmul_ones_multicore(script_runner, caplog):
 def test_verilator_ctest_vecunit_matmul_identity_random_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_identity_random_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_identity_random_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -487,7 +487,7 @@ def test_verilator_ctest_vecunit_matmul_identity_random_multicore(script_runner,
 def test_verilator_ctest_vecunit_matmul_row_col_vector_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_row_col_vector_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_row_col_vector_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -505,7 +505,7 @@ def test_verilator_ctest_vecunit_matmul_row_col_vector_multicore(script_runner, 
 def test_verilator_ctest_vecunit_matmul_col_row_vector_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_col_row_vector_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_col_row_vector_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -523,7 +523,7 @@ def test_verilator_ctest_vecunit_matmul_col_row_vector_multicore(script_runner, 
 def test_verilator_ctest_vecunit_matmul_random1_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_random1_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_random1_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -541,7 +541,7 @@ def test_verilator_ctest_vecunit_matmul_random1_multicore(script_runner, caplog)
 def test_verilator_ctest_vecunit_matmul_random2_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_random2_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_random2_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -559,7 +559,7 @@ def test_verilator_ctest_vecunit_matmul_random2_multicore(script_runner, caplog)
 def test_verilator_ctest_vecunit_matmul_random3_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_random3_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_random3_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -577,7 +577,7 @@ def test_verilator_ctest_vecunit_matmul_random3_multicore(script_runner, caplog)
 def test_verilator_ctest_vecunit_matmul_zero_random_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_zero_random_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_zero_random_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -595,7 +595,7 @@ def test_verilator_ctest_vecunit_matmul_zero_random_multicore(script_runner, cap
 def test_verilator_ctest_vecunit_matmul_16xn_ones_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_16xn_ones_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_16xn_ones_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -613,7 +613,7 @@ def test_verilator_ctest_vecunit_matmul_16xn_ones_multicore(script_runner, caplo
 def test_verilator_ctest_vecunit_matmul_16xn_random1_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_16xn_random1_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_16xn_random1_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -631,7 +631,7 @@ def test_verilator_ctest_vecunit_matmul_16xn_random1_multicore(script_runner, ca
 def test_verilator_ctest_vecunit_matmul_16xn_random2_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_16xn_random2_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_16xn_random2_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -649,7 +649,7 @@ def test_verilator_ctest_vecunit_matmul_16xn_random2_multicore(script_runner, ca
 def test_verilator_ctest_vecunit_matmul_16xn_random3_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_16xn_random3_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_16xn_random3_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -667,7 +667,7 @@ def test_verilator_ctest_vecunit_matmul_16xn_random3_multicore(script_runner, ca
 def test_verilator_ctest_vecunit_matmul_16xn_zero_random_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_16xn_zero_random_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_16xn_zero_random_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -687,7 +687,7 @@ def test_verilator_ctest_vecunit_matmul_16xn_zero_random_multicore(script_runner
 def test_verilator_ctest_vecunit_matmul_ones_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_ones_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_ones_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -706,7 +706,7 @@ def test_verilator_ctest_vecunit_matmul_ones_multicore(script_runner, caplog):
 def test_verilator_ctest_mvin_mvout_acc_test_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_mvin_mvout_acc_test_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_mvin_mvout_acc_test_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -724,7 +724,7 @@ def test_verilator_ctest_mvin_mvout_acc_test_multicore(script_runner, caplog):
 def test_verilator_ctest_mvin_mvout_alternate_test_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_mvin_mvout_alternate_test_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_mvin_mvout_alternate_test_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
@@ -742,7 +742,7 @@ def test_verilator_ctest_mvin_mvout_alternate_test_multicore(script_runner, capl
 def test_verilator_ctest_vecunit_simple_nn_forward_pass_test_multicore(script_runner, caplog):
   caplog.set_level(logging.INFO)
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_simple_nn_forward_pass_test_multicore", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_simple_nn_forward_pass_test_multicore"], timeout=600)
   execution_time = time.time() - start_time
   logging.info(f"Execution time: {execution_time:.2f} seconds")
   logging.info(f"Return code: {result['returncode']}")
