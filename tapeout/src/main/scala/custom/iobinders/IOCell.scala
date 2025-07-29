@@ -56,3 +56,8 @@ class CustomDigitalOutIOCell extends BlackBox with HasBlackBoxResource with Digi
     addResource("ip/pad/CustomDigitalOutIOCell.v")
     addResource("ip/pad/SPC28NHKCPD18RNP.v")
 }
+class CustomDigitalInIOCell extends BlackBox with HasBlackBoxResource with DigitalInIOCell {
+  val io = IO(new DigitalInIOCellBundle)
+    addResource("ip/pad/CustomDigitalInIOCell.v")
+    addResource("ip/pad/SPC28NHKCPD18RNP.v")
+}

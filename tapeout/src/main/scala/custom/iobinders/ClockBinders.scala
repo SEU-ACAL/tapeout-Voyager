@@ -16,10 +16,10 @@ class VoyagerClockSourceIO extends Bundle {
   val gate = Input(Bool())
   val clk = Output(Clock())
   val lock = Output(Bool()) // PLL lock status
-  val VSSA = Analog(1.W)
-  val VDDP = Analog(1.W)
-  val VDDB = Analog(1.W)
-  val VDDA = Analog(1.W)
+  // val VSSA = Analog(1.W)
+  // val VDDP = Analog(1.W)
+  // val VDDB = Analog(1.W)
+  // val VDDA = Analog(1.W)
 }
 
 
@@ -87,23 +87,23 @@ class WithVoyagerPLLSelectorDividerClockGenerator(enable: Boolean = true) extend
       fake_pll.io.clk0  := clock_wire
       pllCtrlSource.out(0)._1.lock := fake_pll.io.lock // Connect PLL lock status to the output
       // 创建 PLL 电源引脚的顶层 IO（不通过 IOCell）
-      val vssa_io = IO(Analog(1.W)).suggestName("PLL_VSSA")
-      val vddp_io = IO(Analog(1.W)).suggestName("PLL_VDDP")
-      val vddb_io = IO(Analog(1.W)).suggestName("PLL_VDDB")
-      val vdda_io = IO(Analog(1.W)).suggestName("PLL_VDDA")
+      // val vssa_io = IO(Analog(1.W)).suggestName("PLL_VSSA")
+      // val vddp_io = IO(Analog(1.W)).suggestName("PLL_VDDP")
+      // val vddb_io = IO(Analog(1.W)).suggestName("PLL_VDDB")
+      // val vdda_io = IO(Analog(1.W)).suggestName("PLL_VDDA")
       
-      // 直接连接 PLL 到顶层 IO
-      fake_pll.io.VSSA <> vssa_io
-      fake_pll.io.VDDP <> vddp_io
-      fake_pll.io.VDDB <> vddb_io
-      fake_pll.io.VDDA <> vdda_io
+      // // 直接连接 PLL 到顶层 IO
+      // fake_pll.io.VSSA <> vssa_io
+      // fake_pll.io.VDDP <> vddp_io
+      // fake_pll.io.VDDB <> vddb_io
+      // fake_pll.io.VDDA <> vdda_io
       
       pllClockSource.out.unzip._1.map { o =>
         o.clock := fake_pll.io.clk
         o.reset := reset_wire
       }
 
-      (Seq(ClockPort(() => clock_io, 100), ResetPort(() => reset_io), PLLPort(() => vssa_io), PLLPort(() => vddp_io), PLLPort(() => vddb_io), PLLPort(() => vdda_io)), clockIOCell ++ resetIOCell)
+      (Seq(ClockPort(() => clock_io, 100), ResetPort(() => reset_io)), clockIOCell ++ resetIOCell)
     }
   }
 })

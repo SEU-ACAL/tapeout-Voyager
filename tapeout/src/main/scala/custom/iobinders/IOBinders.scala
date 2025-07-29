@@ -48,26 +48,26 @@ class WithPeripheralNPUIOCell extends OverrideIOBinder({
   (system: CanHavePeripheryNPU) => {
     system.NpuChipTopIO.map({ p =>
       val sys = system.asInstanceOf[BaseSubsystem]
-      val (port, cells) = IOCell.generateIOFromSignal(p.getWrappedValue, "peripheralNpuIOCellPin", sys.p(IOCellKey), abstractResetAsAsync = true)
-      
+      // val (port, cells) = IOCell.generateIOFromSignal(p.getWrappedValue, "peripheralNpuIOCellPin", sys.p(IOCellKey), abstractResetAsAsync = true)
+      val npu_io = IO(new PeripheralNPUIOCell).suggestName("npu_io")
       // Input pins: from IOCell (external) to NPU peripheral (internal)
-      p.getWrappedValue.npu_clk_FPGA_w         := port.npu_clk_FPGA_w         
-      p.getWrappedValue.npu_clk_FPGA_cim       := port.npu_clk_FPGA_cim       
-      p.getWrappedValue.npu_rstn_FPGA          := port.npu_rstn_FPGA          
-      p.getWrappedValue.npu_PLL_CLK_SEL        := port.npu_PLL_CLK_SEL        
-      p.getWrappedValue.npu_TEST_MODE	         := port.npu_TEST_MODE	         
-      p.getWrappedValue.npu_FPGA_sys_load_en   := port.npu_FPGA_sys_load_en   
-      p.getWrappedValue.npu_FPGA_sys_load_addr := port.npu_FPGA_sys_load_addr 
-      p.getWrappedValue.npu_FPGA_sys_store_en  := port.npu_FPGA_sys_store_en  
-      p.getWrappedValue.npu_FPGA_sys_store_addr:= port.npu_FPGA_sys_store_addr
-      p.getWrappedValue.npu_FPGA_sys_store_data:= port.npu_FPGA_sys_store_data
-      p.getWrappedValue.npu_clk_PLL_w          := port.npu_clk_PLL_w          
-      p.getWrappedValue.npu_clk_PLL_cim        := port.npu_clk_PLL_cim        
+      p.getWrappedValue.npu_clk_FPGA_w         := npu_io.npu_clk_FPGA_w         
+      p.getWrappedValue.npu_clk_FPGA_cim       := npu_io.npu_clk_FPGA_cim       
+      p.getWrappedValue.npu_rstn_FPGA          := npu_io.npu_rstn_FPGA          
+      p.getWrappedValue.npu_PLL_CLK_SEL        := npu_io.npu_PLL_CLK_SEL        
+      p.getWrappedValue.npu_TEST_MODE	         := npu_io.npu_TEST_MODE	         
+      p.getWrappedValue.npu_FPGA_sys_load_en   := npu_io.npu_FPGA_sys_load_en   
+      p.getWrappedValue.npu_FPGA_sys_load_addr := npu_io.npu_FPGA_sys_load_addr 
+      p.getWrappedValue.npu_FPGA_sys_store_en  := npu_io.npu_FPGA_sys_store_en  
+      p.getWrappedValue.npu_FPGA_sys_store_addr:= npu_io.npu_FPGA_sys_store_addr
+      p.getWrappedValue.npu_FPGA_sys_store_data:= npu_io.npu_FPGA_sys_store_data
+      p.getWrappedValue.npu_clk_PLL_w          := npu_io.npu_clk_PLL_w          
+      p.getWrappedValue.npu_clk_PLL_cim        := npu_io.npu_clk_PLL_cim        
 
       // Output pins: from NPU peripheral (internal) to IOCell (external)
-      port.npu_FPGA_sys_load_data_vld      := p.getWrappedValue.npu_FPGA_sys_load_data_vld 
-      port.npu_FPGA_sys_load_data          := p.getWrappedValue.npu_FPGA_sys_load_data     
-      (Seq(PeripheralNPUPort(() => port)), cells)
+      npu_io.npu_FPGA_sys_load_data_vld      := p.getWrappedValue.npu_FPGA_sys_load_data_vld 
+      npu_io.npu_FPGA_sys_load_data          := p.getWrappedValue.npu_FPGA_sys_load_data     
+      (Seq(PeripheralNPUPort(() => npu_io)),Nil)
     }).getOrElse((Nil, Nil))
   }
 })

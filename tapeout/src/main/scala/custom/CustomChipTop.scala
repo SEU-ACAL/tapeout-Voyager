@@ -24,52 +24,52 @@ class WithCustomDigitalTop extends Config((site, here, up) => {
   case BuildSystem => (p: Parameters) => new CustomDigitalTop()(p)
 })
 
-// Custom NPU bundle for IOCell - all ports are outputs to avoid undriven inputs
-class CustomNPUIOCellBundle extends Bundle {
-  val npu_clk_FPGA_w             = Output(Bool()) 
-  val npu_clk_FPGA_cim           = Output(Bool()) 
-  val npu_rstn_FPGA              = Output(Bool()) 
-  val npu_PLL_CLK_SEL            = Output(Bool()) 
-  val npu_TEST_MODE	             = Output(Bool()) 
-  val npu_load_store_OEN         = Output(Bool()) 
-  val npu_FPGA_sys_load_data_vld = Output(Bool()) 
-  val npu_FPGA_sys_load_en       = Output(Bool()) 
-  val npu_FPGA_sys_load_addr     = Output(UInt(20.W)) 
-  val npu_FPGA_sys_load_data     = Output(UInt(64.W)) 
-  val npu_FPGA_sys_store_en      = Output(Bool()) 
-  val npu_FPGA_sys_store_addr    = Output(UInt(20.W)) 
-  val npu_FPGA_sys_store_data    = Output(UInt(64.W)) 
-  val npu_clk_PLL_w              = Output(Bool()) 
-  val npu_clk_PLL_cim            = Output(Bool()) 
-}
+// // Custom NPU bundle for IOCell - all ports are outputs to avoid undriven inputs
+// class CustomNPUIOCellBundle extends Bundle {
+//   val npu_clk_FPGA_w             = Output(Bool()) 
+//   val npu_clk_FPGA_cim           = Output(Bool()) 
+//   val npu_rstn_FPGA              = Output(Bool()) 
+//   val npu_PLL_CLK_SEL            = Output(Bool()) 
+//   val npu_TEST_MODE	             = Output(Bool()) 
+//   val npu_load_store_OEN         = Output(Bool()) 
+//   val npu_FPGA_sys_load_data_vld = Output(Bool()) 
+//   val npu_FPGA_sys_load_en       = Output(Bool()) 
+//   val npu_FPGA_sys_load_addr     = Output(UInt(20.W)) 
+//   val npu_FPGA_sys_load_data     = Output(UInt(64.W)) 
+//   val npu_FPGA_sys_store_en      = Output(Bool()) 
+//   val npu_FPGA_sys_store_addr    = Output(UInt(20.W)) 
+//   val npu_FPGA_sys_store_data    = Output(UInt(64.W)) 
+//   val npu_clk_PLL_w              = Output(Bool()) 
+//   val npu_clk_PLL_cim            = Output(Bool()) 
+// }
 
-// A custom IOCell with additional NPU I/O
-class CustomDigitalInIOCellBundle extends DigitalInIOCellBundle {
-  val npu_bundle = new CustomNPUIOCellBundle
-}
+// // A custom IOCell with additional NPU I/O
+// class CustomDigitalInIOCellBundle extends DigitalInIOCellBundle {
+//   val npu_bundle = new CustomNPUIOCellBundle
+// }
 
-// Using a custom digital in iocell instead of the default one
-class CustomDigitalInIOCell extends RawModule with DigitalInIOCell {
-  val io = IO(new CustomDigitalInIOCellBundle)
-  // Connect required DigitalInIOCell io.i port
-  io.i := io.pad
-  // Connect NPU pins
-  io.npu_bundle.npu_clk_FPGA_w             := io.pad
-  io.npu_bundle.npu_clk_FPGA_cim           := io.pad
-  io.npu_bundle.npu_rstn_FPGA              := io.pad
-  io.npu_bundle.npu_PLL_CLK_SEL            := io.pad
-  io.npu_bundle.npu_TEST_MODE	             := io.pad
-  io.npu_bundle.npu_load_store_OEN         := io.pad
-  io.npu_bundle.npu_FPGA_sys_load_data_vld := false.B
-  io.npu_bundle.npu_FPGA_sys_load_en       := io.pad
-  io.npu_bundle.npu_FPGA_sys_load_addr     := io.pad
-  io.npu_bundle.npu_FPGA_sys_load_data     := 0.U(64.W)
-  io.npu_bundle.npu_FPGA_sys_store_en      := io.pad
-  io.npu_bundle.npu_FPGA_sys_store_addr    := io.pad
-  io.npu_bundle.npu_FPGA_sys_store_data    := io.pad
-  io.npu_bundle.npu_clk_PLL_w              := io.pad
-  io.npu_bundle.npu_clk_PLL_cim            := io.pad
-}
+// // Using a custom digital in iocell instead of the default one
+// class CustomDigitalInIOCell extends RawModule with DigitalInIOCell {
+//   val io = IO(new CustomDigitalInIOCellBundle)
+//   // Connect required DigitalInIOCell io.i port
+//   io.i := io.pad
+//   // // Connect NPU pins
+//   // io.npu_bundle.npu_clk_FPGA_w             := io.pad
+//   // io.npu_bundle.npu_clk_FPGA_cim           := io.pad
+//   // io.npu_bundle.npu_rstn_FPGA              := io.pad
+//   // io.npu_bundle.npu_PLL_CLK_SEL            := io.pad
+//   // io.npu_bundle.npu_TEST_MODE	             := io.pad
+//   // io.npu_bundle.npu_load_store_OEN         := io.pad
+//   // io.npu_bundle.npu_FPGA_sys_load_data_vld := false.B
+//   // io.npu_bundle.npu_FPGA_sys_load_en       := io.pad
+//   // io.npu_bundle.npu_FPGA_sys_load_addr     := io.pad
+//   // io.npu_bundle.npu_FPGA_sys_load_data     := 0.U(64.W)
+//   // io.npu_bundle.npu_FPGA_sys_store_en      := io.pad
+//   // io.npu_bundle.npu_FPGA_sys_store_addr    := io.pad
+//   // io.npu_bundle.npu_FPGA_sys_store_data    := io.pad
+//   // io.npu_bundle.npu_clk_PLL_w              := io.pad
+//   // io.npu_bundle.npu_clk_PLL_cim            := io.pad
+// }
 
 case class CustomIOCellParams() extends IOCellTypeParams {
   def analog() = Module(new GenericAnalogIOCell)

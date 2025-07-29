@@ -6,10 +6,6 @@
 module PLL (
     input clk0,
     input power,
-    inout VSSA,
-    inout VDDP,
-    inout VDDB,
-    inout VDDA, 
     output lock,
     input gate,
     output clk);
@@ -22,23 +18,23 @@ endmodule
 module PLL (
     input clk0,
     input power,
-    inout VSSA,
-    inout VDDP,
-    inout VDDB,
-    inout VDDA, 
+    // inout VSSA,
+    // inout VDDP,
+    // inout VDDB,
+    // inout VDDA, 
     output lock,
     input gate,
     output clk);
 
-	supply0	VSSA;
-	supply1	VDDP;
-	supply1	VDDB;
-	supply1	VDDA;
+	// supply0	VSSA;
+	// supply1	VDDP;
+	// supply1	VDDB;
+	// supply1	VDDA;
     PLL6GS28		PLL6GS28(
-    .VSSA							(VSSA),
-    .VDDP							(VDDP),
-    .VDDB							(VDDB),
-    .VDDA							(VDDA),
+    // .VSSA							(1'b0),
+    // .VDDP							(1'b1),
+    // .VDDB							(1'b1),
+    // .VDDA							(1'b1),
     .I_PLL_BYPASS_CLKDIVPD         	(1'b0                          ),
     .I_PLL_CKREF                   	(clk0                          ),
     .I_PLL_CLKDIV1                 	(3'b1                          ),
@@ -52,7 +48,7 @@ module PLL (
     .I_PLL_V2I_PD                  	(1'b0                          ),
     .I_PLL_FRPD                    	(1'b0                          ),
     .I_PLL_VCO_OUT_PD              	(1'b0                          ),
-    .O_PLL_CLK2                    	(                           ),
+    .O_PLL_CLK2                    	(                              ),
     .O_PLL_CLK3                    	(                              ),
     .O_PLL_CLK4                    	(                              ),
     .O_PLL_CLK5                    	(                              ),
@@ -67,6 +63,7 @@ module PLL (
     .O_PLL_LOCK                    	(lock                          ),
     .O_PLL_VCO_OUT_CLK             	(clk)
     );
+    // assign clk = clk0;
 endmodule
 `endif // vcs
 
@@ -74,23 +71,13 @@ endmodule
 module PLL (
     input clk0,
     input power,
-    inout VSSA,
-    inout VDDP,
-    inout VDDB,
-    inout VDDA, 
+
     output lock,
     input gate,
     output clk);
 
-	supply0	VSSA;
-	supply1	VDDP;
-	supply1	VDDB;
-	supply1	VDDA;
+
     PLL6GS28		PLL6GS28(
-    .VSSA							(VSSA),
-    .VDDP							(VDDP),
-    .VDDB							(VDDB),
-    .VDDA							(VDDA),
     .I_PLL_BYPASS_CLKDIVPD         	(1'b0                          ),
     .I_PLL_CKREF                   	(clk0                          ),
     .I_PLL_CLKDIV1                 	(3'b1                          ),
