@@ -3,3 +3,7 @@ gen/
 raw/
 generated-src/
 tmp/
+
+.metals/
+.scala-build/
+.vscode/
