@@ -21,7 +21,7 @@ class VoyagerChipConfig extends Config(
   new voyager_tapeout.VoyagerSerialFPGAConfig 
 )
 class VoyagerVerilatorConfig extends Config(
-  // new WithMyBootROM("/home/mio/Code/Voyager/tapeout/boot/build/bootrom.img") ++
+  // new WithMyBootROM("/home/mio/Code/Voyager/tapeout/boot/build/.img") ++
   // new chipyard.harness.WithSimSPIFlashModel(false) ++       // add the SPI flash model in the harness (writeable)
   // new chipyard.iobinders.WithSPIFlashIOCells ++
   // new voyager_tapeout.custom.WithSPIForFlash ++

@@ -155,6 +155,7 @@ class FetchTargetQueue(implicit p: Parameters) extends BoomModule
   val prev_ghist = RegInit((0.U).asTypeOf(new GlobalHistory))
   val prev_entry = RegInit((0.U).asTypeOf(new FTQBundle))
   val prev_pc    = RegInit(0.U(vaddrBitsExtended.W))
+  val bypass_ghist = RegInit((0.U).asTypeOf(new GlobalHistory))
   when (do_enq) {
 
     pcs(enq_ptr)           := io.enq.bits.pc
@@ -188,7 +189,7 @@ class FetchTargetQueue(implicit p: Parameters) extends BoomModule
         prev_entry.cfi_is_ret
       )
     )
-
+    bypass_ghist := RegNext(new_ghist)
     lhist.map( l => l.write(enq_ptr, io.enq.bits.lhist))
     ghist.map( g => g.write(enq_ptr, new_ghist))
     meta.write(enq_ptr, io.enq.bits.bpd_meta)
@@ -232,18 +233,28 @@ class FetchTargetQueue(implicit p: Parameters) extends BoomModule
   val bpd_idx = Mux(io.redirect.valid, io.redirect.bits,
     Mux(bpd_update_repair || bpd_update_mispredict, bpd_repair_idx, bpd_ptr))
   val bpd_entry = RegNext(ram(bpd_idx))
-  val bpd_ghist = ghist(0).read(bpd_idx, true.B)
+  val can_bypass_ghist0 = (bpd_idx===enq_ptr)&&do_enq
+  val sram_rghist       =  ghist(0).read(bpd_idx, !can_bypass_ghist0)
+  val bpd_ghist = Mux(can_bypass_ghist0, bypass_ghist, sram_rghist)
   val bpd_lhist = if (useLHist) {
     lhist.get.read(bpd_idx, true.B)
   } else {
     VecInit(Seq.fill(nBanks) { 0.U })
   }
-  val bpd_meta  = meta.read(bpd_idx, true.B) // TODO fix these SRAMs
-  val bpd_pc    = RegNext(pcs(bpd_idx))
-  val bpd_target = RegNext(pcs(WrapInc(bpd_idx, num_entries)))
 
-  // assert(!(do_enq&&(enq_ptr===bpd_idx)),"FTQ meta RW the same idx(enq)")
-  // assert(!(do_enq&&(enq_ptr===bpd_idx)),"FTQ ghist0 RW the same idx(enq)")
+  //TODO : now these sram is bypass(by GB)
+  val can_bypass_meta = (bpd_idx===enq_ptr)&&do_enq
+  val bypass_meta     = RegInit(VecInit(Seq.fill(nBanks) { 0.U(bpdMaxMetaLength.W) }))
+    // RegNext(io.enq.bits.bpd_meta)
+  // Vec(nBanks, UInt(bpdMaxMetaLength.W))
+  bypass_meta        := io.enq.bits.bpd_meta 
+  val sram_rmeta      = meta.read(bpd_idx, !can_bypass_meta)
+  val bpd_meta        = Mux(can_bypass_meta, bypass_meta, sram_rmeta)
+  val bpd_pc          = RegNext(pcs(bpd_idx))
+  val bpd_target      = RegNext(pcs(WrapInc(bpd_idx, num_entries)))
+
+  assert(!(do_enq&&(!can_bypass_meta)&&(enq_ptr===bpd_idx)),"FTQ meta RW the same idx(enq)")
+  assert(!(do_enq&&(!can_bypass_ghist0)&&(enq_ptr===bpd_idx)),"FTQ ghist0 RW the same idx(enq)")
   
   when (io.redirect.valid) {
     bpd_update_mispredict := false.B
@@ -343,7 +354,7 @@ class FetchTargetQueue(implicit p: Parameters) extends BoomModule
   //-------------------------------------------------------------
   // **** Core Read PCs ****
   //-------------------------------------------------------------
-
+  val can_bypass_ghist1 = (io.get_ftq_pc(1).ftq_idx===enq_ptr)&&do_enq
   for (i <- 0 until 2) {
     val idx = io.get_ftq_pc(i).ftq_idx
     val next_idx = WrapInc(idx, num_entries)
@@ -351,9 +362,12 @@ class FetchTargetQueue(implicit p: Parameters) extends BoomModule
     val next_pc = Mux(next_is_enq, io.enq.bits.pc, pcs(next_idx))
     val get_entry = ram(idx)
     val next_entry = ram(next_idx)
+    
     io.get_ftq_pc(i).entry     := RegNext(get_entry)
-    if (i == 1)
-      io.get_ftq_pc(i).ghist   := ghist(1).read(idx, true.B)
+    if (i == 1){
+      val sram_rghist1 = ghist(1).read(idx, !can_bypass_ghist1)
+      io.get_ftq_pc(i).ghist   := Mux(can_bypass_ghist1, bypass_ghist, sram_rghist1)
+    }
     else
       io.get_ftq_pc(i).ghist   := DontCare
     io.get_ftq_pc(i).pc        := RegNext(pcs(idx))
@@ -361,7 +375,7 @@ class FetchTargetQueue(implicit p: Parameters) extends BoomModule
     io.get_ftq_pc(i).next_val  := RegNext(next_idx =/= enq_ptr || next_is_enq)
     io.get_ftq_pc(i).com_pc    := RegNext(pcs(Mux(io.deq.valid, io.deq.bits, deq_ptr)))
   }
-  // assert(!(do_enq&&(io.get_ftq_pc(1).ftq_idx===enq_ptr)),"FTQ ghist1 RW the same idx(enq)")
+  assert(!(do_enq&&(!can_bypass_ghist1)&&(io.get_ftq_pc(1).ftq_idx===enq_ptr)),"FTQ ghist1 RW the same idx(enq)")
   for (w <- 0 until coreWidth) {
     io.debug_fetch_pc(w) := RegNext(pcs(io.debug_ftq_idx(w)))
   }
