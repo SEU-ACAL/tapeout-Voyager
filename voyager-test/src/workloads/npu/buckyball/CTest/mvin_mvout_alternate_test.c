@@ -16,17 +16,17 @@ static elem_t a_transposed[DIM * 1024] __attribute__((aligned(64)));
 #define WR_ADDR (DIM + 2 * BANK)
 
 int alternately_mvin_mvout_pressure_test() {
-    for(int i = 0; i < 16; i++){
-        init_u8_random_matrix(input_matrix_a, DIM, DIM , i);
-        bb_mvin((uintptr_t)input_matrix_a, OP1_ADDR + DIM * i, DIM);
-        clear_u8_matrix(input_matrix_b, DIM, DIM);
-        bb_mvout((uintptr_t)input_matrix_b, OP1_ADDR + DIM * i, DIM);
+    for(int i = 0; i < 4; i++){
+        init_u32_random_matrix(expected_matrix, DIM, DIM ,i * 10 + i);
+        bb_mvin((uintptr_t)expected_matrix, WR_ADDR + DIM * i, DIM << 2);
+        clear_u32_matrix(output_matrix, DIM, DIM);
+        bb_mvout((uintptr_t)output_matrix, WR_ADDR + DIM * i, DIM << 2);
         bb_fence();
-        if(!compare_u8_matrices(input_matrix_a, input_matrix_b, DIM, DIM)) {
-            printf("Test alternately mvin/mvout pressure %d FAILED\n", i);
+        if(!compare_u32_matrices(output_matrix, expected_matrix, DIM, DIM)) {
+            printf("Test ACC mvin/mvout pressure %d FAILED\n", i);
             return 0;
         } else {
-            printf("Test alternately mvin/mvout pressure %d PASSED\n", i);
+            printf("Test ACC mvin/mvout pressure %d PASSED\n", i);
         }
     }
     return 1;

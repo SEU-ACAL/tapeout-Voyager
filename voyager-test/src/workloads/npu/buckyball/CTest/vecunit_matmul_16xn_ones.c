@@ -18,14 +18,24 @@ void hw_matmul(const char* test_name, elem_t* a, elem_t* b, result_t* c, int siz
     bb_mvin((uintptr_t)a_transposed, OP1_ADDR, size);
     bb_mvin((uintptr_t)b, OP2_ADDR, size);
     bb_mvin((uintptr_t)c, WR_ADDR, DIM << 2);
-    printf("2\n");
+    bb_fence();
     bb_mul_warp16(OP1_ADDR, OP2_ADDR, WR_ADDR, size);
-    printf("2\n");
+    bb_fence();
     bb_mvout((uintptr_t)c, WR_ADDR, DIM << 2);
+    bb_fence();
 }
 
 int run_test(const char* test_name, elem_t* a, elem_t* b, int size) {
+    clear_u32_matrix(output_matrix, DIM, DIM);
+    cpu_matmul(a, b, expected_matrix, DIM, DIM, size);
     hw_matmul(test_name, a, b, output_matrix, size);
+    if (compare_u32_matrices(output_matrix, expected_matrix, DIM, DIM)) {
+        printf("Test %s PASSED\n", test_name);
+        return 1;
+    } else {
+        printf("Test %s FAILED\n", test_name);
+        return 0;
+    }
 }
 
 int test_ones_16x64() {
@@ -39,7 +49,11 @@ int main() {
     multicore(MULTICORE);
 #endif
     int passed = test_ones_16x64();
-
+    if (passed) {
+        printf("vecunit_matmul_16xn_ones test PASSED\n");
+    } else {
+        printf("vecunit_matmul_16xn_ones test FAILED\n");
+    }
 #ifdef MULTICORE 
     exit(0);
 #endif

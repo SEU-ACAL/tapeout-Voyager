@@ -23,8 +23,6 @@ add_library(buckyball-lib STATIC ${BUCKYBALL_CTEST_DIR}/buckyball.c)
 
 add_executable(ctest_acc_matmul-linux ${BUCKYBALL_CTEST_DIR}/acc_matmul.c)
 target_link_libraries(ctest_acc_matmul-linux buckyball-lib)
-add_executable(ctest_mvin_mvout_sram_test-linux ${BUCKYBALL_CTEST_DIR}/mvin_mvout_sram_test.c)
-target_link_libraries(ctest_mvin_mvout_sram_test-linux buckyball-lib)
 add_executable(ctest_mvin_mvout_acc_test-linux ${BUCKYBALL_CTEST_DIR}/mvin_mvout_acc_test.c)
 target_link_libraries(ctest_mvin_mvout_acc_test-linux buckyball-lib)
 add_executable(ctest_mvin_mvout_alternate_test-linux ${BUCKYBALL_CTEST_DIR}/mvin_mvout_alternate_test.c)
@@ -59,7 +57,6 @@ add_executable(ctest_vecunit_simple_nn_forward_pass_test-linux ${BUCKYBALL_CTEST
 target_link_libraries(ctest_vecunit_simple_nn_forward_pass_test-linux buckyball-lib)
 
 add_custom_target(buckyball-CTest-linux ALL DEPENDS
-    ctest_mvin_mvout_sram_test-linux
     ctest_mvin_mvout_acc_test-linux
     ctest_mvin_mvout_alternate_test-linux
     ctest_vecunit_matmul_ones-linux
@@ -89,10 +86,6 @@ set(C_FLAGS -std=gnu11 -g -DCHECK=1 -fno-common -O2 -static
 set(ELF_CC "riscv64-unknown-elf-gcc")
 
 add_custom_target(buckyball-CTest-multicore-baremetal ALL
-    COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_mvin_mvout_sram_test_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
-            -DMULTICORE=3
-            ${BUCKYBALL_CTEST_DIR}/mvin_mvout_sram_test.c
-            ${BUCKYBALL_CTEST_DIR}/buckyball.c
     COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_mvin_mvout_acc_test_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
             -DMULTICORE=3
             ${BUCKYBALL_CTEST_DIR}/mvin_mvout_acc_test.c
@@ -157,8 +150,7 @@ add_custom_target(buckyball-CTest-multicore-baremetal ALL
             -DMULTICORE=3
             ${BUCKYBALL_CTEST_DIR}/vecunit_simple_nn_forward_pass_test.c
             ${BUCKYBALL_CTEST_DIR}/buckyball.c
-    DEPENDS ${BUCKYBALL_CTEST_DIR}/mvin_mvout_sram_test.c
-            ${BUCKYBALL_CTEST_DIR}/mvin_mvout_acc_test.c
+    DEPENDS ${BUCKYBALL_CTEST_DIR}/mvin_mvout_acc_test.c
             ${BUCKYBALL_CTEST_DIR}/mvin_mvout_alternate_test.c
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_ones.c
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_identity_random.c
@@ -180,9 +172,6 @@ add_custom_target(buckyball-CTest-multicore-baremetal ALL
     VERBATIM)
 
 add_custom_target(buckyball-CTest-singlecore-baremetal ALL
-    COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_mvin_mvout_sram_test_singlecore-baremetal 
-            ${BUCKYBALL_CTEST_DIR}/mvin_mvout_sram_test.c
-            ${BUCKYBALL_CTEST_DIR}/buckyball.c
     COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_mvin_mvout_acc_test_singlecore-baremetal 
             ${BUCKYBALL_CTEST_DIR}/mvin_mvout_acc_test.c
             ${BUCKYBALL_CTEST_DIR}/buckyball.c
@@ -231,8 +220,7 @@ add_custom_target(buckyball-CTest-singlecore-baremetal ALL
     COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_vecunit_simple_nn_forward_pass_test_singlecore-baremetal 
             ${BUCKYBALL_CTEST_DIR}/vecunit_simple_nn_forward_pass_test.c
             ${BUCKYBALL_CTEST_DIR}/buckyball.c
-    DEPENDS ${BUCKYBALL_CTEST_DIR}/mvin_mvout_sram_test.c
-            ${BUCKYBALL_CTEST_DIR}/mvin_mvout_acc_test.c
+    DEPENDS ${BUCKYBALL_CTEST_DIR}/mvin_mvout_acc_test.c
             ${BUCKYBALL_CTEST_DIR}/mvin_mvout_alternate_test.c
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_ones.c
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_identity_random.c

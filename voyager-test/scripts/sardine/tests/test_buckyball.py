@@ -14,58 +14,6 @@ script_dir = Path(__file__).parent.parent.parent
 @pytest.mark.verilator  
 @pytest.mark.buckyball
 @pytest.mark.debug
-def test_verilator_ctest_mvin_mvout_multicore_debug(script_runner, caplog):
-  caplog.set_level(logging.INFO)
-  
-  start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_mvin_mvout_multicore", "--debug"], timeout=600)
-  execution_time = time.time() - start_time
-  
-  logging.info(f"Execution time: {execution_time:.2f} seconds")
-  logging.info(f"Return code: {result['returncode']}")
-  logging.info("Script output:")
-  logging.info(f"  stdout: {result['stdout']}")
-  if result['stderr']:
-    logging.info(f"  stderr: {result['stderr']}")
-
-  # Check minimum execution time (e.g., at least 5 seconds)
-  min_execution_time = 5.0
-  assert execution_time >= min_execution_time, f"Script executed too quickly: {execution_time:.2f}s < {min_execution_time}s"
-  
-  assert "ACC Test passed: Output matches expected result." in result["stdout"], "Mismatch the expected output" # 这里检查输出中是否含有xxx，否则认定为失败
-  assert "SRAM Test passed: Output matches expected result." in result["stdout"], "Mismatch the expected output" # 这里检查输出中是否含有xxx，否则认定为失败
-  # assert result["returncode"] in [0, 1], f"Script failed with unexpected return code: {result['returncode']}" # 检查脚本是否成功执行（不一定是0，可能是其他成功状态）
-  logging.info("Verilator hello test completed") 
-
-@pytest.mark.verilator  
-@pytest.mark.buckyball
-@pytest.mark.debug
-def test_verilator_ctest_acc_matmul_multicore_debug(script_runner, caplog):
-  caplog.set_level(logging.INFO)
-  
-  start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_acc_matmul_multicore", "--debug"], timeout=600)
-  execution_time = time.time() - start_time
-  
-  logging.info(f"Execution time: {execution_time:.2f} seconds")
-  logging.info(f"Return code: {result['returncode']}")
-  logging.info("Script output:")
-  logging.info(f"  stdout: {result['stdout']}")
-  if result['stderr']:
-    logging.info(f"  stderr: {result['stderr']}")
-
-  # Check minimum execution time (e.g., at least 5 seconds)
-  min_execution_time = 5.0
-  assert execution_time >= min_execution_time, f"Script executed too quickly: {execution_time:.2f}s < {min_execution_time}s"
-  
-  assert "Matmul Done" in result["stdout"], "Mismatch the expected output" # 这里检查输出中是否含有xxx，否则认定为失败
-  # assert result["returncode"] in [0, 1], f"Script failed with unexpected return code: {result['returncode']}" # 检查脚本是否成功执行（不一定是0，可能是其他成功状态）
-  logging.info("Verilator hello test completed") 
-
-
-@pytest.mark.verilator  
-@pytest.mark.buckyball
-@pytest.mark.debug
 def test_verilator_ctest_bbfp_matmul_multicore_debug(script_runner, caplog):
   caplog.set_level(logging.INFO)
   
@@ -113,60 +61,6 @@ def test_verilator_ctest_bbfptest_multicore_debug(script_runner, caplog):
   assert "288  288  288  288  288  288  288  288  288  288  288  288  288  288  288  288" in result["stdout"], "Mismatch the expected output" # 这里检查输出中是否含有xxx，否则认定为失败
   # assert result["returncode"] in [0, 1], f"Script failed with unexpected return code: {result['returncode']}" # 检查脚本是否成功执行（不一定是0，可能是其他成功状态）
   logging.info("Verilator hello test completed") 
-
-
-@pytest.mark.verilator  
-@pytest.mark.buckyball
-@pytest.mark.debug
-def test_verilator_ctest_vecunit_matmul_multicore_debug(script_runner, caplog):
-  caplog.set_level(logging.INFO)
-  
-  start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_matmul_multicore", "--debug"], timeout=600)
-  execution_time = time.time() - start_time
-  
-  logging.info(f"Execution time: {execution_time:.2f} seconds")
-  logging.info(f"Return code: {result['returncode']}")
-  logging.info("Script output:")
-  logging.info(f"  stdout: {result['stdout']}")
-  if result['stderr']:
-    logging.info(f"  stderr: {result['stderr']}")
-
-  # Check minimum execution time (e.g., at least 5 seconds)
-  min_execution_time = 5.0
-  assert execution_time >= min_execution_time, f"Script executed too quickly: {execution_time:.2f}s < {min_execution_time}s"
-  
-  # assert result["returncode"] in [0, 1], f"Script failed with unexpected return code: {result['returncode']}" # 检查脚本是否成功执行（不一定是0，可能是其他成功状态）
-  logging.info("Verilator hello test completed") 
-
-@pytest.mark.verilator  
-@pytest.mark.buckyball
-@pytest.mark.debug
-def test_verilator_ctest_acc_matmul_debug(script_runner, caplog):
-  caplog.set_level(logging.INFO)
-  
-  start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_bbfptest_multicore", "--debug"], timeout=600)
-  execution_time = time.time() - start_time
-  
-  logging.info(f"Execution time: {execution_time:.2f} seconds")
-  logging.info(f"Return code: {result['returncode']}")
-  logging.info("Script output:")
-  logging.info(f"  stdout: {result['stdout']}")
-  if result['stderr']:
-    logging.info(f"  stderr: {result['stderr']}")
-
-  # Check minimum execution time (e.g., at least 5 seconds)
-  min_execution_time = 5.0
-  assert execution_time >= min_execution_time, f"Script executed too quickly: {execution_time:.2f}s < {min_execution_time}s"
-  
-  # assert result["returncode"] in [0, 1], f"Script failed with unexpected return code: {result['returncode']}" # 检查脚本是否成功执行（不一定是0，可能是其他成功状态）
-  logging.info("Verilator hello test completed") 
-
-
-
-
-
 
 
 
@@ -583,3 +477,61 @@ def test_verilator_ctest_vecunit_matmul_ones_multicore(script_runner, caplog):
   assert execution_time >= min_execution_time, f"Script executed too quickly: {execution_time:.2f}s < {min_execution_time}s"
   assert "Test All-ones matrices PASSED" in result["stdout"], "Mismatch the expected output"
   logging.info("Verilator vecunit_matmul_ones test completed") 
+
+
+@pytest.mark.verilator  
+@pytest.mark.buckyball
+@pytest.mark.debug
+def test_verilator_ctest_mvin_mvout_acc_test_multicore(script_runner, caplog):
+  caplog.set_level(logging.INFO)
+  start_time = time.time()
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_mvin_mvout_acc_test_multicore", "--debug"], timeout=600)
+  execution_time = time.time() - start_time
+  logging.info(f"Execution time: {execution_time:.2f} seconds")
+  logging.info(f"Return code: {result['returncode']}")
+  logging.info("Script output:")
+  logging.info(f"  stdout: {result['stdout']}")
+  if result['stderr']:
+    logging.info(f"  stderr: {result['stderr']}")
+  min_execution_time = 1.0
+  assert execution_time >= min_execution_time, f"Script executed too quickly: {execution_time:.2f}s < {min_execution_time}s"
+  assert "ACC mvin/mvout pressure test PASSED" in result["stdout"], "Mismatch the expected output"
+  logging.info("Verilator mvin_mvout_acc_test test completed")
+
+@pytest.mark.verilator  
+@pytest.mark.buckyball
+@pytest.mark.debug
+def test_verilator_ctest_mvin_mvout_alternate_test_multicore(script_runner, caplog):
+  caplog.set_level(logging.INFO)
+  start_time = time.time()
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_mvin_mvout_alternate_test_multicore", "--debug"], timeout=600)
+  execution_time = time.time() - start_time
+  logging.info(f"Execution time: {execution_time:.2f} seconds")
+  logging.info(f"Return code: {result['returncode']}")
+  logging.info("Script output:")
+  logging.info(f"  stdout: {result['stdout']}")
+  if result['stderr']:
+    logging.info(f"  stderr: {result['stderr']}")
+  min_execution_time = 1.0
+  assert execution_time >= min_execution_time, f"Script executed too quickly: {execution_time:.2f}s < {min_execution_time}s"
+  assert "Alternately mvin/mvout pressure test PASSED" in result["stdout"], "Mismatch the expected output"
+  logging.info("Verilator mvin_mvout_alternative_test test completed")
+
+@pytest.mark.verilator  
+@pytest.mark.buckyball
+@pytest.mark.debug
+def test_verilator_ctest_vecunit_simple_nn_forward_pass_test_multicore(script_runner, caplog):
+  caplog.set_level(logging.INFO)
+  start_time = time.time()
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "ctest_vecunit_simple_nn_forward_pass_test_multicore", "--debug"], timeout=600)
+  execution_time = time.time() - start_time
+  logging.info(f"Execution time: {execution_time:.2f} seconds")
+  logging.info(f"Return code: {result['returncode']}")
+  logging.info("Script output:")
+  logging.info(f"  stdout: {result['stdout']}")
+  if result['stderr']:
+    logging.info(f"  stderr: {result['stderr']}")
+  min_execution_time = 1.0
+  assert execution_time >= min_execution_time, f"Script executed too quickly: {execution_time:.2f}s < {min_execution_time}s"
+  assert "Neural Network Test PASSED" in result["stdout"], "Mismatch the expected output"
+  logging.info("Verilator vecunit simple nn forward pass test completed")

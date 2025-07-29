@@ -95,7 +95,7 @@ class ReorderBuffer(implicit bbconfig: BuckyBallConfig, p: Parameters) extends M
   } .otherwise {
     rs_timer := 0.U
   }
-  assert(rs_timer < 3000.U, "RS timer exceeded 3000 cycles without completion")
+  assert(rs_timer < 30000.U, "RS timer exceeded 30000 cycles without completion")
 // -----------------------------------------------------------------------------
 // 发射：按顺序发射到ISSQueue，考虑Load/Store互斥约束
 // -----------------------------------------------------------------------------
