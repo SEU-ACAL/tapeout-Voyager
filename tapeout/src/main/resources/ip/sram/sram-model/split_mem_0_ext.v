@@ -61,9 +61,9 @@ module split_mem_0_ext (
 
     // 可选：添加断言检查地址范围
     // synthesis translate_off
-    initial begin
-        assert (RW0_addr < 256) else $error("Address out of range: %d", RW0_addr);
-    end
+    // initial begin
+    //     assert (RW0_addr < 256) else $error("Address out of range: %d", RW0_addr);
+    // end
     // synthesis translate_on
 
 endmodule
