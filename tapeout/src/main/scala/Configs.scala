@@ -45,14 +45,27 @@ class VoyagerVcsConfig extends Config(
   // new voyager_tapeout.custom.WithSPIForSD ++
   // new voyager_tapeout.custom.iobinders.WithSPISDIOCells++
   // new chipyard.iobinders.WithSPIFlashIOCells ++
-  
+  new freechips.rocketchip.subsystem.WithoutTLMonitors++
   new voyager_tapeout.custom.harness.WithCustomChipTop ++
   new voyager_tapeout.custom.harness.WithCustomIOCells ++
   new voyager_tapeout.custom.WithCustomDigitalTop ++
   new voyager_tapeout.custom.OurHeterSoCConfig ++
   new voyager_tapeout.custom.iobinders.WithVoyagerPLLSelectorDividerClockGenerator(enable=true)++
   new voyager_tapeout.custom.WithNPU ++
+  // new testchipip.serdes.WithNoSerialTLClient++
+  //TODO : 运行vsc 暂时注释掉
+  // new testchipip.serdes.WithSerialTLMem(size = BigInt("80000000",16)) ++ // 8 GB of off-chip memory
+  // new voyager_tapeout.custom.WithSerialConnect++   // 
+
   new chipyard.config.AbstractConfig)
+
+// TODO:测试中
+// class TetheredVoyagerConfig extends Config(
+//   new chipyard.harness.WithAbsoluteFreqHarnessClockInstantiator ++   // use absolute freqs for sims in the harness
+//   new chipyard.harness.WithMultiChipSerialTL(0, 1) ++                // connect the serial-tl ports of the chips together
+//   new chipyard.harness.WithMultiChip(0, new VoyagerVcsConfig) ++ // ChipTop0 is the design-to-be-taped-out
+//   new chipyard.harness.WithMultiChip(1, new ChipBringupHostConfig))  // ChipTop1 is the bringup design
+
 
 // class VoyagerSerialVerilatorConfig extends Config(
 //   new voyager_tapeout.custom.harness.WithCustomChipTop ++
