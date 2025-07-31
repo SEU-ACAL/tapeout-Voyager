@@ -143,10 +143,10 @@ source ${CYDIR}/voyager-test/scripts/env-source.sh vcs
 cd ${CYDIR}/sims/vcs/
 ./simv-chipyard.harness-${CONFIG}${DEBUG} $PK $full_binary_path \
   $([ $debug -eq 1 ] && echo "+fsdbfile=${WAVEFORM}") \
-  +verbose +loadmem=${full_binary_path} +loadmem_addr=80000000 \
+  +loadmem=${full_binary_path} +loadmem_addr=80000000 \
   +permissive-off ${full_binary_path} \
-  &> >(tee ${LOG_DIR}/stdout.log) \
-  2> >(spike-dasm > ${LOG_DIR}/disasm.log)
+  &> >(tee ${LOG_DIR}/stdout.log) 
+  # 2> >(spike-dasm > ${LOG_DIR}/disasm.log)
 
 # cd ${CYDIR}/voyager-test/output/verilator/
 # ./simulator-chipyard.harness-${CONFIG}${DEBUG} $PK +permissive \
