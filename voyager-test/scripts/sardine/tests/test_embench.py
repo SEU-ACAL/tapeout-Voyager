@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 script_dir = Path(__file__).parent.parent.parent
-embench_workload_dir = script_dir / ".." / "output" / "workloads" / "embench"
+embench_workload_dir = Path("/home/gb515897968/tape/tapeout/tapeout-Voyager/voyager-test/output/workloads/embench")
 
 # Define all embench workloads with absolute paths and corresponding IDs
 embench_workloads = [
@@ -107,41 +107,42 @@ def test_embench_workload_fast(script_runner, caplog, workload_path, workload_id
   
   logging.info("test completed")
   
-# vcs_config = [
-#   "VoyagerVcsConfig"
-# ]
+vcs_config = [
+  "VoyagerVcsConfig"
+]
 
-# @pytest.mark.vcs
-# @pytest.mark.embench
-# @pytest.mark.parametrize("workload_path,workload_id", embench_workloads, ids=[w[1] for w in embench_workloads])
-# @pytest.mark.parametrize("config", vcs_config)
-# def test_embench_workload_fast(script_runner, caplog, workload_path, workload_id, config):
-#   caplog.set_level(logging.INFO)
+@pytest.mark.vcs
+@pytest.mark.embench
+@pytest.mark.debug
+@pytest.mark.parametrize("workload_path,workload_id", embench_workloads, ids=[w[1] for w in embench_workloads])
+@pytest.mark.parametrize("config", vcs_config)
+def test_embench_workload_vcs_fast(script_runner, caplog, workload_path, workload_id, config):
+  caplog.set_level(logging.INFO)
   
-#   start_time = time.time()
-#   result = script_runner(f"{script_dir}/run-vcs.sh", ["--config", config, workload_path], timeout=60000)
-#   execution_time = time.time() - start_time
+  start_time = time.time()
+  result = script_runner(f"{script_dir}/run-vcs.sh", ["--config", config, workload_path, "--debug"], timeout=60000)
+  execution_time = time.time() - start_time
   
-#   logging.info(f"Workload: {workload_id}, Config: {config}")
-#   logging.info(f"Workload path: {workload_path}")
-#   logging.info(f"Execution time: {execution_time:.2f} seconds")
-#   logging.info(f"Return code: {result['returncode']}")
-#   logging.info("Script output:")
-#   logging.info(f"  stdout: {result['stdout']}")
-#   if result['stderr']:
-#     logging.info(f"  stderr: {result['stderr']}")
+  logging.info(f"Workload: {workload_id}, Config: {config}")
+  logging.info(f"Workload path: {workload_path}")
+  logging.info(f"Execution time: {execution_time:.2f} seconds")
+  logging.info(f"Return code: {result['returncode']}")
+  logging.info("Script output:")
+  logging.info(f"  stdout: {result['stdout']}")
+  if result['stderr']:
+    logging.info(f"  stderr: {result['stderr']}")
 
-#   min_execution_time = 5.0
-#   assert execution_time >= min_execution_time, f"Script executed too quickly: {execution_time:.2f}s < {min_execution_time}s"
-#   assert result["returncode"] in [0, 1], f"Script failed with unexpected return code: {result['returncode']}"
+  min_execution_time = 5.0
+  assert execution_time >= min_execution_time, f"Script executed too quickly: {execution_time:.2f}s < {min_execution_time}s"
+  assert result["returncode"] in [0, 1], f"Script failed with unexpected return code: {result['returncode']}"
   
-#   # Check for %Error in output
-#   if "%Error" in result["stdout"] or "%Error" in result["stderr"]:
-#     error_msg = "Found %Error in output"
-#     if "%Error" in result["stdout"]:
-#       error_msg += f" (stdout): {result['stdout']}"
-#     if "%Error" in result["stderr"]:
-#       error_msg += f" (stderr): {result['stderr']}"
-#     assert False, error_msg
+  # Check for %Error in output
+  if "%Error" in result["stdout"] or "%Error" in result["stderr"]:
+    error_msg = "Found %Error in output"
+    if "%Error" in result["stdout"]:
+      error_msg += f" (stdout): {result['stdout']}"
+    if "%Error" in result["stderr"]:
+      error_msg += f" (stderr): {result['stderr']}"
+    assert False, error_msg
   
-#   logging.info("test completed")
+  logging.info("test completed")

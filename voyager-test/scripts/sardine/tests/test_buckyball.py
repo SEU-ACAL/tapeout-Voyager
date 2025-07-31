@@ -754,3 +754,69 @@ def test_verilator_ctest_vecunit_simple_nn_forward_pass_test_multicore(script_ru
   assert execution_time >= min_execution_time, f"Script executed too quickly: {execution_time:.2f}s < {min_execution_time}s"
   assert "Neural Network Test PASSED" in result["stdout"], "Mismatch the expected output"
   logging.info("Verilator vecunit simple nn forward pass test completed")
+
+
+
+script_dir = Path(__file__).parent.parent.parent
+buckyball_workload_dir = script_dir / ".." / "output" / "workloads" / "npu" / "buckyball" / "CTest"
+
+# Define all embench workloads with absolute paths and corresponding IDs
+buckyball_workloads = [
+  (f"{buckyball_workload_dir}/ctest_vecunit_matmul_col_row_vector_multicore-baremetal", "ctest_vecunit_matmul_col_row_vector_multicore"),
+  (f"{buckyball_workload_dir}/ctest_vecunit_matmul_random3_multicore-baremetal", "ctest_vecunit_matmul_random3_multicore"),
+  (f"{buckyball_workload_dir}/ctest_vecunit_matmul_16xn_ones_multicore-baremetal", "ctest_vecunit_matmul_16xn_ones_multicore"),
+  (f"{buckyball_workload_dir}/ctest_vecunit_matmul_identity_random_multicore-baremetal", "ctest_vecunit_matmul_identity_random_multicore"),
+  (f"{buckyball_workload_dir}/ctest_vecunit_matmul_16xn_random1_multicore-baremetal", "ctest_vecunit_matmul_16xn_random1_multicore"),
+  (f"{buckyball_workload_dir}/ctest_vecunit_matmul_ones_multicore-baremetal", "ctest_vecunit_matmul_ones_multicore"),
+  (f"{buckyball_workload_dir}/ctest_vecunit_matmul_16xn_random3_multicore-baremetal", "ctest_vecunit_matmul_16xn_random3_multicore"),
+  (f"{buckyball_workload_dir}/ctest_vecunit_matmul_row_col_vector_multicore-baremetal", "ctest_vecunit_matmul_row_col_vector_multicore"),
+  (f"{buckyball_workload_dir}/ctest_vecunit_simple_nn_forward_pass_test_multicore-baremetal", "ctest_vecunit_simple_nn_forward_pass_test_multicore"),
+  (f"{buckyball_workload_dir}/ctest_mvin_mvout_alternate_test_multicore-baremetal", "ctest_mvin_mvout_alternate_test_multicore"),
+  (f"{buckyball_workload_dir}/ctest_vecunit_matmul_random1_multicore-baremetal", "ctest_vecunit_matmul_random1_multicore"),
+  (f"{buckyball_workload_dir}/ctest_vecunit_matmul_random2_multicore-baremetal", "ctest_vecunit_matmul_random2_multicore"),
+  (f"{buckyball_workload_dir}/ctest_vecunit_matmul_16xn_zero_random_multicore-baremetal", "ctest_vecunit_matmul_16xn_zero_random_multicore"),
+  (f"{buckyball_workload_dir}/ctest_vecunit_matmul_zero_random_multicore-baremetal", "ctest_vecunit_matmul_zero_random_multicore"),
+  (f"{buckyball_workload_dir}/ctest_mvin_mvout_acc_test_multicore-baremetal", "ctest_mvin_mvout_acc_test_multicore"),
+  (f"{buckyball_workload_dir}/ctest_vecunit_matmul_16xn_random2_multicore-baremetal", "ctest_vecunit_matmul_16xn_random2_multicore"),
+]
+
+# Define configurations to test
+vcs_config = [
+  "VoyagerVcsConfig"
+]
+
+@pytest.mark.vcs
+@pytest.mark.buckyball
+@pytest.mark.debug
+@pytest.mark.parametrize("workload_path,workload_id", buckyball_workloads, ids=[w[1] for w in buckyball_workloads])
+@pytest.mark.parametrize("config", vcs_config)
+def test_buckyball_workload_vcs_fast(script_runner, caplog, workload_path, workload_id, config):
+  caplog.set_level(logging.INFO)
+  
+  start_time = time.time()
+  result = script_runner(f"{script_dir}/run-vcs.sh", ["--config", config, workload_path, "--debug"], timeout=60000)
+  execution_time = time.time() - start_time
+  
+  logging.info(f"Workload: {workload_id}, Config: {config}")
+  logging.info(f"Workload path: {workload_path}")
+  logging.info(f"Execution time: {execution_time:.2f} seconds")
+  logging.info(f"Return code: {result['returncode']}")
+  logging.info("Script output:")
+  logging.info(f"  stdout: {result['stdout']}")
+  if result['stderr']:
+    logging.info(f"  stderr: {result['stderr']}")
+
+  min_execution_time = 5.0
+  assert execution_time >= min_execution_time, f"Script executed too quickly: {execution_time:.2f}s < {min_execution_time}s"
+  # assert result["returncode"] in [0, 1], f"Script failed with unexpected return code: {result['returncode']}"
+  
+  # Check for %Error in output
+  if "%Error" in result["stdout"] or "%Error" in result["stderr"]:
+    error_msg = "Found %Error in output"
+    if "%Error" in result["stdout"]:
+      error_msg += f" (stdout): {result['stdout']}"
+    if "%Error" in result["stderr"]:
+      error_msg += f" (stderr): {result['stderr']}"
+    assert False, error_msg
+  
+  logging.info("test completed")

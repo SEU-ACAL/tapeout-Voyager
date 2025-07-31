@@ -59,13 +59,14 @@ class OurHeterSoCConfig extends Config(
   new boom.meek.common.WithNMediumBooms(1) ++
   new chipyard.config.WithGPIO(width=12) ++
   // new chipyard.config.WithSPI ++
-  new voyager_tapeout.custom.WithUART1 ++
-  new voyager_tapeout.custom.WithUART2 ++
-  new voyager_tapeout.custom.WithUART3 ++
+
+  // new voyager_tapeout.custom.WithUART1 ++
+  // new voyager_tapeout.custom.WithUART2 ++
+  // new voyager_tapeout.custom.WithUART3 ++
+  // new voyager_tapeout.custom.WithSPIForFlash ++
+  // new chipyard.iobinders.WithSPIFlashIOCells ++
   new voyager_tapeout.custom.WithSPIForSD ++
-  new voyager_tapeout.custom.iobinders.WithSPISDIOCells ++
-  new voyager_tapeout.custom.WithSPIForFlash ++
-  new chipyard.iobinders.WithSPIFlashIOCells 
+  new voyager_tapeout.custom.iobinders.WithSPISDIOCells 
   // NPUPeripheral
   // new chipyard.config.AbstractConfig
 )
