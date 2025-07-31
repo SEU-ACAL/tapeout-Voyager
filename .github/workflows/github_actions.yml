@@ -182,6 +182,6 @@ jobs:
   Update-Repository:
     name: Update Repository
     runs-on: fpga
-    needs: VCS-Test
+    needs: Smoke-Test
     steps:
       - run: echo "🎉 Good Job! This ${{ github.event_name }} will be updated to ${{ github.ref }}."
