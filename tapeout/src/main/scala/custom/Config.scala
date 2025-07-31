@@ -29,7 +29,7 @@ class WithSPIForSD(address: BigInt = 0x10031000) extends Config((site, here, up)
 
 class WithUART1(baudrate: BigInt = 4800, address: BigInt = 0x10021000, txEntries: Int = 8, rxEntries: Int = 8) extends Config((site, here, up) => {
   case PeripheryUARTKey => up(PeripheryUARTKey) ++ Seq(
-    UARTParams(address = address, nTxEntries = txEntries, nRxEntries = rxEntries, initBaudRate = baudrate))
+    UARTParams(address = address, nTxEntries = txEntries, nRxEntries = rxEntries, initBaudRate = baudrate, divisorBits = 20))
 })
 
 // class WithUART2(baudrate: BigInt = 115200, address: BigInt = 0x10022000, txEntries: Int = 8, rxEntries: Int = 8) extends Config((site, here, up) => {
