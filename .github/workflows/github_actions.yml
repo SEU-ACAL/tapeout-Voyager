@@ -107,7 +107,7 @@ jobs:
           git reset --hard HEAD~1
           git push --force origin ${{ github.ref }}
   
-    Build-VCS:
+  Build-VCS:
     name: Build VCS
     runs-on: fpga
     needs: Build-Workloads
