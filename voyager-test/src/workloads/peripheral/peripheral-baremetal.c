@@ -22,7 +22,7 @@ static inline void multicore(int target_hart_id) {
 // memory map
 #define WEIGHT_MEM_LARGE_BASE   (PERIPHERAL_BASE + 0x00000)     // 20'h00000~20'h0FFFF
 #define CSR_BASE                (PERIPHERAL_BASE + 0x24A00)     // 20'h24A00~20'h24A7F
-#define CSR_LAST_ADDR           (PERIPHERAL_BASE + 0x24A7F)     // the last address of CSR
+#define CSR_LAST_ADDR           (PERIPHERAL_BASE + 0x24BF8)     // the last address of CSR
 
 static inline uint32_t read32(uint32_t addr) {
     return *(volatile uint32_t*)addr;
@@ -73,31 +73,14 @@ void test_weight_memory_large() {
 // test the csr
 void test_csr() {
     printf("CSR:\n");
-    printf("---------------------------------------------\n");
+    printf("---------------------------------------------\n\n");
 
-    // original
+
     uint64_t original_val = read64(CSR_LAST_ADDR);
     printf("read64(0x%08X) ---> 0x%016lX\n\n", CSR_LAST_ADDR, original_val);
 
-    // aligned 64-bit 
-    uint64_t aligned_addr_64 = CSR_LAST_ADDR - 7; // This is 0x...A78
-    uint64_t aligned_val_64 = read64(aligned_addr_64);
-    printf("read64(0x%08lX) ---> 0x%016lX\n\n", aligned_addr_64, aligned_val_64);
-
-    // divide
-    uint32_t addr_low  = CSR_LAST_ADDR - 7; // 0x...A78
-    uint32_t addr_high = CSR_LAST_ADDR - 3; // 0x...A7C
-
-    uint32_t val_low  = read32(addr_low);
-    uint32_t val_high = read32(addr_high);
-
-    printf("read32(0x%08X) ---> 0x%08X\n", addr_low, val_low);
-    printf("read32(0x%08X) ---> 0x%08X\n", addr_high, val_high);
-
-    // in little-endian system, the high address is the high byte
-    uint64_t combined_val = ((uint64_t)val_high << 32) | val_low;
-    printf("Combined 32-bit reads ---> 0x%016lX\n", combined_val);
     printf("---------------------------------------------\n\n");
+
 }
 
 int main() {    
