@@ -59,7 +59,7 @@ class OurHeterSoCConfig extends Config(
   new chipyard.config.WithSystemBusWidth(128) ++
   new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1) ++
   new boom.meek.common.WithNMediumBooms(1) ++
-  new chipyard.config.WithGPIO(width=12) ++
+  new chipyard.config.WithGPIO(width=9) ++
   // new chipyard.config.WithSPI ++
   new voyager_tapeout.custom.WithSPIForSD ++
   new voyager_tapeout.custom.iobinders.WithSPISDIOCells
