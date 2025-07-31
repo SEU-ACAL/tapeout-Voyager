@@ -35,6 +35,8 @@ module CIM_memory_interface_small #(
     localparam BANK_SEL  = $clog2(`CIM_Bank_NUM);       // 2
     localparam LOCAL_ADDR = $clog2(`CIM_Bank_DEPTH_S);  // 6
     localparam ADDR_WIDTH = $clog2(`CIM_DEPTH_S);       // 8
+	localparam WIDTH = 4;
+	
 
 
     wire [BANK_SEL-1:0]     bank_idx;
@@ -56,8 +58,8 @@ module CIM_memory_interface_small #(
 	assign AXI_NNIN_M_S = 'd0;
 
     assign AXI_WADR_S = CIM_store_addr[LOCAL_ADDR-1:0];
-    assign AXI_WEB_S= CIM_store_en ? 4'b0001 << bank_idx : 'd0;
-    assign AXI_MEB_S = 'd0;
+    assign AXI_WEB_S= CIM_store_en ? (4'b1110 << bank_idx) | (4'b1110 >> (WIDTH-bank_idx)) : 4'hf;
+    assign AXI_MEB_S = 4'hf;
 
 
     // assign AXI_fp_en_S = fp_en;
@@ -68,7 +70,7 @@ module CIM_memory_interface_small #(
     assign AXI_buffer1_rst_S = 'd0;
 
     assign AXI_CIMADR_S = {!CIM_store_addr[LOCAL_ADDR-1], 1'b0};
-    assign AXI_adder_enb_S = 'd0;
+    assign AXI_adder_enb_S = 1'b1;
     assign AXI_buffer_row_addr_S = 'd0;
 
 endmodule

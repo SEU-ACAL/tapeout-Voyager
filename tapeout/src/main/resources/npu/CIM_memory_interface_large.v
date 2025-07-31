@@ -36,6 +36,7 @@ module CIM_memory_interface_large #(
     localparam BANK_SEL  = $clog2(`CIM_Bank_NUM);       // 2
     localparam LOCAL_ADDR = $clog2(`CIM_Bank_DEPTH_L);  // 9
     localparam ADDR_WIDTH = $clog2(`CIM_DEPTH_L);       // 11
+	localparam WIDTH = 4;
 
 
     wire [BANK_SEL-1:0]     bank_idx;
@@ -54,8 +55,8 @@ module CIM_memory_interface_large #(
 	assign AXI_NNIN_M_L = 'd0;
 
     assign AXI_WADR_L = CIM_store_addr[LOCAL_ADDR-1:0];
-    assign AXI_WEB_L = CIM_store_en ? 4'b0001 << bank_idx : 'd0;
-    assign AXI_MEB_L = 4'h0;
+    assign AXI_WEB_L = CIM_store_en ? (4'b1110 << bank_idx) | (4'b1110 >> (WIDTH-bank_idx)) : 4'hf;
+    assign AXI_MEB_L = 4'hf;
 
     // E_reg的深度只有64，但大核的深度有256，所以要分4次写Macro，每次写64个，所以这里减4。
     assign AXI_WD_E_L = (fp_en && CIM_store_en) ? exp_mem[CIM_store_addr[LOCAL_ADDR-4:0]] : 'd0;
@@ -65,7 +66,7 @@ module CIM_memory_interface_large #(
     assign AXI_compute_valid_L = 'd0;
 
     assign AXI_CIMADR_L = {!CIM_store_addr[LOCAL_ADDR-1], 8'b0};
-    assign AXI_adder_enb_L = 'd0;
+    assign AXI_adder_enb_L = 1'b1;
     assign AXI_buffer_row_addr_L = 'd0;
 
 endmodule

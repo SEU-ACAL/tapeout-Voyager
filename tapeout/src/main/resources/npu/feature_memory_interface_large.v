@@ -1,72 +1,88 @@
 `include "../gen-collateral/defines.v"
 //`include "../0-RTL/AXI_SLAVE/defines.v"
 
-module CIM_memory_interface_large #(
-        parameter Macro_ROW_NUM = 256
-    )(
-        input 									clk,
-        input 									rstn,
+module feature_memory_interface_large(
+        input clk,
+        input rstn,
 
-        input                            		CIM_store_en,
-        input [$clog2(`CIM_DEPTH_L)-1:0]	    CIM_store_addr,
-        input [`CIM_WIDTH-1:0]        	 		CIM_store_data,
+        input                                   fml_load_en,
+        input  [$clog2(`FM_DEPTH_L)-1:0]        fml_load_addr,
+        output [`FM_WIDTH-1:0]                  fml_load_data,
+  
+        input                                   fml_store_en,
+        input [$clog2(`FM_DEPTH_L)-1:0]         fml_store_addr,
+        input [`FM_WIDTH-1:0]                   fml_store_data,
+  
+        input                                   fml_npu_load_en,
+        input  [$clog2(`FM_Bank_DEPTH_L)-1:0]   fml_npu_load_addr,
+        output [`FM_WIDTH *`FM_Bank_NUM_L -1:0] fml_npu_load_data,
+        input                                   NPU_AXI_SEL  
 
-        input [`EXP_DEPTH*`EXP_WIDTH-1:0]       exp_data,
-        input                                   fp_en,
-
-        output                                  AXI_din_valid_L,
-        output [Macro_ROW_NUM*8-1:0]            AXI_NNIN_E_L,
-		output [Macro_ROW_NUM*8-1:0]            AXI_NNIN_M_L,
-
-        output [$clog2(Macro_ROW_NUM):0]        AXI_WADR_L,
-        output [3:0]                            AXI_WEB_L,
-        output [3:0]                            AXI_MEB_L,
-
-        output [63:0]                           AXI_WD_E_L,
-        output [63:0]                           AXI_WD_M_L,
-        output                                  AXI_buffer0_rst_L,
-        output                                  AXI_buffer1_rst_L,
-        output                                  AXI_compute_valid_L,
-
-        output [$clog2(Macro_ROW_NUM):0]        AXI_CIMADR_L,
-        output                                  AXI_adder_enb_L,
-        output [3:0]                            AXI_buffer_row_addr_L
     );
 
-    localparam BANK_SEL  = $clog2(`CIM_Bank_NUM);       // 2
-    localparam LOCAL_ADDR = $clog2(`CIM_Bank_DEPTH_L);  // 9
-    localparam ADDR_WIDTH = $clog2(`CIM_DEPTH_L);       // 11
-	localparam WIDTH = 4;
+    localparam BANK_SEL_W  = $clog2(`FM_Bank_NUM_L);
+    localparam LOCAL_ADDR_W  = $clog2(`FM_Bank_DEPTH_L);
+    localparam ADDR_WIDTH  = $clog2(`FM_DEPTH_L);
 
+    wire [BANK_SEL_W-1:0] bank_idx;
+    wire [LOCAL_ADDR_W-1:0] local_addr;
 
-    wire [BANK_SEL-1:0]     bank_idx;
-    wire [`EXP_WIDTH-1:0]   exp_mem [0:`EXP_DEPTH-1];
-    assign bank_idx = CIM_store_addr[ADDR_WIDTH-1-:BANK_SEL];
+    // assign bank_idx  = fm_store_en ? fm_store_addr[ADDR_WIDTH-1 -: BANK_SEL_W] :
+    //                    fm_load_en  ? fm_load_addr[ADDR_WIDTH-1 -: BANK_SEL_W]  : 'd0;
+    assign bank_idx  =  fml_store_en ? fml_store_addr[0 +: BANK_SEL_W] :
+           				fml_load_en  ? fml_load_addr[0 +: BANK_SEL_W]  : 'd0;
+
+    // assign local_addr =fm_npu_load_en ? fm_npu_load_addr :
+    //                    fm_store_en ? fm_store_addr[LOCAL_ADDR_W-1:0]  :
+    //                    fm_load_en  ? fm_load_addr[LOCAL_ADDR_W-1:0]   : 'd0;
+    assign local_addr = fml_npu_load_en ? fml_npu_load_addr :
+           				fml_store_en ? fml_store_addr[ADDR_WIDTH-1 -:LOCAL_ADDR_W]  :
+           				fml_load_en  ? fml_load_addr[ADDR_WIDTH-1 -:LOCAL_ADDR_W]   : 'd0;
+
+    wire [`FM_Bank_NUM_L-1:0] cen;
+    wire [`FM_Bank_NUM_L-1:0] wen;
+    wire [`FM_Bank_NUM_L *`FM_WIDTH-1:0] din;
+    wire [`FM_Bank_NUM_L *`FM_WIDTH-1:0] dout;
+
 
     genvar i;
     generate
-        for(i=0; i<`EXP_DEPTH; i=i+1) begin
-            assign exp_mem[i] = exp_data[i*`EXP_WIDTH +: `EXP_WIDTH];
+        for (i = 0; i < `FM_Bank_NUM_L; i = i + 1) begin : BANK
+            // assign cen[i] = ((bank_idx == i) && (fm_store_en || fm_load_en)) || fm_npu_load_en;
+			assign cen[i] = ((bank_idx == i) && (fml_store_en)) || fml_load_en || fml_npu_load_en;
+            assign wen[i] = (bank_idx == i) && fml_store_en && !fml_npu_load_en;
+            assign din[i *`FM_WIDTH +: `FM_WIDTH] = wen[i] ? fml_store_data : 'd0;
+
+            smic281prf64x64m4
+                smic281prf64x64m4_inst (
+                    .CLK(clk),
+                    .CEN(!cen[i]),
+                    .WEN(!wen[i]),
+                    .A(local_addr),
+                    .D(din[i *`FM_WIDTH +: `FM_WIDTH]),
+                    .Q(dout[i *`FM_WIDTH +: `FM_WIDTH]),
+                    .BWEN(64'b0),
+                    .SD(1'b0),
+                    .SLP(1'b0),
+                    .PUDLY_SD(),
+                    .PUDLY_SLP(),
+                    .RT(2'b00),
+                    .WT(2'b00),
+                    .TM(1'b0)
+                );
         end
     endgenerate
 
-    assign AXI_din_valid_L = 1'b0;
-    assign AXI_NNIN_E_L = 'd0;
-	assign AXI_NNIN_M_L = 'd0;
+	reg [BANK_SEL_W-1:0] bank_idx_d;
+    always @(posedge clk or negedge rstn) begin
+        if(~rstn)
+            bank_idx_d <= 'b0;
+        else begin
+            if( |cen )
+            bank_idx_d <= bank_idx;
+        end
+    end
 
-    assign AXI_WADR_L = CIM_store_addr[LOCAL_ADDR-1:0];
-    assign AXI_WEB_L = CIM_store_en ? (4'b1110 << bank_idx) | (4'b1110 >> (WIDTH-bank_idx)) : 4'hf;
-    assign AXI_MEB_L = 4'hf;
-
-    // E_reg的深度只有64，但大核的深度有256，所以要分4次写Macro，每次写64个，所以这里减4。
-    assign AXI_WD_E_L = (fp_en && CIM_store_en) ? exp_mem[CIM_store_addr[LOCAL_ADDR-4:0]] : 'd0;
-    assign AXI_WD_M_L = CIM_store_data;
-    assign AXI_buffer0_rst_L = 'd0;
-    assign AXI_buffer1_rst_L = 'd0;
-    assign AXI_compute_valid_L = 'd0;
-
-    assign AXI_CIMADR_L = {!CIM_store_addr[LOCAL_ADDR-1], 8'b0};
-    assign AXI_adder_enb_L = 1'b1;
-    assign AXI_buffer_row_addr_L = 'd0;
-
+    assign fml_load_data =  !NPU_AXI_SEL ? dout[bank_idx_d *`FM_WIDTH +: `FM_WIDTH] : 'd0;
+    assign fml_npu_load_data = NPU_AXI_SEL ? dout : 'd0;
 endmodule
