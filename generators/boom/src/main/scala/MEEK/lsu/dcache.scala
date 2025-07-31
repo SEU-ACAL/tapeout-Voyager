@@ -475,7 +475,7 @@ class BoomNonBlockingDCacheModule(outer: BoomNonBlockingDCache) extends LazyModu
   dataReadArb.io.out.ready := dataReadArb.io.out.bits.req.map{req=>
     ((req.addr>>rowOffBits) =/=  (dataWriteArb.io.out.bits.addr>>rowOffBits))&&(dataWriteArb.io.out.fire)||(!dataWriteArb.io.out.fire)
   }.reduce(_&&_)
-
+  // dataReadArb.io.out.ready := true.B
   data.io.write.valid := dataWriteArb.io.out.fire
   data.io.write.bits  := dataWriteArb.io.out.bits
   dataWriteArb.io.out.ready := true.B

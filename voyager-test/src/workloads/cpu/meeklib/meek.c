@@ -12,6 +12,7 @@
 #include "ght.h"
 #include "ghe.h"
 #include "tasks.h"
+int uart_lock=0;
 size_t total_cycle_s  =0;
 size_t total_commit_s =0;
 size_t total_issue_s  =0;
@@ -281,7 +282,7 @@ int checker (int hart_id)
 
   return 0;
 }
-int uart_lock;
+
 void rStartup (void) {
   // printf("")
   // barrier();
