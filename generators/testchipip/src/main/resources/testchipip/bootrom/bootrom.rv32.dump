@@ -28,54 +28,19 @@ Disassembly of section .text.start:
 00010040 <_start>:
    10040:	020005b7          	lui	a1,0x2000
    10044:	f1402573          	csrr	a0,mhartid
-   10048:	00050463          	beqz	a0,10050 <pll_init>
+   10048:	00050463          	beqz	a0,10050 <set_msip>
    1004c:	1b80006f          	j	10204 <boot_core>
 
-00010050 <pll_init>:
-   10050:	001402b7          	lui	t0,0x140
-   10054:	00428293          	addi	t0,t0,4 # 140004 <_dtb+0x12fdc4>
-   10058:	00100313          	li	t1,1
-   1005c:	0062a023          	sw	t1,0(t0)
-   10060:	00428293          	addi	t0,t0,4
+00010050 <set_msip>:
+   10050:	00458613          	addi	a2,a1,4 # 2000004 <_dtb+0x1fefdc4>
+   10054:	00100693          	li	a3,1
 
-00010064 <wait_pll_open>:
-   10064:	00028303          	lb	t1,0(t0)
-   10068:	00137313          	andi	t1,t1,1
-   1006c:	00100393          	li	t2,1
-   10070:	fe639ae3          	bne	t2,t1,10064 <wait_pll_open>
-
-00010074 <gpio_init>:
-   10074:	100102b7          	lui	t0,0x10010
-   10078:	00428293          	addi	t0,t0,4 # 10010004 <_dtb+0xffffdc4>
-   1007c:	00000313          	li	t1,0
-   10080:	0062a023          	sw	t1,0(t0)
-   10084:	00428293          	addi	t0,t0,4
-   10088:	0062a023          	sw	t1,0(t0)
-
-0001008c <clock_set>:
-   1008c:	100102b7          	lui	t0,0x10010
-   10090:	00028303          	lb	t1,0(t0) # 10010000 <_dtb+0xffffdc0>
-   10094:	00f37313          	andi	t1,t1,15
-   10098:	00137393          	andi	t2,t1,1
-   1009c:	00130e37          	lui	t3,0x130
-   100a0:	007e0023          	sb	t2,0(t3) # 130000 <_dtb+0x11fdc0>
-
-000100a4 <gpio_unset>:
-   100a4:	100102b7          	lui	t0,0x10010
-   100a8:	00428293          	addi	t0,t0,4 # 10010004 <_dtb+0xffffdc4>
-   100ac:	00000313          	li	t1,0
-   100b0:	0062a023          	sw	t1,0(t0)
-
-000100b4 <set_msip>:
-   100b4:	00458613          	addi	a2,a1,4 # 2000004 <_dtb+0x1fefdc4>
-   100b8:	00100693          	li	a3,1
-
-000100bc <interrupt_loop>:
-   100bc:	00d62023          	sw	a3,0(a2)
-   100c0:	00460613          	addi	a2,a2,4
-   100c4:	ffc62683          	lw	a3,-4(a2)
-   100c8:	fe069ae3          	bnez	a3,100bc <interrupt_loop>
-   100cc:	1480006f          	j	10214 <boot_core_hart0>
+00010058 <interrupt_loop>:
+   10058:	00d62023          	sw	a3,0(a2)
+   1005c:	00460613          	addi	a2,a2,4
+   10060:	ffc62683          	lw	a3,-4(a2)
+   10064:	fe069ae3          	bnez	a3,10058 <interrupt_loop>
+   10068:	1ac0006f          	j	10214 <boot_core_hart0>
 
 Disassembly of section .text.hang80:
 

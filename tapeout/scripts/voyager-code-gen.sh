@@ -199,7 +199,7 @@ cd ${CYDIR}
 ORINGIN_DIR=""
 # TARGET_DIR="${CYDIR}/tapeout/generated-src"
 if [ "$TOOL" == "verilator" ]; then
-  ./voyager-test/scripts/build-verilator.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --debug
+  # ./voyager-test/scripts/build-verilator.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --debug
   ORINGIN_DIR="${CYDIR}/sims/verilator/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
 elif [ "$TOOL" == "vcs" ]; then
   ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --debug
