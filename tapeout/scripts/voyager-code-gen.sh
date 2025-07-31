@@ -113,7 +113,7 @@ find ./ -type f -name "*.v" -exec sed -i \
 # === 1.1 SRAM替换 ==================================================
 cd ${CYDIR}
 if [ "$TOOL" == "verilator" ]; then
-  ./voyager-test/scripts/build-verilator.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --debug
+  ./voyager-test/scripts/build-verilator.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout 
   ORINGIN_DIR="${CYDIR}/sims/verilator/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
 elif [ "$TOOL" == "vcs" ]; then
   cd ${CYDIR}/sims/vcs && make clean
