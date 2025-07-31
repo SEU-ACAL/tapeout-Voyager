@@ -11,7 +11,10 @@ import freechips.rocketchip.subsystem.{MBUS, SBUS}
 import freechips.rocketchip.resources.{SimpleDevice}
 import sifive.blocks.devices.spi.{PeripherySPIKey, SPIParams, PeripherySPIFlashKey, SPIFlashParams}
 import sifive.blocks.devices.uart.{PeripheryUARTKey, UARTParams}
-
+import freechips.rocketchip.util._
+class WithCustomClockGateModel(file: String = "/ip/clock/EICG_wrapper.v") extends Config((site, here, up) => {
+  case ClockGateModelFile => Some(file)
+})
 
 // Custom SPI configurations to avoid name conflicts
 class WithSPIForFlash(address: BigInt = 0x10030000, fAddress: BigInt = 0x20000000, size: BigInt = 0x800000) extends Config((site, here, up) => {
@@ -59,13 +62,14 @@ class OurHeterSoCConfig extends Config(
   new boom.meek.common.WithNMediumBooms(1) ++
   new chipyard.config.WithGPIO(width=12) ++
   // new chipyard.config.WithSPI ++
-  new voyager_tapeout.custom.WithUART1 ++
-  new voyager_tapeout.custom.WithUART2 ++
-  new voyager_tapeout.custom.WithUART3 ++
+  // new voyager_tapeout.custom.WithUART1 ++
+  // new voyager_tapeout.custom.WithUART2 ++
+  // new voyager_tapeout.custom.WithUART3 ++
   new voyager_tapeout.custom.WithSPIForSD ++
-  new voyager_tapeout.custom.iobinders.WithSPISDIOCells ++
-  new voyager_tapeout.custom.WithSPIForFlash ++
-  new chipyard.iobinders.WithSPIFlashIOCells 
+  new voyager_tapeout.custom.iobinders.WithSPISDIOCells 
+  // new voyager_tapeout.custom.WithCustomClockGateModel
+  // new voyager_tapeout.custom.WithSPIForFlash ++
+  // new chipyard.iobinders.WithSPIFlashIOCells 
   // NPUPeripheral
   // new chipyard.config.AbstractConfig
 )

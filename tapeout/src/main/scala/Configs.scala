@@ -59,6 +59,24 @@ class VoyagerVcsConfig extends Config(
   // new voyager_tapeout.custom.WithSerialConnect++   // 
 
   new chipyard.config.AbstractConfig)
+class VoyagerVcsConfig1 extends Config(
+  // new voyager_tapeout.custom.WithSPIForFlash ++
+  // new voyager_tapeout.custom.WithSPIForSD ++
+  // new voyager_tapeout.custom.iobinders.WithSPISDIOCells++
+  // new chipyard.iobinders.WithSPIFlashIOCells ++
+  new freechips.rocketchip.subsystem.WithoutTLMonitors++
+  new voyager_tapeout.custom.harness.WithCustomChipTop ++
+  new voyager_tapeout.custom.harness.WithCustomIOCells ++
+  new voyager_tapeout.custom.WithCustomDigitalTop ++
+  new voyager_tapeout.custom.OurHeterSoCConfig ++
+  new voyager_tapeout.custom.iobinders.WithVoyagerPLLSelectorDividerClockGenerator(enable=true)++
+  new voyager_tapeout.custom.WithNPU ++
+  // new testchipip.serdes.WithNoSerialTLClient++
+  //TODO : 运行vsc 暂时注释掉
+  // new testchipip.serdes.WithSerialTLMem(size = BigInt("80000000",16)) ++ // 8 GB of off-chip memory
+  // new voyager_tapeout.custom.WithSerialConnect++   // 
+
+  new chipyard.config.AbstractConfig)
 
 class VoyagerVcsChipConfig extends Config(
   new freechips.rocketchip.subsystem.WithoutTLMonitors++

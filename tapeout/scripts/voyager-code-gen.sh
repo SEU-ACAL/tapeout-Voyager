@@ -119,7 +119,7 @@ if [ "$TOOL" == "verilator" ]; then
 elif [ "$TOOL" == "vcs" ]; then
   cd ${CYDIR}/sims/vcs && make clean
   cd ${CYDIR}
-  ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --debug
+  ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout 
   ORINGIN_DIR="${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
 elif [ "$TOOL" == "chip" ]; then
   ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --debug

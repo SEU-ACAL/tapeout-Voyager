@@ -32,6 +32,7 @@ class PLL extends BlackBox
   addResource("ip/pll/PLL.v")
   addResource("ip/pll/PLL6GS28.v")
   addResource("ip/pll/phy_defines.v")
+  
 }
 
 
@@ -42,15 +43,15 @@ class WithVoyagerPLLSelectorDividerClockGenerator(enable: Boolean = true) extend
     implicit val p = GetSystemParameters(system)
     val tlbus = system.asInstanceOf[BaseSubsystem].locateTLBusWrapper(system.prciParams.slaveWhere)
     val baseAddress = system.prciParams.baseAddress
-    val clockDivider  = system.prci_ctrl_domain { LazyModule(new TLClockDivider (baseAddress + 0x20000, tlbus.beatBytes, enable=enable)) }
-    val clockSelector = system.prci_ctrl_domain { LazyModule(new TLClockSelector(baseAddress + 0x30000, tlbus.beatBytes, enable=enable)) }
+    // val clockDivider  = system.prci_ctrl_domain { LazyModule(new TLClockDivider (baseAddress + 0x20000, tlbus.beatBytes, enable=enable)) }
+    val clockSelector = system.prci_ctrl_domain { LazyModule(new voyager_tapeout.custom.clocking.CustomTLClockSelector(baseAddress + 0x30000, tlbus.beatBytes, enable=enable)) }
     val pllCtrl       = system.prci_ctrl_domain { LazyModule(new FakePLLCtrl    (baseAddress + 0x40000, tlbus.beatBytes)) }
 
-    clockDivider.tlNode  := system.prci_ctrl_domain { TLFragmenter(tlbus, Some("ClockDivider")) := system.prci_ctrl_bus.get }
+    // clockDivider.tlNode  := system.prci_ctrl_domain { TLFragmenter(tlbus, Some("ClockDivider")) := system.prci_ctrl_bus.get }
     clockSelector.tlNode := system.prci_ctrl_domain { TLFragmenter(tlbus, Some("ClockSelector")) := system.prci_ctrl_bus.get }
     pllCtrl.tlNode       := system.prci_ctrl_domain { TLFragmenter(tlbus, Some("PLLCtrl")) := system.prci_ctrl_bus.get }
 
-    system.chiptopClockGroupsNode := clockDivider.clockNode := clockSelector.clockNode
+    system.chiptopClockGroupsNode :=  clockSelector.clockNode
 
     // Connect all other requested clocks
     val slowClockSource = ClockSourceNode(Seq(ClockSourceParameters()))
