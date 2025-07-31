@@ -864,7 +864,8 @@ class BoomNonBlockingDCacheModule(outer: BoomNonBlockingDCache) extends LazyModu
                             !(io.lsu.exception && resp(w).bits.uop.uses_ldq) &&
                             !IsKilledByBranch(io.lsu.brupdate, resp(w).bits.uop)
     io.lsu.resp(w).bits  := UpdateBrMask(io.lsu.brupdate, resp(w).bits)
-
+    io.lsu.resp(w).bits.data := Mux(io.lsu.resp(w).valid,resp(w).bits.data,0.U)
+    
     io.lsu.nack(w).valid := s2_valid(w) && s2_send_nack(w) &&
                             !(io.lsu.exception && s2_req(w).uop.uses_ldq) &&
                             !IsKilledByBranch(io.lsu.brupdate, s2_req(w).uop)

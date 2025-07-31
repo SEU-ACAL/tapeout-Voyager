@@ -971,10 +971,11 @@ class DCacheModule(outer: DCache) extends HellaCacheModule(outer) {
   val s2_data_word_corrected = (0 until rowBits by wordBits).map(i => s2_data_corrected(wordBits+i-1,i)).reduce(_|_)
   val s2_data_word_possibly_uncached = Mux(cacheParams.pipelineWayMux.B && doUncachedResp, s2_uncached_data_word, 0.U) | s2_data_word
   val loadgen = new LoadGen(s2_req.size, s2_req.signed, s2_req.addr, s2_data_word_possibly_uncached, s2_sc, wordBytes)
-  io.cpu.resp.bits.data := loadgen.data | s2_sc_fail
-  io.cpu.resp.bits.data_word_bypass := loadgen.wordData
-  io.cpu.resp.bits.data_raw := s2_data_word
-  io.cpu.resp.bits.store_data := pstore1_data
+  //TODO fix data X state(by GB)
+  io.cpu.resp.bits.data             := Mux(io.cpu.resp.valid,loadgen.data | s2_sc_fail,0.U)
+  io.cpu.resp.bits.data_word_bypass := Mux(io.cpu.resp.valid,loadgen.wordData,0.U)
+  io.cpu.resp.bits.data_raw         := Mux(io.cpu.resp.valid,s2_data_word,0.U)
+  io.cpu.resp.bits.store_data       := Mux(io.cpu.resp.valid,pstore1_data,0.U)
 
   // AMOs
   if (usingRMW) {

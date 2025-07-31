@@ -60,7 +60,7 @@ class WithNPU extends Config (
 class WithSerialConnect extends Config (
   new testchipip.serdes.WithSerialTLMem(size = BigInt("10000000",16)) ++ // 8 GB of off-chip memory
   new testchipip.serdes.WithSerialTLPHYParams(
-  testchipip.serdes.ExternalSyncSerialPhyParams(phitWidth=4, flitWidth=4))++ 
+  testchipip.serdes.ExternalSyncSerialPhyParams(phitWidth=4, flitWidth=16))++ 
   new chipyard.config.WithSerialBackingMemory  ++
   new testchipip.soc.WithOffchipBusClient(MBUS) ++                                      // offchip bus connects to MBUS, since the serial-tl needs to provide backing memory
   new testchipip.soc.WithOffchipBus

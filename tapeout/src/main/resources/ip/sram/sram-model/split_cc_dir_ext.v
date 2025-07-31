@@ -7,31 +7,45 @@
 module split_cc_dir_ext(
   input  [5:0]  RW0_addr,
   input         RW0_clk,
-  input  [26:0] RW0_wdata,
-  output [26:0] RW0_rdata,
+  input  [23:0] RW0_wdata,
+  output [23:0] RW0_rdata,
   input         RW0_en,
   input         RW0_wmode,
   input         RW0_wmask
 );
     wire RW0_en_masked =  RW0_wmode ? RW0_wmask&RW0_en : RW0_en;
-
-
-  // SRAM编译器生成的模块实例化
-  smic281prf64x27m4 sram_inst_64x27 (
-    .CLK(RW0_clk),
-    .CEN(~RW0_en_masked),           // CEN是低有效的使能信号
-    .WEN(~RW0_wmode),        // WEN是低有效的写使能信号
-    .A(RW0_addr),
-    .D(RW0_wdata),
-    .Q(RW0_rdata),
-    .BWEN(27'h0),       // 字节写使能，低有效
-    .SD(1'b0),               // 关断模式，正常操作时为0
-    .SLP(1'b0),              // 休眠模式，正常操作时为0
-    .PUDLY_SD(),             // 关断延迟输出（未连接）
-    .PUDLY_SLP(),            // 休眠延迟输出（未连接）
-    .RT(2'b00),              // 读时序控制
-    .WT(2'b00),              // 写时序控制
-    .TM(1'b0)                // 测试模式
-  );
+    wire [7:0] rdata [0:2]; // 更清晰的声明方式
+    wire [7:0] wdata [0:2];
+    
+    // 确保位顺序一致
+    assign wdata[0] = RW0_wdata[7:0];
+    assign wdata[1] = RW0_wdata[15:8];
+    assign wdata[2] = RW0_wdata[23:16];
+    
+    // 确保连接顺序与赋值顺序一致
+    assign RW0_rdata = {rdata[2], rdata[1], rdata[0]};
+    
+    genvar i;
+    // 例化3个SRAM模块
+    generate
+        for (i = 0; i < 3; i = i + 1) begin : gen_sram_inst
+            smic281prf64x8m4 sram_inst (
+                .CLK(RW0_clk),
+                .CEN(~RW0_en_masked),
+                .WEN(~RW0_wmode),
+                .A(RW0_addr),
+                .D(wdata[i]),
+                .Q(rdata[i]),
+                .BWEN(8'h0),
+                .SD(1'b0),
+                .SLP(1'b0),
+                .PUDLY_SD(),
+                .PUDLY_SLP(),
+                .RT(2'b00),
+                .WT(2'b00),
+                .TM(1'b0)
+            );
+        end
+    endgenerate
 endmodule
 `endif
