@@ -95,6 +95,7 @@ class ClockMutexMux(val n: Int, depth: Int, genClockGate: () => ClockGate) exten
     val andClocks = io.clocksIn.map(x => ClockSignalNor2(ClockInverter(x), io.resetAsync.asBool))
 
     val syncs  = andClocks.map { c => withClockAndReset(c, io.resetAsync) { Module(new AsyncResetSynchronizerShiftReg(1, sync = depth, init = 0)) } }
+    // val sync_l = andClocks.map { c => withClockAndReset(c, io.resetAsync) { Module(new AsyncResetSynchronizerShiftReg(1, sync = depth-1, init = 0)) } }
     val gaters = andClocks.map { c =>
         val g = Module(genClockGate())
         g.io.in := c
@@ -103,7 +104,7 @@ class ClockMutexMux(val n: Int, depth: Int, genClockGate: () => ClockGate) exten
     }
 
     syncs.zip(gaters).foreach { case (s, g) => g.io.en := s.io.q }
-
+    // sync.zipWithIndex.foreach { case (s, i) => s.io.d := (io.sel === i.U) && !(syncs.zipWithIndex.filter(_._2 != i).map(_._1.io.q.asBool).reduce(_||_)) }
     syncs.zipWithIndex.foreach { case (s, i) => s.io.d := (io.sel === i.U) && !(syncs.zipWithIndex.filter(_._2 != i).map(_._1.io.q.asBool).reduce(_||_)) }
 
     io.clockOut := clockOrTree(gaters.map(_.io.out))(0)

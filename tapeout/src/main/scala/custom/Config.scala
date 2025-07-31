@@ -68,8 +68,8 @@ class OurHeterSoCConfig extends Config(
   // new voyager_tapeout.custom.WithUART2 ++
   // new voyager_tapeout.custom.WithUART3 ++
   new voyager_tapeout.custom.WithSPIForSD ++
-  new voyager_tapeout.custom.iobinders.WithSPISDIOCells 
-  // new voyager_tapeout.custom.WithCustomClockGateModel
+  new voyager_tapeout.custom.iobinders.WithSPISDIOCells
+  
   // new voyager_tapeout.custom.WithSPIForFlash ++
   // new chipyard.iobinders.WithSPIFlashIOCells 
   // NPUPeripheral

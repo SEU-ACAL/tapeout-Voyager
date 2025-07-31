@@ -48,26 +48,26 @@ _start:
 #   li t3, CLOCK_SEL_ADDR
 #   sb t2, 0(t3)        // 写入时钟选择寄存器
   
-#   // 延迟一段时间等待时钟稳定
-#   li t4, 1000
-#   li t5, 0
-# clock_delay1:
-#   addi t5, t5, 1
-#   bne t5, t4, clock_delay1
+# #   // 延迟一段时间等待时钟稳定
+# #   li t4, 1000
+# #   li t5, 0
+# # clock_delay1:
+# #   addi t5, t5, 1
+# #   bne t5, t4, clock_delay1
   
-#   // 配置时钟分频
-#   srli t2, t1, 1      // 右移1位，获取bit 1-2
-#   andi t2, t2, 0x3    // 只保留这两位
-#   # addi t2, t2, 1      // 确保分频系数至少为1
-#   li t3, CLOCK_DIV_ADDR
-#   sb t2, 0(t3)        // 写入分频寄存器
+# #   // 配置时钟分频
+# #   srli t2, t1, 1      // 右移1位，获取bit 1-2
+# #   andi t2, t2, 0x3    // 只保留这两位
+# #   # addi t2, t2, 1      // 确保分频系数至少为1
+# #   li t3, CLOCK_DIV_ADDR
+# #   sb t2, 0(t3)        // 写入分频寄存器
   
-#   // 再次延迟等待分频设置生效
-#   li t4, 1000
-#   li t5, 0
-# clock_delay2:
-#   addi t5, t5, 1
-#   bne t5, t4, clock_delay2
+# #   // 再次延迟等待分频设置生效
+# #   li t4, 1000
+# #   li t5, 0
+# # clock_delay2:
+# #   addi t5, t5, 1
+# #   bne t5, t4, clock_delay2
 
 #   // clock init finish
 

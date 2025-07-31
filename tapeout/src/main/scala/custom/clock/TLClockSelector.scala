@@ -58,7 +58,7 @@ FOR RTL SIMULATION
       sel := reg.io.q
       println(s"${(address+i*4).toString(16)}: Clock domain $sinkName clock mux")
 
-      val mux = ClockMutexMux(clocks).suggestName(s"${sinkName}_clkmux")
+      val mux = voyager_tapeout.custom.clocking.ClockMutexMux(clocks).suggestName(s"${sinkName}_clkmux")
       mux.io.sel        := sel
       mux.io.resetAsync := asyncReset.asAsyncReset
       if (enable) {

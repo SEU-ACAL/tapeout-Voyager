@@ -32,6 +32,7 @@ class PLL extends BlackBox
   addResource("ip/pll/PLL.v")
   addResource("ip/pll/PLL6GS28.v")
   addResource("ip/pll/phy_defines.v")
+  addResource("ip/lib/scc28nhkcp_hdc35p140_rvt.v")
   
 }
 

@@ -7,10 +7,10 @@ import chisel3.experimental.{Analog, IntParam}
 import org.chipsalliance.cde.config.Parameters
 import freechips.rocketchip.util._
 
-// This always adds the resource always
-class EICG_wrapper extends ClockGate {
-    addResource("/ip/lib/scc28nhkcp_hdc35p140_rvt.v")
-}
+// // This always adds the resource always
+// class EICG_wrapper extends ClockGate {
+    
+// }
 
 class ClockFlop extends BlackBox with HasBlackBoxResource {
     val io = IO(new Bundle {
@@ -18,8 +18,8 @@ class ClockFlop extends BlackBox with HasBlackBoxResource {
         val d = Input(Bool())
         val clockOut = Output(Clock())
     })
-
-    addResource("/ip/clock/ClockUtil.v")
+    
+    addResource("ip/clock/ClockUtil.v")
 }
 
 class ClockOr2 extends BlackBox with HasBlackBoxResource {
@@ -27,8 +27,8 @@ class ClockOr2 extends BlackBox with HasBlackBoxResource {
         val clocksIn = Input(Vec(2, Clock()))
         val clockOut = Output(Clock())
     })
-
-    addResource("/ip/clock/ClockUtil.v")
+    addResource("ip/lib/scc28nhkcp_hdc35p140_rvt.v")
+    addResource("ip/clock/ClockUtil.v")
 }
 
 class ClockInverter extends BlackBox with HasBlackBoxResource {
@@ -37,7 +37,7 @@ class ClockInverter extends BlackBox with HasBlackBoxResource {
         val clockOut = Output(Clock())
     })
 
-    addResource("/ip/clock/ClockUtil.v")
+    addResource("ip/clock/ClockUtil.v")
 }
 
 object ClockInverter {
@@ -55,7 +55,7 @@ class ClockSignalNor2 extends BlackBox with HasBlackBoxResource {
         val clockOut = Output(Clock())
     })
 
-    addResource("/ip/clock/ClockUtil.v")
+    addResource("ip/clock/ClockUtil.v")
 }
 
 object ClockSignalNor2 {
@@ -77,7 +77,7 @@ class ClockMux2 extends BlackBox with HasBlackBoxResource {
         val clockOut = Output(Clock())
     })
 
-    addResource("/ip/clock/ClockUtil.v")
+    addResource("ip/clock/ClockUtil.v")
 }
 
 // A clock mux that's safe to switch during execution
@@ -92,7 +92,7 @@ class ClockMutexMux(val n: Int, depth: Int, genClockGate: () => ClockGate) exten
         val sel = Input(UInt(log2Ceil(n).W))
     })
 
-    val andClocks = io.clocksIn.map(x => ClockSignalNor2(ClockInverter(x), io.resetAsync.asBool))
+    val andClocks = io.clocksIn.map(x => voyager_tapeout.custom.clocking.ClockSignalNor2(voyager_tapeout.custom.clocking.ClockInverter(x), io.resetAsync.asBool))
 
     val syncs  = andClocks.map { c => withClockAndReset(c, io.resetAsync) { Module(new AsyncResetSynchronizerShiftReg(1, sync = depth, init = 0)) } }
     val gaters = andClocks.map { c =>
@@ -112,7 +112,7 @@ class ClockMutexMux(val n: Int, depth: Int, genClockGate: () => ClockGate) exten
         if (in.length == 1) {
             return in
         } else {
-            return clockOrTree(Seq.fill(in.length / 2)(Module(new ClockOr2))
+            return clockOrTree(Seq.fill(in.length / 2)(Module(new voyager_tapeout.custom.clocking.ClockOr2))
                 .zipWithIndex.map({ case (or, i) =>
                     or.io.clocksIn(0) := in(2*i)
                     or.io.clocksIn(1) := in(2*i+1)
@@ -181,7 +181,7 @@ class ClockDivideOrPass(width: Int, depth: Int = 3, genClockGate: () => ClockGat
   val divider = withClockAndReset(io.clockIn, io.resetAsync) { Module(new ClockDivider(width, initDiv=1)) }
   divider.io.divisor := withClockAndReset(io.clockIn, io.resetAsync) { SynchronizerShiftReg(Mux(io.divisor === 0.U, 1.U, io.divisor)) }
 
-  val clock_mux = Module(new ClockMutexMux(2, depth, genClockGate))
+  val clock_mux = Module(new voyager_tapeout.custom.clocking.ClockMutexMux(2, depth, genClockGate))
   clock_mux.io.clocksIn(0) := divider.io.clockOut
   clock_mux.io.clocksIn(1) := io.clockIn
   clock_mux.io.sel := io.divisor === 0.U // the sel signal is synchronized internally in the ClockMutexMux
