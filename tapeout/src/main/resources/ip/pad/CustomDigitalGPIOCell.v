@@ -1,5 +1,5 @@
 //==================================================================//
-`define verilator
+`define vcs
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `timescale 1ns/1ps
@@ -15,7 +15,7 @@ module CustomDigitalGPIOCell(
 );
 
     /* ie=0 oe=0,trans !!!
-        ie=1 oe=1 ,recieve
+       ie=1 oe=1 ,recieve
     */
     PBCD2RNC_X u_PAD_IO (
         .PAD(pad),        // 连接到外部 pad

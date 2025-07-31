@@ -98,9 +98,9 @@ class ChipBringupHostConfig extends Config(
   //=============================
   new testchipip.serdes.WithSerialTL(Seq(testchipip.serdes.SerialTLParams(
     manager = Some(testchipip.serdes.SerialTLManagerParams(
-      memParams = Seq(testchipip.serdes.ManagerRAMParams(                            // Bringup platform can access all memory from 0 to DRAM_BASE
-        address = BigInt("00000000", 16),
-        size    = BigInt("80000000", 16)
+      memParams = Seq(testchipip.serdes.ManagerRAMParams(
+        address = BigInt("00000000", 16),    // 0x00000000
+        size    = BigInt("80000000", 16)     // 2GB: 到 0x7FFFFFFF
       ))
     )),
     client = Some(testchipip.serdes.SerialTLClientParams()),                                        // Allow chip to access this device's memory (DRAM)

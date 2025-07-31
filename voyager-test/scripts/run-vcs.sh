@@ -140,10 +140,14 @@ mkdir -p "${LOG_DIR}"
 
 source ${CYDIR}/voyager-test/scripts/env-source.sh vcs
 
+#TODO:no_hart0_msip 让tsi 不发出 中断信号，在原始bootrom 无法使系统启动
+
+
 cd ${CYDIR}/sims/vcs/
 ./simv-chipyard.harness-${CONFIG}${DEBUG} $PK $full_binary_path \
   $([ $debug -eq 1 ] && echo "+fsdbfile=${WAVEFORM}") \
   +verbose +loadmem=${full_binary_path} +loadmem_addr=80000000 \
+  +no_hart0_msip\
   +permissive-off ${full_binary_path} \
   &> >(tee ${LOG_DIR}/stdout.log) \
   2> >(spike-dasm > ${LOG_DIR}/disasm.log)

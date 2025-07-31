@@ -99,3 +99,4 @@ class WithSerialDebugConnect extends Config (
   new testchipip.soc.WithOffchipBusClient(MBUS) ++                                      // offchip bus connects to MBUS, since the serial-tl needs to provide backing memory
   new testchipip.soc.WithOffchipBus
 )
+

@@ -98,6 +98,14 @@ CYDIR=$(git rev-parse --show-toplevel)
 # 切换环境变量
 source ${CYDIR}/voyager-test/scripts/env-source.sh vcs
 
+
+
+
+cd ${CYDIR}/tapeout/boot
+make clean
+
+
+
 export PATH="/usr/bin:$PATH"          # 系统 gcc/g++/ld 优先
 export CC=/usr/bin/gcc
 export CXX=/usr/bin/g++

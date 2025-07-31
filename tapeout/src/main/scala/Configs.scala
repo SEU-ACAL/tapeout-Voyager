@@ -4,15 +4,29 @@ import org.chipsalliance.cde.config.Config
 import chipyard._
 import chipyard.harness.WithSimSPIFlashModel
 import freechips.rocketchip.devices.tilelink.BootROMParams
+import freechips.rocketchip.devices.tilelink.{DevNullParams, BootROMLocated}
+import freechips.rocketchip.subsystem.{SystemBusKey, PeripheryBusKey, ControlBusKey, ExtMem}
+import scala.sys.process._
 
 // class VoyagerChipConfig extends Config(
 //   new voyager_tapeout.VoyagerSerialVerilatorConfig  
 // )
 
-class WithMyBootROM (contentFileName: String) extends Config((site, here, up) => {
-  case BootROMParams =>
-    BootROMParams(contentFileName = contentFileName)
+// class WithMyBootROM (contentFileName: String) extends Config((site, here, up) => {
+//   case BootROMParams =>
+//     BootROMParams(contentFileName = contentFileName)
+// })
+
+class WithVoyagerBootROM extends Config((site, here, up) => {
+  case BootROMLocated(x) => up(BootROMLocated(x), site).map { p =>
+    // invoke makefile for sdboot
+    val freqMHz = (site(SystemBusKey).dtsFrequency.get / (1000 * 1000)).toLong
+    val make = s"make -C tapeout/boot PBUS_CLK=${freqMHz} bin"
+    require (Process(make).! == 0, "Failed to build bootrom")
+    p.copy(hang = 0x10000, contentFileName = s"./tapeout/boot/build/sdboot.bin")
+  }
 })
+
 
 class VoyagerFPGAConfig extends Config(
   new voyager_tapeout.VoyagerSerialWithoutNPUFPGAConfig 
@@ -46,6 +60,9 @@ class VoyagerVcsConfig extends Config(
   // new voyager_tapeout.custom.WithSPIForSD ++
   // new voyager_tapeout.custom.iobinders.WithSPISDIOCells++
   // new chipyard.iobinders.WithSPIFlashIOCells ++
+  // new voyager_tapeout.custom.WithSPIForFlash ++
+  // new chipyard.iobinders.WithSPIFlashIOCells ++
+  new voyager_tapeout.WithVoyagerBootROM++
   new freechips.rocketchip.subsystem.WithoutTLMonitors++
   new voyager_tapeout.custom.harness.WithCustomChipTop ++
   new voyager_tapeout.custom.harness.WithCustomIOCells ++
@@ -64,6 +81,7 @@ class VoyagerVcsConfig1 extends Config(
   // new voyager_tapeout.custom.WithSPIForSD ++
   // new voyager_tapeout.custom.iobinders.WithSPISDIOCells++
   // new chipyard.iobinders.WithSPIFlashIOCells ++
+  new voyager_tapeout.WithVoyagerBootROM++
   new freechips.rocketchip.subsystem.WithoutTLMonitors++
   new voyager_tapeout.custom.harness.WithCustomChipTop ++
   new voyager_tapeout.custom.harness.WithCustomIOCells ++
@@ -79,6 +97,7 @@ class VoyagerVcsConfig1 extends Config(
   new chipyard.config.AbstractConfig)
 
 class VoyagerVcsChipConfig extends Config(
+  new voyager_tapeout.WithVoyagerBootROM++
   new freechips.rocketchip.subsystem.WithoutTLMonitors++
   new voyager_tapeout.custom.harness.WithCustomChipTop ++
   new voyager_tapeout.custom.harness.WithCustomIOCells ++
@@ -96,11 +115,11 @@ class VoyagerVcsChipConfig extends Config(
   new chipyard.config.AbstractConfig)
 
 // TODO:测试中
-// class TetheredVoyagerConfig extends Config(
-//   new chipyard.harness.WithAbsoluteFreqHarnessClockInstantiator ++   // use absolute freqs for sims in the harness
-//   new chipyard.harness.WithMultiChipSerialTL(0, 1) ++                // connect the serial-tl ports of the chips together
-//   new chipyard.harness.WithMultiChip(0, new VoyagerVcsConfig) ++ // ChipTop0 is the design-to-be-taped-out
-//   new chipyard.harness.WithMultiChip(1, new ChipBringupHostConfig))  // ChipTop1 is the bringup design
+class TetheredVoyagerConfig extends Config(
+  new chipyard.harness.WithAbsoluteFreqHarnessClockInstantiator ++   // use absolute freqs for sims in the harness
+  new chipyard.harness.WithMultiChipSerialTL(0, 1) ++                // connect the serial-tl ports of the chips together
+  new chipyard.harness.WithMultiChip(0, new VoyagerVcsConfig) ++ // ChipTop0 is the design-to-be-taped-out
+  new chipyard.harness.WithMultiChip(1, new ChipBringupHostConfig))  // ChipTop1 is the bringup design
 
 
 // class VoyagerSerialVerilatorConfig extends Config(
