@@ -12,6 +12,7 @@ module Macro_small #(
     input                          clk_cim,
     input                          clk_w,
     input                          rstn,
+    input                          fp_en, 
     input                          MEB,
     input                          WEB,
     input [$clog2(ROW_NUM):0]      WADR,
@@ -31,7 +32,12 @@ module Macro_small #(
 
     input                          adder_enb,
     input [3:0]                    buffer_row_addr,
-    
+
+    input [32*8-1:0]               outlier_sum,
+
+    input [7:0]                    NNIN_E_max,
+    input [63:0]           		   W_E_most,
+
     output [COL_NUM-1:0]           Q,
     output [255:0]                 data_out,
     output                         Macro_dout_valid
@@ -87,12 +93,16 @@ module Macro_small #(
     ) self_add( 
         .clk              (clk_cim),
         .rstn             (rstn),
+        .fp_en            (fp_en),
         .adder_enb        (adder_enb),
         .din_valid        (temp_psum_valid),
         .buffer_row_addr  (buffer_row_addr),
         .Macro_out        (temp_psum),
+        .outlier_sum      (outlier_sum),
+		.NNIN_E_max       (NNIN_E_max),
+		.W_E_most         (W_E_most),
         .data_out         (data_out),
-        .Macro_out_valid (Macro_dout_valid)
+        .Macro_out_valid  (Macro_dout_valid)
     );
 
 endmodule

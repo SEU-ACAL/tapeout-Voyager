@@ -9,25 +9,26 @@ module clk_selector (
     input  PLL_CLK_SEL,
 	input  reset_async,
     output clk_w,
-    output clk_cim
+    output clk_cim,
+    output clk_CSR
 );
 
     // clk_w 路径
-    wire clk_w_after_test_mode;
+    // wire clk_w_after_test_mode;        // 7.25取消, 直接复用输出clk_CSR
     wire clk_w_after_npu_sel;
 
     // 1、TEST_MODE
     ClockMutexMux mux_test_mode_w (
         .io_clocksIn_0(clk_AXI),          // CPU模式：clk_AXI
         .io_clocksIn_1(clk_FPGA_w),       // TEST模式：clk_FPGA_w
-        .io_clockOut(clk_w_after_test_mode),
+        .io_clockOut(clk_CSR),            // 7.25更改
         .io_resetAsync(reset_async),
         .io_sel(TEST_MODE)
     );
 
     // 2、NPU_AXI_SEL
     ClockMutexMux mux_npu_sel_w (
-        .io_clocksIn_0(clk_w_after_test_mode), // AXI模式：上一级输出
+        .io_clocksIn_0(clk_CSR),               // AXI模式：上一级输出       // 7.25更改
         .io_clocksIn_1(clk_FPGA_w),            // NPU模式：clk_FPGA_w
         .io_clockOut(clk_w_after_npu_sel),
         .io_resetAsync(reset_async),

@@ -10,21 +10,35 @@ import testchipip.soc.{OBUS}
 import freechips.rocketchip.subsystem.{MBUS, SBUS}
 import freechips.rocketchip.resources.{SimpleDevice}
 import sifive.blocks.devices.spi.{PeripherySPIKey, SPIParams, PeripherySPIFlashKey, SPIFlashParams}
+import sifive.blocks.devices.uart.{PeripheryUARTKey, UARTParams}
 
 
 // Custom SPI configurations to avoid name conflicts
-// class WithSPIForFlash(address: BigInt = 0x10030000, fAddress: BigInt = 0x20000000, size: BigInt = 0x800000) extends Config((site, here, up) => {
-//   case PeripherySPIFlashKey => up(PeripherySPIFlashKey) ++ Seq(
-//     SPIFlashParams(rAddress = address, fAddress = fAddress, fSize = size))
-// })
+class WithSPIForFlash(address: BigInt = 0x10030000, fAddress: BigInt = 0x20000000, size: BigInt = 0x800000) extends Config((site, here, up) => {
+  case PeripherySPIFlashKey => up(PeripherySPIFlashKey) ++ Seq(
+    SPIFlashParams(rAddress = address, fAddress = fAddress, fSize = size))
+})
 
-// class WithSPIForSD(address: BigInt = 0x10031000) extends Config((site, here, up) => {
-//   case PeripherySPIKey => up(PeripherySPIKey) ++ Seq(
-//     SPIParams(rAddress = address))
-// })
+class WithSPIForSD(address: BigInt = 0x10031000) extends Config((site, here, up) => {
+  case PeripherySPIKey => up(PeripherySPIKey) ++ Seq(
+    SPIParams(rAddress = address))
+})
 
+// 添加三个额外的UART接口
+class WithUART1(baudrate: BigInt = 115200, address: BigInt = 0x10021000, txEntries: Int = 8, rxEntries: Int = 8) extends Config((site, here, up) => {
+  case PeripheryUARTKey => up(PeripheryUARTKey) ++ Seq(
+    UARTParams(address = address, nTxEntries = txEntries, nRxEntries = rxEntries, initBaudRate = baudrate))
+})
 
+class WithUART2(baudrate: BigInt = 115200, address: BigInt = 0x10022000, txEntries: Int = 8, rxEntries: Int = 8) extends Config((site, here, up) => {
+  case PeripheryUARTKey => up(PeripheryUARTKey) ++ Seq(
+    UARTParams(address = address, nTxEntries = txEntries, nRxEntries = rxEntries, initBaudRate = baudrate))
+})
 
+class WithUART3(baudrate: BigInt = 115200, address: BigInt = 0x10023000, txEntries: Int = 8, rxEntries: Int = 8) extends Config((site, here, up) => {
+  case PeripheryUARTKey => up(PeripheryUARTKey) ++ Seq(
+    UARTParams(address = address, nTxEntries = txEntries, nRxEntries = rxEntries, initBaudRate = baudrate))
+})
 
 class OurHeterSoCConfig extends Config(
   new chipyard.config.WithTileFrequency(100, Some(0)) ++
@@ -44,9 +58,14 @@ class OurHeterSoCConfig extends Config(
   new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1) ++
   new boom.meek.common.WithNMediumBooms(1) ++
   new chipyard.config.WithGPIO(width=12) ++
-  new chipyard.config.WithSPI ++
-  // new voyager_tapeout.custom.WithSPIForSD ++
-  new voyager_tapeout.custom.iobinders.WithSPISDIOCells
+  // new chipyard.config.WithSPI ++
+  new voyager_tapeout.custom.WithUART1 ++
+  new voyager_tapeout.custom.WithUART2 ++
+  new voyager_tapeout.custom.WithUART3 ++
+  new voyager_tapeout.custom.WithSPIForSD ++
+  new voyager_tapeout.custom.iobinders.WithSPISDIOCells ++
+  new voyager_tapeout.custom.WithSPIForFlash ++
+  new chipyard.iobinders.WithSPIFlashIOCells 
   // NPUPeripheral
   // new chipyard.config.AbstractConfig
 )

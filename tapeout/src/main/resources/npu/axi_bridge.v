@@ -2,35 +2,35 @@ module axi_bridge(
     input clk,
     input rstn,
 
-    input [19:0] axi_awaddr,
-    input [7:0]  axi_awlen,  // 8 bit
-    input [2:0]  axi_awsize, // 3 bit
-    input [1:0]  axi_awburst,
-    input [11:0]  axi_awid,
-    input        axi_awvalid,
-    output reg   axi_awready,
+    input [19:0]      axi_awaddr,
+    input [7:0]       axi_awlen,  // 8 bit
+    input [2:0]       axi_awsize, // 3 bit
+    input [1:0]       axi_awburst,
+    input [11:0]      axi_awid,
+    input             axi_awvalid,
+    output reg        axi_awready,
+     
+    input [63:0]      axi_wdata,
+    input [7:0]       axi_wstrb,
+    input             axi_wlast,
+    input             axi_wvalid,
+    output reg        axi_wready,
 
-    input [63:0] axi_wdata,
-    input [7:0]  axi_wstrb,
-    input        axi_wlast,
-    input        axi_wvalid,
-    output reg   axi_wready,
-
-    output reg [1:0] axi_bresp,
+    output reg [1:0]  axi_bresp,
     output [11:0]     axi_bid,
-    output reg       axi_bvalid,
-    input            axi_bready,
+    output reg        axi_bvalid,
+    input             axi_bready,
 
-    input  [19:0] axi_araddr,
-    input  [7:0]  axi_arlen,
-    input  [2:0]  axi_arsize,
-    input  [1:0]  axi_arburst,
-    input  [11:0]  axi_arid,
-    input         axi_arvalid,
-    output reg    axi_arready,
+    input  [19:0]     axi_araddr,
+    input  [7:0]      axi_arlen,
+    input  [2:0]      axi_arsize,
+    input  [1:0]      axi_arburst,
+    input  [11:0]     axi_arid,
+    input             axi_arvalid,
+    output reg        axi_arready,
 
-    output     [63:0] axi_rdata,
-    output     [11:0]  axi_rid,
+    output [63:0]     axi_rdata,
+    output [11:0]     axi_rid,
     output reg [1:0]  axi_rresp,
     output reg        axi_rlast,
     output reg        axi_rvalid,
@@ -156,7 +156,6 @@ always @(posedge clk or negedge rstn) begin
     end
 end
 
-//?????NPU??????????????
 
 // Implement write response logic generation
 
@@ -165,7 +164,6 @@ end
 // This marks the acceptance of address and indicates the status of 
 // write transaction.
 
-//axi_bvalid:???д?????Ч??slave??master??д???????
 always @(posedge clk or negedge rstn) begin
     if (~rstn) begin
         axi_bvalid <= 1'b0;
@@ -196,7 +194,16 @@ reg [19:0] araddr;
 reg [7:0]  arlen_cntr;
 reg [7:0]  arlen;
 reg [1:0]  arburst;
+reg inner_rvalid;
 
+always @(posedge clk or negedge rstn) begin
+	if (~rstn) begin
+		axi_rvalid <= 1'b0;
+	end
+	else begin
+		axi_rvalid <= inner_rvalid;
+	end
+end
 
 
 always @(posedge clk or negedge rstn) begin
@@ -209,7 +216,7 @@ always @(posedge clk or negedge rstn) begin
             axi_arready <= 1'b1;
             axi_arv_arr_flag <= 1'b1;
         end
-        else if (axi_rvalid && axi_rready && arlen_cntr == arlen) begin
+        else if (inner_rvalid && axi_rready && arlen_cntr == arlen) begin
         // preparing to accept next address after current read completion
             axi_arv_arr_flag  <= 1'b0;
         end
@@ -241,8 +248,7 @@ always @(posedge clk or negedge rstn) begin
             arlen_cntr <= 'b0;
             axi_rlast <= 'b0;
         end
-        // 目前的问题是axi ready不来，就不能让下??个mem访存，因此需要增加一个fifo
-        else if ((arlen_cntr <= arlen) && axi_rvalid && axi_rready) begin
+        else if ((arlen_cntr < arlen) && inner_rvalid && axi_rready) begin
             arlen_cntr <= arlen_cntr + 1'b1;
             axi_rlast <= 1'b0;
             case (arburst)
@@ -262,7 +268,7 @@ always @(posedge clk or negedge rstn) begin
                 end
             endcase
         end
-        else if ((arlen_cntr==arlen) && ~axi_rlast && axi_arv_arr_flag) begin
+        else if ((arlen_cntr==arlen) && ~axi_rlast && inner_rvalid) begin
             axi_rlast <= 1'b1;
         end 
         else if(axi_rready) begin  // 说明读到了rlast信号
@@ -283,17 +289,17 @@ end
 
 always @(posedge clk or negedge rstn) begin
     if (~rstn) begin
-        axi_rvalid <= 'b0;
+        inner_rvalid <= 'b0;
         axi_rresp  <= 'b0;
     end
     else begin
-        if (axi_arv_arr_flag && ~axi_rvalid) begin
-            axi_rvalid <= 1'b1;
+        if (axi_arv_arr_flag && ~inner_rvalid) begin
+            inner_rvalid <= 1'b1;
             axi_rresp  <= 2'b0;
             // "OKAY" respones
         end
-        else if (axi_rvalid && axi_rready && (arlen_cntr >= arlen)) begin
-            axi_rvalid <= 1'b0;
+        else if(inner_rvalid && axi_rready && (arlen_cntr >= arlen)) begin
+            inner_rvalid <= 1'b0;
         end
     end
 end
@@ -304,41 +310,9 @@ assign sys_store_en = axi_wvalid && axi_wready;
 assign sys_store_addr = awaddr[3+:17];
 assign sys_store_data = axi_wdata;
 
-//一直拉高？要不要用边沿触发
-//assign sys_load_en = axi_arv_arr_flag && ~axi_rvalid;
-
-//reg sys_load_en_d;
-//reg sys_load_en_d1;
-
-//reg [11:0] araddr_d;
-//always @(posedge clk) begin
-//    if (!rstn) begin
-//        sys_load_en_d <= 1'b0;
-//        sys_load_en_d1 <= 1'b0;
-//        araddr_d      <=  'd0;
-//   end else begin 
-//        sys_load_en_d <= axi_arv_arr_flag && axi_rvalid;
-//        sys_load_en_d1 <= sys_load_en_d;
-//        araddr_d <= araddr[3+:13];
-//    end
-//end
-//
-//assign sys_load_en = sys_load_en_d1; 
-//assign sys_load_addr = araddr_d;
-
-
 //assign sys_load_en = axi_arv_arr_flag && axi_rvalid;
-assign sys_load_en = axi_rready && axi_rvalid;
+assign sys_load_en = axi_rready && inner_rvalid;
 assign sys_load_addr = araddr[3+:17];
 assign axi_rdata = sys_load_data;
-
-// reg [63:0] axi_rdata_reg;
-// always @(posedge clk) begin
-//     if (sys_load_en)
-//         axi_rdata_reg <= sys_load_data;  // 在下一拍更新给 axi
-// end
-
-// assign axi_rdata = axi_rdata_reg;
-
 
 endmodule

@@ -1,5 +1,5 @@
-// `include "defines.v"
 `include "../gen-collateral/defines.v"
+// `include "../0-RTL/AXI_SLAVE/defines.v"
 
 module output_buffer_interface(
         input clk,
@@ -73,13 +73,15 @@ module output_buffer_interface(
     always @(posedge clk or negedge rstn) begin
         if(~rstn)
             bank_idx_d <= 'b0;
-        else
-            bank_idx_d <= bank_idx;
+        else begin
+            if( |cen )
+                bank_idx_d <= bank_idx;
+        end
     end
 
 
     // assign ob_load_data = ob_load_en ? dout[bank_idx *`OB_WIDTH +: `OB_WIDTH] : 'd0;
     assign ob_load_data = dout[bank_idx_d *`OB_WIDTH +: `OB_WIDTH];
 
-	
+
 endmodule

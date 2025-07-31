@@ -28,7 +28,8 @@ module outlier_mac_small_Macro #(
     output [32*8-1:0]                   outlier_mac_out,
     output                           dout_valid
 );
-
+wire [7:0] dout_valid_w;
+assign dout_valid = |dout_valid_w;
 genvar i;
 generate
     for(i = 0; i < 8; i = i + 1) begin
@@ -57,7 +58,7 @@ generate
             .outlier_index_2bit         (outlier_index_2bit                                 ) ,
             .outlier_index_4bit         (outlier_index_4bit                                 ) ,
             .outlier_mac_out            (outlier_mac_out[i*32 +: 32]                        ) ,
-            .dout_valid                 (dout_valid                                         )
+            .dout_valid                 (dout_valid_w[i]                                         )
         );
     end
 

@@ -12,7 +12,8 @@ module NNIN_top #(
     input [Macro_ROW_NUM*8-1:0]             NNIN_M_all,
 
     output [Macro_ROW_NUM-1:0]      		NNIN_bit,
-	output [Macro_ROW_NUM*8-1:0]    		NNIN_data
+	output [Macro_ROW_NUM*8-1:0]    		NNIN_data,
+	output [7:0]                      	    E_max
 );
 
 
@@ -22,7 +23,8 @@ NNIN_pre_align #(
     .fp_en      (fp_en      ),
     .NNIN_E_all (NNIN_E_all ),
     .NNIN_M_all (NNIN_M_all ),
-    .NNIN_data  (NNIN_data  )
+    .NNIN_data  (NNIN_data  ),
+	.E_max      (E_max	    )
 );
 
 NNIN_shifter #(

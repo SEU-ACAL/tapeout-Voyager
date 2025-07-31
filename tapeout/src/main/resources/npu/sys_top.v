@@ -1,10 +1,10 @@
 `include "../gen-collateral/defines.v"
-// `include "../gen-collateral/defines.v"
+// `include "../0-RTL/AXI_SLAVE/defines.v"
 
 module sys_top(
         input clk_w,
         input clk_cim,
-        input clk_axi,
+        input clk_CSR,
         input rstn,
 
         // ahb port interface
@@ -144,18 +144,21 @@ module sys_top(
     //Intermediate Variable
     //from CSR
     wire         						fp_en;
+	wire         						ctrl_rstn;
     wire         						start_en;
     // Large
-    wire [3:0]              			MAC_INPUT_ROW_L;
-    wire [3:0]              			MAC_LENGTH_L;
+    wire [4:0]              			MAC_INPUT_ROW_L;
+    wire [4:0]              			MAC_LENGTH_L;
     wire [9:0]              			FM_ADDR_START_L;
+	wire [3:0]              			CSR_MEB_L;
     wire [7:0]              			last_CIMADR_L;
-    wire [64*4-1:0]         			E_most_L;
+    wire [64*4*6-1:0]         			E_most_L;
     // Small
-    wire [3:0]              			MAC_INPUT_ROW_S;
-    wire [3:0]              			MAC_LENGTH_S;
+    wire [4:0]              			MAC_INPUT_ROW_S;
+    wire [4:0]              			MAC_LENGTH_S;
     wire [9:0]              			FM_ADDR_START_S;
-    wire [64*4-1:0]         			E_most_S;
+    wire [3:0]              			CSR_MEB_S;
+    wire [64*4*6-1:0]         			E_most_S;
 
     //from exe_mem
     wire  [`EXP_DEPTH*`EXP_WIDTH-1:0] 	WD_E_all;
@@ -224,7 +227,7 @@ module sys_top(
 
     output_buffer_interface
         output_buffer_interface_L_inst (
-            .clk                ( clk_w               ),
+            .clk                ( clk_cim             ),
             .rstn               ( rstn                ),
             .ob_load_en         ( obl_load_en         ),
             .ob_load_addr       ( obl_load_addr       ),
@@ -239,7 +242,7 @@ module sys_top(
 
     output_buffer_interface
         output_buffer_interface_S_inst (
-            .clk                ( clk_w               ),
+            .clk                ( clk_cim             ),
             .rstn               ( rstn                ),
             .ob_load_en         ( obs_load_en         ),
             .ob_load_addr       ( obs_load_addr       ),
@@ -287,22 +290,24 @@ module sys_top(
 
     csr_ctrl_memory_interface
         csr_ctrl_memory_interface_inst (
-            .clk                ( clk_axi             ),
-            .rstn               ( rstn                ),
-            .csr_load_en        ( csr_load_en         ),
-            .csr_load_addr      ( csr_load_addr       ),
-            .csr_load_data      ( csr_load_data       ),
-            .csr_store_en       ( csr_store_en        ),
-            .csr_store_addr     ( csr_store_addr      ),
-            .csr_store_data     ( csr_store_data      ),
-            .NPU_AXI_SEL        ( NPU_AXI_SEL         ),
-            .fp_en              ( fp_en              ),
-            .start_en           ( start_en           ),
+            .clk                ( clk_CSR              ),
+            .rstn               ( rstn                 ),
+            .csr_load_en        ( csr_load_en          ),
+            .csr_load_addr      ( csr_load_addr        ),
+            .csr_load_data      ( csr_load_data        ),
+            .csr_store_en       ( csr_store_en         ),
+            .csr_store_addr     ( csr_store_addr       ),
+            .csr_store_data     ( csr_store_data       ),
+            .NPU_AXI_SEL        ( NPU_AXI_SEL          ),
+            .fp_en              ( fp_en                ),
+			.ctrl_rstn          ( ctrl_rstn            ),
+            .start_en           ( start_en             ),
 
             // Large
             .MAC_INPUT_ROW_L     ( MAC_INPUT_ROW_L     ),
             .MAC_LENGTH_L        ( MAC_LENGTH_L        ),
             .FM_ADDR_START_L     ( FM_ADDR_START_L     ),
+			.CSR_MEB_L           ( CSR_MEB_L           ),
             .last_CIMADR_L       ( last_CIMADR_L       ),
             .E_most_L            ( E_most_L            ),
 
@@ -310,12 +315,13 @@ module sys_top(
             .MAC_INPUT_ROW_S     ( MAC_INPUT_ROW_S     ),
             .MAC_LENGTH_S        ( MAC_LENGTH_S        ),
             .FM_ADDR_START_S     ( FM_ADDR_START_S     ),
+			.CSR_MEB_S           ( CSR_MEB_S           ),
             .E_most_S            ( E_most_S            )
         );
 
     exponent_memory_interface
         exponent_memory_interface_inst (
-            .clk             ( clk_axi          ),
+            .clk             ( clk_CSR         ),
             .rstn            ( rstn            ),
             .exp_store_en    ( exp_store_en    ),
             .exp_store_addr  ( exp_store_addr  ),
@@ -399,18 +405,23 @@ module sys_top(
                 .clk_w                  ( clk_w                  ),
                 .clk_cim                ( clk_cim                ),
                 .rstn                   ( rstn                   ),
-                //FROM CSR
+				//FROM CSR
                 .NPU_AXI_SEL            ( NPU_AXI_SEL            ),
                 .start_en               ( start_en               ),
                 .fp_en                  ( fp_en                  ),
+				.ctrl_rstn              ( ctrl_rstn              ),
+                //FROM CSR_L
                 .MAC_INPUT_ROW_L        ( MAC_INPUT_ROW_L        ),
                 .MAC_LENGTH_L           ( MAC_LENGTH_L           ),
                 .FM_ADDR_START_L        ( FM_ADDR_START_L        ),
+				.CSR_MEB_L              ( CSR_MEB_L              ),
                 .last_CIMADR_L          ( last_CIMADR_L          ),
                 .E_most_L               ( E_most_L               ),
+				//FROM CSR_S
                 .MAC_INPUT_ROW_S        ( MAC_INPUT_ROW_S        ),
                 .MAC_LENGTH_S           ( MAC_LENGTH_S           ),
                 .FM_ADDR_START_S        ( FM_ADDR_START_S        ),
+				.CSR_MEB_S              ( CSR_MEB_S              ),
                 .E_most_S               ( E_most_S               ),
 				//FROM exe_mem
                 .WD_E_all               ( WD_E_all               ),

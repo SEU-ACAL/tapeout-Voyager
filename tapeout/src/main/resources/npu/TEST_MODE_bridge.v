@@ -35,8 +35,9 @@ module TEST_MODE_bridge (
         //TO_csr_ctrl
         input        	  	NPU_AXI_SEL,					//0:AXI use SRAM , 1:NPU use SRAM
         //To sys_top
-        output 				clk_w,
-        output 				clk_cim,
+        output reg			clk_w,
+        output reg			clk_cim,
+        output reg          clk_CSR,                        
         output 				rstn_NPU,
 
         output          	sys_load_en,
@@ -74,7 +75,8 @@ module TEST_MODE_bridge (
                      .PLL_CLK_SEL   ( PLL_CLK_SEL  ),
 					 .reset_async	( reset_async  ),
                      .clk_w         ( clk_w        ),
-                     .clk_cim       ( clk_cim      )
+                     .clk_cim       ( clk_cim      ),
+                     .clk_CSR       ( clk_CSR      )
                  );
 
 endmodule

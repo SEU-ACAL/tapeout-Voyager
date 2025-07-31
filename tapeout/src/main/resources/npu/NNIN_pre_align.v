@@ -7,13 +7,14 @@ module NNIN_pre_align #(
         input [Macro_ROW_NUM*8-1:0]         NNIN_E_all,
         input [Macro_ROW_NUM*8-1:0]         NNIN_M_all,
 
-        output [Macro_ROW_NUM*8-1:0]        NNIN_data
+        output [Macro_ROW_NUM*8-1:0]        NNIN_data,
+		output [7:0]                        E_max
     );
 
     reg [7:0]								NNIN_E;
     reg [7:0]								NNIN_M;
 
-    wire [7:0]                              E_max;
+    // wire [7:0]                              E_max;
 
     reg [7:0]								delta_E;                // 8bit, 正数
     reg [8:0]								NNIN_M_sup1;            // 9bit, NNIN_M补1后的, 为了不损失精度用9bit
