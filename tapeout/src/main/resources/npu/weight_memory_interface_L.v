@@ -1,5 +1,5 @@
-// `include "defines.v"
-`include "../gen-collateral/defines.v"
+`include "defines.v"
+// `include "../0-RTL/AXI_SLAVE/defines.v"
 
 module weight_memory_interface_L(
         input clk,
@@ -71,8 +71,10 @@ module weight_memory_interface_L(
     always @(posedge clk or negedge rstn) begin
         if(~rstn)
             bank_idx_d <= 'b0;
-        else
-            bank_idx_d <= bank_idx;
+        else begin
+            if( |cen )
+                bank_idx_d <= bank_idx;
+        end
     end
 
     assign wm_load_data = !NPU_AXI_SEL ? dout[bank_idx_d *`WM_WIDTH +: `WM_WIDTH] : 'd0;

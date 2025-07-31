@@ -16,6 +16,8 @@ module csr_ctrl_memory_interface(
 
         output 		   							NPU_AXI_SEL,
         output 		   							fp_en,
+		output 		   							ctrl_rstn,
+
         output									start_en,
 
         output	[4:0]							MAC_INPUT_ROW_L,
@@ -23,13 +25,13 @@ module csr_ctrl_memory_interface(
         output	[9:0]							FM_ADDR_START_L,
         output	[3:0]							CSR_MEB_L,
         output	[7:0]							last_CIMADR_L,
-        output	[64*4-1:0]						E_most_L,
+        output	[64*4*6-1:0]					E_most_L,
 
         output	[4:0]							MAC_INPUT_ROW_S,
         output	[4:0]							MAC_LENGTH_S,
         output	[9:0]							FM_ADDR_START_S,
         output	[3:0]							CSR_MEB_S,
-        output	[64*4-1:0]						E_most_S
+        output	[64*4*6-1:0]					E_most_S
     );
 
     reg [63:0] ctrl_reg[0:`CSR_DEPTH-1];
@@ -64,27 +66,27 @@ module csr_ctrl_memory_interface(
             csr_load_data <= ctrl_reg[csr_load_addr];
     end
 
-    assign NPU_AXI_SEL		 = ctrl_reg[8][0];
-    assign fp_en			 = ctrl_reg[8][1];
+    assign NPU_AXI_SEL		 = ctrl_reg[0][0];
+    assign fp_en			 = ctrl_reg[0][1];
+	assign ctrl_rstn		 = ctrl_reg[0][2];
 
-    assign MAC_INPUT_ROW_L	 = ctrl_reg[9][0  +:5];
-    assign MAC_LENGTH_L		 = ctrl_reg[9][5  +:5];
-    assign FM_ADDR_START_L	 = ctrl_reg[9][10 +:10];
-    assign CSR_MEB_L		 = ctrl_reg[9][20 +:4];
-    assign last_CIMADR_L	 = ctrl_reg[9][24 +:8];
+    assign MAC_INPUT_ROW_L	 = ctrl_reg[1][0  +:5];
+    assign MAC_LENGTH_L		 = ctrl_reg[1][5  +:5];
+    assign FM_ADDR_START_L	 = ctrl_reg[1][10 +:10];
+    assign CSR_MEB_L		 = ctrl_reg[1][20 +:4];
+    assign last_CIMADR_L	 = ctrl_reg[1][24 +:8];
 
-    assign MAC_INPUT_ROW_S	 = ctrl_reg[10][0  +:5];
-    assign MAC_LENGTH_S		 = ctrl_reg[10][5  +:5];
-    assign FM_ADDR_START_S	 = ctrl_reg[10][10 +:10];
-    assign CSR_MEB_S		 = ctrl_reg[10][20 +:4];
+    assign MAC_INPUT_ROW_S	 = ctrl_reg[2][0  +:5];
+    assign MAC_LENGTH_S		 = ctrl_reg[2][5  +:5];
+    assign FM_ADDR_START_S	 = ctrl_reg[2][10 +:10];
+    assign CSR_MEB_S		 = ctrl_reg[2][20 +:4];
 
-    assign start_en			 = ctrl_reg[11][0];
-
+    assign start_en			 = ctrl_reg[3][0];
 
     generate
-        for (i = 0; i < 4; i = i + 1) begin : gen_E_most
-            assign E_most_L[64*i +:64] = ctrl_reg[i];
-            assign E_most_S[64*i +:64] = ctrl_reg[i+8];
+        for (i = 0; i < 4*6; i = i + 1) begin : gen_E_most
+            assign E_most_L[64*i +:64] = ctrl_reg[i+4];
+            assign E_most_S[64*i +:64] = ctrl_reg[i+28];
         end
     endgenerate
 

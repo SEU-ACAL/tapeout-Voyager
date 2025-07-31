@@ -23,7 +23,7 @@
 
 // CSR (Control and Status Register) defines
 `define CSR_WIDTH        64
-`define CSR_DEPTH        16
+`define CSR_DEPTH        64
 
 // CIM (Compute-In-Memory) defines
 `define CIM_WIDTH        64

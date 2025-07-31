@@ -1,4 +1,4 @@
-// `include "../gen-collateral/defines.v"
+// `include "../0-RTL/AXI_SLAVE/defines.v"
 `include "../gen-collateral/defines.v"
 
 module CIM_memory_interface_small #(
