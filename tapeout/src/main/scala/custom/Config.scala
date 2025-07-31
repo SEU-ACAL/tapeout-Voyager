@@ -27,21 +27,23 @@ class WithSPIForSD(address: BigInt = 0x10031000) extends Config((site, here, up)
     SPIParams(rAddress = address))
 })
 
-// 添加三个额外的UART接口
-class WithUART1(baudrate: BigInt = 115200, address: BigInt = 0x10021000, txEntries: Int = 8, rxEntries: Int = 8) extends Config((site, here, up) => {
+class WithUART1(baudrate: BigInt = 4800, address: BigInt = 0x10021000, txEntries: Int = 8, rxEntries: Int = 8) extends Config((site, here, up) => {
   case PeripheryUARTKey => up(PeripheryUARTKey) ++ Seq(
     UARTParams(address = address, nTxEntries = txEntries, nRxEntries = rxEntries, initBaudRate = baudrate))
 })
 
-class WithUART2(baudrate: BigInt = 115200, address: BigInt = 0x10022000, txEntries: Int = 8, rxEntries: Int = 8) extends Config((site, here, up) => {
-  case PeripheryUARTKey => up(PeripheryUARTKey) ++ Seq(
-    UARTParams(address = address, nTxEntries = txEntries, nRxEntries = rxEntries, initBaudRate = baudrate))
-})
+// class WithUART2(baudrate: BigInt = 115200, address: BigInt = 0x10022000, txEntries: Int = 8, rxEntries: Int = 8) extends Config((site, here, up) => {
+//   case PeripheryUARTKey => up(PeripheryUARTKey) ++ Seq(
+//     UARTParams(address = address, nTxEntries = txEntries, nRxEntries = rxEntries, initBaudRate = baudrate))
+// })
 
-class WithUART3(baudrate: BigInt = 115200, address: BigInt = 0x10023000, txEntries: Int = 8, rxEntries: Int = 8) extends Config((site, here, up) => {
-  case PeripheryUARTKey => up(PeripheryUARTKey) ++ Seq(
-    UARTParams(address = address, nTxEntries = txEntries, nRxEntries = rxEntries, initBaudRate = baudrate))
-})
+// class WithUART3(baudrate: BigInt = 115200, address: BigInt = 0x10023000, txEntries: Int = 8, rxEntries: Int = 8) extends Config((site, here, up) => {
+//   case PeripheryUARTKey => up(PeripheryUARTKey) ++ Seq(
+//     UARTParams(address = address, nTxEntries = txEntries, nRxEntries = rxEntries, initBaudRate = baudrate))
+// })
+
+
+
 
 class OurHeterSoCConfig extends Config(
   new chipyard.config.WithTileFrequency(100, Some(0)) ++
@@ -60,7 +62,7 @@ class OurHeterSoCConfig extends Config(
   new chipyard.config.WithSystemBusWidth(128) ++
   new freechips.rocketchip.rocket.WithMEEKCores(GH_GlobalParams.GH_NUM_CORES - 1) ++
   new boom.meek.common.WithNMediumBooms(1) ++
-  new chipyard.config.WithGPIO(width=12) ++
+  new chipyard.config.WithGPIO(width=9) ++
   // new chipyard.config.WithSPI ++
   // new voyager_tapeout.custom.WithUART1 ++
   // new voyager_tapeout.custom.WithUART2 ++
@@ -77,13 +79,13 @@ class OurHeterSoCConfig extends Config(
 class WithNPU extends Config (
   new voyager_tapeout.custom.harness.WithPeripheralNPUPin ++ // 连接harness和npu到chiptop的pin
   new voyager_tapeout.custom.iobinders.WithPeripheralNPUIOCell ++ // 连接npu和chiptop的pin
-  new voyager_tapeout.custom.device.peripheral_npu.WithNPUPeripheral   // 连接npu和pbus的pin 
+  new voyager_tapeout.custom.device.peripheral_npu.WithNPUPeripheral (voyager_tapeout.custom.device.peripheral_npu.PeripheralNPUParams(0x10050000, 0x25000, 4))   // 连接npu和pbus的pin 
 )
 //Chip config
 class WithSerialConnect extends Config (
   new testchipip.serdes.WithSerialTLMem(size = BigInt("10000000",16)) ++ // 8 GB of off-chip memory
   new testchipip.serdes.WithSerialTLPHYParams(
-  testchipip.serdes.ExternalSyncSerialPhyParams(phitWidth=4, flitWidth=16))++ 
+  testchipip.serdes.ExternalSyncSerialPhyParams(phitWidth=4, flitWidth=4))++ 
   new chipyard.config.WithSerialBackingMemory  ++
   new testchipip.soc.WithOffchipBusClient(MBUS) ++                                      // offchip bus connects to MBUS, since the serial-tl needs to provide backing memory
   new testchipip.soc.WithOffchipBus

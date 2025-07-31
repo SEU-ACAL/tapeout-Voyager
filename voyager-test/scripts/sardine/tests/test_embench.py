@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 script_dir = Path(__file__).parent.parent.parent
-embench_workload_dir = script_dir / ".." / "output" / "workloads" / "embench"
+embench_workload_dir = Path("/home/gb515897968/tape/tapeout/tapeout-Voyager/voyager-test/output/workloads/embench")
 
 # Define all embench workloads with absolute paths and corresponding IDs
 embench_workloads = [
@@ -113,13 +113,14 @@ vcs_config = [
 
 @pytest.mark.vcs
 @pytest.mark.embench
+@pytest.mark.debug
 @pytest.mark.parametrize("workload_path,workload_id", embench_workloads, ids=[w[1] for w in embench_workloads])
 @pytest.mark.parametrize("config", vcs_config)
-def test_embench_workload_fast(script_runner, caplog, workload_path, workload_id, config):
+def test_embench_workload_vcs_fast(script_runner, caplog, workload_path, workload_id, config):
   caplog.set_level(logging.INFO)
   
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-vcs.sh", ["--config", config, workload_path,"--debug"], timeout=60000)
+  result = script_runner(f"{script_dir}/run-vcs.sh", ["--config", config, workload_path, "--debug"], timeout=60000)
   execution_time = time.time() - start_time
   
   logging.info(f"Workload: {workload_id}, Config: {config}")

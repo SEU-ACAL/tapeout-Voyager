@@ -86,11 +86,13 @@ class VoyagerVcsChipConfig extends Config(
   new voyager_tapeout.custom.OurHeterSoCConfig ++
   new voyager_tapeout.custom.iobinders.WithVoyagerPLLSelectorDividerClockGenerator(enable=true)++
   new voyager_tapeout.custom.WithNPU ++
-  // new testchipip.serdes.WithNoSerialTLClient++
+
+  new voyager_tapeout.custom.WithSPIForFlash ++
+  new chipyard.iobinders.WithSPIFlashIOCells ++
+  
   //TODO : 运行vsc 暂时注释掉
   new testchipip.serdes.WithSerialTLMem(size = BigInt("80000000",16)) ++ // 8 GB of off-chip memory
   new voyager_tapeout.custom.WithSerialConnect++   // 
-
   new chipyard.config.AbstractConfig)
 
 // TODO:测试中

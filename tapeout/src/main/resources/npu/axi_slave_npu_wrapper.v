@@ -177,6 +177,7 @@ module axi_slave_npu_wrapper(
                          .NPU_AXI_SEL         		( NPU_AXI_SEL         ),
                          .clk_w               		( clk_w               ),
                          .clk_cim             		( clk_cim             ),
+                         .clk_CSR                   ( clk_CSR             ),
                          .rstn_NPU            		( rstn_NPU				),
                          .sys_load_en         		( sys_load_en         ),
                          .sys_load_addr       		( sys_load_addr       ),
