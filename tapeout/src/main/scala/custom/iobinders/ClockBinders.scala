@@ -16,6 +16,9 @@ class VoyagerClockSourceIO extends Bundle {
   val gate = Input(Bool())
   val clk = Output(Clock())
   val lock = Output(Bool()) // PLL lock status
+  val ref_div = Input(UInt(6.W)) // Reference divider input
+  val fb_div_int = Input(UInt(12.W)) // Feedback divider input
+  val clk_div1 = Input(UInt(3.W)) // Clock divider input
   // val VSSA = Analog(1.W)
   // val VDDP = Analog(1.W)
   // val VDDB = Analog(1.W)
@@ -87,6 +90,9 @@ class WithVoyagerPLLSelectorDividerClockGenerator(enable: Boolean = true) extend
       fake_pll.io.power := pllCtrlSink.in(0)._1.power
       fake_pll.io.gate := pllCtrlSink.in(0)._1.gate
       fake_pll.io.clk0  := clock_wire
+      fake_pll.io.ref_div := pllCtrlSink.in(0)._1.ref_div
+      fake_pll.io.fb_div_int := pllCtrlSink.in(0)._1.fb_div_int
+      fake_pll.io.clk_div1 := pllCtrlSink.in(0)._1.clk_div1
       pllCtrlSource.out(0)._1.lock := fake_pll.io.lock // Connect PLL lock status to the output
       // 创建 PLL 电源引脚的顶层 IO（不通过 IOCell）
       // val vssa_io = IO(Analog(1.W)).suggestName("PLL_VSSA")

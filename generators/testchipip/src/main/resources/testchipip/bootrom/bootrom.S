@@ -13,12 +13,21 @@ _start:
 
 # pll_init:
 #   //PLL init
+#   li t0,CLOCK_PLL_CTRL+12
+#   # addi t0,t0,8
+#   li t1, 0x4
+#   sw t1, 0(t0) // 设置PLL分频寄存器,设置分频系数
+#   addi t0,t0,4
+#   li t1, 0x28
+#   sw t1, 0(t0) // 设置PLL反馈分频寄存器,设置反馈分频系数
+#   addi t0,t0,4
+#   li t1, 0x7
+#   sw t1, 0(t0) // 设置PLL参考分频寄存器,设置参考分频系数
 #   li t0,CLOCK_PLL_CTRL
 #   addi t0,t0,4
 #   li t1, 0x1
 #   sw t1, 0(t0) // 设置PLL控制寄存器,启用PLL
 #   addi t0,t0,4
-
 # wait_pll_open:
 #   lb t1, 0(t0)
 #   andi t1,t1,1

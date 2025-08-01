@@ -6,6 +6,9 @@
 module PLL (
     input clk0,
     input power,
+    input [5:0] ref_div,
+    input [11:0] fb_div_int,
+    input [2:0]  clk_div1,
     output lock,
     input gate,
     output clk);
@@ -22,6 +25,9 @@ module PLL (
     // inout VDDP,
     // inout VDDB,
     // inout VDDA, 
+    input [5:0] ref_div,
+    input [11:0] fb_div_int,
+    input [2:0]  clk_div1,
     output lock,
     input gate,
     output clk);
@@ -37,18 +43,18 @@ module PLL (
     // .VDDA							(1'b1),
     .I_PLL_BYPASS_CLKDIVPD         	(1'b0                          ),
     .I_PLL_CKREF                   	(clk0                          ),
-    .I_PLL_CLKDIV1                 	(3'b1                          ),
+    .I_PLL_CLKDIV1                 	(clk_div1                      ),
     .I_PLL_CLKDIV2                 	(3'b1                          ),
     .I_PLL_CLKDIVPD                	(1'b0                          ),
     .I_PLL_CLKPHASEPD              	(1'b0                          ),
     .I_PLL_FBDIV_FRA               	(24'h00_0000                   ),
-    .I_PLL_FBDIV_INT               	(12'b10_1000                   ),
+    .I_PLL_FBDIV_INT               	(fb_div_int                    ),
     .I_PLL_PD                      	(!power                        ),
-    .I_PLL_REFDIV                  	(6'b000100                     ),
-    .I_PLL_V2I_PD                  	(1'b0                          ),
-    .I_PLL_FRPD                    	(1'b0                          ),
+    .I_PLL_REFDIV                  	(ref_div                       ),
+    .I_PLL_V2I_PD                  	(1'b1                          ),
+    .I_PLL_FRPD                    	(1'b1                          ),
     .I_PLL_VCO_OUT_PD              	(1'b0                          ),
-    .O_PLL_CLK2                    	(                              ),
+    .O_PLL_CLK2                    	(clk),
     .O_PLL_CLK3                    	(                              ),
     .O_PLL_CLK4                    	(                              ),
     .O_PLL_CLK5                    	(                              ),
@@ -61,7 +67,7 @@ module PLL (
     .O_PLL_CLK_QN                  	(                              ),
     .O_PLL_CLK_QP                  	(                              ),
     .O_PLL_LOCK                    	(lock                          ),
-    .O_PLL_VCO_OUT_CLK             	(clk)
+    .O_PLL_VCO_OUT_CLK             	()
     );
     // assign clk = clk0;
 endmodule
@@ -71,7 +77,9 @@ endmodule
 module PLL (
     input clk0,
     input power,
-
+    input [5:0] ref_div,
+    input [11:0] fb_div_int,
+    input [2:0]  clk_div1,
     output lock,
     input gate,
     output clk);
@@ -80,16 +88,16 @@ module PLL (
     PLL6GS28		PLL6GS28(
     .I_PLL_BYPASS_CLKDIVPD         	(1'b0                          ),
     .I_PLL_CKREF                   	(clk0                          ),
-    .I_PLL_CLKDIV1                 	(3'b1                          ),
+    .I_PLL_CLKDIV1                 	(clk_div1                      ),
     .I_PLL_CLKDIV2                 	(3'b1                          ),
     .I_PLL_CLKDIVPD                	(1'b0                          ),
     .I_PLL_CLKPHASEPD              	(1'b0                          ),
     .I_PLL_FBDIV_FRA               	(24'h00_0000                   ),
-    .I_PLL_FBDIV_INT               	(12'b10_1000                   ),
+    .I_PLL_FBDIV_INT               	(fb_div_int                    ),
     .I_PLL_PD                      	(!power                        ),
-    .I_PLL_REFDIV                  	(6'b000100                     ),
+    .I_PLL_REFDIV                  	(ref_div                       ),
     .I_PLL_V2I_PD                  	(1'b0                          ),
-    .I_PLL_FRPD                    	(1'b0                          ),
+    .I_PLL_FRPD                    	(1'b1                          ),
     .I_PLL_VCO_OUT_PD              	(1'b0                          ),
     .O_PLL_CLK2                    	(                           ),
     .O_PLL_CLK3                    	(                              ),
