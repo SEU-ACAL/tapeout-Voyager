@@ -201,6 +201,7 @@ class GH_MemFIFO(val params: FIFOParams) extends Module with HasFIFOIO {
                                       1.U, 
                                       0.U)
   
+  assert(!(io.deq_ready&&io.enq_valid && !fullReg&&(readPtr===writePtr)),"LSL rw the same addr")
   io.deq_bits                  := mem.read(readPtr, io.deq_ready)
   io.full                      := fullReg
   io.empty                     := emptyReg

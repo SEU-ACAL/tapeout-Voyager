@@ -133,6 +133,7 @@ class R_RSUSL_kernel(val params: R_RSUSLParams) extends Module with HasR_RSUSLIO
   has_ECP                                        := Mux(if_RSU_packet===1.U,false.B,Mux(det_fall,true.B,has_ECP))
 
   val rfs_ss_wen = (packet_valid === 1.U)
+  // assert(!(rfs_ss_wen && (packet_index === 0x20.U && io.check_priv =/= 0.U)), "RSU Master should not write to ARFS/FARFS at index 0x20 when check_priv is not 0")
   when (rfs_ss_wen) {
     arfs_ss.write(packet_index, packet_arfs)
     farfs_ss.write(packet_index, packet_farfs)

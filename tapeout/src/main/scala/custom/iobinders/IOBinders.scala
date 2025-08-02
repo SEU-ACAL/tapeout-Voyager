@@ -92,7 +92,7 @@ class WithSPISDIOCells extends OverrideIOBinder({
         val iocell = p(IOCellKey).gpio().suggestName(s"${iocellBase}_dq_${j}")
         iocell.io.o := pin.o
         iocell.io.oe := pin.oe
-        iocell.io.ie := true.B
+        iocell.io.ie := false.B
         pin.i := iocell.io.i
         iocell.io.pad <> ana
         iocell
@@ -121,7 +121,7 @@ class WithSPIFlashIOCells extends OverrideIOBinder({
         val iocell = p(IOCellKey).gpio().suggestName(s"${iocellBase}_dq_${j}")
         iocell.io.o := pin.o
         iocell.io.oe := pin.oe
-        iocell.io.ie := true.B
+        iocell.io.ie := false.B
         pin.i := iocell.io.i
         iocell.io.pad <> ana
         iocell

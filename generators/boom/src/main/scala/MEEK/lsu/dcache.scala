@@ -297,6 +297,8 @@ class BoomDuplicatedDataArray(implicit p: Parameters) extends AbstractBoomDataAr
         array.write(waddr, data, io.write.bits.wmask.asBools)
       }
       io.resp(j)(w) := RegNext(array.read(raddr, io.read(j).bits.way_en(w) && io.read(j).valid).asUInt)
+      assert(!(io.read(j).bits.way_en(w) && io.read(j).valid&&io.write.bits.way_en(w) && io.write.valid&&(raddr===waddr)),
+        "Read and write to the same way at the same time in BoomDuplicatedDataArray")
     }
     io.nacks(j) := false.B
   }
@@ -464,12 +466,16 @@ class BoomNonBlockingDCacheModule(outer: BoomNonBlockingDCache) extends LazyModu
   // 0 goes to MSHR replays, 1 goes to wb, 2 goes to pipeline
   dataReadArb.io.in := DontCare
 
+  //TODO ：fix dcache rw bug (change by GB)
   for (w <- 0 until memWidth) {
-    data.io.read(w).valid := dataReadArb.io.out.bits.valid(w) && dataReadArb.io.out.valid
+    data.io.read(w).valid := dataReadArb.io.out.bits.valid(w) && dataReadArb.io.out.fire
     data.io.read(w).bits  := dataReadArb.io.out.bits.req(w)
   }
-  dataReadArb.io.out.ready := true.B
-
+  
+  dataReadArb.io.out.ready := dataReadArb.io.out.bits.req.map{req=>
+    ((req.addr>>rowOffBits) =/=  (dataWriteArb.io.out.bits.addr>>rowOffBits))&&(dataWriteArb.io.out.fire)||(!dataWriteArb.io.out.fire)
+  }.reduce(_&&_)
+  // dataReadArb.io.out.ready := true.B
   data.io.write.valid := dataWriteArb.io.out.fire
   data.io.write.bits  := dataWriteArb.io.out.bits
   dataWriteArb.io.out.ready := true.B
@@ -858,7 +864,8 @@ class BoomNonBlockingDCacheModule(outer: BoomNonBlockingDCache) extends LazyModu
                             !(io.lsu.exception && resp(w).bits.uop.uses_ldq) &&
                             !IsKilledByBranch(io.lsu.brupdate, resp(w).bits.uop)
     io.lsu.resp(w).bits  := UpdateBrMask(io.lsu.brupdate, resp(w).bits)
-
+    io.lsu.resp(w).bits.data := Mux(io.lsu.resp(w).valid,resp(w).bits.data,0.U)
+    
     io.lsu.nack(w).valid := s2_valid(w) && s2_send_nack(w) &&
                             !(io.lsu.exception && s2_req(w).uop.uses_ldq) &&
                             !IsKilledByBranch(io.lsu.brupdate, s2_req(w).uop)

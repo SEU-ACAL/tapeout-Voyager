@@ -1,4 +1,4 @@
-// `include "../gen-collateral/defines.v"
+// `include "../0-RTL/AXI_SLAVE/defines.v"
 `include "../gen-collateral/defines.v"
 
 module mem_access_manager(
@@ -78,7 +78,7 @@ module mem_access_manager(
         // exponent memory
         output                                 exp_load_en,
         output [$clog2(`EXP_DEPTH)-1:0]        exp_load_addr,
-        output [`EXP_WIDTH-1:0]                exp_load_data,
+        input  [`EXP_WIDTH-1:0]                exp_load_data,
         output                                 exp_store_en,
         output [$clog2(`EXP_DEPTH)-1:0]        exp_store_addr,
         output [`EXP_WIDTH-1:0]                exp_store_data,

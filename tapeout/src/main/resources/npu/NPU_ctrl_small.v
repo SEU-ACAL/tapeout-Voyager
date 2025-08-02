@@ -1,203 +1,387 @@
-// `include "../gen-collateral/defines.v"
+// `include "../0-RTL/AXI_SLAVE/defines.v"
 `include "../gen-collateral/defines.v"
 
-module NPU_ctrl_small (
-        input clk_w,
-        input clk_cim,
-        input rstn,
-        input	[3:0]		MAC_INPUT_ROW,    // 代表复用当前权重的次数
-        input	[3:0]		MAC_LENGTH,		  // MAX:6
+module NPU_ctrl_small #(
+        parameter Macro_ROW_NUM_S = 32
+    )(
+        input  clk_w,
+        input  clk_cim,
+        input  rstn,
+        input  NPU_AXI_SEL,
 
-        //from CSR
-        input	[9:0]					FM_ADDR_START_S,
-        input							start_en_S,
-        input							fp_en_S,
-        input	[64*4-1:0]				E_most_S,
+        // from CSR
+        // shared
+        input                      start_en_S,				//start singal pulse，外部脉冲，仅脉冲一次，标志启动
+        input                      fp_en_S,
+        // private
+        input      [4:0]           MAC_INPUT_ROW,
+        input      [4:0]           MAC_LENGTH,
+        input      [9:0]           FM_ADDR_START_S,
+        input      [64*4*6-1:0]    E_most_S,
+        // add CSR
+        input      [3:0]           CSR_MEB_S,
 
+        // TO NPU_large_core
+        output reg                                  din_valid_S,
+        output reg [Macro_ROW_NUM_S*8-1:0]          NNIN_E_S,
+        output reg [Macro_ROW_NUM_S*8-1:0]          NNIN_M_S,
+        output reg [$clog2(Macro_ROW_NUM_S):0]      WADR_S,
+        output reg [3:0]                            WEB_S,
+        output reg [3:0]                            MEB_S,
+        output reg [64*4-1:0]                       WD_E_S,
+        output reg [64*4-1:0]                       WD_M_S,
+        output reg [1:0]                            CIMADR_S,
+        output reg [3:0]                            buffer_row_addr_S,
+        output reg                                  buffer1_rst_S,      // add
+        output reg                                  buffer0_rst_S,
+        output reg                                  adder_enb_S,
+		output reg [64*4-1:0]    					E_most_S_core,
 
+        // output
+        input  [256*4-1:0]                          data_out_S,
+        input                                       Macro_out_valid,
 
-        //to memory interface
-        output 										wms_npu_load_en_pre ,
-        output [$clog2(`WM_Bank_DEPTH_S)-1:0]       wms_npu_load_addr   ,
-        input [`WM_WIDTH *`WM_Bank_NUM -1:0]       	wms_npu_load_data   , // 64*16 bit
-        //input 								       	wms_npu_load_valid  ,
+        // MEM ctrl
+        output                                      wms_npu_load_en_pre,
+        output [$clog2(`WM_Bank_DEPTH_S)-1:0]       wms_npu_load_addr,
+        input  [`WM_WIDTH *`WM_Bank_NUM -1:0]       wms_npu_load_data,
 
-        output 										fms_npu_load_en_pre ,
-        output [$clog2(`FM_Bank_DEPTH_S)-1:0]       fms_npu_load_addr   ,
-        input [`FM_WIDTH *`FM_Bank_NUM_S -1:0]       	fms_npu_load_data   , // 64*64 bit = 4096
-        //input 								       	fms_npu_load_valid  ,
+        output                                      fms_npu_load_en_pre,
+        output [$clog2(`FM_Bank_DEPTH_S)-1:0]       fms_npu_load_addr,
+        input  [`FM_WIDTH *`FM_Bank_NUM_S -1:0]     fms_npu_load_data,
 
-        output 										obs_npu_store_en_pre,
-        output [$clog2(`OB_Bank_DEPTH)-1:0]         obs_npu_store_addr  ,
-        output  signed[`OB_WIDTH *`OB_Bank_NUM -1:0]    obs_npu_store_data,
-
-        //to npu core
-        output reg                     din_valid_S,
-        output reg [32*8-1:0]          NNIN_E_S,
-		output reg [32*8-1:0]          NNIN_M_S,
-        output reg [5:0]               WADR_S,
-        output reg [3:0]               WEB_S,
-        output reg [3:0]               MEB_S,
-        output reg [64*4-1:0]          WD_E_S,
-        output reg [64*4-1:0]          WD_M_S,
-        output reg 		               buffer1_rst_S,
-        output reg 		               buffer0_rst_S,
-        output reg [1:0]               CIMADR_S,
-        output reg 			           adder_enb_S,
-        output reg [3:0]               buffer_row_addr_S,
-        input wire [32*8*4-1:0]        outlier_sum_S,
-        input wire 		               outlier_out_valid_S,
-        input wire [256*4-1:0]         data_out_S,
-        input wire 		 	           Macro_out_valid_S
+        output                                      obs_npu_store_en_pre,
+        output reg[$clog2(`OB_Bank_DEPTH)-1:0]      obs_npu_store_addr,
+        output signed[`OB_WIDTH *`OB_Bank_NUM -1:0] obs_npu_store_data
     );
 
-    localparam Macro_ROW_NUM_S    = 32;
-    localparam ROW_NUM_2_S        = 16;
-    localparam ROW_NUM_4_S        = 4;
-    localparam GROUP_ROW_NUM_S    = 32;
-    localparam ROW_GROUP_NUM_S    = 1;
-    localparam COL_NUM_S          = 64;
-    localparam COL_GROUP_NUM_S    = 8;
-    localparam WEIGHT_W_S         = 8;
-    localparam BUFFER_ROW_S       = 16;
-
-
-    reg [3:0] 			MAC_INPUT_ROW_cnt;  //0~15
-    reg [3:0] 			MAC_LENGTH_cnt;     //0~15
-    reg [3:0] 			MAC_COL_cnt;        //0~15
-
     //counter ctrl
-    reg [2:0] 	bit_cyc_cnt;
-    wire 		first_start;		//start singal pulse
-    wire		write_ready;
-    wire		cim_ready;
-    wire 		ready;
-    wire		last_en;
+    reg [2:0] 								bit_cyc_cnt;
+    reg [4:0] 								MAC_INPUT_ROW_cnt;
+    reg [4:0] 								MAC_LENGTH_cnt;
+    reg [4:0] 								WRITE_LENGTH_cnt;
 
-	reg wms_npu_load_valid;
-	reg fms_npu_load_valid;
+    //辅助信号定义
+    wire 									st_cim_pl;
+    reg 									st_cim;				//辅助信号，用于产生开始计算脉冲
+    reg 									st_cim_d1;
+    wire 									first_start;		//start singal pulse，外部脉冲，仅脉冲一次，标志计算启动
+    reg 									first_start_d;
+    reg										first_end;
 
-    assign first_start = (MAC_INPUT_ROW_cnt == 0) && (MAC_LENGTH_cnt == 0) && (MAC_COL_cnt == 0) && start_en_S;
-    assign ready = write_ready & cim_ready; //ping-pong 计算/写入中需要等memory 1的权重写满和memory 2的权重复用结束才能开始写memory 2
-    assign last_en = MAC_LENGTH_cnt == MAC_LENGTH;
+    wire 									st_write_pl;
+    reg										st_write;			//辅助信号，用于产生开始write cim脉冲
+    reg 									st_write_d1;
+    wire									last_en;			//标志MAC_LENGTH_cnt == MAC_LENGTH，表示这一次算完后所有的计算都完成了
+    wire 									last_en_write;
+    wire 									write_cim_en;
 
-	always @(posedge clk_w or negedge rstn) begin
-    	if (!rstn) begin
-        	wms_npu_load_valid <= 1'b0;
-        	fms_npu_load_valid <= 1'b0;
-    	end 
-		else begin
-        	wms_npu_load_valid <= wms_npu_load_en_pre;
-        	fms_npu_load_valid <= fms_npu_load_en_pre;
-    	end
-	end
+    wire									cim_ready;
+    reg								 		cim_ready_d1;
+    wire									cim_ready_cdc;
+    wire									write_ready;
+    reg										write_ready_d1;
+    reg										write_ready_d2;
+    wire									write_ready_cdc;
+
+    wire 									NNIN_mux;			//此信号会影响fms_npu_load_addr和fms_npu_load_data,INT8mode下，存NNIN_E_L和NNIN_M_L的BANK交替加载,都用来存储feature
+    // reg 									NNIN_mux_d;
+    wire 									WD_mux;				//此信号会影响wms_npu_load_addr和wms_npu_load_data,INT8mode下，存WD_E_L和WD_M_L的BANK交替加载,都用来存储weight
+    reg 									WD_mux_d;
+
+    reg 									CIMADR_S_MSB;
+    reg 									CIMADR_S_MSB_d1;
+    wire                            		CIMADR_S_LSB;
+    reg 									WADR_S_MSB;
+    reg [$clog2(Macro_ROW_NUM_S)-1:0]		WADR_S_LSB;
+	reg [$clog2(Macro_ROW_NUM_S)-1:0]		WADR_S_LSB_d1;
+
+    //FM ctrl
+    wire [$clog2(`FM_Bank_DEPTH_S)-1:0]     fms_npu_load_addr_next;
+    reg 									fms_npu_load_valid  ;
+    //WMS ctrl
+    reg [$clog2(Macro_ROW_NUM_S)-1:0] 		wm_addr_S;				//上述功能修改至此，直接增加1bit位宽//7.24不增加位宽了，直接/2就是wm的地址
+    reg [$clog2(`WM_Bank_DEPTH_S):0]      	wms_npu_load_addr_reg;
+    reg 								    wms_npu_load_valid  ;
+
+
+    always @(posedge clk_cim or negedge rstn) begin
+        if(!rstn)
+            fms_npu_load_valid <= 'b0;
+        else
+            fms_npu_load_valid <= NPU_AXI_SEL&fms_npu_load_en_pre;
+    end
+    always @(posedge clk_w or negedge rstn) begin
+        if(!rstn)
+            wms_npu_load_valid <= 'b0;
+        else
+            wms_npu_load_valid <= NPU_AXI_SEL&wms_npu_load_en_pre;
+    end
 
     always @(posedge clk_cim or negedge rstn) begin
         if (!rstn)
             bit_cyc_cnt <= 'd0;
-        else if (bit_cyc_cnt == 3'd7)
-            bit_cyc_cnt <= 'd0;
-        else if (bit_cyc_cnt == 3'd0)
-            bit_cyc_cnt <= bit_cyc_cnt + 1'b1;
-        else
-            bit_cyc_cnt <= bit_cyc_cnt + 1'b1;
+        else if (bit_cyc_cnt == 'd7) begin
+            if(MAC_INPUT_ROW_cnt == MAC_INPUT_ROW) begin
+                if( (write_ready_cdc | first_end) & !last_en )							//input_row算完了，bit_cyc算完，写cim ready，计数器归零
+                    bit_cyc_cnt <= 'd0;
+            end
+            else
+                bit_cyc_cnt <= 'd0;
+        end
+        else begin
+            if(st_cim_d1)
+                bit_cyc_cnt <= bit_cyc_cnt + 1'b1;
+        end
     end
 
     always @(posedge clk_cim or negedge rstn) begin
         if (!rstn)
             MAC_INPUT_ROW_cnt <= 'd0;
-        else if (bit_cyc_cnt == 3'd7)
-            if (MAC_INPUT_ROW_cnt == MAC_INPUT_ROW-1) begin
-                // if(ready)
-                MAC_INPUT_ROW_cnt <= 'd0;
+        else if (bit_cyc_cnt == 3'd7) begin
+            if (MAC_INPUT_ROW_cnt == MAC_INPUT_ROW) begin
+                if( (write_ready_cdc | first_end) & !last_en )								//第一次算完不需要write_ready_cdc，直接归零，MAC_LENGTH_cnt == 'd0即为第一次算完
+                    MAC_INPUT_ROW_cnt <= 'd0;
             end
             else
                 MAC_INPUT_ROW_cnt <= MAC_INPUT_ROW_cnt + 1'b1;
+        end
     end
 
     always @(posedge clk_cim or negedge rstn) begin
         if (!rstn)
             MAC_LENGTH_cnt <= 'd0;
-        else if (bit_cyc_cnt == 3'd7 && MAC_INPUT_ROW_cnt == MAC_INPUT_ROW-1)
-            if (MAC_LENGTH_cnt == MAC_LENGTH) begin
-                // if(ready)
-                MAC_LENGTH_cnt <= 'd0;
-            end
-            else
-                MAC_LENGTH_cnt <= MAC_LENGTH + 1'b1;
+        else if (cim_ready & (write_ready_cdc|first_end) & !last_en)
+            MAC_LENGTH_cnt <= MAC_LENGTH_cnt + 1'b1;
     end
 
 
     //FM ctrl
-    wire [$clog2(`FM_Bank_DEPTH_S)-1:0]         fms_npu_load_addr_next;
+    wire [4:0]     FA_offset;
 
-    assign fms_npu_load_en_pre		 = ((bit_cyc_cnt == 3'd7)& (MAC_INPUT_ROW_cnt < MAC_INPUT_ROW) ) | ((bit_cyc_cnt == 3'd7)&ready) | first_start;
-    assign fms_npu_load_addr_next	 = FM_ADDR_START_S + MAC_LENGTH_cnt * MAC_INPUT_ROW + MAC_INPUT_ROW_cnt + 1'b1;
-    assign fms_npu_load_addr		 = first_start ? FM_ADDR_START_S: fms_npu_load_addr_next;
-    assign cim_ready				 = MAC_INPUT_ROW_cnt == MAC_INPUT_ROW;  // 复用结束
+    assign FA_offset = fp_en_S?	 MAC_LENGTH_cnt * (MAC_INPUT_ROW+1'b1) + MAC_INPUT_ROW_cnt+ 1'b1
+           :   					(MAC_LENGTH_cnt * (MAC_INPUT_ROW+1'b1) + MAC_INPUT_ROW_cnt+ 1'b1)>>1;													//INT8 mode下，两周期地址一变
+    assign fms_npu_load_en_pre		 = (bit_cyc_cnt == 3'd7 | first_start | cim_ready&write_ready_cdc) && (MAC_INPUT_ROW_cnt < MAC_INPUT_ROW||MAC_LENGTH_cnt < MAC_LENGTH);		//三种情况：1）input_row没算完  2）第一次启动  3）input_row算完了，write_ready_cdc和cim_ready都为1
+    assign fms_npu_load_addr_next	 = FM_ADDR_START_S + FA_offset;
+    assign fms_npu_load_addr		 = first_start? FM_ADDR_START_S: fms_npu_load_addr_next;
+    assign cim_ready				 = (bit_cyc_cnt == 3'd7) && (MAC_INPUT_ROW_cnt == MAC_INPUT_ROW);
+
 
 
     //WML ctrl
-    reg [$clog2(Macro_ROW_NUM_S)-1:0] 	wm_addr_S;
-    reg 								wm_addr_S_MSB;
-	always @(posedge clk_w or negedge rstn) begin
-		if(!rstn) begin
-			wm_addr_S <= 'b0;
-			wm_addr_S_MSB <= 1'b0;
-		end
-		else if(wm_addr_S == Macro_ROW_NUM_S-1) begin
-			wm_addr_S <= wm_addr_S + 1'b1;
-			wm_addr_S_MSB <= !wm_addr_S_MSB;
-		end
-	end
-    assign wms_npu_load_en_pre		 =  ready || wm_addr_S;
-
-    assign wms_npu_load_addr		 = MAC_LENGTH_cnt * 32 + wm_addr_S;
-    assign write_ready				 = (wm_addr_S == Macro_ROW_NUM_S-1);  // 一块memory写满
-
-    reg               CIMADR_MSB;
-    always @(posedge clk_cim or negedge rstn) begin
-        if(!rstn) begin
-            CIMADR_MSB <= ~WADR_S[$clog2(Macro_ROW_NUM_S)];
+    always @(posedge clk_w or negedge rstn) begin
+        if(!rstn)
+            wm_addr_S <= 'b0;
+        else if( wm_addr_S == Macro_ROW_NUM_S-1) begin
+            if(cim_ready_cdc && !last_en_write)
+                wm_addr_S <= wm_addr_S + 1'b1;
         end
-        else if(ready) begin
-            CIMADR_MSB <= ~CIMADR_MSB;
+        else begin
+            if(st_write)							//在clk_cim时钟域拉高后恒为1，所以跨时钟域没关系
+                wm_addr_S <= wm_addr_S + 1'b1;
         end
     end
+    always @(posedge clk_w or negedge rstn) begin
+        if(!rstn)
+            WRITE_LENGTH_cnt <= 'b0;
+        else if(wm_addr_S == Macro_ROW_NUM_S-1 && cim_ready_cdc && !last_en_write)
+            WRITE_LENGTH_cnt <= WRITE_LENGTH_cnt + 1'b1;
+    end
+    always @(posedge clk_w or negedge rstn) begin
+        if(!rstn)
+            wms_npu_load_addr_reg <= 'b0;
+        else if( wm_addr_S == Macro_ROW_NUM_S-1) begin
+            if(cim_ready_cdc && !last_en_write)
+                wms_npu_load_addr_reg <= wms_npu_load_addr_reg + 1'b1;
+        end
+        else begin
+            if(st_write)							//在clk_cim时钟域拉高后恒为1，所以跨时钟域没关系
+                wms_npu_load_addr_reg <= wms_npu_load_addr_reg + 1'b1;
+        end
+    end
+    assign wms_npu_load_en_pre	 = (!(WADR_S_LSB==wm_addr_S) | st_write_pl) && st_write;
+    assign wms_npu_load_addr	 = fp_en_S ? wms_npu_load_addr_reg[6:0] : wms_npu_load_addr_reg[7:1];			//两种模式下选择wml的地址，INT8mode下，两周期选一次地址
+    assign write_ready			 = wm_addr_S == Macro_ROW_NUM_S-1;
 
     //OBL ctrl
-    //仅当达到最后一轮MAC长度并有有效输出时，才写入输出缓冲
-    assign obs_npu_store_en_pre	 = (MAC_LENGTH_cnt == MAC_LENGTH) && Macro_out_valid_S;
-    assign obs_npu_store_addr	 = MAC_INPUT_ROW_cnt;
-    genvar i;
-    generate
-		for (i = 0; i < 32; i = i + 1) begin : gen_obs_add
-            wire signed [31:0] sum_in_1 = outlier_sum_S[i*32 +: 32];
-            wire signed [31:0] sum_in_2 = data_out_S[i*32 +: 32];
-            wire signed [31:0] sum_res = (sum_in_1 <<< 8) + sum_in_2;
-
-            assign obs_npu_store_data[i*32 +: 32] = sum_res;
+    assign obs_npu_store_en_pre	 = Macro_out_valid;						//每一次INT8xINT8都存下来，存中间结果方便测试
+    assign obs_npu_store_data	 = data_out_S;
+    always @(posedge clk_cim or negedge rstn) begin						//cim时钟域
+        if (!rstn)
+            obs_npu_store_addr <= 'd0;
+        else begin
+            if(Macro_out_valid)
+                obs_npu_store_addr <= obs_npu_store_addr + 1'b1;		//obs结果有延迟，NPU出结果,已经在下一周期，需要打拍保持住
         end
-    endgenerate
-
-    always @(*) begin
-        MEB_S				= {  4{((bit_cyc_cnt == 3'd7) & cim_ready)}  }; // =7说明8bit的feature全部传输完毕，之后延迟1周期
-        {WD_E_S, WD_M_S} 	= wms_npu_load_data;
-        NNIN_E_S			= fms_npu_load_data[`FM_WIDTH *`FM_Bank_NUM_S/2	+:`FM_WIDTH *`FM_Bank_NUM_S/2];
-        NNIN_M_S			= fms_npu_load_data[0							+:`FM_WIDTH *`FM_Bank_NUM_S/2];
-        din_valid_S			= fms_npu_load_valid & ready;
-        //************************************************************//
-        //有问题，需要后面修改
-        // obs_npu_store_data				 = ($signed(outlier_sum_S)<<<8) + $signed(data_out_S); // outlier的位权比尾数高
-        //************************************************************//
-        CIMADR_S			= 'b0;
-        adder_enb_S			= {{!(MAC_LENGTH_cnt > 'b0)}};						//延迟一cyc
-        buffer_row_addr_S	= MAC_INPUT_ROW_cnt;
-        WADR_S				= wm_addr_S;
-        WEB_S               = { 4{!wms_npu_load_en_pre}};
-        buffer0_rst_S		= { {(wm_addr_S == Macro_ROW_NUM_S) & ready} } | (buffer1_rst_S & ~adder_enb_S);
-        buffer1_rst_S		= { {(wm_addr_S == Macro_ROW_NUM_S) & ready} };
     end
+    // assign obl_npu_store_addr	 = MAC_LENGTH_cnt*(MAC_INPUT_ROW+1'b1) + MAC_INPUT_ROW_cnt;		//obl结果有延迟，NPU出结果,已经在下一周期，需要打拍保持住
+
+
+    //*********************************Macro ctrl port*************************************//
+    assign CIMADR_S_LSB = (cim_ready && cim_ready_d1) ? 1'b0 : 1'b1;
+    always @(*) begin
+        NNIN_E_S			= fp_en_S	? fms_npu_load_data[`FM_WIDTH *`FM_Bank_NUM_S/2	+:`FM_WIDTH *`FM_Bank_NUM_S/2]: 'b0;
+        NNIN_M_S			= NNIN_mux	? fms_npu_load_data[`FM_WIDTH *`FM_Bank_NUM_S/2 +:`FM_WIDTH *`FM_Bank_NUM_S/2]: fms_npu_load_data[0 +:`FM_WIDTH *`FM_Bank_NUM_S/2];
+        WD_E_S				= fp_en_S	? wms_npu_load_data[`WM_WIDTH *`WM_Bank_NUM/2   +:`WM_WIDTH *`WM_Bank_NUM/2]  : 'b0;
+        WD_M_S				= WD_mux	? wms_npu_load_data[`WM_WIDTH *`WM_Bank_NUM/2   +:`WM_WIDTH *`WM_Bank_NUM/2]  : wms_npu_load_data[0 +:`WM_WIDTH *`WM_Bank_NUM/2];
+        din_valid_S			= !fms_npu_load_en_pre & fms_npu_load_valid;
+
+        CIMADR_S			= {CIMADR_S_MSB, CIMADR_S_LSB };				//高bit反转后需要延迟一周期在开始计算，cdl行为与行为及模型不一样,后续再说
+        adder_enb_S			= MAC_LENGTH_cnt == 'b0;						//cyc有延迟**********此处采用macro内采样
+        buffer_row_addr_S	= MAC_INPUT_ROW_cnt;							//cyc有延迟**********此处采用macro内采样
+
+        WADR_S				= {WADR_S_MSB, WADR_S_LSB};
+        WEB_S				= {4{!wms_npu_load_valid}} | CSR_MEB_S;			//写完没算完要关闭,通过利用写完没算完wml_npu_load_en不使能，wml_npu_load_valid无效
+        buffer0_rst_S		= !CIMADR_S_MSB & !CIMADR_S_MSB_d1 & cim_ready;
+        buffer1_rst_S		= CIMADR_S_MSB & CIMADR_S_MSB_d1 & cim_ready;
+		E_most_S_core		= E_most_S[64*4*MAC_LENGTH_cnt +:64*4];
+    end
+
+    //设置CSR_MEB目的是：当计算到矩阵乘边缘时，不一定所有的CIM都需要使用  //MEB初始赋值后不变，CIM计算用CIMADR操作，write CIM不受该信号控制
+    always @(posedge clk_cim or negedge rstn) begin
+        if (!rstn)
+            MEB_S <= 4'hf;
+        else begin
+            if(start_en_S)
+                MEB_S <= CSR_MEB_S;
+        end
+    end
+    //INPUT_ROW算完之后就翻转，初始值为0
+    always @(posedge clk_cim or negedge rstn) begin
+        if (!rstn)
+            CIMADR_S_MSB <= 'd0;
+        else begin
+            if(cim_ready&!cim_ready_d1)
+                CIMADR_S_MSB <= !CIMADR_S_MSB;
+        end
+    end
+    // CIMADR_L_MSB 打一拍
+    always @(posedge clk_cim or negedge rstn) begin
+        if (!rstn)
+            CIMADR_S_MSB_d1 <= 'd0;
+        else begin
+            if(bit_cyc_cnt == 'd0)
+                CIMADR_S_MSB_d1 <= CIMADR_S_MSB;
+        end
+    end
+    // WADR_L_LSB 是 wm_addr_L 的延迟一周期
+    always @(posedge clk_w or negedge rstn) begin
+        if (!rstn)
+            WADR_S_LSB <= 'd0;
+        else
+            WADR_S_LSB <= wm_addr_S;
+    end
+    // WADR_L_LSB_d1 是 WADR_L_LSB 打一拍
+    always @(posedge clk_w or negedge rstn) begin
+        if (!rstn)
+            WADR_S_LSB_d1 <= 'd0;
+        else
+            WADR_S_LSB_d1 <= WADR_S_LSB;
+    end
+    //WADR_MSB存满之后就翻转，初始值为0
+    always @(posedge clk_w or negedge rstn) begin
+        if (!rstn)
+            WADR_S_MSB <= 'd0;
+        else begin
+            if(WADR_S_LSB == Macro_ROW_NUM_S-1 && !(WADR_S_LSB_d1 == Macro_ROW_NUM_S-1) && !last_en_write)
+                WADR_S_MSB <= !WADR_S_MSB;
+        end
+    end
+
+    //*********************************辅助信号*************************************//
+    assign first_start	 = (MAC_INPUT_ROW_cnt == 0) && (MAC_LENGTH_cnt == 0) && st_cim_pl;			//start singal pulse，外部脉冲，仅脉冲一次，标志启动
+    assign last_en		 = MAC_LENGTH_cnt == MAC_LENGTH;											//标志这一次算完后所有的计算都完成了
+    assign last_en_write = WRITE_LENGTH_cnt == (MAC_LENGTH>'d2 ? MAC_LENGTH-'d2 : 1'b0);			//标志这一次写完后所有的写操作都完成了
+    assign write_cim_en  = MAC_LENGTH>'d1 ? 1'b1: 1'b0;
+
+    always @(posedge clk_cim or negedge rstn) begin
+        if (!rstn)
+            first_start_d <= 1'b0;
+        else
+            first_start_d <= first_start;
+    end
+
+    always @(posedge clk_cim or negedge rstn) begin
+        if (!rstn)
+            first_end <= 1'b0;
+        else begin
+            if(cim_ready & (MAC_LENGTH_cnt == 0))
+                first_end <= 1'b1;		//第一次算完后，first_end拉高
+            else
+                first_end <= 1'b0;		//第二次开始后，first_end归0
+        end
+    end
+
+    //起始信号产生
+    always @(posedge clk_cim or negedge rstn) begin
+        if (!rstn) begin
+            st_cim    <= 1'b0;
+            st_cim_d1 <= 1'b0;
+        end
+        else begin
+            if(start_en_S)				//被采样信号保持恒1，不会出问题
+                st_cim <= 1'b1;      // 对原始信号采样,恒1的逻辑，作用于计数器的第一次0 - 1转换
+            st_cim_d1 <= st_cim;          // 对原始信号打一拍
+        end
+    end
+    always @(posedge clk_w or negedge rstn) begin
+        if (!rstn) begin
+            st_write    <= 1'b0;
+            st_write_d1 <= 1'b0;
+        end
+        else begin
+            if(cim_ready & (MAC_LENGTH_cnt == 0) & write_cim_en)		//这里采样会不会有问题，被采样信号仅一周期
+                st_write    <= 1'b1;
+            st_write_d1 <= st_write;
+        end
+    end
+    assign st_cim_pl = st_cim & ~st_cim_d1;  // 检测上升沿，生成1周期脉冲,此时两个信号都从CSR域转换到cim域，仅产生1周期，作用于fm和wm的第一次load使能
+    assign st_write_pl = st_write & ~st_write_d1;
+
+
+
+
+
+    // NNIN_mux 打拍，用 clk_cim      // WD_mux 打拍，用 clk_w 		//和SRAM地址一样，需要打拍模拟SRAM输出延迟
+    // always @(posedge clk_cim or negedge rstn) begin
+    //     if (!rstn)
+    //         NNIN_mux_d <= 1'b0;
+    //     else
+    //         NNIN_mux_d <= MAC_INPUT_ROW_cnt[0];
+    // end
+    always @(posedge clk_w or negedge rstn) begin
+        if (!rstn)
+            WD_mux_d <= 1'b0;
+        else
+            WD_mux_d <= fp_en_S ? 1'b0 : wm_addr_S[0];
+    end
+    assign NNIN_mux = fp_en_S ? 1'b0 : MAC_INPUT_ROW_cnt[0];				//fe_en_S为1时, 浮点模式，mux恒0
+    assign WD_mux = fp_en_S ? 1'b0 : WD_mux_d;
+
+
+
+
+
+    //cim_ready打两拍做CDC
+    always @(posedge clk_cim or negedge rstn) begin
+        if (!rstn)
+            cim_ready_d1 <= 1'b0;
+        else
+            cim_ready_d1 <= cim_ready;
+    end
+    //write_ready打两拍做CDC
+    always @(posedge clk_w or negedge rstn) begin
+        if (!rstn) begin
+            write_ready_d1 <= 1'b0;
+            write_ready_d2 <= 1'b0;
+        end
+        else begin
+            write_ready_d1 <= write_ready;
+            write_ready_d2 <= write_ready_d1;
+        end
+    end
+    assign cim_ready_cdc = cim_ready_d1 | cim_ready;
+    assign write_ready_cdc = write_ready_d2 | write_ready_d1 | write_ready;
 
 
 endmodule

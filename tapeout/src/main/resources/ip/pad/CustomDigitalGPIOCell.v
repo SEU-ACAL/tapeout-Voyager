@@ -15,7 +15,7 @@ module CustomDigitalGPIOCell(
 );
 
     /* ie=0 oe=0,trans !!!
-        ie=1 oe=1 ,recieve
+       ie=1 oe=1 ,recieve
     */
     PBCD2RNC_X u_PAD_IO (
         .PAD(pad),        // 连接到外部 pad

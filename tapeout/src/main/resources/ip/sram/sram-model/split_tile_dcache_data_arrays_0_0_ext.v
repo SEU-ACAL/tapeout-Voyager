@@ -4,7 +4,6 @@
 
 `ifdef vcs
 
-`include "smic281prf256x8m4.v"
 module split_tile_dcache_data_arrays_0_0_ext(
   input  [7:0]   RW0_addr,
   input          RW0_clk,

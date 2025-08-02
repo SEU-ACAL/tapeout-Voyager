@@ -18,52 +18,49 @@ module NPU_core_small #(
         input                                   din_valid,
 
         // NNIN
-        // input [Macro_ROW_NUM*8-1:0]          NNIN_all,   //共用
+        // input [Macro_ROW_NUM*8-1:0]          NNIN_all,
         input [Macro_ROW_NUM*8-1:0]          	NNIN_E,
         input [Macro_ROW_NUM*8-1:0]          	NNIN_M,
 
         // outlier & macro public
-        input [$clog2(Macro_ROW_NUM):0]         WADR,                   // 每个macro共用一个
-        input [3:0]                             WEB,                    // 每个macro不一样，位宽x4
-        input [3:0]                             MEB,                    // 每个macro不一样，位宽x4
+        input [$clog2(Macro_ROW_NUM):0]         WADR,
+        input [3:0]                             WEB,
+        input [3:0]                             MEB,
 
         // outlier_large_macro_top
         input                                   fp_en,                  // 1 enable, 0 disable
-        input [64*4-1:0]                        E_most,                 // 每个macro不一样(每个channel都不一样，自然每个macro不一样)，位宽x4
-        input [64*4-1:0]                        WD_E,                   // 每个macro不一样，位宽x4
-        input [64*4-1:0]                        WD_M,                   // 每个macro不一样，位宽x4
-        input 		                            buffer0_rst,            // 每个macro不一样，位宽x4
-        input 		                            buffer1_rst,            // 每个macro不一样，位宽x4
-        // 小核不需要compute_valid
-        // input [7:0]                          compute_valid,          // 每个macro不一样，位宽x8
+        input [64*4-1:0]                        E_most,
+        input [64*4-1:0]                        WD_E,
+        input [64*4-1:0]                        WD_M,
+        input 		                            buffer0_rst,
+        input 		                            buffer1_rst,
+        // input [7:0]                          compute_valid,
 
         // macro
-        input [1:0]                             CIMADR,                 // 每个macro共用一个 (小核的CIMADR只有最高位核最低位有用)
+        input [1:0]                             CIMADR,
 
-        input 		                            adder_enb,              // 每个macro不一样，位宽x4
-        input [3:0]                             buffer_row_addr,        // 修改为共用
+        input 		                            adder_enb,
+        input [3:0]                             buffer_row_addr,
 
         // output
-        output [32*8*4-1:0]                     outlier_sum,            // 每个macro不一样，位宽x4
+        //output [32*8*4-1:0]                   outlier_sum,
+        //output 		                        outlier_out_valid,
 
 
-        output 		                            outlier_out_valid,      // 每个macro不一样，位宽x4
-
-
-        output [256*4-1:0]                      data_out,               // 每个macro不一样，位宽x4
+        output [256*4-1:0]                      data_out,
         output 		                            Macro_out_valid
     );
 
     // between NNIN & macro
-    wire [Macro_ROW_NUM-1:0]      		        NNIN_bit;               // NNIN的单比特输出
+    wire [Macro_ROW_NUM-1:0]      		        NNIN_bit;
 
     // between outlier & macro
-    wire [COL_NUM*4-1:0]                        WD;                     // 每个macro不一样，位宽x4
+    wire [COL_NUM*4-1:0]                        WD;
+    wire [32*8*4-1:0]                           outlier_sum;
 
     //between NNIN & outlier
-    //由于NNIN是共用的，所以不再需要从NNIN_NOC中引出重组之后的NNIN_INT8     // 7.19修改 再使用NNIN_top之后，还需要从NNIN_pre_align移位后(FP16)引出MMIN_data
     //wire [Macro_ROW_NUM*8*4-1:0]    		    NNIN_INT8;
-    wire [Macro_ROW_NUM*8-1:0]                  NNIN_data;              // 每个macro共用一个输入
+    wire [Macro_ROW_NUM*8-1:0]                  NNIN_data;
 
     // macro unuse signal
     wire                                    REN;
@@ -75,10 +72,12 @@ module NPU_core_small #(
     wire                                    NNIN_SI;
     wire                                    PSUM_SI;
     wire [3:0]								Macro_out_valid_w;
-    wire [3:0]								dout_valid;
+    //wire [3:0]						    dout_valid;
+
+	wire [7:0]                              E_max;
 
     assign Macro_out_valid   = |Macro_out_valid_w;
-    assign outlier_out_valid = |dout_valid;
+    //assign outlier_out_valid = |dout_valid;
 
     assign REN = 1'b0;
     assign RA = 6'b0;
@@ -89,18 +88,51 @@ module NPU_core_small #(
     assign NNIN_SI = 1'b0;
     assign PSUM_SI = 1'b0;
 
+    // adder_enb 打三拍
+    reg adder_enb_d1, adder_enb_d2, adder_enb_d3;
+    always @(posedge clk_cim or negedge rstn) begin
+        if (!rstn) begin
+            adder_enb_d1 <= 1'b0;
+            adder_enb_d2 <= 1'b0;
+            adder_enb_d3 <= 1'b0;
+        end
+        else begin
+            adder_enb_d1 <= adder_enb;
+            adder_enb_d2 <= adder_enb_d1;
+            adder_enb_d3 <= adder_enb_d2;
+        end
+    end
+
+    // buffer_row_addr 打四拍
+    reg [3:0] buffer_row_addr_d1, buffer_row_addr_d2, buffer_row_addr_d3, buffer_row_addr_d4;
+    always @(posedge clk_cim or negedge rstn) begin
+        if (!rstn) begin
+            buffer_row_addr_d1 <= 4'b0;
+            buffer_row_addr_d2 <= 4'b0;
+            buffer_row_addr_d3 <= 4'b0;
+            buffer_row_addr_d4 <= 4'b0;
+        end
+        else begin
+            buffer_row_addr_d1 <= buffer_row_addr;
+            buffer_row_addr_d2 <= buffer_row_addr_d1;
+            buffer_row_addr_d3 <= buffer_row_addr_d2;
+            buffer_row_addr_d4 <= buffer_row_addr_d3;
+        end
+    end
+
     NNIN_top #(
-        .Macro_ROW_NUM  ( Macro_ROW_NUM  )  
-    ) u_NNIN_top (
-        .clk            ( clk_cim        ),          
-        .rstn           ( rstn           ),       
-        .din_valid      ( din_valid      ),    
-        .fp_en          ( fp_en          ),      
-        .NNIN_E_all     ( NNIN_E         ),   
-        .NNIN_M_all     ( NNIN_M         ), 
-        .NNIN_bit       ( NNIN_bit       ),     
-        .NNIN_data      ( NNIN_data      )     
-    );
+                 .Macro_ROW_NUM  ( Macro_ROW_NUM  )
+             ) u_NNIN_top (
+                 .clk            ( clk_cim        ),
+                 .rstn           ( rstn           ),
+                 .din_valid      ( din_valid      ),
+                 .fp_en          ( fp_en          ),
+                 .NNIN_E_all     ( NNIN_E         ),
+                 .NNIN_M_all     ( NNIN_M         ),
+                 .NNIN_bit       ( NNIN_bit       ),
+                 .NNIN_data      ( NNIN_data      ),
+				 .E_max          ( E_max          )
+             );
 
     genvar i;
     generate
@@ -126,7 +158,7 @@ module NPU_core_small #(
                                         .full_NNIN      ( NNIN_data                  ),
                                         .WD_out         ( WD[i*COL_NUM+:COL_NUM]     ),
                                         .outlier_sum    ( outlier_sum[i*32*8+:32*8]  ),
-                                        .dout_valid     ( dout_valid[i]              )
+                                        .dout_valid     (                            )
                                     );
         end
     endgenerate
@@ -146,6 +178,7 @@ module NPU_core_small #(
                             .clk_cim                    ( clk_cim                        ),
                             .clk_w                      ( clk_w                          ),
                             .rstn                       ( rstn                           ),
+                            .fp_en                      ( fp_en                          ),
                             .MEB                        ( MEB[j]                         ),
                             .WEB                        ( WEB[j]                         ),
                             .WADR                       ( WADR                           ),
@@ -161,8 +194,11 @@ module NPU_core_small #(
                             .NNIN_SI                    ( NNIN_SI                        ),
                             .PSUM_SI                    ( PSUM_SI                        ),
                             .din_valid                  ( din_valid                      ),
-                            .adder_enb                  ( adder_enb	                     ),
-                            .buffer_row_addr            ( buffer_row_addr                ),
+                            .adder_enb                  ( adder_enb_d3	                 ),
+                            .buffer_row_addr            ( buffer_row_addr_d4             ),
+                            .outlier_sum                ( outlier_sum[j*32*8+:32*8]      ),
+							.NNIN_E_max                 ( E_max                          ),
+							.W_E_most                    ( E_most[j*64+:64]              ),
                             .Q                          (                                ),
                             .data_out                   ( data_out[j*256+:256]           ),
                             .Macro_dout_valid           ( Macro_out_valid_w[j]           )

@@ -4,7 +4,6 @@
 
 `ifdef vcs
 
-`include "smic281prf1024x8m4.v"
 module split_mem_2_ext(
 
   input  [9:0]   RW0_addr,

@@ -4,62 +4,33 @@
 
 `ifdef chip
 module split_mem_1_ext(
-  input  [6:0] R0_addr,
-  input        R0_clk,
-  output [7:0] R0_data,
-  input        R0_en,
-  input  [6:0] W0_addr,
-  input        W0_clk,
-  input  [7:0] W0_data,
-  input        W0_en,
-  input        W0_mask
+  input  [6:0] RW0_addr,
+  input        RW0_clk,
+  input  [7:0] RW0_wdata,
+  output [7:0] RW0_rdata,
+  input        RW0_en,
+  input        RW0_wmode,
+  input        RW0_wmask
 );
-  arm28hkcpdpsram128x8m4 sram_inst_128x8 (
-    // Port A signals
-    .CLKA(R0_clk),
-    .CENA(~R0_en),          // CENA是低有效的使能信号
-    .AA(R0_addr),
-    .QA(R0_data),
-    .WENA({8{1'b1}}),
-    .GWENA(1'b1),
-    
-    // Port B signals
-    .CLKB(W0_clk),
-    .CENB(~W0_en_masked),          // CENB是低有效的使能信号
-    .WENB({8{1'b0}}),       // WENB是低有效的写使能信号
-    .AB(W0_addr),
-    .DB(W0_data),
-    // Byte write enable signals (低有效)
-    .GWENB(~W0_en_masked),      // 全局字节写使能B
 
-    .EMAA(3'b011),
-    .EMAB(3'b011),
-    .EMAWA(2'b01),
-    .EMAWB(2'b01),
-    .EMASA(1'b0),
-    .EMASB(1'b0),
+wire RW0_en_masked =  RW0_wmode ? RW0_wmask&RW0_en : RW0_en;
 
-    .SEA(1'b0),
-    .TENA(1'b1),
-    .SEB(1'b0),
-    .TENB(1'b1),
-    .DFTRAMBYP(1'b0),
-    .TAA({7{1'b0}}),
-    .TDA({8{1'b0}}),
-    .TCENA(1'b1),
-    .TWENA({8{1'b1}}),
-    .CENYA(),
-    .TGWENA(1'b0),
-    .SIA(2'b0),
-    .TAB({7{1'b0}}) ,
-    .TDB({8{1'b0}}),
-    .TCENB(1'b1),
-    .TWENB({8{1'b1}}),
-    .CENYB(),
-    .TGWENB(1'b0),
-    .SIB(2'b0),
-    .RET1N(1'b1),
-    .COLLDISN(1'b1)
+  // SRAM编译器生成的模块实例化
+  smic281prf128x8m4 sram_inst_128x8 (
+    .CLK(RW0_clk),
+    .CEN(~RW0_en_masked),           // CEN是低有效的使能信号
+    .WEN(~RW0_wmode),        // WEN是低有效的写使能信号
+    .A(RW0_addr),
+    .D(RW0_wdata),
+    .Q(RW0_rdata),
+    .BWEN(8'h0),       // 字节写使能，低有效
+    .SD(1'b0),               // 关断模式，正常操作时为0
+    .SLP(1'b0),              // 休眠模式，正常操作时为0
+    .PUDLY_SD(),             // 关断延迟输出（未连接）
+    .PUDLY_SLP(),            // 休眠延迟输出（未连接）
+    .RT(2'b00),              // 读时序控制
+    .WT(2'b00),              // 写时序控制
+    .TM(1'b0)                // 测试模式
   );
 endmodule
 `endif

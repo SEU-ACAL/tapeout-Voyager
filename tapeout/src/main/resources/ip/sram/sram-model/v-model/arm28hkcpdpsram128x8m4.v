@@ -1,3 +1,11 @@
+//==================================================================//
+`define verilator
+//======= would be auto replaced by voyager-code-gen.sh ============//
+
+//==================================================================//
+`ifdef vcs
+//======= auto generated ============//
+
 /* verilog_memcomp Version: c0.3.19-beta */
 /* common_memcomp Version: c0.3.16-EAC */
 /* lang compiler Version: 4.9.4-EAC Jul 12 2017 12:42:23 */
@@ -5192,3 +5200,7 @@ begin
       Q_out = Q_in;
    end
 endmodule
+
+//==================================================================//
+`endif // vcs
+//======= auto generated ============//

@@ -140,13 +140,35 @@ mkdir -p "${LOG_DIR}"
 
 source ${CYDIR}/voyager-test/scripts/env-source.sh vcs
 
+
+# 加入spiflash 的时候加入+spiflash0
+#+spiflash0=/home/wzy/tapeout-Voyager/voyager-test/build/src/workloads/cpu/hello.bin\
+
 cd ${CYDIR}/sims/vcs/
+# 本地跑vcs debug请使用该配置
+# ./simv-chipyard.harness-${CONFIG}${DEBUG} $PK $full_binary_path \
+#   $([ $debug -eq 1 ] && echo "+fsdbfile=${WAVEFORM}") \
+#   +verbose +loadmem=${full_binary_path} +loadmem_addr=80000000 \
+#   +permissive-off ${full_binary_path} \
+#   &> >(tee ${LOG_DIR}/stdout.log) \
+#   2> >(spike-dasm > ${LOG_DIR}/disasm.log)
+
+# 临时修改，供CI使用
 ./simv-chipyard.harness-${CONFIG}${DEBUG} $PK $full_binary_path \
   $([ $debug -eq 1 ] && echo "+fsdbfile=${WAVEFORM}") \
-  +verbose +loadmem=${full_binary_path} +loadmem_addr=80000000 \
+  +loadmem=${full_binary_path} +loadmem_addr=80000000 \
   +permissive-off ${full_binary_path} \
-  &> >(tee ${LOG_DIR}/stdout.log) \
-  2> >(spike-dasm > ${LOG_DIR}/disasm.log)
+  &> >(tee ${LOG_DIR}/stdout.log) 
+
+#TODO:no_hart0_msip 让tsi 不发出 中断信号，在原始bootrom 无法使系统启动
+# 测试bootrom+flash请用我
+# ./simv-chipyard.harness-${CONFIG}${DEBUG} $PK $full_binary_path \
+#   $([ $debug -eq 1 ] && echo "+fsdbfile=${WAVEFORM}") \
+#   +verbose +loadmem=${full_binary_path} +loadmem_addr=80000000 \
+#   +no_hart0_msip\
+#   +permissive-off ${full_binary_path} \
+#   &> >(tee ${LOG_DIR}/stdout.log) \
+#   2> >(spike-dasm > ${LOG_DIR}/disasm.log)
 
 # cd ${CYDIR}/voyager-test/output/verilator/
 # ./simulator-chipyard.harness-${CONFIG}${DEBUG} $PK +permissive \

@@ -4,7 +4,6 @@
 
 `ifdef vcs
 
-`include "arm28hkcpdpsram128x65m4.v"
 module split_mem_ext(
   input  [6:0]   R0_addr,
   input          R0_clk,

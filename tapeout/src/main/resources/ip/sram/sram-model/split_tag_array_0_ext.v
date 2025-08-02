@@ -4,7 +4,6 @@
 
 `ifdef vcs
 
-`include "smic281prf64x20m4.v"
 module split_tag_array_0_ext(
   input  [5:0]   RW0_addr,
   input          RW0_clk,

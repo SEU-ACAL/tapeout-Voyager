@@ -8,7 +8,6 @@ CYDIR=$(git rev-parse --show-toplevel)
 # PLL:   直接连线(无法验证)    厂商提供的行为模型            db
 # pad:   直接连线(无法验证)    厂商提供的行为模型            db
 # SRAM:  Verilator行为模型    厂商提供的行为模型            db
-# ROM:   Verilator行为模型    厂商提供的行为模型            db
 #-------------------------------------------------------------------
 TOOL=""
 CONFIG=""
@@ -64,9 +63,44 @@ add_ifdef() {
   done < "$filelist"
 }
 
+# 将filelist中的所有.v文件拼接为一个文件
+concat_verilog_files() {
+  filelist="$1"
+  output_file="$2"
+  
+  if [ -z "$filelist" ] || [ -z "$output_file" ]; then
+    echo "ERROR: concat_verilog_files requires filelist and output_file parameters"
+    exit 1
+  fi
+  
+  if [ ! -f "$filelist" ]; then
+    echo "ERROR: filelist $filelist does not exist"
+    exit 1
+  fi
+  
+  # 清空输出文件
+  > "$output_file"
+  
+  # 遍历filelist中的每个.v文件并拼接
+  while read -r vfile; do
+    if [ -f "$vfile" ]; then
+      echo "// File: $vfile" >> "$output_file"
+      echo "// =========================================" >> "$output_file"
+      cat "$vfile" >> "$output_file"
+      echo "" >> "$output_file"
+      echo "// =========================================" >> "$output_file"
+      echo "" >> "$output_file"
+    else
+      echo "WARNING: File $vfile not found, skipping"
+    fi
+  done < "$filelist"
+  
+  echo "Successfully concatenated all .v files from $filelist into $output_file"
+}
+
 
 #-------------------------------------------------------------------
-# step1. 代码预处理: IP 整合 
+# step1. 代码预生成 IP 整合 
 #-------------------------------------------------------------------
 # 1.0 切换模式
 # Replace all `define chip/vcs/verilator with `define ${TOOL} recursively in .v files
@@ -78,61 +112,101 @@ find ./ -type f -name "*.v" -exec sed -i \
   {} +
 # === 1.1 SRAM替换 ==================================================
 cd ${CYDIR}
-./voyager-test/scripts/build-verilator.sh --config VoyagerVerilatorConfig --project voyager_tapeout --sub-project voyager_tapeout --debug
+if [ "$TOOL" == "verilator" ]; then
+  ./voyager-test/scripts/build-verilator.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout 
+  ORINGIN_DIR="${CYDIR}/sims/verilator/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
+elif [ "$TOOL" == "vcs" ]; then
+  cd ${CYDIR}/sims/vcs && make clean
+  cd ${CYDIR}
+  ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --debug
+  ORINGIN_DIR="${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
+elif [ "$TOOL" == "chip" ]; then
+  cd ${CYDIR}/sims/vcs && make clean
+  cd ${CYDIR}
+  ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout
+  ORINGIN_DIR="${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
+fi
 
 # verilator --------------------------------------------------------
 TMP_DIR="${CYDIR}/tapeout/scripts/tmp"
 rm -rf ${TMP_DIR}
 mkdir -p ${TMP_DIR} && cd ${TMP_DIR}
-cp ${CYDIR}/sims/verilator/generated-src/chipyard.harness.TestHarness.VoyagerVerilatorConfig/gen-collateral/chipyard.harness.TestHarness.VoyagerVerilatorConfig.top.mems.v ${TMP_DIR}/mems.v 
+if [ "$TOOL" == "verilator"  ]; then
+  cp ${CYDIR}/sims/${TOOL}/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral/chipyard.harness.TestHarness.${CONFIG}.top.mems.v ${TMP_DIR}/mems.v 
+  rm ${CYDIR}/sims/${TOOL}/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral/chipyard.harness.TestHarness.${CONFIG}.top.mems.v 
+elif [ "$TOOL" == "vcs" ] || [ "$TOOL" == "chip" ]; then
+  cp ${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral/chipyard.harness.TestHarness.${CONFIG}.top.mems.v ${TMP_DIR}/mems.v 
+  rm ${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral/chipyard.harness.TestHarness.${CONFIG}.top.mems.v 
+fi
+cd ${TMP_DIR}
 ../split.sh ./mems.v && rm mems.v
 ls *.v > filelist
-add_ifdef filelist verilator
-add_header filelist "\`define ${TOOL}"
+ls split_*.v > split_filelist
+add_ifdef split_filelist verilator
+add_header split_filelist "\`define ${TOOL}"
 
 # vcs --------------------------------------------------------------
 SRAM_MODEL_DIR="${CYDIR}/tapeout/src/main/resources/ip/sram/sram-model"
-cd ${SRAM_MODEL_DIR} && ls *.v > filelist
 
 # 将sram-model目录下同名.v文件内容合并到tmp目录下
 cd $TMP_DIR
-if [ -f filelist ]; then
+if [ -f split_filelist ]; then
   while read -r vfile; do
     if [ -f "$TMP_DIR/$vfile" ] && [ -f "$SRAM_MODEL_DIR/$vfile" ]; then
       cat "$SRAM_MODEL_DIR/$vfile" >> "$TMP_DIR/$vfile"
     fi
-  done < filelist
+  done < split_filelist
 fi
+
+# 将sram-model/v-model目录下.v文件内容合并到tmp目录下
+SRAM_V_DIR="${CYDIR}/tapeout/src/main/resources/ip/sram/sram-model/v-model"
+cp -r ${SRAM_V_DIR}/* ${TMP_DIR}
+
 
 # chip --------------------------------------------------------------
 SRAM_DB_DIR="${CYDIR}/tapeout/src/main/resources/ip/sram/sram-db"
-cd ${SRAM_DB_DIR} && ls *.v > filelist
+# cd ${SRAM_DB_DIR} && ls *.v > filelist
 
 # 将sram-db目录下同名.v文件内容合并到tmp目录下
 cd $TMP_DIR
-if [ -f filelist ]; then
+if [ -f split_filelist ]; then
   while read -r vfile; do
     if [ -f "$TMP_DIR/$vfile" ] && [ -f "$SRAM_DB_DIR/$vfile" ]; then
       cat "$SRAM_DB_DIR/$vfile" >> "$TMP_DIR/$vfile"
     fi
-  done < filelist
+  done < split_filelist
 fi
 
 #-------------------------------------------------------------------
-# step2. 生成原始代码 
+# step2. 加入IP文件, 替换仿真模型: 只有 VCS 和 Chip 需要
+#-------------------------------------------------------------------
+if [ "$TOOL" == "vcs" ] || [ "$TOOL" == "chip" ]; then
+  # 替换sram文件
+  cd ${ORINGIN_DIR} && rm -rf *.top.mems.v 
+  cd ${TMP_DIR} && ls *.v > sram_filelist.v
+  # 拼接各版本 sram ---------------------------------------------------
+  concat_verilog_files sram_filelist.v chipyard.harness.TestHarness.${CONFIG}.top.mems.v
+  cp chipyard.harness.TestHarness.${CONFIG}.top.mems.v ${ORINGIN_DIR}
+  # cp -r ${TMP_DIR}/* ${ORINGIN_DIR} 
+  # Append the filelist from SRAM_DB_DIR to the filelist in TMP_DIR
+  # cd ${ORINGIN_DIR} && cat sram_filelist.v >> filelist.f
+fi
+
+#-------------------------------------------------------------------
+# step3. 正式生成仿真代码 
 #-------------------------------------------------------------------
 cd ${CYDIR}
 ORINGIN_DIR=""
 # TARGET_DIR="${CYDIR}/tapeout/generated-src"
 if [ "$TOOL" == "verilator" ]; then
-  ./voyager-test/scripts/build-verilator.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --debug
+  # ./voyager-test/scripts/build-verilator.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --debug
   ORINGIN_DIR="${CYDIR}/sims/verilator/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
 elif [ "$TOOL" == "vcs" ]; then
   ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --debug
   ORINGIN_DIR="${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
 elif [ "$TOOL" == "chip" ]; then
-  ./voyager-test/scripts/build-chip.sh --config ${CONFIG} 
-  ORINGIN_DIR="${CYDIR}/tapeout/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
+  ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout 
+  ORINGIN_DIR="${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
 fi
 
 if [ -z "$ORINGIN_DIR" ]; then
@@ -142,25 +216,13 @@ fi
 
 
 #-------------------------------------------------------------------
-# step3. 加入IP文件, 替换仿真模型: 只有 VCS 和 Chip 需要
-#-------------------------------------------------------------------
-if [ "$TOOL" == "vcs" ] || [ "$TOOL" == "chip" ]; then
-  # 替换sram文件
-  cd ${ORINGIN_DIR} && rm -rf *.top.mems.v 
-  cd ${TMP_DIR} && ls *.v > sram_filelist.v
-  cp -r ${TMP_DIR}/* ${ORINGIN_DIR} 
-  # Append the filelist from SRAM_DB_DIR to the filelist in TMP_DIR
-  cd ${ORINGIN_DIR} && cat sram_filelist.v >> filelist
-fi
-
-#-------------------------------------------------------------------
 # step4. 代码后处理: 只有 Chip Config需要 
 #-------------------------------------------------------------------
 # 4.1 还原头文件
 if [ "$TOOL" == "chip" ]; then
-  cd ${CYDIR}/tapeout/src/main/resources/npu
+  cd ${ORINGIN_DIR}
   # Replace all `include "../gen-collateral/defines.v" with `include "defines.v" recursively
-  find ${CYDIR} -type f -name "*.v" -exec sed -i 's#`include "../gen-collateral/defines.v"#`include "defines.v"#g' {} +
+  find . -type f -name "*.v" -exec sed -i 's#`include "../gen-collateral/defines.v"#`include "defines.v"#g' {} +
 fi
 
 #-------------------------------------------------------------------

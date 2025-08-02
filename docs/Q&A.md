@@ -141,7 +141,6 @@ echo 1 | sudo tee /sys/bus/pci/rescan
 直接使用TOP看，是否有firesim线程
 
 > 21端口的FPGA板子有概率一启动就导致服务器崩溃，目前暂时未找到解决方法（此时请不要使用21端口的板子）
-<<<<<<< HEAD
 
 ## 仿真时间设置过短导致报错问题
 
@@ -152,5 +151,3 @@ Aborting...
 ```
 
 遇到这种问题直接改tapeout根目录variables.mk的TIMEOUT_CYCLES
-=======
->>>>>>> 9aa6e0bf51aee3ed4e8669b8e2a543d3c56cdb10

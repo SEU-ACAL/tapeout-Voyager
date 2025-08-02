@@ -4,7 +4,6 @@
 
 `ifdef vcs
 
-`include "arm28hkcpdpsram128x14m4.v"
 module split_btb_0_ext(
   // Port A (Read)
   input  [6:0]   R0_addr,
