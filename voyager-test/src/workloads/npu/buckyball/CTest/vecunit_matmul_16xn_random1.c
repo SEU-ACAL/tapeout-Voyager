@@ -14,7 +14,7 @@ static elem_t a_transposed[DIM * 1024] __attribute__((aligned(64)));
 #define WR_ADDR (DIM + 2 * BANK)
 
 void hw_matmul(const char* test_name, elem_t* a, elem_t* b, result_t* c, int size) {
-    transpose_matrix(a, a_transposed, DIM, size);
+    transpose_u8_matrix(a, a_transposed, DIM, size);
     bb_mvin((uintptr_t)a_transposed, OP1_ADDR, size);
     bb_mvin((uintptr_t)b, OP2_ADDR, size);
     bb_mvin((uintptr_t)c, WR_ADDR, DIM << 2);

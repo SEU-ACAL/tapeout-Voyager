@@ -14,7 +14,7 @@ static result_t expected_matrix[DIM * DIM] __attribute__((aligned(64)));
 
 void hw_matmul(const char* test_name, elem_t* a, elem_t* b, result_t* c, int size) {
     static elem_t a_transposed[DIM * DIM] __attribute__((aligned(64)));
-    transpose_matrix(a, a_transposed, size, size);
+    transpose_u8_matrix(a, a_transposed, size, size);
     bb_mvin((uintptr_t)a_transposed, OP1_ADDR, size);
     bb_mvin((uintptr_t)b, OP2_ADDR, size);
     bb_mvin((uintptr_t)c, WR_ADDR, size << 2);
@@ -39,8 +39,8 @@ int run_test(const char* test_name, elem_t* a, elem_t* b, int size) {
 }
 
 int test_random1() {
-    init_random_matrix(input_matrix_a, DIM, DIM, 456);
-    init_random_matrix(input_matrix_b, DIM, DIM, 789);
+    init_u8_random_matrix(input_matrix_a, DIM, DIM, 456);
+    init_u8_random_matrix(input_matrix_b, DIM, DIM, 789);
     return run_test("Random matrices 1", input_matrix_a, input_matrix_b, DIM);
 }
 

@@ -103,8 +103,24 @@ void init_random_matrix(elem_t* matrix, int rows, int cols, int seed) {
     }
 }
 
+void init_bbfp_random_matrix(elem_t* matrix, int rows, int cols, int seed) {
+    srand(seed);
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            matrix[i * cols + j] = (rand() % 16); 
+        }
+    }
+}
+
 // 转置矩阵
-void transpose_matrix(elem_t* src, elem_t* dst, int rows, int cols) {
+void transpose_u8_matrix(elem_t* src, elem_t* dst, int rows, int cols) {
+    for (int i = 0; i < rows; i++) {
+        for (int j = 0; j < cols; j++) {
+            dst[j * rows + i] = src[i * cols + j];
+        }
+    }
+}
+void transpose_u32_matrix(result_t* src, result_t* dst, int rows, int cols) {
     for (int i = 0; i < rows; i++) {
         for (int j = 0; j < cols; j++) {
             dst[j * rows + i] = src[i * cols + j];

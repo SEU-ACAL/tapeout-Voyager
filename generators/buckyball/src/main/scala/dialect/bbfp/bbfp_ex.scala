@@ -20,6 +20,7 @@ class BBFP_EX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
         val sramReadResp = Vec(bbconfig.sp_banks, Flipped(Decoupled(new SramReadResp(spad_w))))
         val is_matmul_ws = Input(Bool())
         val accWrite = Vec(bbconfig.acc_banks, Flipped(new SramWriteIO(bbconfig.acc_bank_entries, bbconfig.acc_w, bbconfig.acc_mask_len)))
+        val cmdResp = Decoupled(new ReservationStationComplete(rob_id_width))
   })
 
        for(i <- 0 until bbconfig.sp_banks) {
@@ -45,9 +46,11 @@ class BBFP_EX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
     val op2_bank    = Reg(UInt(io.lu_ex_i.bits.op2_bank.getWidth.W))
     val wr_bank     = Reg(UInt(io.lu_ex_i.bits.wr_bank.getWidth.W))
     val opcode      = Reg(UInt(io.lu_ex_i.bits.opcode.getWidth.W))
+    val rob_id_reg = RegInit(0.U(rob_id_width.W))
  
     
     val act_shift_reg = Reg(Vec(16, Vec(16, UInt(7.W))))
+    val act_reg_counters = RegInit(VecInit(Seq.fill(16)(0.U(5.W))))
     val row_enable = RegInit(VecInit(Seq.fill(16)(false.B)))
     val input_cycle = RegInit(0.U(5.W))
     val act_data_ready = RegInit(false.B)
@@ -58,6 +61,7 @@ class BBFP_EX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
         op2_bank  := io.lu_ex_i.bits.op2_bank
         wr_bank   := io.lu_ex_i.bits.wr_bank
         opcode    := io.lu_ex_i.bits.opcode
+        rob_id_reg := io.lu_ex_i.bits.rob_id
     }
 
     val state = RegInit(idle)
@@ -82,8 +86,8 @@ class BBFP_EX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
     }
     val weight_reg = Reg(Vec(16, UInt(7.W)))
  
-    when(io.sramReadResp(op1_bank).valid && !io.is_matmul_ws) {
-      val data = io.sramReadResp(op1_bank).bits.data
+    when(io.sramReadResp(io.lu_ex_i.bits.op1_bank).valid && !io.is_matmul_ws) {
+      val data = io.sramReadResp(io.lu_ex_i.bits.op1_bank).bits.data
       for(i <- 0 until 16) {
         weight_reg(i) := data((i+1)*8-1, i*8)(6,0)
       }
@@ -130,35 +134,41 @@ class BBFP_EX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
         io.sramWrite(i).req.bits.mask := VecInit(Seq.fill(spad_w / 8)(false.B))
     }
 
+    io.cmdResp.valid := false.B
+    io.cmdResp.bits.rob_id := 0.U
+
     // 当输出准备好时，开始写入SRAM
     when(output_ready && !writing_output) {
       writing_output := true.B
       write_cycles := 0.U
     }
-
+    val acc_write_ctrl = RegInit(false.B) // acc_write控制信号，为false时允许写入acc
+    acc_write_ctrl := writing_output && !acc_write_ctrl 
     when(writing_output) {
       when(write_cycles < 16.U) {
         // 将一个4x32位数据拼接成128位宽的数据写入SRAM
-       
-        
-         for(i <- 0 until bbconfig.acc_banks) {
-        io.accWrite(i).req.valid := true.B
-        io.accWrite(i).req.bits.addr := (wr_bank_addr_base >> log2Ceil(bbconfig.acc_banks)) + write_cycles
-        val idx = (write_cycles * 4.U + i.U)(5,0) // 6 bits for 64 elements
-        io.accWrite(i).req.bits.data := Cat(
-          output_buffer(idx)(3),
-          output_buffer(idx)(2),
-          output_buffer(idx)(1),
-          output_buffer(idx)(0)
-        )
-        io.accWrite(i).req.bits.mask := VecInit(Seq.fill(bbconfig.acc_mask_len)(true.B))
-    }
+        when(!acc_write_ctrl){
+          for(i <- 0 until bbconfig.acc_banks) {
+            io.accWrite(i).req.valid := true.B
+            io.accWrite(i).req.bits.addr := wr_bank_addr_base + write_cycles
+            val idx = (write_cycles * 4.U + i.U)(5,0) // 6 bits for 64 elements
+            io.accWrite(i).req.bits.data := Cat(
+              output_buffer(idx)(3),
+              output_buffer(idx)(2),
+              output_buffer(idx)(1),
+              output_buffer(idx)(0)
+            )
+            io.accWrite(i).req.bits.mask := VecInit(Seq.fill(bbconfig.acc_mask_len)(true.B))
+          }
         write_cycles := write_cycles + 1.U
+      }
       }.otherwise {                                                                                                                            
         // 写入完成
         writing_output := false.B
         output_ready := false.B
         addr_base_captured:=false.B
+        io.cmdResp.valid := true.B
+        io.cmdResp.bits.rob_id := rob_id_reg
       }
     }
 
@@ -177,7 +187,7 @@ class BBFP_EX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
       }
       is(weight_load) {
         // 加载16周期权重
-        when(weight_cycles <= 16.U) {
+        when(weight_cycles < 16.U) {
           pe_array.io.in_d := weight_reg
           pe_array.io.in_control.foreach(_.propagate := 1.U)
           pe_array.io.in_valid.foreach(_ := true.B)
@@ -202,23 +212,14 @@ class BBFP_EX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
               row_enable(row) := false.B
             }
           }
-        
-          // 移位寄存器操作：使能的行向右移位
-          for(row <- 0 until 16) {
-            when(row_enable(row)) {
-              for(col <- 15 to 1 by -1) {
-                act_shift_reg(row)(col) := act_shift_reg(row)(col-1)
-              }
-              // 左侧补0（因为是计算阶段，不再输入新数据）
-              act_shift_reg(row)(0) := 0.U(7.W)
-            }
-          }
                  
           // 将每行的最右侧元素（第15列）输入到PE阵列
           val current_input = WireDefault(VecInit(Seq.fill(16)(0.U(7.W))))
           for(row <- 0 until 16) {
             when(row_enable(row)) {
-              current_input(row) := act_shift_reg(row)(15)
+                val counter_val = act_reg_counters(row)
+                current_input(row) := Mux(counter_val === 16.U, 0.U(7.W), act_shift_reg(counter_val)(row))
+                act_reg_counters(row) := Mux(counter_val === 16.U, counter_val, counter_val + 1.U)
             }.otherwise {
               current_input(row) := 0.U(7.W)
             }
@@ -257,6 +258,7 @@ class BBFP_EX(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Module 
           output_ptr := 0.U
           // 重置所有行使能信号
           row_enable := VecInit(Seq.fill(16)(false.B))
+          act_reg_counters := VecInit(Seq.fill(16)(0.U(5.W)))
           state := idle
         }
       }

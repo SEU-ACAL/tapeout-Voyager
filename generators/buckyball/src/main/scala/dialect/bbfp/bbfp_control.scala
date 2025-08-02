@@ -32,7 +32,6 @@ class BBFP_Control(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Mo
 // -----------------------------------------------------------------------------
     val BBFP_ID = Module(new BBFP_ID)
     BBFP_ID.io.cmdReq <> io.cmdReq
-    io.cmdResp <> BBFP_ID.io.cmdResp
 // -----------------------------------------------------------------------------
 // ID_LU
 // -----------------------------------------------------------------------------
@@ -67,5 +66,6 @@ class BBFP_Control(implicit bbconfig: BuckyBallConfig, p: Parameters) extends Mo
         io.accWrite(i) <> BBFP_EX.io.accWrite(i)
         io.accRead(i) := DontCare
     }
+    io.cmdResp <> BBFP_EX.io.cmdResp
 
 }

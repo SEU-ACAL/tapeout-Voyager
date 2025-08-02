@@ -57,7 +57,7 @@ void cpu_nn_forward(elem_t* input, elem_t* w1, elem_t* w2,
 void hw_matmul(elem_t* a, elem_t* b, result_t* c, int size) {
     // 转置左矩阵
     static elem_t a_transposed[DIM * DIM] __attribute__((aligned(64)));
-    transpose_matrix(a, a_transposed, size, size);
+    transpose_u8_matrix(a, a_transposed, size, size);
     
     // 移动矩阵到暂存器
     bb_mvin((uintptr_t)a_transposed, OP1_ADDR, size);
