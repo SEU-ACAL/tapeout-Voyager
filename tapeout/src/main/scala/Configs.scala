@@ -20,7 +20,8 @@ import scala.sys.process._
 class WithVoyagerBootROM extends Config((site, here, up) => {
   case BootROMLocated(x) => up(BootROMLocated(x), site).map { p =>
     // invoke makefile for sdboot
-    val freqMHz = (site(SystemBusKey).dtsFrequency.get / (1000 * 1000)).toLong
+    // val freqMHz = (site(SystemBusKey).dtsFrequency.get / (1000 * 1000)).toLong
+    val freqMHz = 25000000
     val make = s"make -C tapeout/boot PBUS_CLK=${freqMHz} bin"
     require (Process(make).! == 0, "Failed to build bootrom")
     p.copy(hang = 0x10000, contentFileName = s"./tapeout/boot/build/sdboot.bin")
@@ -113,7 +114,7 @@ class VoyagerVcsChipConfig extends Config(
   new voyager_tapeout.custom.WithUART1 ++
 
   new voyager_tapeout.custom.WithSPIForFlash ++
-  new chipyard.iobinders.WithSPIFlashIOCells ++
+  new voyager_tapeout.custom.iobinders.WithSPIFlashIOCells ++
   new voyager_tapeout.custom.WithCustomClockGateModel++// new CLOCK GATE
   //TODO : 运行vsc 暂时注释掉
   new testchipip.serdes.WithSerialTLMem(size = BigInt("80000000",16)) ++ // 8 GB of off-chip memory
@@ -124,7 +125,7 @@ class VoyagerVcsChipConfig extends Config(
 class TetheredVoyagerConfig extends Config(
   new chipyard.harness.WithAbsoluteFreqHarnessClockInstantiator ++   // use absolute freqs for sims in the harness
   new chipyard.harness.WithMultiChipSerialTL(0, 1) ++                // connect the serial-tl ports of the chips together
-  new chipyard.harness.WithMultiChip(0, new VoyagerVcsConfig) ++ // ChipTop0 is the design-to-be-taped-out
+  new chipyard.harness.WithMultiChip(0, new VoyagerChipConfig) ++ // ChipTop0 is the design-to-be-taped-out
   new chipyard.harness.WithMultiChip(1, new ChipBringupHostConfig))  // ChipTop1 is the bringup design
 
 

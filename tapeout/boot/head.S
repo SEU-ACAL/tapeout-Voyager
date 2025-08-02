@@ -73,8 +73,6 @@ _prog_start:
     li t5, 0x40  // 点亮gpio6
     sw t5, 0(t4) 
 
-   li t4, 1000
-   li t5, 0
 
 
 
