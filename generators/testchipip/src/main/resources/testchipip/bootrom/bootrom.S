@@ -1,92 +1,12 @@
 #define BOOTADDR_REG 0x1000
-#define CLOCK_GPIO_ADDR 0x10010000 // GPIO地址：BIT 0-时钟切换，BIT 1-2分频控制
-#define CLOCK_DIV_ADDR 0X120000    // 时钟分频寄存器
-#define CLOCK_SEL_ADDR 0X130000    // 时钟选择寄存器
-#define CLOCK_PLL_CTRL 0X140000    // PLL 控制
+
 // boot all cores (only hart 0) and jump to main program execution
 .section .text.start, "ax", @progbits
 .globl _start
 _start:
   li a1, 0x2000000 // base address of clint
   csrr a0, mhartid
-  bnez a0, boot_core 
-
-# pll_init:
-#   //PLL init
-#   li t0,CLOCK_PLL_CTRL+12
-#   # addi t0,t0,8
-#   li t1, 0x4
-#   sw t1, 0(t0) // 设置PLL分频寄存器,设置分频系数
-#   addi t0,t0,4
-#   li t1, 0x28
-#   sw t1, 0(t0) // 设置PLL反馈分频寄存器,设置反馈分频系数
-#   addi t0,t0,4
-#   li t1, 0x7
-#   sw t1, 0(t0) // 设置PLL参考分频寄存器,设置参考分频系数
-#   li t0,CLOCK_PLL_CTRL
-#   addi t0,t0,4
-#   li t1, 0x1
-#   sw t1, 0(t0) // 设置PLL控制寄存器,启用PLL
-#   addi t0,t0,4
-# wait_pll_open:
-#   lb t1, 0(t0)
-#   andi t1,t1,1
-#   li t2,1
-#   bne t2,t1,wait_pll_open
-
-# gpio_init:
-
-#   //GPIO init
-#   li t0,CLOCK_GPIO_ADDR
-#   addi t0,t0,4
-#   li t1, 0x0//使能输入
-#   sw t1, 0(t0) 
-#   addi t0,t0,4
-#   sw t1, 0(t0) // oe=1,ie=1
-
-# clock_set:
-# //clcok init start
-#   // 只有hart 0执行时钟配置
-#   // 读取GPIO值并配置时钟
-#   li t0, CLOCK_GPIO_ADDR
-#   lb t1, 0(t0)        // 读取GPIO值
-#   andi t1, t1, 0xf    // 确保只使用低4位
-  
-#   // 配置时钟切换
-#   andi t2, t1, 0x1    // 提取bit 0用于时钟切换
-#   li t3, CLOCK_SEL_ADDR
-#   sb t2, 0(t3)        // 写入时钟选择寄存器
-  
-# #   // 延迟一段时间等待时钟稳定
-# #   li t4, 1000
-# #   li t5, 0
-# # clock_delay1:
-# #   addi t5, t5, 1
-# #   bne t5, t4, clock_delay1
-  
-# #   // 配置时钟分频
-# #   srli t2, t1, 1      // 右移1位，获取bit 1-2
-# #   andi t2, t2, 0x3    // 只保留这两位
-# #   # addi t2, t2, 1      // 确保分频系数至少为1
-# #   li t3, CLOCK_DIV_ADDR
-# #   sb t2, 0(t3)        // 写入分频寄存器
-  
-# #   // 再次延迟等待分频设置生效
-# #   li t4, 1000
-# #   li t5, 0
-# # clock_delay2:
-# #   addi t5, t5, 1
-# #   bne t5, t4, clock_delay2
-
-#   // clock init finish
-
-# gpio_unset:
-#   li t0,CLOCK_GPIO_ADDR
-#   addi t0,t0,4
-#   li t1, 0x00000000
-#   sw t1, 0(t0)
-
-set_msip:
+  bnez a0, boot_core
   addi a2, a1, 4
   li a3, 1
 interrupt_loop: // trigger MSIP interrupts for other harts so that they also boot

@@ -120,5 +120,3 @@ module ClockGenerator #(
 endmodule
 
 `endif
-
- 

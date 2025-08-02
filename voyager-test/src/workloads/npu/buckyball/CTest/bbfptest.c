@@ -59,6 +59,7 @@ int main() {
     // Move input to scratchpad
     bb_mvin((uintptr_t)input_matrix, OP1_ADDR, DIM);
     bb_mvin((uintptr_t)weight_matrix, OP2_ADDR, DIM);
+    bb_mvin((uintptr_t)output_matrix, WR_ADDR, DIM << 2);
     printf("Perform Matmul\n");
     bb_bbfp_mul(OP1_ADDR, OP2_ADDR, WR_ADDR, DIM);
    
@@ -67,7 +68,7 @@ int main() {
     init_matrixv2(input_matrix, 16, 16, 42, 4);
     bb_matmul_ws(WR_ADDR, OP2_ADDR, WR_ADDR, 16);
     printf("Matmul Done\n");
-    bb_mvout(((uintptr_t)output_matrix), WR_ADDR, 16);
+    bb_mvout(((uintptr_t)output_matrix), WR_ADDR, DIM << 2);
 
     print_result_matrix("Output", output_matrix, DIM, DIM);
     

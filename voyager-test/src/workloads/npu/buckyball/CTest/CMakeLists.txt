@@ -21,8 +21,6 @@ set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${LINK_FLAGS}")
 
 add_library(buckyball-lib STATIC ${BUCKYBALL_CTEST_DIR}/buckyball.c)
 
-add_executable(ctest_acc_matmul-linux ${BUCKYBALL_CTEST_DIR}/acc_matmul.c)
-target_link_libraries(ctest_acc_matmul-linux buckyball-lib)
 add_executable(ctest_mvin_mvout_acc_test-linux ${BUCKYBALL_CTEST_DIR}/mvin_mvout_acc_test.c)
 target_link_libraries(ctest_mvin_mvout_acc_test-linux buckyball-lib)
 add_executable(ctest_mvin_mvout_alternate_test-linux ${BUCKYBALL_CTEST_DIR}/mvin_mvout_alternate_test.c)
@@ -150,6 +148,22 @@ add_custom_target(buckyball-CTest-multicore-baremetal ALL
             -DMULTICORE=3
             ${BUCKYBALL_CTEST_DIR}/vecunit_simple_nn_forward_pass_test.c
             ${BUCKYBALL_CTEST_DIR}/buckyball.c
+    COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_bbfp_matmul_test_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
+            -DMULTICORE=3
+            ${BUCKYBALL_CTEST_DIR}/bbfpmatmul.c
+            ${BUCKYBALL_CTEST_DIR}/buckyball.c
+    COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_bbfp_matmul_random1_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
+            -DMULTICORE=3
+            ${BUCKYBALL_CTEST_DIR}/bbfp_matmul_random1.c
+            ${BUCKYBALL_CTEST_DIR}/buckyball.c
+    COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_bbfp_matmul_random2_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
+            -DMULTICORE=3
+            ${BUCKYBALL_CTEST_DIR}/bbfp_matmul_random2.c
+            ${BUCKYBALL_CTEST_DIR}/buckyball.c
+    COMMAND ${ELF_CC} ${C_FLAGS} -o ctest_bbfp_matmul_random3_multicore-baremetal ${BUCKYBALL_CTEST_DIR}/start.S
+            -DMULTICORE=3
+            ${BUCKYBALL_CTEST_DIR}/bbfp_matmul_random3.c
+            ${BUCKYBALL_CTEST_DIR}/buckyball.c           
     DEPENDS ${BUCKYBALL_CTEST_DIR}/mvin_mvout_acc_test.c
             ${BUCKYBALL_CTEST_DIR}/mvin_mvout_alternate_test.c
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_ones.c
@@ -166,6 +180,10 @@ add_custom_target(buckyball-CTest-multicore-baremetal ALL
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_16xn_random3.c
             ${BUCKYBALL_CTEST_DIR}/vecunit_matmul_16xn_zero_random.c
             ${BUCKYBALL_CTEST_DIR}/vecunit_simple_nn_forward_pass_test.c
+            ${BUCKYBALL_CTEST_DIR}/bbfpmatmul.c
+            ${BUCKYBALL_CTEST_DIR}/bbfp_matmul_random1.c
+            ${BUCKYBALL_CTEST_DIR}/bbfp_matmul_random2.c
+            ${BUCKYBALL_CTEST_DIR}/bbfp_matmul_random3.c
             ${BUCKYBALL_CTEST_DIR}/start.S
             ${BUCKYBALL_CTEST_DIR}/buckyball.c
     COMMENT "Building baremetal workloads for Buckyball"

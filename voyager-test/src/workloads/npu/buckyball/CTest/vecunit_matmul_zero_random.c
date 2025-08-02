@@ -14,7 +14,7 @@ static result_t expected_matrix[DIM * DIM] __attribute__((aligned(64)));
 
 void hw_matmul(const char* test_name, elem_t* a, elem_t* b, result_t* c, int size) {
     static elem_t a_transposed[DIM * DIM] __attribute__((aligned(64)));
-    transpose_matrix(a, a_transposed, size, size);
+    transpose_u8_matrix(a, a_transposed, size, size);
     bb_mvin((uintptr_t)a_transposed, OP1_ADDR, size);
     bb_mvin((uintptr_t)b, OP2_ADDR, size);
     bb_mvin((uintptr_t)c, WR_ADDR, size << 2);
