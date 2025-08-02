@@ -24,14 +24,17 @@
 
 #define F_CLK 		(TL_CLK)
 
+#define UART_BAUD_RATE 115200
+#define UART_DIV (F_CLK / UART_BAUD_RATE - 1)
+
 // SPI SCLK frequency, in kHz
 // We are using the 25MHz High Speed mode. If this speed is not supported by the
 // SD card, consider changing to the Default Speed mode (12.5 MHz).
-#define SPI_CLK 	25000
+#define SPI_CLK 	2000000
 
 // SPI clock divisor value
 // @see https://ucb-bar.gitbook.io/baremetal-ide/baremetal-ide/using-peripheral-devices/sifive-ips/serial-peripheral-interface-spi
-#define SPI_DIV 	(((F_CLK * 1000) / SPI_CLK) / 2 - 1)
+#define SPI_DIV 	(((F_CLK) / SPI_CLK) / 2 - 1)
 
 static volatile uint32_t * const spi = (void *)(SPI_CTRL_ADDR);
 
@@ -228,6 +231,7 @@ static int copy(void)
 int main(void)
 {
 	REG32(uart, UART_REG_TXCTRL) = UART_TXEN;
+	REG32(uart, UART_REG_DIV) =  UART_DIV ;           
 
 	kputs("INIT");
 	sd_poweron();

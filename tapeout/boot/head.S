@@ -46,8 +46,11 @@ smp_pause 作用：让除了主核（一般是hart0）以外的所有核暂停�
   6-11 输出
 **/
 
-
-
+/**
+gpio5 = 1 gpio4 = 1 ddr 
+gpio5 = 1 gpio4 = 0 flash 
+gpio5 = 0 gpio4 = 1 sd card 
+*/
 
 _prog_start:
   smp_pause(s1, s2)
@@ -61,13 +64,17 @@ _prog_start:
     li t0,GPIO_BASE_ADDR 
     addi t1,t0, GPIO_OUTPUT_EN
     addi t2,t0, GPIO_INPUT_EN
-    li t3, 0xFC0
-    sw t3, 0(t1) // 
+    li t3 ,0x00
     sw t3, 0(t2) // 
+    li t3, 0x1C0
+    sw t3, 0(t1) // 
     // 所有gpio 输出0
     addi t4,t0, GPIO_OUTPUT_VAL
     li t5, 0x40  // 点亮gpio6
     sw t5, 0(t4) 
+
+   li t4, 1000
+   li t5, 0
 
 
 
@@ -80,7 +87,7 @@ custom_boot:
   bnez t2, skip_sd_load // If value != 0x00000001, skip SD loading
 
 
-
+/*
 pll_init:
   li t2,GPIO_BASE_ADDR
   addi t2,t2, GPIO_OUTPUT_VAL
@@ -152,17 +159,18 @@ clock_div:
   addi t2,t2, GPIO_OUTPUT_VAL
   li t3, 0x7c0
   sw t3, 0(t2) // 点亮gpio6,7,8,9,10
+*/
 
 sd_load:
-  // 执行sd_load函数
-  call main
-
   li t2,GPIO_BASE_ADDR
   addi t2,t2, GPIO_OUTPUT_VAL
-  li t3, 0xfc0
-  sw t3, 0(t2) // 点亮gpio6,7,8,9,10,11
-  j boot_ddr
+  li t3, 0x80
+  sw t3, 0(t2) // 点亮gpio7
 
+  li sp, (DDR_BASE_ADDR + 0xffff000)
+
+  // 执行sd_load函数
+  call main
 
 
 
@@ -170,10 +178,11 @@ sd_load:
 skip_sd_load:
   nop
 
-//  li t2,GPIO_BASE_ADDR
-//  addi t2,t2, GPIO_OUTPUT_VAL
-//  li t3, 0x014
-//  sw t3, 0(t2) // 点亮gpio6,8
+  li t2,GPIO_BASE_ADDR
+  addi t2,t2, GPIO_OUTPUT_VAL
+  li t3, 0x100
+  sw t3, 0(t2) // 点亮gpio8
+  call delay_500ms
 
 
   resume_pause(s1, s2) //判断 BOOT_SEL (GPIO4)
@@ -192,8 +201,9 @@ boot_flash:
   
   li t2,GPIO_BASE_ADDR
   addi t2,t2, GPIO_OUTPUT_VAL
-  li t3, 0x340
-  sw t3, 0(t2) // 点亮gpio6,8,9
+  li t3, 0xc0
+  sw t3, 0(t2) // 点亮gpio6,7
+  call delay_500ms
 
 jump_led1:
   li   s3, FLASH_BASE_ADDR
@@ -206,10 +216,11 @@ boot_ddr:
   csrr s2, mhartid		
   bne  s1, s2, jump_led2
 
-//  li t2,GPIO_BASE_ADDR
-//  addi t2,t2, GPIO_OUTPUT_VAL
-//  li t3, 0x540
-//  sw t3, 0(t2) // 点亮gpio6,8,10
+  li t2,GPIO_BASE_ADDR
+  addi t2,t2, GPIO_OUTPUT_VAL
+  li t3, 0x180
+  sw t3, 0(t2) // 点亮gpio7,8
+  call delay_500ms
 
 jump_led2:
 
@@ -224,16 +235,24 @@ boot_jump:
   csrr s2, mhartid		
   bne  s1, s2, jump_led3
 
-//  li t2,GPIO_BASE_ADDR
-//  addi t2,t2, GPIO_OUTPUT_VAL
-//  li t3, 0xcc0
-//  sw t3, 0(t2) // 点亮gpio6,7,10,11
+  li t2,GPIO_BASE_ADDR
+  addi t2,t2, GPIO_OUTPUT_VAL
+  li t3, 0x1c0
+  sw t3, 0(t2) // 点亮gpio6,7,8
+
 
 jump_led3:
   csrr a0, mhartid // hartid for next level bootloader
   la a1, dtb // dtb address for next level bootloader
   jr   s3
 
+
+// 延时 ， 在仿真的时候设置小一点
+delay_500ms:
+   li t0,12500000
+   addi t0,t0,-1
+   bnez t0,delay_500ms
+   ret
 
 
   .section .dtb

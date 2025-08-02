@@ -11,7 +11,8 @@ CFLAGS+= -I $(ROOT_DIR)/include -I.
 LFLAGS=-static -nostdlib -L $(ROOT_DIR)/linker -T sdboot.elf.lds
 
 # default to 1MHz but really should be overridden
-PBUS_CLK ?= 1000000
+# PBUS_CLK ?= 25000
+PBUS_CLK ?= 25000000
 
 default: elf bin dump
 

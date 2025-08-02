@@ -141,6 +141,8 @@ mkdir -p "${LOG_DIR}"
 source ${CYDIR}/voyager-test/scripts/env-source.sh vcs
 
 
+# 加入spiflash 的时候加入+spiflash0
+#+spiflash0=/home/wzy/tapeout-Voyager/voyager-test/build/src/workloads/cpu/hello.bin\
 
 cd ${CYDIR}/sims/vcs/
 # 本地跑vcs debug请使用该配置
