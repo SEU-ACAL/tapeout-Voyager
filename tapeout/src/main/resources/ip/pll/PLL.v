@@ -86,6 +86,10 @@ module PLL (
 
 
     PLL6GS28		PLL6GS28(
+    // .VSSA							(1'b0),
+    // .VDDP							(1'b1),
+    // .VDDB							(1'b1),
+    // .VDDA							(1'b1),
     .I_PLL_BYPASS_CLKDIVPD         	(1'b0                          ),
     .I_PLL_CKREF                   	(clk0                          ),
     .I_PLL_CLKDIV1                 	(clk_div1                      ),
@@ -96,10 +100,10 @@ module PLL (
     .I_PLL_FBDIV_INT               	(fb_div_int                    ),
     .I_PLL_PD                      	(!power                        ),
     .I_PLL_REFDIV                  	(ref_div                       ),
-    .I_PLL_V2I_PD                  	(1'b0                          ),
+    .I_PLL_V2I_PD                  	(1'b1                          ),
     .I_PLL_FRPD                    	(1'b1                          ),
     .I_PLL_VCO_OUT_PD              	(1'b0                          ),
-    .O_PLL_CLK2                    	(clk                           ),
+    .O_PLL_CLK2                    	(clk),
     .O_PLL_CLK3                    	(                              ),
     .O_PLL_CLK4                    	(                              ),
     .O_PLL_CLK5                    	(                              ),

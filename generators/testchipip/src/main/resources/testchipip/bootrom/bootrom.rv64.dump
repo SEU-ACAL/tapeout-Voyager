@@ -28,42 +28,19 @@ Disassembly of section .text.start:
 0000000000010040 <_start>:
    10040:	020005b7          	lui	a1,0x2000
    10044:	f1402573          	csrr	a0,mhartid
-   10048:	00050463          	beqz	a0,10050 <pll_init>
+   10048:	00050463          	beqz	a0,10050 <set_msip>
    1004c:	1b80006f          	j	10204 <boot_core>
 
-0000000000010050 <pll_init>:
-   10050:	001402b7          	lui	t0,0x140
-   10054:	00c2829b          	addiw	t0,t0,12 # 14000c <_dtb+0x12fdcc>
-   10058:	00200313          	li	t1,2
-   1005c:	0062a023          	sw	t1,0(t0)
-   10060:	00428293          	addi	t0,t0,4
-   10064:	01000313          	li	t1,16
-   10068:	0062a023          	sw	t1,0(t0)
-   1006c:	00428293          	addi	t0,t0,4
-   10070:	00700313          	li	t1,7
-   10074:	0062a023          	sw	t1,0(t0)
-   10078:	001402b7          	lui	t0,0x140
-   1007c:	00428293          	addi	t0,t0,4 # 140004 <_dtb+0x12fdc4>
-   10080:	00100313          	li	t1,1
-   10084:	0062a023          	sw	t1,0(t0)
-   10088:	00428293          	addi	t0,t0,4
+0000000000010050 <set_msip>:
+   10050:	00458613          	addi	a2,a1,4 # 2000004 <_dtb+0x1fefdc4>
+   10054:	00100693          	li	a3,1
 
-000000000001008c <wait_pll_open>:
-   1008c:	00028303          	lb	t1,0(t0)
-   10090:	00137313          	andi	t1,t1,1
-   10094:	00100393          	li	t2,1
-   10098:	fe639ae3          	bne	t2,t1,1008c <wait_pll_open>
-
-000000000001009c <set_msip>:
-   1009c:	00458613          	addi	a2,a1,4 # 2000004 <_dtb+0x1fefdc4>
-   100a0:	00100693          	li	a3,1
-
-00000000000100a4 <interrupt_loop>:
-   100a4:	00d62023          	sw	a3,0(a2)
-   100a8:	00460613          	addi	a2,a2,4
-   100ac:	ffc62683          	lw	a3,-4(a2)
-   100b0:	fe069ae3          	bnez	a3,100a4 <interrupt_loop>
-   100b4:	1600006f          	j	10214 <boot_core_hart0>
+0000000000010058 <interrupt_loop>:
+   10058:	00d62023          	sw	a3,0(a2)
+   1005c:	00460613          	addi	a2,a2,4
+   10060:	ffc62683          	lw	a3,-4(a2)
+   10064:	fe069ae3          	bnez	a3,10058 <interrupt_loop>
+   10068:	1ac0006f          	j	10214 <boot_core_hart0>
 
 Disassembly of section .text.hang80:
 
