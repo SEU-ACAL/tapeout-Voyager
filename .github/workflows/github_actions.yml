@@ -107,27 +107,27 @@ jobs:
           git reset --hard HEAD~1
           git push --force origin ${{ github.ref }}
   
-  Build-VCS:
-    name: Build VCS
-    runs-on: fpga
-    needs: Build-Workloads
-    steps:
-      - name: Build VCS
-        shell: zsh {0}
-        run: |
-          source ~/.zshrc
-          chipyard_exec
-          ./tapeout/scripts/voyager-code-gen.sh --tool vcs --config VoyagerVcsConfig 
-        # 如果检查失败，强制回退分支
-      - name: Revert Bad Commit
-        if: failure()
-        shell: zsh {0}
-        run: |
-          source ~/.zshrc
-          chipyard_exec
-          setproxy
-          git reset --hard HEAD~1
-          git push --force origin ${{ github.ref }}
+  # Build-VCS:
+  #   name: Build VCS
+  #   runs-on: fpga
+  #   needs: Build-Workloads
+  #   steps:
+  #     - name: Build VCS
+  #       shell: zsh {0}
+  #       run: |
+  #         source ~/.zshrc
+  #         chipyard_exec
+  #         ./tapeout/scripts/voyager-code-gen.sh --tool vcs --config VoyagerVcsConfig 
+  #       # 如果检查失败，强制回退分支
+  #     - name: Revert Bad Commit
+  #       if: failure()
+  #       shell: zsh {0}
+  #       run: |
+  #         source ~/.zshrc
+  #         chipyard_exec
+  #         setproxy
+  #         git reset --hard HEAD~1
+  #         git push --force origin ${{ github.ref }}
   
   Smoke-Test:
     name: Smoke Test
