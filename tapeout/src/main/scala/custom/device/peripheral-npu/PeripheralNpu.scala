@@ -55,7 +55,7 @@ class AXISlaveNPUWrapperBlackBox extends BlackBox with HasBlackBoxResource {
     val axi_awlen = Input(UInt(8.W))
     val axi_awsize = Input(UInt(3.W))
     val axi_awburst = Input(UInt(2.W))
-    val axi_awid = Input(UInt(12.W))
+    val axi_awid = Input(UInt(2.W))
     val axi_awvalid = Input(Bool())
     val axi_awready = Output(Bool())
 
@@ -66,7 +66,7 @@ class AXISlaveNPUWrapperBlackBox extends BlackBox with HasBlackBoxResource {
     val axi_wready = Output(Bool())
 
     val axi_bresp = Output(UInt(2.W))
-    val axi_bid = Output(UInt(12.W))
+    val axi_bid = Output(UInt(2.W))
     val axi_bvalid = Output(Bool())
     val axi_bready = Input(Bool())
 
@@ -74,14 +74,14 @@ class AXISlaveNPUWrapperBlackBox extends BlackBox with HasBlackBoxResource {
     val axi_arlen = Input(UInt(8.W))
     val axi_arsize = Input(UInt(3.W))
     val axi_arburst = Input(UInt(2.W))
-    val axi_arid = Input(UInt(12.W))
+    val axi_arid = Input(UInt(2.W))
     val axi_arvalid = Input(Bool())
     val axi_arready = Output(Bool())
 
     val axi_rdata = Output(UInt(64.W))
     val axi_rresp = Output(UInt(2.W))
     val axi_rlast = Output(Bool())
-    val axi_rid = Output(UInt(12.W))
+    val axi_rid = Output(UInt(2.W))
     val axi_rvalid = Output(Bool())
     val axi_rready = Input(Bool())
 
@@ -198,7 +198,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
     npuBlackBox.io.axi_awlen := axi.aw.bits.len
     npuBlackBox.io.axi_awsize := axi.aw.bits.size
     npuBlackBox.io.axi_awburst := axi.aw.bits.burst
-    npuBlackBox.io.axi_awid := axi.aw.bits.id(11, 0)
+    npuBlackBox.io.axi_awid := axi.aw.bits.id
     npuBlackBox.io.axi_awvalid := axi.aw.valid
     axi.aw.ready := npuBlackBox.io.axi_awready
 
@@ -223,7 +223,7 @@ class PeripheralNPU(params: PeripheralNPUParams)(implicit p: Parameters) extends
     npuBlackBox.io.axi_arlen := axi.ar.bits.len
     npuBlackBox.io.axi_arsize := axi.ar.bits.size
     npuBlackBox.io.axi_arburst := axi.ar.bits.burst
-    npuBlackBox.io.axi_arid := axi.ar.bits.id(11, 0)
+    npuBlackBox.io.axi_arid := axi.ar.bits.id
     npuBlackBox.io.axi_arvalid := axi.ar.valid
     axi.ar.ready := npuBlackBox.io.axi_arready
 
@@ -273,7 +273,7 @@ trait CanHavePeripheryNPU { this: BaseSubsystem =>
       AXI4Buffer() :=
       TLToAXI4() :=
       TLRequestFifoFalse() :=
-      TLSourceShrinker(1 << 12) :=
+      TLSourceShrinker(1 << 2) :=
       TLFragmenter(pbus.beatBytes, pbus.blockBytes, holdFirstDeny = true) := _
     }
     device
