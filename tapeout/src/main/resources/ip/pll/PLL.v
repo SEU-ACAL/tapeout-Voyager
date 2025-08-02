@@ -99,7 +99,7 @@ module PLL (
     .I_PLL_V2I_PD                  	(1'b0                          ),
     .I_PLL_FRPD                    	(1'b1                          ),
     .I_PLL_VCO_OUT_PD              	(1'b0                          ),
-    .O_PLL_CLK2                    	(                           ),
+    .O_PLL_CLK2                    	(clk                           ),
     .O_PLL_CLK3                    	(                              ),
     .O_PLL_CLK4                    	(                              ),
     .O_PLL_CLK5                    	(                              ),
@@ -112,7 +112,7 @@ module PLL (
     .O_PLL_CLK_QN                  	(                              ),
     .O_PLL_CLK_QP                  	(                              ),
     .O_PLL_LOCK                    	(lock                          ),
-    .O_PLL_VCO_OUT_CLK             	(clk)
+    .O_PLL_VCO_OUT_CLK             	()
     );
 endmodule
 `endif // chip
