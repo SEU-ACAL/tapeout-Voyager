@@ -159,8 +159,10 @@ if [ -f split_filelist ]; then
 fi
 
 # 将sram-model/v-model目录下.v文件内容合并到tmp目录下
-SRAM_V_DIR="${CYDIR}/tapeout/src/main/resources/ip/sram/sram-model/v-model"
-cp -r ${SRAM_V_DIR}/* ${TMP_DIR}
+if [ "$TOOL" == "vcs" ]; then
+  SRAM_V_DIR="${CYDIR}/tapeout/src/main/resources/ip/sram/sram-model/v-model"
+  cp -r ${SRAM_V_DIR}/* ${TMP_DIR}
+fi
 
 
 # chip --------------------------------------------------------------
