@@ -9,19 +9,21 @@ module split_ghist_0_ext(
   // Port A (Read)
   input  [4:0]   R0_addr,
   input          R0_clk,
-  output [71:0] R0_data,
+  output [23:0] R0_data,
   input          R0_en,
   
   // Port B (Write)
   input  [4:0]   W0_addr,
   input          W0_clk,
-  input  [71:0] W0_data,
+  input  [23:0] W0_data,
   input          W0_en
 );
   wire W0_en_masked = W0_en;
   wire [5:0] r_addr = {1'b0,R0_addr};
   wire [5:0] w_addr = {1'b0,W0_addr};
-  
+  wire [71:0] w_data = {'b0,W0_data};
+  wire[71:0] r_data;
+  assign R0_data = r_data[23:0];
   // 双端口SRAM编译器生成的模块实例化
   arm28hkcpdpsram64x72m4 sram_inst_64x72 (
     // Port A signals

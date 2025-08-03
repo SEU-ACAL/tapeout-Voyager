@@ -3,12 +3,12 @@
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `ifdef vcs
-module split_hi_us_ext(
-  input  [6:0] R0_addr,
+module split_hi_us_0_ext(
+  input  [7:0] R0_addr,
   input        R0_clk,
   output       R0_data,
   input        R0_en,
-  input  [6:0] W0_addr,
+  input  [7:0] W0_addr,
   input        W0_clk,
   input        W0_data,
   input        W0_en,
@@ -21,16 +21,16 @@ module split_hi_us_ext(
   reg [31:0] _RAND_1;
   reg [31:0] _RAND_2;
 `endif // RANDOMIZE_REG_INIT
-  reg  ram [0:127];
+  reg  ram [0:255];
   wire  ram_R_0_en;
-  wire [6:0] ram_R_0_addr;
+  wire [7:0] ram_R_0_addr;
   wire  ram_R_0_data;
   wire  ram_W_0_data;
-  wire [6:0] ram_W_0_addr;
+  wire [7:0] ram_W_0_addr;
   wire  ram_W_0_mask;
   wire  ram_W_0_en;
   reg  ram_R_0_en_pipe_0;
-  reg [6:0] ram_R_0_addr_pipe_0;
+  reg [7:0] ram_R_0_addr_pipe_0;
   assign ram_R_0_en = ram_R_0_en_pipe_0;
   assign ram_R_0_addr = ram_R_0_addr_pipe_0;
   assign ram_R_0_data = ram[ram_R_0_addr];
@@ -87,14 +87,14 @@ initial begin
     `endif
 `ifdef RANDOMIZE_MEM_INIT
   _RAND_0 = {1{`RANDOM}};
-  for (initvar = 0; initvar < 128; initvar = initvar+1)
+  for (initvar = 0; initvar < 256; initvar = initvar+1)
     ram[initvar] = _RAND_0[0:0];
 `endif // RANDOMIZE_MEM_INIT
 `ifdef RANDOMIZE_REG_INIT
   _RAND_1 = {1{`RANDOM}};
   ram_R_0_en_pipe_0 = _RAND_1[0:0];
   _RAND_2 = {1{`RANDOM}};
-  ram_R_0_addr_pipe_0 = _RAND_2[6:0];
+  ram_R_0_addr_pipe_0 = _RAND_2[7:0];
 `endif // RANDOMIZE_REG_INIT
   `endif // RANDOMIZE
 end // initial
