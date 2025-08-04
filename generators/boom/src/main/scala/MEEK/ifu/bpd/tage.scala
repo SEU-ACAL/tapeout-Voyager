@@ -99,7 +99,11 @@ class TageTable(val nRows: Int, val tagSz: Int, val histLength: Int, val uBitPer
   val rlous_valid  = WireInit(false.B)
 
   val s2_rtage_valid= RegNext(rtage_valid) 
-  val s2_req_rtage = VecInit(table.read(s1_hashed_idx, rtage_valid).map(_.asTypeOf(new TageEntry)))
+  // val s2_req_rtage = VecInit(table.read(s1_hashed_idx, rtage_valid).map(_.asTypeOf(new TageEntry)))
+  val s2_req_rtage = VecInit(table.read(s1_hashed_idx, rtage_valid).map(entry => 
+  Mux(RegNext(rtage_valid), entry.asTypeOf(new TageEntry), 0.U.asTypeOf(new TageEntry))
+  ))
+
   val s2_req_rhius = hi_us.read(s1_hashed_idx, rhius_valid)
   val s2_req_rlous = lo_us.read(s1_hashed_idx, rlous_valid)
 

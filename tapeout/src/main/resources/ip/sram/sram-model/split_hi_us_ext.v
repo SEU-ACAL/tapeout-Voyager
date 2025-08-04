@@ -1,9 +1,9 @@
 //==================================================================//
-`define chip
+`define vcs
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `ifdef vcs
-module split_hi_us_0_ext(
+module split_hi_us_ext(
   input  [7:0] R0_addr,
   input        R0_clk,
   output       R0_data,

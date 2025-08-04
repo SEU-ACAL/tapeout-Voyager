@@ -1,5 +1,5 @@
 //==================================================================//
-`define chip
+`define vcs
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `ifdef verilator
@@ -54,11 +54,11 @@ module PLL (
     .I_PLL_V2I_PD                  	(1'b1                          ),
     .I_PLL_FRPD                    	(1'b1                          ),
     .I_PLL_VCO_OUT_PD              	(1'b0                          ),
-    .O_PLL_CLK2                    	(clk),
+    .O_PLL_CLK2                    	(),
     .O_PLL_CLK3                    	(                              ),
     .O_PLL_CLK4                    	(                              ),
     .O_PLL_CLK5                    	(                              ),
-    .O_PLL_CLKDIV                  	(                              ),
+    .O_PLL_CLKDIV                  	(clk),
     .O_PLL_CLKN                    	(                              ),
     .O_PLL_CLKP                    	(                              ),
     .O_PLL_CLKSSC                  	(                              ),
@@ -103,11 +103,11 @@ module PLL (
     .I_PLL_V2I_PD                  	(1'b1                          ),
     .I_PLL_FRPD                    	(1'b1                          ),
     .I_PLL_VCO_OUT_PD              	(1'b0                          ),
-    .O_PLL_CLK2                    	(clk),
+    .O_PLL_CLK2                    	(),
     .O_PLL_CLK3                    	(                              ),
     .O_PLL_CLK4                    	(                              ),
     .O_PLL_CLK5                    	(                              ),
-    .O_PLL_CLKDIV                  	(                              ),
+    .O_PLL_CLKDIV                  	(clk),
     .O_PLL_CLKN                    	(                              ),
     .O_PLL_CLKP                    	(                              ),
     .O_PLL_CLKSSC                  	(                              ),

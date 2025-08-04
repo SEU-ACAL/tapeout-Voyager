@@ -97,8 +97,13 @@ class BTBBranchPredictorBank(params: BoomBTBParams = BoomBTBParams())(implicit p
   val s0_rmeta_valid= s0_valid && ((s1_update_wmeta_mask === 0.U)||(s1_update_wmeta_mask =/= 0.U)&& s1_update_idx(log2Ceil(nSets)-1,0) =/= s0_idx(log2Ceil(nSets)-1,0))&&(!doing_reset)
   val s1_rmeta_valid = RegNext(s0_rmeta_valid)
 
-  val s1_req_rbtb  = VecInit(btb.map { b => VecInit(b.read(s0_idx , s0_rbtb_valid).map(_.asTypeOf(new BTBEntry))) })
-  val s1_req_rmeta = VecInit(meta.map { m => VecInit(m.read(s0_idx, s0_rmeta_valid).map(_.asTypeOf(new BTBMeta))) })
+  // val s1_req_rbtb  = VecInit(btb.map { b => VecInit(b.read(s0_idx , s0_rbtb_valid).map(_.asTypeOf(new BTBEntry))) })
+  val s1_req_rbtb  = VecInit(btb.map { b => VecInit(b.read(s0_idx , s0_rbtb_valid).map(entry => 
+  Mux(RegNext(s0_rbtb_valid), entry.asTypeOf(new BTBEntry), 0.U.asTypeOf(new BTBEntry)))) })
+  // val s1_req_rmeta = VecInit(meta.map { m => VecInit(m.read(s0_idx, s0_rmeta_valid).map(_.asTypeOf(new BTBMeta))) })
+  val s1_req_rmeta = VecInit(meta.map { m => VecInit(m.read(s0_idx, s0_rmeta_valid).map(entry => 
+  Mux(RegNext(s0_rmeta_valid), entry.asTypeOf(new BTBMeta), 0.U.asTypeOf(new BTBMeta)))) })
+
   val s1_req_rebtb = ebtb.read(s0_idx, s0_rbtb_valid)
   val s1_req_tag   = s1_idx >> log2Ceil(nSets)
 

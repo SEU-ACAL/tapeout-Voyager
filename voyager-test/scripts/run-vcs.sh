@@ -153,19 +153,20 @@ cd ${CYDIR}/sims/vcs/
 #   &> >(tee ${LOG_DIR}/stdout.log) \
 #   2> >(spike-dasm > ${LOG_DIR}/disasm.log)
 
-# 临时修改，供CI使用
+#临时修改，供CI使用
 ./simv-chipyard.harness-${CONFIG}${DEBUG} $PK $full_binary_path \
   $([ $debug -eq 1 ] && echo "+fsdbfile=${WAVEFORM}") \
   +loadmem=${full_binary_path} +loadmem_addr=80000000 \
   +permissive-off ${full_binary_path} \
   &> >(tee ${LOG_DIR}/stdout.log) 
 
-#TODO:no_hart0_msip 让tsi 不发出 中断信号，在原始bootrom 无法使系统启动
+# TODO:no_hart0_msip 让tsi 不发出 中断信号，在原始bootrom 无法使系统启动
 # 测试bootrom+flash请用我
 # ./simv-chipyard.harness-${CONFIG}${DEBUG} $PK $full_binary_path \
 #   $([ $debug -eq 1 ] && echo "+fsdbfile=${WAVEFORM}") \
 #   +verbose +loadmem=${full_binary_path} +loadmem_addr=80000000 \
 #   +no_hart0_msip\
+#   +spiflash0=${full_binary_path} \
 #   +permissive-off ${full_binary_path} \
 #   &> >(tee ${LOG_DIR}/stdout.log) \
 #   2> >(spike-dasm > ${LOG_DIR}/disasm.log)
