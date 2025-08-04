@@ -1,5 +1,5 @@
 //==================================================================//
-`define chip
+`define verilator
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `timescale 1ns/1ps
