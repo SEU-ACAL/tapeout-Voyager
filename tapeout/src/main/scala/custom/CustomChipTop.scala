@@ -106,9 +106,9 @@ class CustomChipTop(implicit p: Parameters) extends ChipTop with HasIOBinders {
           case c: CustomDigitalOutIOCell => {
             // Custom output cell, no special handling needed
           }
-          case c: GenericDigitalOutIOCell => {  // 这里有问题，修复这行
-            // Standard output cell, no special handling needed
-          }
+          // case c: GenericDigitalOutIOCell => {  // 这里有问题，修复这行
+          //   // Standard output cell, no special handling needed
+          // }
           case c: CustomDigitalGPIOCell => {
             // GPIO cell handling
           }

@@ -190,7 +190,8 @@ class WithSingleClockBroadcastClockGenerator(freqMHz: Int = 100) extends Overrid
 class WithClockTapIOCells extends OverrideIOBinder({
   (system: CanHaveClockTap) => {
     system.clockTapIO.map { tap =>
-      val (clock_tap_io, clock_tap_cell) = IOCell.generateIOFromSignal(tap.getWrappedValue, "clock_tap")
+      implicit val p = GetSystemParameters(system)
+      val (clock_tap_io, clock_tap_cell) = IOCell.generateIOFromSignal(tap.getWrappedValue, "clock_tap",p(IOCellKey))
       (Seq(ClockTapPort(() => clock_tap_io)), clock_tap_cell)
     }.getOrElse((Nil, Nil))
   }

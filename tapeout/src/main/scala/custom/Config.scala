@@ -16,6 +16,7 @@ class WithCustomClockGateModel(file: String = "/ip/clock/EICG_wrapper.v") extend
   case ClockGateModelFile => Some(file)
 })
 
+
 // Custom SPI configurations to avoid name conflicts
 class WithSPIForFlash(address: BigInt = 0x10030000, fAddress: BigInt = 0x20000000, size: BigInt = 0x800000) extends Config((site, here, up) => {
   case PeripherySPIFlashKey => up(PeripherySPIFlashKey) ++ Seq(
