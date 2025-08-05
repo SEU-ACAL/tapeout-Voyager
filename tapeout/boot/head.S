@@ -247,9 +247,10 @@ jump_led3:
 
 // 延时 ， 在仿真的时候设置小一点
 delay_500ms:
-   li t0,12500000
+   li t0,12
+delay_500ms_loop:
    addi t0,t0,-1
-   bnez t0,delay_500ms
+   bnez t0,delay_500ms_loop
    ret
 
 
