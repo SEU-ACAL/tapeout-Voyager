@@ -6,7 +6,7 @@ module axi_bridge(
     input [7:0]       axi_awlen,  // 8 bit
     input [2:0]       axi_awsize, // 3 bit
     input [1:0]       axi_awburst,
-    input [11:0]      axi_awid,
+    input [1:0]      axi_awid,
     input             axi_awvalid,
     output reg        axi_awready,
      
@@ -17,7 +17,7 @@ module axi_bridge(
     output reg        axi_wready,
 
     output reg [1:0]  axi_bresp,
-    output [11:0]     axi_bid,
+    output [1:0]     axi_bid,
     output reg        axi_bvalid,
     input             axi_bready,
 
@@ -25,12 +25,12 @@ module axi_bridge(
     input  [7:0]      axi_arlen,
     input  [2:0]      axi_arsize,
     input  [1:0]      axi_arburst,
-    input  [11:0]     axi_arid,
+    input  [1:0]     axi_arid,
     input             axi_arvalid,
     output reg        axi_arready,
 
     output [63:0]     axi_rdata,
-    output [11:0]     axi_rid,
+    output [1:0]     axi_rid,
     output reg [1:0]  axi_rresp,
     output reg        axi_rlast,
     output reg        axi_rvalid,

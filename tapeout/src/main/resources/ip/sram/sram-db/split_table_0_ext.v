@@ -3,6 +3,7 @@
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `ifdef chip
+
 module split_table_0_ext(
   // Port A (Read)
   input  [7:0]   R0_addr,

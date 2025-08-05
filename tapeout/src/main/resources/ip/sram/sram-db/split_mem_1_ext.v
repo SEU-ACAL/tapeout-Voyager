@@ -3,6 +3,7 @@
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `ifdef chip
+
 module split_mem_1_ext(
   input  [6:0] RW0_addr,
   input        RW0_clk,

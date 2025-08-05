@@ -3,6 +3,8 @@
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `ifdef chip
+
+
 module split_ghist_0_ext(
   // Port A (Read)
   input  [4:0]   R0_addr,
@@ -19,7 +21,7 @@ module split_ghist_0_ext(
   wire W0_en_masked = W0_en;
   wire [5:0] r_addr = {1'b0,R0_addr};
   wire [5:0] w_addr = {1'b0,W0_addr};
-  wire [71:0] w_data = {'b0,W0_data};
+  wire [71:0] w_data = {48'b0,W0_data};
   wire[71:0] r_data;
   assign R0_data = r_data[23:0];
   // 双端口SRAM编译器生成的模块实例化
@@ -28,7 +30,7 @@ module split_ghist_0_ext(
     .CLKA(R0_clk),
     .CENA(~R0_en),          // CENA是低有效的使能信号
     .AA(r_addr),
-    .QA(R0_data),
+    .QA(r_data),
     .WENA({72{1'b1}}),
     .GWENA(1'b1),
     
@@ -37,7 +39,7 @@ module split_ghist_0_ext(
     .CENB(~W0_en_masked),          // CENB是低有效的使能信号
     .WENB({72{1'b0}}),       // WENB是低有效的写使能信号
     .AB(w_addr),
-    .DB(W0_data),
+    .DB(w_data),
     // Byte write enable signals (低有效)
     .GWENB(~W0_en_masked),      // 全局字节写使能B
 

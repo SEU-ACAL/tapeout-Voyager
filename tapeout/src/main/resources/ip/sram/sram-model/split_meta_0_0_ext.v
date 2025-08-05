@@ -19,7 +19,7 @@ module split_meta_0_0_ext(
   wire [5:0] r_addr={1'b0,R0_addr};
   wire [5:0] w_addr={1'b0,W0_addr};
   wire [119:0] r_data ;
-  wire [119:0] w_data ={'b0,W0_data};
+  wire [119:0] w_data ={75'b0,W0_data};
   assign R0_data= r_data[44:0];
   // 双端口SRAM编译器生成的模块实例化
   arm28hkcpdpsram64x120m4 sram_inst_64x120 (

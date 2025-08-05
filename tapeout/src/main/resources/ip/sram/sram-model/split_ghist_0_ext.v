@@ -21,7 +21,7 @@ module split_ghist_0_ext(
   wire W0_en_masked = W0_en;
   wire [5:0] r_addr = {1'b0,R0_addr};
   wire [5:0] w_addr = {1'b0,W0_addr};
-  wire [71:0] w_data = {'b0,W0_data};
+  wire [71:0] w_data = {48'b0,W0_data};
   wire[71:0] r_data;
   assign R0_data = r_data[23:0];
   // 双端口SRAM编译器生成的模块实例化

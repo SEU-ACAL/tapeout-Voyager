@@ -3,6 +3,8 @@
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `ifdef chip
+
+
 module split_mem_0_ext (
   input  [8:0]   RW0_addr,
   input          RW0_clk,
@@ -14,7 +16,7 @@ module split_mem_0_ext (
 );
    wire RW0_en_masked =  RW0_wmode ? RW0_wmask&RW0_en : RW0_en;
 
-  logic [1:0] sram_select;    // 选择哪个SRAM (0-3)
+    logic [1:0] sram_select;    // 选择哪个SRAM (0-3)
     logic [7:0] sram_addr;      // SRAM内部地址
     
     assign sram_select = RW0_addr[8];  // 高2位选择SRAM
@@ -59,9 +61,9 @@ module split_mem_0_ext (
 
     // 可选：添加断言检查地址范围
     // synthesis translate_off
-    initial begin
-        assert (RW0_addr < 256) else $error("Address out of range: %d", RW0_addr);
-    end
+    // initial begin
+    //     assert (RW0_addr < 256) else $error("Address out of range: %d", RW0_addr);
+    // end
     // synthesis translate_on
 
 endmodule

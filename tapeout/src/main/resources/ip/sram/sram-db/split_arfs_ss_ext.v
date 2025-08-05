@@ -2,7 +2,9 @@
 `define vcs
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
+
 `ifdef chip
+
 module split_arfs_ss_ext(
   input  [5:0]   RW0_addr,
   input          RW0_clk,

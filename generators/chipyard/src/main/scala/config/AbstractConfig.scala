@@ -130,7 +130,7 @@ class AbstractConfig extends Config(
   // ================================================
 
   // ChipTop clock IO/PLL/Divider/Mux settings
-  new chipyard.clocking.WithClockTapIOCells ++                      /** Default generate a clock tapio */
+  // new chipyard.clocking.WithClockTapIOCells ++                      /** Default generate a clock tapio */
   new chipyard.clocking.WithPassthroughClockGenerator ++
 
   // DigitalTop-internal clocking settings

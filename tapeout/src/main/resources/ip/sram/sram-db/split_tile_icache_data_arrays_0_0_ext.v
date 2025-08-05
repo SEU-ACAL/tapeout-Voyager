@@ -3,6 +3,7 @@
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `ifdef chip
+
 module split_tile_icache_data_arrays_0_0_ext(
   input  [7:0]   RW0_addr,
   input          RW0_clk,
