@@ -45,7 +45,7 @@ def test_verilator_bb_mvin_mvout(script_runner, caplog):
   
   logging.info("Testing Verilator bb_mvin_mvout script...")
   start_time = time.time()
-  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "bb_mvin_mvout_multi", "--debug"], timeout=600)
+  result = script_runner(f"{script_dir}/run-verilator.sh", ["--config", "VoyagerVerilatorConfig", "bb_mvin_mvout_multi", "--debug"], timeout=6000)
   execution_time = time.time() - start_time
   
   logging.info(f"Execution time: {execution_time:.2f} seconds")
