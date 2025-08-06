@@ -271,7 +271,7 @@ trait CanHavePeripheryNPU { this: BaseSubsystem =>
       device.regnode :=
       AXI4UserYanker() :=
       AXI4Buffer() :=
-      TLToAXI4() :=
+      CustomTLToAXI4() :=
       TLRequestFifoFalse() :=
       TLSourceShrinker(1 << 2) :=
       TLFragmenter(pbus.beatBytes, pbus.blockBytes, holdFirstDeny = true) := _
