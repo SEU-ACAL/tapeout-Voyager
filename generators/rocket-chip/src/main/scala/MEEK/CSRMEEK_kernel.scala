@@ -1918,12 +1918,12 @@ class CSRFileMEEK_kernel(
   io.shadow_read(4) := readEPC(reg_mepc).sextTo(xLen)
   io.shadow_read(5) := read_mip
   io.shadow_read(6) := (read_sstatus.asUInt)(xLen-1,0)
-  io.shadow_read(7) := reg_mie & sie_mask
+  io.shadow_read(7) := 0.U
   io.shadow_read(8) := reg_sscratch
   io.shadow_read(9) := readEPC(reg_sepc).sextTo(xLen)
   io.shadow_read(10) := reg_scause
   io.shadow_read(11) := reg_stval.sextTo(xLen)
-  io.shadow_read(12) := read_mip & sie_mask 
+  io.shadow_read(12) := 0.U
   io.r_exception := exception
   io.r_exception_nocall := exception_nocall
   //===== GuardianCouncil Function: End ====//
