@@ -1,5 +1,5 @@
 //==================================================================//
-`define vcs
+`define chip
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `ifdef chip

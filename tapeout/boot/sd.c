@@ -238,7 +238,7 @@ int main(void)
 	if (sd_cmd0() ||
 	    sd_cmd8() ||
 	    sd_acmd41() ||
-	    sd_cmd58() ||
+	    // sd_cmd58() ||
 	    sd_cmd16() ||
 	    copy()) {
 		kputs("ERROR");
