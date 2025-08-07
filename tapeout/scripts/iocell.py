@@ -43,8 +43,7 @@ module CustomDigitalInIOCellTap(
 
     // i信号打10拍
     always @(posedge clk) begin
-        if (ie_shift_reg[9])
-            i_shift_reg <= {i_shift_reg[8:0], i_internal};
+        i_shift_reg <= {i_shift_reg[8:0], i_internal};
     end
 
     assign i = i_shift_reg[9];
@@ -81,8 +80,7 @@ module CustomDigitalInIOCellTap(
 
     // i信号打10拍
     always @(posedge clk) begin
-        if (ie_shift_reg[9])
-            i_shift_reg <= {i_shift_reg[8:0], i_internal};
+        i_shift_reg <= {i_shift_reg[8:0], i_internal};
     end
 
     assign i = i_shift_reg[9];
@@ -117,8 +115,7 @@ module CustomDigitalInIOCellTap(
     
     // i信号打10拍
     always @(posedge clk) begin
-        if (ie_shift_reg[9])
-            i_shift_reg <= {i_shift_reg[8:0], i_internal};
+        i_shift_reg <= {i_shift_reg[8:0], i_internal};
     end
     
     assign i_internal = ie ? pad : 1'b0;
@@ -272,8 +269,7 @@ module CustomDigitalGPIOCellTap(
 
     // i信号打10拍
     always @(posedge clk) begin
-        if (ie_shift_reg[9])
-            i_shift_reg <= {i_shift_reg[8:0], i_internal};
+        i_shift_reg <= {i_shift_reg[8:0], i_internal};
     end
 
     assign i = i_shift_reg[9];
@@ -324,8 +320,7 @@ module CustomDigitalGPIOCellTap(
 
     // i信号打10拍
     always @(posedge clk) begin
-        if (ie_shift_reg[9])
-            i_shift_reg <= {i_shift_reg[8:0], i_internal};
+        i_shift_reg <= {i_shift_reg[8:0], i_internal};
     end
 
     assign i = i_shift_reg[9];
@@ -374,8 +369,7 @@ module CustomDigitalGPIOCellTap(
 
     // i信号打10拍
     always @(posedge clk) begin
-        if (ie_shift_reg[9])
-            i_shift_reg <= {i_shift_reg[8:0], i_internal};
+        i_shift_reg <= {i_shift_reg[8:0], i_internal};
     end
     
     assign pad = oe_shift_reg[9] ? o_shift_reg[9] : 1'bz;
@@ -517,12 +511,12 @@ def modify_chiptop(content):
         'jtag_TCK', 'jtag_TMS', 'jtag_TDI', 'jtag_TDO', 
         'serial_tl_0_clock_in',
         'serial_tl_0_in_ready', 'serial_tl_0_in_valid', 
-        'serial_tl_0_out_ready', 'serial_tl_0_out_valid',
-        'spi_flash_0_sck','spi_flash_0_cs_0',
-        'spi_flash_0_dq_0',
-        'spi_flash_0_dq_1',
-        'spi_flash_0_dq_2',
-        'spi_flash_0_dq_3'
+        'serial_tl_0_out_ready', 'serial_tl_0_out_valid'
+        # 'spi_flash_0_sck','spi_flash_0_cs_0',
+        # 'spi_flash_0_dq_0',
+        # 'spi_flash_0_dq_1',
+        # 'spi_flash_0_dq_2',
+        # 'spi_flash_0_dq_3'
     ]
     
     # 添加serial_tl_0_in_bits_phit_0到serial_tl_0_in_bits_phit_31
