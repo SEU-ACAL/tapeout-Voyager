@@ -162,7 +162,7 @@ echo "  +permissive-off \\"
 echo "  ${full_binary_path}"
 echo ""
 
-if $debug -eq 1; then
+if [ $debug -eq 1 ]; then
   ./simulator-chipyard.harness-${CONFIG}${DEBUG} $PK +permissive \
     +vcdfile=${WAVEFORM} \
     +verbose \
