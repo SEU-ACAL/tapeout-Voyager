@@ -7,6 +7,9 @@ import freechips.rocketchip.devices.tilelink.BootROMParams
 import freechips.rocketchip.devices.tilelink.{DevNullParams, BootROMLocated}
 import freechips.rocketchip.subsystem.{SystemBusKey, PeripheryBusKey, ControlBusKey, ExtMem}
 import scala.sys.process._
+import freechips.rocketchip.subsystem.{MBUS, SBUS}
+import freechips.rocketchip.diplomacy._
+import testchipip.soc.{OBUS}
 
 // class VoyagerChipConfig extends Config(
 //   new voyager_tapeout.VoyagerSerialVerilatorConfig  
@@ -142,8 +145,8 @@ class VoyagerVcsChipTestConfig extends Config(
 class TetheredVoyagerConfig extends Config(
   new chipyard.harness.WithAbsoluteFreqHarnessClockInstantiator ++   // use absolute freqs for sims in the harness
   new chipyard.harness.WithMultiChipSerialTL(0, 1) ++                // connect the serial-tl ports of the chips together
-  new chipyard.harness.WithMultiChip(0, new VoyagerChipConfig) ++ // ChipTop0 is the design-to-be-taped-out
-  new chipyard.harness.WithMultiChip(1, new ChipBringupHostConfig))  // ChipTop1 is the bringup design
+  new chipyard.harness.WithMultiChip(0, new voyager_tapeout.VoyagerVcsChipConfig) ++ // ChipTop0 is the design-to-be-taped-out
+  new chipyard.harness.WithMultiChip(1, new voyager_tapeout.ChipBringupHostConfig))  // ChipTop1 is the bringup design
 
 
 // class VoyagerSerialVerilatorConfig extends Config(
@@ -192,3 +195,31 @@ class VoyagerTLFPGAConfig extends Config(
   new voyager_tapeout.custom.OurHeterSoCConfig ++
   new chipyard.config.AbstractConfig)
 // class VoyagerFPGATestHarness extends VoyagerFPGAConfig
+
+
+// 无核心soc 配置 ， 作为fpga 使用
+class ChipBringupHostConfig extends Config(
+  new freechips.rocketchip.subsystem.WithoutTLMonitors++
+  new chipyard.harness.WithAbsoluteFreqHarnessClockInstantiator ++  // Generate absolute frequencies
+  new chipyard.harness.WithSerialTLTiedOff ++                       // when doing standalone sim, tie off the serial-tl port
+  new chipyard.harness.WithSimTSIToUARTTSI ++                       // Attach SimTSI-over-UART to the UART-TSI port
+  new chipyard.iobinders.WithSerialTLPunchthrough ++                // Don't generate IOCells for the serial TL (this design maps to FPGA)
+  new testchipip.serdes.WithSerialTL(Seq(testchipip.serdes.SerialTLParams(
+    manager = Some(testchipip.serdes.SerialTLManagerParams(
+      memParams = Seq(testchipip.serdes.ManagerRAMParams(
+        address = BigInt("00000000", 16),    // 0x00000000
+        size    = BigInt("80000000", 16)     // 2GB: 到 0x7FFFFFFF
+      ))
+    )),
+    client = Some(testchipip.serdes.SerialTLClientParams()),                                        // Allow chip to access this device's memory (DRAM)
+    phyParams = testchipip.serdes.InternalSyncSerialPhyParams(phitWidth=4, flitWidth=16, freqMHz = 75) // bringup platform provides the clock
+  ))) ++
+  new testchipip.soc.WithOffchipBusClient(SBUS,                                // offchip bus hangs off the SBUS
+    blockRange = AddressSet.misaligned(0x80000000L, (BigInt(1) << 30) * 4)) ++ // offchip bus should not see the main memory of the testchip, since that can be accessed directly
+  new testchipip.soc.WithOffchipBus ++                                         // offchip bus
+  new freechips.rocketchip.subsystem.WithExtMemSize((1 << 30) * 4L) ++         // match what the chip believes the max size should be
+  new testchipip.tsi.WithUARTTSIClient(initBaudRate = BigInt(921600)) ++       // nonstandard baud rate to improve performance
+  new chipyard.clocking.WithPassthroughClockGenerator ++ // pass all the clocks through, since this isn't a chip
+  new chipyard.config.WithUniformBusFrequencies(75.0) ++   // run all buses of this system at 75 MHz
+  // Base is the no-cores config
+  new chipyard.NoCoresConfig)
