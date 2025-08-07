@@ -161,14 +161,25 @@ echo "  +loadmem_addr=80000000 \\"
 echo "  +permissive-off \\"
 echo "  ${full_binary_path}"
 echo ""
-./simulator-chipyard.harness-${CONFIG}${DEBUG} $PK +permissive \
-  $([ $debug -eq 1 ] && echo "+vcdfile=${WAVEFORM}") \
-  $([ $debug -eq 1 ] && echo "+verbose") \
+
+if [ $debug -eq 1 ]; then
+  ./simulator-chipyard.harness-${CONFIG}${DEBUG} $PK +permissive \
+    +vcdfile=${WAVEFORM} \
+    +verbose \
+    +loadmem=${full_binary_path} +loadmem_addr=80000000 \
+    +permissive-off \
+    ${full_binary_path} \
+    &> >(tee ${LOG_DIR}/stdout.log) \
+    2> >(spike-dasm > ${LOG_DIR}/disasm.log)
+else
+  ./simulator-chipyard.harness-${CONFIG}${DEBUG} $PK +permissive \
   +loadmem=${full_binary_path} +loadmem_addr=80000000 \
   +permissive-off \
   ${full_binary_path} \
-  &> >(tee ${LOG_DIR}/stdout.log) \
-  2> >(spike-dasm > ${LOG_DIR}/disasm.log)
+  &> >(tee ${LOG_DIR}/stdout.log)
+fi
+
+
 
 
 # 如果启用了调试模式并且需要转换波形文件

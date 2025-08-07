@@ -14,7 +14,7 @@ set(CMAKE_C_COMPILER "riscv64-unknown-linux-gnu-g++")
 add_custom_command(
   OUTPUT  bb_mvin_mvout_multi-baremetal bb_mvin_mvout_single-baremetal bb_mvin_mvout-linux
   COMMAND ${BUDDY_OPT} ${BUCKYBALL_OPTEST_DIR}/bb_mvin_mvout.mlir 
-            -lower-buckyball="hartId=5"  |
+            -lower-buckyball="hartId=3"  |
           ${BUDDY_TRANSLATE} --buddy-to-llvmir |
           ${BUDDY_LLC} -filetype=obj -mtriple=riscv64
             -mattr=+buddyext,+D -float-abi=hard
