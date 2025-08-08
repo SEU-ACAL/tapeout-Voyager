@@ -192,7 +192,7 @@ if [ "$TOOL" == "vcs" ] || [ "$TOOL" == "chip" ]; then
   # cp -r ${TMP_DIR}/* ${ORINGIN_DIR} 
   # Append the filelist from SRAM_DB_DIR to the filelist in TMP_DIR
   # cd ${ORINGIN_DIR} && cat sram_filelist.v >> filelist.f
-  # python ${CYDIR}/tapeout/scripts/iocell.py ${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral
+  python ${CYDIR}/tapeout/scripts/iocell.py ${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral
 fi
 
 #-------------------------------------------------------------------
