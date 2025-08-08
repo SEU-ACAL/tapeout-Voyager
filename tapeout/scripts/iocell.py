@@ -534,6 +534,9 @@ def modify_chiptop(content):
         '^serial_tl_0_clock_in$',
         '^serial_tl_0_in_ready$', '^serial_tl_0_in_valid$', 
         '^serial_tl_0_out_ready$', '^serial_tl_0_out_valid$',
+        "^spi_0_dq_0$", "^spi_0_dq_1$", "^spi_0_dq_2$", "^spi_0_dq_3$",
+        "^spi_0_sck$","^spi_0_cs_0$","^spi_flash_0_sck$","^spi_flash_0_cs_0$",
+        "^spi_flash_0_dq_0$","^spi_flash_0_dq_1$","^spi_flash_0_dq_2$","^spi_flash_0_dq_3$",
     ]
     
     # 添加serial_tl_0_in_bits_phit_0到serial_tl_0_in_bits_phit_31

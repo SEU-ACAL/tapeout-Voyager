@@ -1,0 +1,11 @@
+
+flash_test-baremetal:     file format elf64-littleriscv
+
+
+Disassembly of section .text:
+
+0000000020000000 <_start>:
+    20000000:	0010029b          	addiw	t0,zero,1
+    20000004:	02fe                	slli	t0,t0,0x1f
+    20000006:	8282                	jr	t0
+    20000008:	0001                	nop

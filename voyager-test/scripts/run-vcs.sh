@@ -141,8 +141,16 @@ mkdir -p "${LOG_DIR}"
 source ${CYDIR}/voyager-test/scripts/env-source.sh vcs
 
 
-# 加入spiflash 的时候加入+spiflash0
-#+spiflash0=/home/wzy/tapeout-Voyager/voyager-test/build/src/workloads/cpu/hello.bin\
+#加入spiflash 的时候加入+spiflash0
+cd ${CYDIR}/tapeout/boot/flash_test
+echo "Building flash_test..."
+make 
+if [ $? -ne 0 ]; then
+    echo "Error: make failed in flash_test directory"
+    exit 1
+fi
+echo "flash_test build completed successfully"
+
 
 cd ${CYDIR}/sims/vcs/
 # 本地跑vcs debug请使用该配置
@@ -170,9 +178,6 @@ cd ${CYDIR}/sims/vcs/
 #   +permissive-off ${full_binary_path} \
 #   &> >(tee ${LOG_DIR}/stdout.log) \
 #   2> >(spike-dasm > ${LOG_DIR}/disasm.log)
-
-cd ${CYDIR}/tapeout/boot/flash_test
-make 
 
 
 #测试串行接口可用它
