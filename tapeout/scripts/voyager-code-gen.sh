@@ -194,7 +194,7 @@ if [ "$TOOL" == "vcs" ] || [ "$TOOL" == "chip" ]; then
   # cd ${ORINGIN_DIR} && cat sram_filelist.v >> filelist.f
   python ${CYDIR}/tapeout/scripts/iocell.py ${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral
   ## 加入这个可以从flash启动
-  # python ${CYDIR}/tapeout/scripts/gpio_set.py ${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral/TestHarness.sv 4:0 5:1 --remove-gpio 6,7,8
+  # python ${CYDIR}/tapeout/scripts/gpio_set.py ${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral/TestHarness.sv 3:0 4:0 5:1 --remove-gpio 6,7,8
 fi
 
 #-------------------------------------------------------------------

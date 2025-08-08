@@ -142,14 +142,14 @@ source ${CYDIR}/voyager-test/scripts/env-source.sh vcs
 
 
 #加入spiflash 的时候加入+spiflash0
-cd ${CYDIR}/tapeout/boot/flash_test
-echo "Building flash_test..."
+cd ${CYDIR}/tapeout/boot/flash_boot
+echo "Building flash_boot..."
 make 
 if [ $? -ne 0 ]; then
-    echo "Error: make failed in flash_test directory"
+    echo "Error: make failed in flash_boot directory"
     exit 1
 fi
-echo "flash_test build completed successfully"
+echo "flash_boot build completed successfully"
 
 
 cd ${CYDIR}/sims/vcs/
@@ -186,7 +186,7 @@ cd ${CYDIR}/sims/vcs/
   +verbose +loadmem=${full_binary_path} +loadmem_addr=80000000 \
   +no_hart0_msip\
   +cflush_addr=0x2010200\
-  +spiflash0=${CYDIR}/tapeout/boot/flash_test/flash_test.bin  \
+  +spiflash0=${CYDIR}/tapeout/boot/flash_boot/flash_boot.bin  \
   +permissive-off ${full_binary_path} \
   &> >(tee ${LOG_DIR}/stdout.log) \
   2> >(spike-dasm > ${LOG_DIR}/disasm.log)

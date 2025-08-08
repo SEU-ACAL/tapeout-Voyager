@@ -8,21 +8,21 @@ OBJDUMP = riscv64-unknown-elf-objdump
 
 # Compiler flags
 CFLAGS = -march=rv64gc -mabi=lp64d -nostartfiles -nostdlib -static
-LDFLAGS = -T flash_test.lds
+LDFLAGS = -T flash_boot.lds
 
 # Target files
-TARGET = flash_test-baremetal
-BIN_FILE = flash_test.bin
-DUMP_FILE = flash_test.dump
+TARGET = flash_boot-baremetal
+BIN_FILE = flash_boot.bin
+DUMP_FILE = flash_boot.dump
 
 # Source files
-SOURCES = flash_test.S
+SOURCES = flash_boot.S
 
 # Default target
 all: $(TARGET) $(BIN_FILE) $(DUMP_FILE)
 
 # Build the ELF file
-$(TARGET): $(SOURCES) flash_test.lds
+$(TARGET): $(SOURCES) flash_boot.lds
 	$(CC) $(CFLAGS) $(LDFLAGS) -o $@ $(SOURCES)
 
 # Generate binary file for flash programming
