@@ -15,9 +15,24 @@ import sys
 def create_tap_iocells(source_dir):
     """创建打拍的IOCell文件，用于普通信号"""
     
+    # 首先检查原始IOCell文件中使用的宏定义
+    macro_define = "`define vcs"  # 默认值
+    
+    # 尝试读取原始IOCell文件以获取正确的宏定义
+    original_iocell_path = os.path.join(source_dir, "CustomDigitalInIOCell.v")
+    if os.path.exists(original_iocell_path):
+        with open(original_iocell_path, 'r') as f:
+            content = f.read()
+            # 查找宏定义行
+            macro_match = re.search(r'`define\s+(\w+)', content)
+            if macro_match:
+                macro_define = f"`define {macro_match.group(1)}"
+                print(f"✓ 检测到原始宏定义: {macro_define}")
+    
+    # 使用普通字符串而非f-string，避免大括号解析问题
     # 创建CustomDigitalInIOCellTap.v文件
     tap_in_cell_content = """//==================================================================//
-`define vcs
+MACRO_DEFINE_PLACEHOLDER
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `timescale 1ns/1ps
@@ -127,7 +142,7 @@ endmodule
     
     # 创建CustomDigitalOutIOCellTap.v文件
     tap_out_cell_content = """//==================================================================//
-`define vcs
+MACRO_DEFINE_PLACEHOLDER
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `timescale 1ns/1ps
@@ -229,7 +244,7 @@ endmodule
 
     # 创建CustomDigitalGPIOCellTap.v文件
     tap_gpio_cell_content = """//==================================================================//
-`define vcs
+MACRO_DEFINE_PLACEHOLDER
 //======= would be auto replaced by voyager-code-gen.sh ============//
 
 `timescale 1ns/1ps
@@ -379,6 +394,11 @@ module CustomDigitalGPIOCellTap(
 endmodule
 `endif // verilator
 """
+
+    # 手动替换宏定义占位符
+    tap_in_cell_content = tap_in_cell_content.replace("MACRO_DEFINE_PLACEHOLDER", macro_define)
+    tap_out_cell_content = tap_out_cell_content.replace("MACRO_DEFINE_PLACEHOLDER", macro_define)
+    tap_gpio_cell_content = tap_gpio_cell_content.replace("MACRO_DEFINE_PLACEHOLDER", macro_define)
     
     # 写入文件
     files_to_create = [
@@ -476,6 +496,7 @@ def update_filelist(source_dir, new_files):
         print(f"  - {file}")
     
     return True
+
 def modify_chiptop(content):
     """修改ChipTop文件，对特殊信号使用原始IOCell，对普通信号使用新的打拍IOCell"""
     
@@ -506,35 +527,48 @@ def modify_chiptop(content):
     content = re.sub(duplicate_pattern, r'\1', content, flags=re.DOTALL)
     
     # 定义特殊信号，这些信号不需要打拍
+    # 使用精确匹配，避免 "clock_tap" 被误匹配为 "clock"
     special_signals = [
-        'clock', 'reset', 
-        'jtag_TCK', 'jtag_TMS', 'jtag_TDI', 'jtag_TDO', 
-        'serial_tl_0_clock_in',
-        'serial_tl_0_in_ready', 'serial_tl_0_in_valid', 
-        'serial_tl_0_out_ready', 'serial_tl_0_out_valid'
-        # 'spi_flash_0_sck','spi_flash_0_cs_0',
-        # 'spi_flash_0_dq_0',
-        # 'spi_flash_0_dq_1',
-        # 'spi_flash_0_dq_2',
-        # 'spi_flash_0_dq_3'
+        '^clock$', '^reset$', 
+        '^jtag_TCK$', '^jtag_TMS$', '^jtag_TDI$', '^jtag_TDO$', 
+        '^serial_tl_0_clock_in$',
+        '^serial_tl_0_in_ready$', '^serial_tl_0_in_valid$', 
+        '^serial_tl_0_out_ready$', '^serial_tl_0_out_valid$',
     ]
     
     # 添加serial_tl_0_in_bits_phit_0到serial_tl_0_in_bits_phit_31
     for i in range(32):
-        special_signals.append(f'serial_tl_0_in_bits_phit_{i}')
+        if(i==0):
+            special_signals.append(f'^serial_tl_0_in_bits_phit$')
+        else:
+            special_signals.append(f'^serial_tl_0_in_bits_phit_{i}$')
         
     # 添加serial_tl_0_out_bits_phit_0到serial_tl_0_out_bits_phit_31
     for i in range(32):
-        special_signals.append(f'serial_tl_0_out_bits_phit_{i}')
+        if(i==0):
+            special_signals.append(f'^serial_tl_0_out_bits_phit$')
+        else:
+            special_signals.append(f'^serial_tl_0_out_bits_phit_{i}$')
     
-    # 正则表达式模式，匹配所有普通IOCell实例（排除特殊信号）
-    # 匹配并替换CustomDigitalInIOCell（但不是特殊信号）
-    in_iocell_pattern = r'(CustomDigitalInIOCell\s+(?!iocell_(?:' + '|'.join(special_signals) + '))\w+\s*\()([^;]*?)(\);)'
+    # 修改正则表达式模式，使用精确匹配避免误匹配
+    in_iocell_pattern = r'(CustomDigitalInIOCell\s+iocell_(\w+)\s*\()([^;]*?)(\);)'
     
     def replace_in_normal_iocell(match):
         instance_prefix = match.group(1)
-        instance_body = match.group(2)
-        instance_suffix = match.group(3)
+        signal_name = match.group(2)  # 捕获信号名称
+        instance_body = match.group(3)
+        instance_suffix = match.group(4)
+        
+        # 检查是否为特殊信号
+        is_special = False
+        for pattern in special_signals:
+            if re.match(pattern, signal_name):
+                is_special = True
+                break
+        
+        if is_special:
+            # 如果是特殊信号，保持原样
+            return instance_prefix + instance_body + instance_suffix
         
         # 替换为打拍的IOCell
         new_instance_prefix = instance_prefix.replace('CustomDigitalInIOCell', 'CustomDigitalInIOCellTap')
@@ -576,13 +610,25 @@ def modify_chiptop(content):
     
     content = re.sub(in_iocell_pattern, replace_in_normal_iocell, content, flags=re.DOTALL)
     
-    # 匹配并替换CustomDigitalOutIOCell（但不是特殊信号）
-    out_iocell_pattern = r'(CustomDigitalOutIOCell\s+(?!iocell_(?:' + '|'.join(special_signals) + '))\w+\s*\()([^;]*?)(\);)'
+    # 匹配并替换CustomDigitalOutIOCell
+    out_iocell_pattern = r'(CustomDigitalOutIOCell\s+iocell_(\w+)\s*\()([^;]*?)(\);)'
     
     def replace_out_normal_iocell(match):
         instance_prefix = match.group(1)
-        instance_body = match.group(2)
-        instance_suffix = match.group(3)
+        signal_name = match.group(2)  # 捕获信号名称
+        instance_body = match.group(3)
+        instance_suffix = match.group(4)
+        
+        # 检查是否为特殊信号
+        is_special = False
+        for pattern in special_signals:
+            if re.match(pattern, signal_name):
+                is_special = True
+                break
+        
+        if is_special:
+            # 如果是特殊信号，保持原样
+            return instance_prefix + instance_body + instance_suffix
         
         # 替换为打拍的IOCell
         new_instance_prefix = instance_prefix.replace('CustomDigitalOutIOCell', 'CustomDigitalOutIOCellTap')
@@ -624,13 +670,25 @@ def modify_chiptop(content):
     
     content = re.sub(out_iocell_pattern, replace_out_normal_iocell, content, flags=re.DOTALL)
     
-    # 匹配并替换CustomDigitalGPIOCell（但不是特殊信号）
-    gpio_iocell_pattern = r'(CustomDigitalGPIOCell\s+(?!iocell_(?:' + '|'.join(special_signals) + '))\w+\s*\()([^;]*?)(\);)'
+    # 匹配并替换CustomDigitalGPIOCell
+    gpio_iocell_pattern = r'(CustomDigitalGPIOCell\s+iocell_(\w+)\s*\()([^;]*?)(\);)'
     
     def replace_gpio_normal_iocell(match):
         instance_prefix = match.group(1)
-        instance_body = match.group(2)
-        instance_suffix = match.group(3)
+        signal_name = match.group(2)  # 捕获信号名称
+        instance_body = match.group(3)
+        instance_suffix = match.group(4)
+        
+        # 检查是否为特殊信号
+        is_special = False
+        for pattern in special_signals:
+            if re.match(pattern, signal_name):
+                is_special = True
+                break
+        
+        if is_special:
+            # 如果是特殊信号，保持原样
+            return instance_prefix + instance_body + instance_suffix
         
         # 替换为打拍的IOCell
         new_instance_prefix = instance_prefix.replace('CustomDigitalGPIOCell', 'CustomDigitalGPIOCellTap')
@@ -685,7 +743,6 @@ def modify_chiptop(content):
     content = content.replace("1\\'b1", "1'b1")
     
     return content
-
 def process_files(source_dir):
     """处理所有IOCell相关文件"""
     
