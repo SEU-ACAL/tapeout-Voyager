@@ -171,13 +171,17 @@ cd ${CYDIR}/sims/vcs/
 #   &> >(tee ${LOG_DIR}/stdout.log) \
 #   2> >(spike-dasm > ${LOG_DIR}/disasm.log)
 
+cd ${CYDIR}/tapeout/boot/flash_test
+make 
+
+
 #测试串行接口可用它
 ./simv-chipyard.harness-${CONFIG}${DEBUG} $PK $full_binary_path \
   $([ $debug -eq 1 ] && echo "+fsdbfile=${WAVEFORM}") \
   +verbose +loadmem=${full_binary_path} +loadmem_addr=80000000 \
   +no_hart0_msip\
   +cflush_addr=0x2010200\
-  +spiflash0=${full_binary_path} \
+  +spiflash0=${CYDIR}/tapeout/boot/flash_test/flash_test.bin  \
   +permissive-off ${full_binary_path} \
   &> >(tee ${LOG_DIR}/stdout.log) \
   2> >(spike-dasm > ${LOG_DIR}/disasm.log)
