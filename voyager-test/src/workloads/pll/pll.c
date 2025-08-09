@@ -51,14 +51,6 @@ void init_clock_system() {
     // 使能PLL输出
     // write_reg(PLL_CTRL + PLL_GATE_REG, 1);//时钟门控
     printf("PLL output enabled\n");
-    
-    // 阶段3：配置时钟分频器为2分频
-    printf("Phase 3: Configuring clock divider (divide by 2)...\n");
-    
-    // 设置分频值为2 (通常寄存器值为分频数-1)
-    write_reg(CLOCK_DIVIDER , 1);  // 2分频
-    printf("Clock divider configured for divide-by-2\n");
-    
     // 阶段4：切换到PLL时钟
     printf("Phase 4: Switching to PLL clock...\n");
     
@@ -83,15 +75,12 @@ void init_clock_system() {
 void monitor_clock_status() {
     printf("\n=== Clock Status Monitor ===\n");
     
-    uint32_t divider_ctrl = read_reg(CLOCK_DIVIDER);
-    uint32_t divider_val = read_reg(CLOCK_DIVIDER );
+
     uint32_t selector_ctrl = read_reg(CLOCK_SELECTOR );
     uint32_t selector_mux = read_reg(CLOCK_SELECTOR);
     uint32_t pll_power = read_reg(PLL_CTRL );
     uint32_t pll_gate = read_reg(PLL_CTRL );
     
-    printf("Clock Divider: %s, Division: %d\n", 
-           divider_ctrl ? "Enabled" : "Disabled", divider_val + 1);
     printf("Clock Selector: %s, Source: %s\n", 
            selector_ctrl ? "Enabled" : "Disabled",
            selector_mux ? "PLL" : "Slow Clock");

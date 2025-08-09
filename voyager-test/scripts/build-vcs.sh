@@ -1,5 +1,5 @@
 #!/bin/bash
-
+CYDIR=$(git rev-parse --show-toplevel)
 help () {
   echo "Build a cycle-accurate VCS simulator for RISCV Gemmini programs,"
   echo 'matching `customConfig` in `configs/GemminiCustomConfigs.scala`.'
@@ -40,6 +40,26 @@ while [ $# -gt 0 ] ; do
         shift
       else
         echo "错误: -c 或 --config 选项需要一个参数"
+        help
+      fi
+      ;;
+#替换为厂家提供的仿真模型
+    -r|--real)
+      if [[ -n $2 && $2 != -* ]]; then
+          REAL="$2"
+        shift
+      else
+        echo "错误: -r 或 --real 选项需要一个参数"
+        help
+      fi
+      ;;
+#选择chip还是vcs仿真
+    -t|--tool)
+      if [[ -n $2 && $2 != -* ]]; then
+          TOOL="$2"
+        shift
+      else
+        echo "错误: -t 或 --tool 选项需要一个参数"
         help
       fi
       ;;
@@ -85,6 +105,8 @@ CACHE_DIR="${CYDIR}/.classpath_cache"
 # 当使用voyager_tapeout项目时，自动清理缓存以避免配置冲突
 if [ "$SBT_PROJECT" = "voyager_tapeout" ] ; then
   rm -rf "$CACHE_DIR"
+  cd ${CYDIR}/sims/vcs && make clean
+  cd ${CYDIR}
 fi
 
 DASH_DEBUG_POSTFIX=""
@@ -121,6 +143,8 @@ cd ${CYDIR}/sims/vcs/ || { echo "Cannot enter the directory: ${CYDIR}/sims/vcs/"
 make -j$j ${debug} CONFIG=$CONFIG \
   USE_FST=$USE_FST \
   SBT_PROJECT=$SBT_PROJECT \
+  REAL=$REAL \
+  TOOL=$TOOL \
   $([ -n "$SUB_PROJECT" ] && echo "SUB_PROJECT=$SUB_PROJECT") \
   || { echo "[Build VCS Failed!]==================="; exit 1; } 
 mkdir -p ${CYDIR}/voyager-test/output/vcs

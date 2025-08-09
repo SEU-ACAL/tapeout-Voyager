@@ -64,15 +64,27 @@ VCS_OPTS = $(VCS_CC_OPTS) $(VCS_NONCC_OPTS) $(SIM_PREPROC_DEFINES) $(VCS_PREPROC
 model_dir = $(build_dir)/$(long_name)
 model_dir_debug = $(build_dir)/$(long_name).debug
 
+define CONDITIONAL_RUN_REAL
+    @# This is a shell 'if' statement, executed by the command shell, not by make.
+    @if [ "$(REAL)" = "yes" ]; then \
+        echo "✅ RUN_REAL=yes. Executing iocell.py script..."; \
+        python $(base_dir)/tapeout/scripts/iocell.py $(GEN_COLLATERAL_DIR); \
+		bash $(base_dir)/tapeout/scripts/sram_gen.sh --tool $(TOOL) --config $(CONFIG); \
+    else \
+        echo "☑️ RUN_REAL not set to 'yes'. Skipping iocell.py script."; \
+    fi
+endef
 #########################################################################################
 # vcs simulator rules
 #########################################################################################
 $(sim): $(sim_common_files) $(dramsim_lib) $(EXTRA_SIM_REQS)
 	rm -rf $(model_dir)
+	$(CONDITIONAL_RUN_REAL)
 	$(VCS) $(VCS_OPTS) $(EXTRA_SIM_SOURCES) -o $@ -Mdir=$(model_dir)
 
 $(sim_debug): $(sim_common_files) $(dramsim_lib) $(EXTRA_SIM_REQS)
 	rm -rf $(model_dir_debug)
+	$(CONDITIONAL_RUN_REAL)
 	$(VCS) $(VCS_OPTS) $(EXTRA_SIM_SOURCES) -o $@ -Mdir=$(model_dir_debug)  \
 	+define+DEBUG -debug_access+all -kdb -lca
 

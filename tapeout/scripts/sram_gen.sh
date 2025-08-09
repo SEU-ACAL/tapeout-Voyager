@@ -113,17 +113,17 @@ find ./ -type f -name "*.v" -exec sed -i \
 # === 1.1 SRAM替换 ==================================================
 cd ${CYDIR}
 if [ "$TOOL" == "verilator" ]; then
-  ./voyager-test/scripts/build-verilator.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout 
+#   ./voyager-test/scripts/build-verilator.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout 
   ORINGIN_DIR="${CYDIR}/sims/verilator/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
 elif [ "$TOOL" == "vcs" ]; then
-  cd ${CYDIR}/sims/vcs && make clean
-  cd ${CYDIR}
-  ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --debug
+#   cd ${CYDIR}/sims/vcs && make clean
+#   cd ${CYDIR}
+#   ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --debug
   ORINGIN_DIR="${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
 elif [ "$TOOL" == "chip" ]; then
-  cd ${CYDIR}/sims/vcs && make clean
-  cd ${CYDIR}
-  ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout
+#   cd ${CYDIR}/sims/vcs && make clean
+#   cd ${CYDIR}
+#   ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout
   ORINGIN_DIR="${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
 fi
 
@@ -193,7 +193,7 @@ if [ "$TOOL" == "vcs" ] || [ "$TOOL" == "chip" ]; then
   # cp -r ${TMP_DIR}/* ${ORINGIN_DIR} 
   # Append the filelist from SRAM_DB_DIR to the filelist in TMP_DIR
   # cd ${ORINGIN_DIR} && cat sram_filelist.v >> filelist.f
-  python ${CYDIR}/tapeout/scripts/iocell.py ${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral
+#   python ${CYDIR}/tapeout/scripts/iocell.py ${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral
 fi
 
 #-------------------------------------------------------------------
@@ -207,11 +207,11 @@ if [ "$TOOL" == "verilator" ]; then
   ORINGIN_DIR="${CYDIR}/sims/verilator/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
 elif [ "$TOOL" == "vcs" ]; then
   # python ${CYDIR}/tapeout/scripts/iocell.py ${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral
-  ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --io_cell yes --debug
+#   ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --io_cell yes --debug
   ORINGIN_DIR="${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
 elif [ "$TOOL" == "chip" ]; then
   # python ${CYDIR}/tapeout/scripts/iocell.py ${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral
-  ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --io_cell yes 
+#   ./voyager-test/scripts/build-vcs.sh --config ${CONFIG} --project voyager_tapeout --sub-project voyager_tapeout --io_cell yes 
   ORINGIN_DIR="${CYDIR}/sims/vcs/generated-src/chipyard.harness.TestHarness.${CONFIG}/gen-collateral"
 fi
 

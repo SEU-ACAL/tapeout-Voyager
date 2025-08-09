@@ -419,18 +419,19 @@ endmodule
     return created_files
 
 def update_filelist(source_dir, new_files):
-    """更新filelist.f文件，添加新创建的文件"""
-    filelist_path = os.path.join(source_dir, 'firrtl_black_box_resource_files.f')
+    """更新filelist.f文件，添加新创建的文件，并确保路径为绝对路径"""
+    print(f"Source directory for filelist update: {source_dir}")
+    filelist_path = os.path.join(source_dir, 'sim_files.common.f')
     
+    # --- 文件查找逻辑保持不变 ---
     if not os.path.exists(filelist_path):
-        print(f"⚠ 警告: firrtl_black_box_resource_files.f 文件不存在: {filelist_path}")
+        print(f"⚠ 警告: sim_files.common.f 文件不存在: {filelist_path}")
         
-        # 尝试在上层目录查找
         parent_dir = os.path.dirname(source_dir)
         potential_paths = [
-            os.path.join(parent_dir, 'firrtl_black_box_resource_files.f'),
-            os.path.join(source_dir, 'gen-collateral', 'firrtl_black_box_resource_files.f'),
-            os.path.join(parent_dir, 'gen-collateral', 'firrtl_black_box_resource_files.f')
+            os.path.join(parent_dir, 'sim_files.common.f'),
+            os.path.join(source_dir, 'gen-collateral', 'sim_files.common.f'),
+            os.path.join(parent_dir, 'gen-collateral', 'sim_files.common.f')
         ]
         
         for path in potential_paths:
@@ -439,60 +440,69 @@ def update_filelist(source_dir, new_files):
                 print(f"✓ 找到替代文件列表: {filelist_path}")
                 break
         else:
-            # 如果找不到文件，创建一个新的
             print(f"⚠ 无法找到filelist.f，将创建新文件")
+            # ★ 修改点: 创建新文件时也使用绝对路径
+            new_files_absolute = [os.path.abspath(os.path.join(source_dir, f)) for f in new_files]
             with open(filelist_path, 'w') as f:
                 f.write("// 自动生成的filelist.f\n")
-                f.write('\n'.join(new_files))
+                f.write('\n'.join(new_files_absolute))
             print(f"✓ 已创建新的filelist.f: {filelist_path}")
             return True
-    
-    # 读取现有文件内容
+
+    # --- 文件去重逻辑保持不变 ---
     with open(filelist_path, 'r') as f:
         content = f.read().splitlines()
     
-    # 检查文件是否已存在
     already_exists = []
+    # 检查时既可以检查相对路径也可以检查绝对路径，这里保持原逻辑，只检查文件名
     for file in new_files:
-        if any(file == line.strip() for line in content):
+        if any(file in line for line in content): # 使用 `in` 检查，更灵活
             already_exists.append(file)
-    
+            
     if already_exists:
         print(f"⚠ 以下文件已存在于filelist.f中，将不重复添加: {', '.join(already_exists)}")
-        # 移除已存在的文件
         new_files = [f for f in new_files if f not in already_exists]
         
         if not new_files:
             print(f"✓ 所有文件已存在于filelist.f中，无需更新")
             return True
-    
-    # 定位添加位置 - 查找最后一个IOCell文件或者ChipTop.sv
+            
+    # ★ 主要修改点: 在此处将待添加的文件列表转换为绝对路径
+    # 使用 os.path.abspath 确保路径是最规范的绝对形式
+    print(f"将以下相对路径文件转换为绝对路径后添加: {new_files}")
+    new_files_absolute = [os.path.abspath(os.path.join(source_dir, f)) for f in new_files]
+
+    # --- 插入点定位逻辑保持不变 ---
     insert_index = None
+    # 倒序查找，确保插入在最后一个匹配项之后
     for marker in ['CustomDigitalInIOCell.v', 'CustomDigitalOutIOCell.v', 'CustomDigitalGPIOCell.v', 'ChipTop.sv']:
-        for i, line in enumerate(content):
-            if marker in line:
-                insert_index = i + 1  # 插入到该文件之后
-    
-    # 如果没找到插入点，附加到文件末尾
+        for i in range(len(content) - 1, -1, -1):
+            if marker in content[i]:
+                insert_index = i + 1
+                break
+        if insert_index is not None:
+            break
+            
+    # --- 文件写入逻辑，使用包含绝对路径的列表 ---
     if insert_index is None:
         print(f"⚠ 在filelist.f中未找到合适的插入点，将附加到文件末尾")
-        # 添加一个标记注释和新文件
         content.append("")
-        # content.append("// 新添加的自定义IOCell模块")
-        content.extend(new_files)
+        content.append("// --- Appended Custom IO Cells ---")
+        content.extend(new_files_absolute)
     else:
-        # 插入到标记文件之后
-        # content.insert(insert_index, "// 新添加的自定义IOCell模块")
-        for i, file in enumerate(new_files, 1):
-            content.insert(insert_index + i, file)
+        print(f"✓ 在 {content[insert_index-1].strip()} 之后找到插入点")
+        # 使用 reversed 确保插入顺序与 new_files 顺序一致
+        for file_abs in reversed(new_files_absolute):
+            content.insert(insert_index, file_abs)
+        # content.insert(insert_index, "// --- Inserted Custom IO Cells ---")
         print(f"✓ 已在合适位置插入新模块")
     
-    # 写回文件
     with open(filelist_path, 'w') as f:
         f.write('\n'.join(content))
     
-    print(f"✓ 已更新filelist.f文件，添加了以下模块:")
-    for file in new_files:
+    print(f"✓ 已更新filelist.f文件，添加了以下模块 (以绝对路径形式):")
+    # 打印时可以使用绝对路径列表，让信息更明确
+    for file in new_files_absolute:
         print(f"  - {file}")
     
     return True
