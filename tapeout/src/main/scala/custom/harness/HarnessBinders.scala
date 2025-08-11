@@ -15,6 +15,11 @@ import voyager_tapeout.custom.iobinders.{PeripheralNPUPort}
 import voyager_tapeout.custom.device.peripheral_npu.{PeripheralNPUIOCell}
 import voyager_tapeout.custom.harness.HasCustomHarnessInstantiators
 
+import testchipip.tsi.{SimTSI, SerialRAM, TSI, TSIIO}
+import testchipip.serdes._
+import chipyard.iobinders._
+import freechips.rocketchip.diplomacy.{LazyModule, LazyModuleImpLike}
+
 class WithPeripheralNPUPin extends HarnessBinder({
   case (th: HasHarnessInstantiators, port: PeripheralNPUPort, chipId: Int) => {
     port.io.npu_clk_FPGA_w             := false.B 
@@ -43,3 +48,32 @@ class WithSimSPIModel(rdOnly: Boolean = true) extends HarnessBinder({
   }
 })
 
+
+class WithVoyagerSimTSIOverSerialTL extends HarnessBinder({
+  case (th: HasHarnessInstantiators, port: SerialTLPort, chipId: Int) if (port.portId == 0) => {
+    port.io match {
+      case io: InternalSyncPhitIO =>
+      case io: ExternalSyncPhitIO => io.clock_in := th.harnessBinderClock
+      case io: SourceSyncPhitIO => io.clock_in := th.harnessBinderClock; io.reset_in := th.harnessBinderReset
+    }
+
+    port.io match {
+      case io: DecoupledPhitIO => {
+        // If the port is locally synchronous (provides a clock), drive everything with that clock
+        // Else, drive everything with the harnes clock
+        val clock = port.io match {
+          case io: InternalSyncPhitIO => io.clock_out
+          case io: ExternalSyncPhitIO => th.harnessBinderClock
+        }
+        withClock(clock) {
+          val ram = Module(LazyModule(new SerialDRAM(port.serdesser, port.params)(port.serdesser.p)).module)
+          ram.io.ser.in <> io.out
+          io.in <> ram.io.ser.out
+
+          val success = SimTSI.connect(ram.io.tsi, clock, th.harnessBinderReset, chipId)
+          when (success) { th.success := true.B }
+        }
+      }
+    }
+  }
+})
