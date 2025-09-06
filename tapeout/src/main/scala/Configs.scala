@@ -125,7 +125,7 @@ class VoyagerVcsChipConfig extends Config(
   new chipyard.config.AbstractConfig)
 
 class VoyagerVcsChipTestConfig extends Config(
-  new voyager_tapeout.WithVoyagerBootROM++
+  // new voyager_tapeout.WithVoyagerBootROM++
   new freechips.rocketchip.subsystem.WithoutTLMonitors++
   new voyager_tapeout.custom.harness.WithCustomChipTop ++
   new voyager_tapeout.custom.harness.WithCustomIOCells ++
@@ -133,11 +133,11 @@ class VoyagerVcsChipTestConfig extends Config(
   new voyager_tapeout.custom.OurHeterSoCConfig ++
   // new voyager_tapeout.custom.iobinders.WithVoyagerPLLSelectorDividerClockGenerator(enable=true)++
   // new voyager_tapeout.custom.WithNPU ++
-  new voyager_tapeout.custom.WithUART1 ++
+  // new voyager_tapeout.custom.WithUART1 ++
 
-  new voyager_tapeout.custom.WithSPIForFlash ++
+  // new voyager_tapeout.custom.WithSPIForFlash ++
   new voyager_tapeout.custom.iobinders.WithSPIFlashIOCells ++
-  new voyager_tapeout.custom.WithCustomClockGateModel++// new CLOCK GATE
+  // new voyager_tapeout.custom.WithCustomClockGateModel++// new CLOCK GATE
   //TODO : 运行vsc 暂时注释掉
   new testchipip.serdes.WithSerialTLMem(size = BigInt("80000000",16)) ++ // 8 GB of off-chip memory
   new voyager_tapeout.custom.WithSerialConnect++   // 
@@ -224,3 +224,26 @@ class ChipBringupHostConfig extends Config(
   new chipyard.config.WithUniformBusFrequencies(75.0) ++   // run all buses of this system at 75 MHz
   // Base is the no-cores config
   new chipyard.NoCoresConfig)
+
+class TestTimeConfig extends Config(
+  new chipyard.config.WithTileFrequency(100, Some(0)) ++
+  new chipyard.config.WithTileFrequency(100, Some(1)) ++
+  // new chipyard.config.WithTileFrequency(100, Some(2)) ++
+  new freechips.rocketchip.guardiancouncil.WithGuardianCouncilNodes ++
+  new freechips.rocketchip.guardiancouncil.WithDisableROBDebug ++
+  // new freechips.rocketchip.rocket.WithNBuckyBallCores(1) ++ //independent Rocket for buckyball: hartid 3
+  // new chipyard.config.WithMultiRoCCBB ++
+  // new chipyard.config.WithMultiRoCCBuckyBall(3)(buckyball.BuckyBallConfigs.defaultConfig) ++ // put buckyball on hart-3 (rocket)
+  
+  new chipyard.config.WithMultiRoCCMEEK ++
+  new chipyard.config.WithMultiSingleRoCCGHE(0, 1,2) ++ //put custom RoCC on hart0-2 for custom0 ISA extension ++
+  new freechips.rocketchip.subsystem.WithInclusiveCache(capacityKB = 32) ++ // 64 KB L2Cache
+  new chipyard.config.WithSystemBusWidth(128) ++
+  new freechips.rocketchip.rocket.WithMEEKCores(2) ++
+  new boom.meek.common.WithNMediumBooms(1) ++
+  // new voyager_tapeout.custom.WithSPIForFlash ++
+  // new chipyard.iobinders.WithSPIFlashIOCells 
+  // NPUPeripheral
+  // new chipyard.config.AbstractConfig
+  new chipyard.config.AbstractConfig
+)

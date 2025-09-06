@@ -130,6 +130,7 @@ class WithNSmallBooms(n: Int = 1) extends Config(
  */
 class WithNMediumBooms(n: Int = 1) extends Config(
   new WithTAGELBPD ++ // Default to TAGE-L BPD
+  new WithNBoomPerfCounters(29)++//后面选择性去除
   new Config((site, here, up) => {
     case TilesLocated(InSubsystem) => {
       val prev = up(TilesLocated(InSubsystem), site)

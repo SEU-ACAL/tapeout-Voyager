@@ -9,7 +9,7 @@ import chisel3.experimental.IntParam
 
 import org.chipsalliance.cde.config._
 import org.chipsalliance.diplomacy.lazymodule._
-
+import freechips.rocketchip.boom_perf._
 import freechips.rocketchip.rocket.{
   MStatus, HellaCacheIO, TLBPTWIO, CanHavePTW, CanHavePTWModule,
   SimpleHellaCacheIF, M_XRD, PTE, PRV, M_SZ
@@ -52,10 +52,13 @@ class RoCCCoreIO(val nRoCCCSRs: Int = 0)(implicit p: Parameters) extends CoreBun
   val interrupt = Output(Bool())
   val exception = Input(Bool())
   val csrs = Flipped(Vec(nRoCCCSRs, new CustomCSRIO))
+
 }
 
 class RoCCIO(val nPTWPorts: Int, nRoCCCSRs: Int)(implicit p: Parameters) extends RoCCCoreIO(nRoCCCSRs)(p) {
   val ptw = Vec(nPTWPorts, new TLBPTWIO)
+  val perf_data_in  = if(p(HasPERF)) Some(Input(UInt(64.W))) else None
+  val debug_perf_ctrl = if(p(HasPERF)) Some(Output(UInt(12.W))) else None
   val fpu_req = Decoupled(new FPInput)
   val fpu_resp = Flipped(Decoupled(new FPResult))
 }

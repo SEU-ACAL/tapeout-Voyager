@@ -47,7 +47,16 @@ class MediumBoomV3CosimConfig extends Config(
   new chipyard.config.WithTraceIO ++                             // enable the traceio
   new boom.v3.common.WithNMediumBooms(1) ++
   new chipyard.config.AbstractConfig)
-
+class MediumBoomV3PERFCosimConfig extends Config(
+  new chipyard.harness.WithCospike ++                            // attach spike-cosim
+  new chipyard.config.WithTraceIO ++   
+  new freechips.rocketchip.boom_perf.WithPERF++                          // enable the traceio
+  new boom.v3.common.WithNMediumBooms(1) ++
+  new chipyard.config.AbstractConfig)
+class MediumBoomV3PERFConfig extends Config(  
+  new freechips.rocketchip.boom_perf.WithPERF++                          // enable the traceio
+  new boom.v3.common.WithNMediumBooms(1) ++
+  new chipyard.config.AbstractConfig)
 class dmiCheckpointingMediumBoomV3Config extends Config(
   new chipyard.config.WithNPMPs(0) ++                            // remove PMPs (reduce non-core arch state)
   new chipyard.harness.WithSerialTLTiedOff ++                    // don't attach anything to serial-tl

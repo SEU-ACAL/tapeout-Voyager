@@ -244,8 +244,10 @@ Voyager 仓库下只有 `generator`部分文件夹, `voyager-test`, `docs` 和 `
 
 ## 十.注意事项
 
-在运行p2e必须将bootrom的wait_pll_open注释掉，但最后的流片代码必须把注释删除
+在运行p2e必须将bootrom的wait_pll_open注释掉，但最后的流片代码必须把注释
 
+
+如果想在firesim使用cosim，必须修改runtime.py中driver_call的prog0参数为bin的绝对地址
 
 <!-- **9.3 专用测试**
 

@@ -27,7 +27,7 @@ import boom.v3.ifu._
 import boom.v3.lsu._
 import boom.v3.util.{BoomCoreStringPrefix}
 import freechips.rocketchip.prci.ClockSinkParameters
-
+import freechips.rocketchip.boom_perf._
 
 case class BoomTileAttachParams(
   tileParams: BoomTileParams,
@@ -141,8 +141,14 @@ class BoomTile private(
 
   require(tileParams.dcache.get.rowBits == tileParams.icache.get.rowBits)
 
+  val roccs =  p(BuildRoCC).map(_(p)) 
+
   // ROCC
-  val roccs = p(BuildRoCC).map(_(p))
+  // if(p(HasPERF)) {
+  //   println("********** Enabling PERF **********")
+  //   roccs = p(BuildRoCCPERF).map(_(p))
+  // }
+
   roccs.map(_.atlNode).foreach { atl => tlMasterXbar.node :=* atl }
   roccs.map(_.tlNode).foreach { tl => tlOtherMastersNode :=* tl }
 }
@@ -178,7 +184,7 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
 
   //fpuOpt foreach { fpu => core.io.fpu <> fpu.io } RocketFpu - not needed in boom
   core.io.rocc := DontCare
-
+  core.io.debug_perf_ctrl :=  0.U
   // RoCC
   if (outer.roccs.size > 0) {
     val (respArb, cmdRouter) = {
@@ -187,6 +193,8 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
       outer.roccs.zipWithIndex.foreach { case (rocc, i) =>
         ptwPorts ++= rocc.module.io.ptw
         rocc.module.io.cmd <> cmdRouter.io.out(i)
+        rocc.module.io.perf_data_in.getOrElse(0.U) := core.io.debug_perf_val
+        
         val dcIF = Module(new SimpleHellaCacheIF()(outer.p))
         dcIF.io.requestor <> rocc.module.io.mem
         hellaCachePorts += dcIF.io.cache
@@ -199,6 +207,8 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
         roccio.fpu_resp.valid := false.B
         roccio.fpu_resp.bits := DontCare
       })
+
+
       // Create this FPU just for RoCC
       val nFPUPorts = outer.roccs.filter(_.usesFPU).size
       if (nFPUPorts > 0) {
@@ -212,7 +222,6 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
           fpu.io.valid := false.B
           fpu.io.killx := false.B
           fpu.io.killm := false.B
-
           val fpArb = Module(new InOrderArbiter(new FPInput()(outer.p), new FPResult()(outer.p), nFPUPorts))
           val fp_rocc_ios = outer.roccs.filter(_.usesFPU).map(_.module.io)
           fpArb.io.in_req <> fp_rocc_ios.map(_.fpu_req)
@@ -224,13 +233,16 @@ class BoomTileModuleImp(outer: BoomTile) extends BaseTileModuleImp(outer){
         }
       }
       (respArb, cmdRouter)
+    
     }
 
     cmdRouter.io.in <> core.io.rocc.cmd
     outer.roccs.foreach(_.module.io.exception := core.io.rocc.exception)
     core.io.rocc.resp <> respArb.io.out
     core.io.rocc.busy <> (cmdRouter.io.busy || outer.roccs.map(_.module.io.busy).reduce(_||_))
-    core.io.rocc.interrupt := outer.roccs.map(_.module.io.interrupt).reduce(_||_)
+    core.io.rocc.interrupt  := outer.roccs.map(_.module.io.interrupt).reduce(_||_)
+    println(s"********** Enabling RoCC with ${outer.roccs.size} accelerators **********")
+    core.io.debug_perf_ctrl := outer.roccs.map(_.module.io.debug_perf_ctrl.getOrElse(0.U)).reduce(_|_)
   }
 
   // PTW

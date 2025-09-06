@@ -61,6 +61,8 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
     val ptw_tlb = new freechips.rocketchip.rocket.TLBPTWIO()
     val trace = Output(new TraceBundle)
     val fcsr_rm = UInt(freechips.rocketchip.tile.FPConstants.RM_SZ.W)
+    val debug_perf_val = Output(UInt(64.W))
+    val debug_perf_ctrl = Input(UInt(12.W))
   })
 
   io.ptw_tlb := DontCare
@@ -267,6 +269,7 @@ val perfEvents = new freechips.rocketchip.rocket.EventSets(Seq(
       ("ITLB miss",   () => io.ifu.perf.tlbMiss),
       ("DTLB miss",   () => io.lsu.perf.tlbMiss),
       ("L2 TLB miss", () => io.ptw.perf.l2miss)))))
+  
   val csr = Module(new freechips.rocketchip.rocket.CSRFile(perfEvents, boomParams.customCSRs.decls))
   csr.io.inst foreach { c => c := DontCare }
   csr.io.rocc_interrupt := io.rocc.interrupt
@@ -1443,7 +1446,74 @@ val perfEvents = new freechips.rocketchip.rocket.EventSets(Seq(
   io.trace.time := csr.io.time
   io.trace.insns map (t => t.valid := false.B)
   io.trace.custom.get.asInstanceOf[BoomTraceBundle].rob_empty := rob.io.empty
+/* 
+PERFORMANCE MONITORING
+ */ 
+  val load_commit     = (0 until coreWidth).map(i => rob.io.commit.arch_valids(i) && rob.io.commit.uops(i).mem_cmd===M_XRD && rob.io.commit.uops(i).iq_type===IQT_MEM)
+  val store_commit    = (0 until coreWidth).map(i => rob.io.commit.arch_valids(i) && rob.io.commit.uops(i).mem_cmd===M_XWR && rob.io.commit.uops(i).iq_type===IQT_MEM)
+  val fp_commit       = (0 until coreWidth).map(i => rob.io.commit.arch_valids(i) && rob.io.commit.uops(i).fp_val)
+  val int_commit      = (0 until coreWidth).map(i => rob.io.commit.arch_valids(i) && rob.io.commit.uops(i).iq_type===IQT_INT)
+  val div_commit      = (0 until coreWidth).map(i => rob.io.commit.arch_valids(i) && rob.io.commit.uops(i).fu_code=== FU_DIV)
+  val mul_commit      = (0 until coreWidth).map(i => rob.io.commit.arch_valids(i) && rob.io.commit.uops(i).fu_code=== FU_MUL)
+  val br_commit       = (0 until coreWidth).map(i=>rob.io.commit.arch_valids(i)&&(rob.io.commit.uops(i).is_br))
+  val jal_commit      = (0 until coreWidth).map(i=>rob.io.commit.arch_valids(i)&&(rob.io.commit.uops(i).is_jal))
+  val jalr_commit     = (0 until coreWidth).map(i=>rob.io.commit.arch_valids(i)&&(rob.io.commit.uops(i).is_jalr))
+  val total_mispred   = (0 until coreWidth).map(i=>rob.io.commit.arch_valids(i)&&(rob.io.commit.uops(i).is_br||rob.io.commit.uops(i).is_jal||rob.io.commit.uops(i).is_jalr)&&(rob.io.commit.uops(i).debug_fsrc===BSRC_C))
+  val br_mispred      = (0 until coreWidth).map(i=>rob.io.commit.arch_valids(i)&&(rob.io.commit.uops(i).is_br)&&(rob.io.commit.uops(i).debug_fsrc===BSRC_C))
+  val issue_valids = VecInit(
+  issue_units.flatMap(_.io.iss_valids) ++ fp_pipeline.io.wb_valids)
+  val Slots_Retire    = RegInit(0.U(64.W))  
+  val Slot_Issued     = RegInit(0.U(64.W))  
+  val Fetch_Bubble    = RegInit(0.U(64.W))  
+  val Load_commit     = RegInit(0.U(64.W))  
+  val Store_commit    = RegInit(0.U(64.W))   
+  val Fp_commit       = RegInit(0.U(64.W)) 
+  val Br_commit       = RegInit(0.U(64.W))   
+  val Jal_commit      = RegInit(0.U(64.W))         
+  val Jalr_commit     = RegInit(0.U(64.W))                                                                         
+  val Int_commit      = RegInit(0.U(64.W))                                                       
+  val Div_commit      = RegInit(0.U(64.W))                   
+  val Mul_commit      = RegInit(0.U(64.W)) 
+  val Total_mispred   = RegInit(0.U(64.W))
+  val Br_mispred      = RegInit(0.U(64.W))
+  val Cycle           = RegInit(0.U(64.W))
+  val perf_ctrl       = io.debug_perf_ctrl
+  Slots_Retire := Mux(perf_ctrl===0.U,0.U,Mux(perf_ctrl===2.U,Slots_Retire ,Mux(perf_ctrl===1.U,Slots_Retire +PopCount(rob.io.commit.arch_valids),Slots_Retire )))
+  Slot_Issued  := Mux(perf_ctrl===0.U,0.U,Mux(perf_ctrl===2.U,Slot_Issued  ,Mux(perf_ctrl===1.U,Slot_Issued  +PopCount(issue_valids),Slot_Issued  )))
+  Fetch_Bubble := Mux(perf_ctrl===0.U,0.U,Mux(perf_ctrl===2.U,Fetch_Bubble ,Mux(perf_ctrl===1.U&&((!io.ifu.fetchpacket.valid)&&dec_ready),Fetch_Bubble +coreWidth.U,Fetch_Bubble )))
+  Load_commit  := Mux(perf_ctrl===0.U,0.U,Mux(perf_ctrl===2.U,Load_commit  ,Mux(perf_ctrl===1.U,Load_commit  +PopCount(load_commit) ,Load_commit  )))
+  Store_commit := Mux(perf_ctrl===0.U,0.U,Mux(perf_ctrl===2.U,Store_commit ,Mux(perf_ctrl===1.U,Store_commit +PopCount(store_commit),Store_commit )))
+  Fp_commit    := Mux(perf_ctrl===0.U,0.U,Mux(perf_ctrl===2.U,Fp_commit    ,Mux(perf_ctrl===1.U,Fp_commit    +PopCount(fp_commit)   ,Fp_commit    )))
+  Br_commit    := Mux(perf_ctrl===0.U,0.U,Mux(perf_ctrl===2.U,Br_commit    ,Mux(perf_ctrl===1.U,Br_commit    +PopCount(br_commit)   ,Br_commit    )))
+  Jal_commit   := Mux(perf_ctrl===0.U,0.U,Mux(perf_ctrl===2.U,Jal_commit   ,Mux(perf_ctrl===1.U,Jal_commit   +PopCount(jal_commit)  ,Jal_commit   )))
+  Jalr_commit  := Mux(perf_ctrl===0.U,0.U,Mux(perf_ctrl===2.U,Jalr_commit  ,Mux(perf_ctrl===1.U,Jalr_commit  +PopCount(jalr_commit) ,Jalr_commit  )))
+  Int_commit   := Mux(perf_ctrl===0.U,0.U,Mux(perf_ctrl===2.U,Int_commit   ,Mux(perf_ctrl===1.U,Int_commit   +PopCount(int_commit)  ,Int_commit   )))
+  Div_commit   := Mux(perf_ctrl===0.U,0.U,Mux(perf_ctrl===2.U,Div_commit   ,Mux(perf_ctrl===1.U,Div_commit   +PopCount(div_commit)  ,Div_commit   )))
+  Mul_commit   := Mux(perf_ctrl===0.U,0.U,Mux(perf_ctrl===2.U,Mul_commit   ,Mux(perf_ctrl===1.U,Mul_commit   +PopCount(mul_commit)  ,Mul_commit   )))
+  Total_mispred:= Mux(perf_ctrl===0.U,0.U,Mux(perf_ctrl===2.U,Total_mispred,Mux(perf_ctrl===1.U,Total_mispred+PopCount(total_mispred),Total_mispred)))
+  Br_mispred   := Mux(perf_ctrl===0.U,0.U,Mux(perf_ctrl===2.U,Br_mispred   ,Mux(perf_ctrl===1.U,Br_mispred   +PopCount(br_mispred),Br_mispred   )))
+  Cycle        := Mux(perf_ctrl===0.U,0.U,Mux(perf_ctrl===2.U,Cycle   ,Mux(perf_ctrl===1.U,Cycle   +1.U,Cycle   )))
 
+  io.debug_perf_val:=  MuxLookup(perf_ctrl, 0.U )(Seq(
+                        0.U -> 0.U,
+                        1.U -> 0.U,
+                        2.U -> 0.U,
+                        3.U -> Slots_Retire,
+                        4.U -> Slot_Issued,
+                        5.U -> Fetch_Bubble,
+                        6.U -> Load_commit,
+                        7.U -> Store_commit,
+                        8.U -> Fp_commit,
+                        9.U -> Br_commit,
+                        10.U -> Jal_commit,
+                        11.U -> Jalr_commit,
+                        12.U -> Int_commit,
+                        13.U -> Div_commit,
+                        14.U -> Mul_commit,
+                        15.U -> Total_mispred,
+                        16.U -> Br_mispred,
+                        17.U -> Cycle
+                      ))
   if (trace) {
     for (w <- 0 until coreWidth) {
       // Delay the trace so we have a cycle to pull PCs out of the FTQ

@@ -550,19 +550,19 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
 
   val perfEvents = new freechips.rocketchip.meek.EventSets(Seq(
     new freechips.rocketchip.meek.EventSet((mask, hits) => (mask & hits).orR, Seq(
-      ("exception"    ,       () => (rob.io.com_xcpt.valid,false.B,0.U)),
+      ("exception     "    ,       () => (rob.io.com_xcpt.valid,false.B,0.U)),
       ("Slots Retired",       () => (rob.io.commit.arch_valids.reduce(_|_),true.B,PopCount(rob.io.commit.arch_valids))),
       ("Slots Issued" ,       () => (issue_valids.reduce(_|_)  ,true.B,PopCount(issue_valids))),
       ("Fetch Bubbles",       () => ((!io.ifu.fetchpacket.valid)&&dec_ready,true.B,coreWidth.U)),
-      ("Load  commit" ,       () => (load_commit.reduce(_|_)   ,true.B,PopCount(load_commit))),
-      ("Store commit" ,       () => (store_commit.reduce(_|_)  ,true.B,PopCount(store_commit))),
-      ("fp    commit" ,       () => (fp_commit.reduce(_|_)     ,true.B,PopCount(fp_commit))),
-      ("br    commit" ,       () => (br_commit.reduce(_|_)     ,true.B,PopCount(br_commit))),
-      ("jal   commit" ,       () => (jal_commit.reduce(_|_)    ,true.B,PopCount(jal_commit))),
-      ("jalr  commit" ,       () => (jalr_commit.reduce(_|_)   ,true.B,PopCount(jalr_commit))),
-      ("int   commit" ,       () => (int_commit.reduce(_|_)    ,true.B,PopCount(int_commit))),
-      ("div   commit" ,       () => (div_commit.reduce(_|_)    ,true.B,PopCount(div_commit))),
-      ("mul   commit" ,       () => (mul_commit.reduce(_|_)   ,true.B,PopCount(mul_commit))),
+      ("Load  commit" ,       () => (load_commit.reduce(_|_)   ,true.B,PopCount(load_commit)  )),
+      ("Store commit" ,       () => (store_commit.reduce(_|_)  ,true.B,PopCount(store_commit) )),
+      ("fp    commit" ,       () => (fp_commit.reduce(_|_)     ,true.B,PopCount(fp_commit)    )),
+      ("br    commit" ,       () => (br_commit.reduce(_|_)     ,true.B,PopCount(br_commit)    )),
+      ("jal   commit" ,       () => (jal_commit.reduce(_|_)    ,true.B,PopCount(jal_commit)   )),
+      ("jalr  commit" ,       () => (jalr_commit.reduce(_|_)   ,true.B,PopCount(jalr_commit)  )),
+      ("int   commit" ,       () => (int_commit.reduce(_|_)    ,true.B,PopCount(int_commit)   )),
+      ("div   commit" ,       () => (div_commit.reduce(_|_)    ,true.B,PopCount(div_commit)   )),
+      ("mul   commit" ,       () => (mul_commit.reduce(_|_)   ,true.B, PopCount(mul_commit)    )),
       ("cdc   bp    " ,       () => (io.gh_stall               ,false.B,1.U)),
       ("no    core    " ,       () => (no_core_aval               ,false.B,1.U)),
       ("ic   stall    " ,       () => (debug_ic_stall               ,false.B,1.U)),
@@ -581,6 +581,7 @@ class BoomCore()(implicit p: Parameters) extends BoomModule
       ("ITLB miss",   () => (io.ifu.perf.tlbMiss,false.B,0.U)),
       ("DTLB miss",   () => (io.lsu.perf.tlbMiss,false.B,0.U)),
       ("L2 TLB miss", () => (io.ptw.perf.l2miss,false.B,0.U))))))
+  
   val csr = Module(new freechips.rocketchip.meek.CSRFileMEEK(perfEvents, boomParams.customCSRs.decls))
   csr.io.inst foreach { c => c := DontCare }
   csr.io.rocc_interrupt := io.rocc.interrupt

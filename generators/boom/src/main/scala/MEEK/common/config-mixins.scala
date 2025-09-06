@@ -128,6 +128,7 @@ class WithNSmallBooms(n: Int = 1) extends Config(
 /**
  * 2-wide BOOM.
  */
+
 class WithNMediumBooms(n: Int = 1) extends Config(
   new WithBoom2BPD (64) ++ // Default to TAGE-L BPD, but with BPD
   new Config((site, here, up) => {

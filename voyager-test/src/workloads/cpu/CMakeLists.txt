@@ -40,7 +40,7 @@ add_custom_target(cpu-linux-build ALL DEPENDS
 # 此处开启了CHECK宏
 include_directories(${CPU_WORKLOAD_DIR}/meeklib)
 set(C_FLAGS -std=gnu11 -g -DCHECK=1 -fno-common -O2 -static 
-    -fno-builtin-printf -specs=htif_nano.specs -I${CPU_WORKLOAD_DIR}/meeklib)
+    -fno-builtin-printf -specs=htif_nano.specs -I${CPU_WORKLOAD_DIR}/meeklib -I${CPU_WORKLOAD_DIR}/perf_lib)
 
 set(ELF_CC "riscv64-unknown-elf-gcc")
 
@@ -51,11 +51,15 @@ add_custom_target(cpu-baremetal-build ALL
             ${CPU_WORKLOAD_DIR}/prefetch/bfs/bfs.c ${CPU_WORKLOAD_DIR}/meeklib/meek.c 
     COMMAND ${ELF_CC} ${C_FLAGS} -o hash-baremetal
             ${CPU_WORKLOAD_DIR}/prefetch/hash/hash.c ${CPU_WORKLOAD_DIR}/meeklib/meek.c 
+    COMMAND ${ELF_CC} ${C_FLAGS} -o perf-baremetal ${CPU_WORKLOAD_DIR}/perf_lib/perf.c
+            ${CPU_WORKLOAD_DIR}/boom_perf/boom_perf.c 
     # COMMAND ${ELF_CC} ${C_FLAGS} -o pll-baremetal
     #         ${CPU_WORKLOAD_DIR}/pll/pll.c ${CPU_WORKLOAD_DIR}/meeklib/meek.c 
     DEPENDS ${CPU_WORKLOAD_DIR}/hello/hello.c
             # ${CPU_WORKLOAD_DIR}/pll/pll.c
+            ${CPU_WORKLOAD_DIR}/perf_lib/perf.c
             ${CPU_WORKLOAD_DIR}/prefetch/bfs/bfs.c 
+            ${CPU_WORKLOAD_DIR}/boom_perf/boom_perf.c 
             ${CPU_WORKLOAD_DIR}/prefetch/hash/hash.c ${CPU_WORKLOAD_DIR}/meeklib/meek.c 
     COMMENT "Building baremetal workloads for CPU"
     VERBATIM)

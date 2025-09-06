@@ -66,6 +66,7 @@ class RoCCShim(implicit p: Parameters) extends BoomModule
   val io = IO(new RoCCShimIO)
 
   io.req.ready := true.B
+  io.core.rocc := DontCare
   io.core.rocc.exception := false.B
   io.core.rocc.mem.req.ready := false.B
   io.core.rocc.mem.s2_nack := false.B
