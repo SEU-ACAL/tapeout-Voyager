@@ -87,6 +87,7 @@ class VoyagerVcsConfig extends Config(
   // new chipyard.iobinders.WithSPIFlashIOCells ++
   // new voyager_tapeout.custom.WithSPIForFlash ++
   // new chipyard.iobinders.WithSPIFlashIOCells ++
+  new voyager_tapeout.custom.harness.WithVoyagerSimTSIOverSerialTL++
   new voyager_tapeout.WithVoyagerBootROM++
   new freechips.rocketchip.subsystem.WithoutTLMonitors++
   new voyager_tapeout.custom.harness.WithCustomChipTop ++
@@ -100,10 +101,11 @@ class VoyagerVcsConfig extends Config(
   new voyager_tapeout.custom.iobinders.WithSPIFlashIOCells ++
   // new testchipip.serdes.WithNoSerialTLClient++
   //TODO : 运行vcs 暂时注释掉
-  // new testchipip.serdes.WithSerialTLMem(size = BigInt("80000000",16)) ++ // 8 GB of off-chip memory
-  // new voyager_tapeout.custom.WithSerialConnect++   // 
+  new testchipip.serdes.WithSerialTLMem(size = BigInt("80000000",16)) ++ // 8 GB of off-chip memory
+  new voyager_tapeout.custom.WithSerialConnect++   // 
 
   new chipyard.config.AbstractConfig)
+
 
 class VoyagerVcsChipConfig extends Config(
   new voyager_tapeout.WithVoyagerBootROM++
