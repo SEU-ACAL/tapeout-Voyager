@@ -4,11 +4,11 @@
 #endif
 int main() {
   #ifdef CHECK 
-  // rStartup();
+  rStartup();
   #endif
   printf("hello world!");
   #ifdef CHECK 
-  // rCleanup();
+  rCleanup();
   #endif
   return 0;
 }
