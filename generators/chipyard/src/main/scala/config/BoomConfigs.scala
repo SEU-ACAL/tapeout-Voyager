@@ -22,8 +22,17 @@ class LargeBoomV3Config extends Config(
 
 class MegaBoomV3Config extends Config(
   new boom.v3.common.WithNMegaBooms(1) ++                           // mega boom config
+  new freechips.rocketchip.boom_perf.WithPERF++ 
   new chipyard.config.WithSystemBusWidth(128) ++
   new chipyard.config.AbstractConfig)
+
+
+class FDIPMegaBoomV3Config extends Config(
+  new boom.fdip.common.WithNMegaBooms(1) ++                           // mega boom config
+  new chipyard.config.WithSystemBusWidth(128) ++
+  new freechips.rocketchip.boom_perf.WithPERF++  
+  new chipyard.config.AbstractConfig)
+
 
 class DualSmallBoomV3Config extends Config(
   new boom.v3.common.WithNSmallBooms(2) ++                          // 2 boom cores
@@ -47,6 +56,19 @@ class MediumBoomV3CosimConfig extends Config(
   new chipyard.config.WithTraceIO ++                             // enable the traceio
   new boom.v3.common.WithNMediumBooms(1) ++
   new chipyard.config.AbstractConfig)
+
+class FDIPMegaBoomV3CosimConfig extends Config(
+  new chipyard.harness.WithGeneralCospike ++                            // attach spike-cosim
+  new chipyard.config.WithTraceIO ++                             // enable the traceio
+  new boom.fdip.common.WithNMegaBooms(1) ++
+  new chipyard.config.WithSystemBusWidth(128) ++ 
+  new chipyard.config.AbstractConfig)
+
+// class FDIPMegaBoomV3Config extends Config(                           // enable the traceio
+//   new boom.fdip.common.WithNMegaBooms(1) ++
+//   new chipyard.config.WithSystemBusWidth(128) ++ 
+//   new chipyard.config.AbstractConfig)
+
 class MediumBoomV3PERFCosimConfig extends Config(
   new chipyard.harness.WithCospike ++                            // attach spike-cosim
   new chipyard.config.WithTraceIO ++   

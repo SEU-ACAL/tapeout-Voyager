@@ -33,7 +33,7 @@
 
 extern dtm_t* dtm;
 extern remote_bitbang_t * jtag;
-
+bool difftest_end = false;
 static uint64_t trace_count = 0;
 bool verbose;
 bool done_reset;
@@ -300,6 +300,9 @@ done_processing:
 #if VM_TRACE
     if (dump)
       tfp->dump(static_cast<vluint64_t>(trace_count * 2 + 1));
+    if(difftest_end)
+      printf("Difftest ends at cycle %ld\n", trace_count);
+      break;
 #endif
     trace_count++;
   }

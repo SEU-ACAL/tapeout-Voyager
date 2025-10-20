@@ -20,7 +20,7 @@ import testchipip.spi.{SimSPIFlashModel}
 import testchipip.uart.{UARTAdapter, UARTToSerial}
 import testchipip.serdes._
 import testchipip.iceblk.{SimBlockDevice, BlockDeviceModel}
-import testchipip.cosim.{SpikeCosim}
+import testchipip.cosim.{SpikeCosim,GeneralSpikeCosim}
 import icenet.{NicLoopback, SimNetwork}
 import chipyard._
 import chipyard.clocking.{HasChipyardPRCI}
@@ -302,7 +302,11 @@ class WithCospike extends HarnessBinder({
     port.io.traces.zipWithIndex.map(t => SpikeCosim(t._1, t._2, port.cosimCfg))
   }
 })
-
+class WithGeneralCospike extends HarnessBinder({
+  case (th: HasHarnessInstantiators, port: TracePort, chipId: Int) => {
+    port.io.traces.zipWithIndex.map(t => GeneralSpikeCosim(t._1, t._2, port.cosimCfg))
+  }
+})
 
 class WithCustomBootPinPlusArg extends HarnessBinder({
   case (th: HasHarnessInstantiators, port: CustomBootPort, chipId: Int) => {

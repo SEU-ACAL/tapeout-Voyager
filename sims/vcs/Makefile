@@ -63,7 +63,7 @@ VCS_OPTS = $(VCS_CC_OPTS) $(VCS_NONCC_OPTS) $(SIM_PREPROC_DEFINES) $(VCS_PREPROC
 #########################################################################################
 model_dir = $(build_dir)/$(long_name)
 model_dir_debug = $(build_dir)/$(long_name).debug
-
+REAL = no
 define CONDITIONAL_RUN_REAL
     @# This is a shell 'if' statement, executed by the command shell, not by make.
     @if [ "$(REAL)" = "yes" ]; then \
@@ -74,17 +74,34 @@ define CONDITIONAL_RUN_REAL
         echo "☑️ RUN_REAL not set to 'yes'. Skipping iocell.py script."; \
     fi
 endef
+
+# export PATH="/usr/bin:$(PATH)"          # 系统 gcc/g++/ld 优先
+# export CC=/usr/bin/gcc
+# export CXX=/usr/bin/g++
+# export LD=/usr/bin/ld
+
+# # 编译阶段只让 ld 找到系统基础库 + VCS 私有库
+# export LIBRARY_PATH="$(VCS_LIB):/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu"
+
+# export LDFLAGS="-L$(VCS_LIB) -Wl,--no-as-needed \
+#       -lvcsnew -lvirsim -lvcsucli -lvfs -lsnpsmalloc -lerrorinf -lzerosoft_rt_stubs \
+#       -lsimprofile -luclinative -lpthread -ldl -lrt -lm -lstdc++"
 #########################################################################################
 # vcs simulator rules
 #########################################################################################
 $(sim): $(sim_common_files) $(dramsim_lib) $(EXTRA_SIM_REQS)
 	rm -rf $(model_dir)
+	
 	$(CONDITIONAL_RUN_REAL)
 	$(VCS) $(VCS_OPTS) $(EXTRA_SIM_SOURCES) -o $@ -Mdir=$(model_dir)
 
 $(sim_debug): $(sim_common_files) $(dramsim_lib) $(EXTRA_SIM_REQS)
 	rm -rf $(model_dir_debug)
+	
 	$(CONDITIONAL_RUN_REAL)
+	
+	
+# 	unset LD_LIBRARY_PATH
 	$(VCS) $(VCS_OPTS) $(EXTRA_SIM_SOURCES) -o $@ -Mdir=$(model_dir_debug)  \
 	+define+DEBUG -debug_access+all -kdb -lca
 
