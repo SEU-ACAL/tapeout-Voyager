@@ -19,9 +19,9 @@ import chisel3.util._
 import org.chipsalliance.cde.config.{Parameters}
 import freechips.rocketchip.rocket.{MStatus, BP, BreakpointUnit}
 
-import boom.v3.common._
-import boom.v3.util.{BoolToChar, MaskUpper}
-import boom.v3.ifu._
+import boom.fdip.common._
+import boom.fdip.util.{BoolToChar, MaskUpper}
+import boom.fdip.ifu._
 /**
  * Bundle that is made up of converted MicroOps from the Fetch Bundle
  * input to the Fetch Buffer. This is handed to the Decode stage.
@@ -86,43 +86,40 @@ class FetchBuffer(implicit p: Parameters) extends BoomModule
   // Input microops.
   val in_mask = Wire(Vec(fetchWidth, Bool()))
   val in_uops = Wire(Vec(fetchWidth, new MicroOp()))
-
+  dontTouch(in_uops)
   // Step 1: Convert FetchPacket into a vector of MicroOps.
-  for (b <- 0 until nBanks) {
-    for (w <- 0 until bankWidth) {
-      val i = (b * bankWidth) + w
+  for(i<- 0 until fetchWidth) {
+    val pc = (fetchAlign(io.enq.bits.pc) + (i << 1).U)
 
-      val pc = (bankAlign(io.enq.bits.pc) + (i << 1).U)
+    in_uops(i)                := DontCare
+    in_mask(i)                := io.enq.valid && io.enq.bits.mask(i)
+    in_uops(i).edge_inst      := false.B
+    in_uops(i).debug_pc       := pc
+    in_uops(i).pc_lob         := pc
 
-      in_uops(i)                := DontCare
-      in_mask(i)                := io.enq.valid && io.enq.bits.mask(i)
-      in_uops(i).edge_inst      := false.B
-      in_uops(i).debug_pc       := pc
-      in_uops(i).pc_lob         := pc
+    in_uops(i).is_sfb         := io.enq.bits.sfbs(i) || io.enq.bits.shadowed_mask(i)
 
-      in_uops(i).is_sfb         := io.enq.bits.sfbs(i) || io.enq.bits.shadowed_mask(i)
-
-      if (w == 0) {
-        when (io.enq.bits.edge_inst(b)) {
-          in_uops(i).debug_pc  := bankAlign(io.enq.bits.pc) + (b * bankBytes).U - 2.U
-          in_uops(i).pc_lob    := bankAlign(io.enq.bits.pc) + (b * bankBytes).U
-          in_uops(i).edge_inst := true.B
-        }
+    if (i == 0) {
+      when (io.enq.bits.edge_inst) {
+        in_uops(i).debug_pc  := fetchAlign(io.enq.bits.pc)  - 2.U
+        in_uops(i).pc_lob    := fetchAlign(io.enq.bits.pc) //这个之后会处理，这里只需要和输入pc一致就可以
+        in_uops(i).edge_inst := true.B
       }
-      in_uops(i).ftq_idx        := io.enq.bits.ftq_idx
-      in_uops(i).inst           := io.enq.bits.exp_insts(i)
-      in_uops(i).debug_inst     := io.enq.bits.insts(i)
-      in_uops(i).is_rvc         := io.enq.bits.insts(i)(1,0) =/= 3.U
-      in_uops(i).taken          := io.enq.bits.cfi_idx.bits === i.U && io.enq.bits.cfi_idx.valid
-
-      in_uops(i).xcpt_pf_if     := io.enq.bits.xcpt_pf_if
-      in_uops(i).xcpt_ae_if     := io.enq.bits.xcpt_ae_if
-      in_uops(i).bp_debug_if    := io.enq.bits.bp_debug_if_oh(i)
-      in_uops(i).bp_xcpt_if     := io.enq.bits.bp_xcpt_if_oh(i)
-
-      in_uops(i).debug_fsrc     := io.enq.bits.fsrc
     }
+    in_uops(i).ftq_idx        := io.enq.bits.ftq_idx
+    in_uops(i).inst           := io.enq.bits.exp_insts(i)
+    in_uops(i).debug_inst     := io.enq.bits.insts(i)
+    in_uops(i).is_rvc         := io.enq.bits.insts(i)(1,0) =/= 3.U
+    in_uops(i).taken          := io.enq.bits.cfi_idx.bits === i.U && io.enq.bits.cfi_idx.valid
+
+    in_uops(i).xcpt_pf_if     := io.enq.bits.xcpt_pf_if
+    in_uops(i).xcpt_ae_if     := io.enq.bits.xcpt_ae_if
+    in_uops(i).bp_debug_if    := io.enq.bits.bp_debug_if_oh(i)
+    in_uops(i).bp_xcpt_if     := io.enq.bits.bp_xcpt_if_oh(i)
+
+    in_uops(i).debug_fsrc     := DontCare
   }
+
 
   // Step 2. Generate one-hot write indices.
   val enq_idxs = Wire(Vec(fetchWidth, UInt(numEntries.W)))

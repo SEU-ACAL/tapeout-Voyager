@@ -2,7 +2,7 @@
 #include <string>
 #include <vpi_user.h>
 #include <svdpi.h>
-
+// #include "rocket-chip/src/main/resources/csrc/verilator.h"
 #include "cospike_impl.h"
 
 extern "C" void cospike_set_sysinfo_wrapper(char* isa, char* priv, int pmpregions, int maxpglevels,
@@ -39,7 +39,7 @@ extern "C" void cospike_set_sysinfo_wrapper(char* isa, char* priv, int pmpregion
   );
 }
 
-extern "C" void cospike_cosim_wrapper(long long int cycle,
+extern "C" int cospike_cosim_wrapper(long long int cycle,
                               long long int hartid,
                               int has_wdata,
                               int valid,
@@ -64,5 +64,6 @@ extern "C" void cospike_cosim_wrapper(long long int cycle,
     wdata,
     priv
   );
-  if (rval) exit(rval);
+
+  return rval;
 }

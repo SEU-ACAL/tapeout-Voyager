@@ -140,6 +140,7 @@ export LDFLAGS="-L$VCS_LIB -Wl,--no-as-needed \
       -lvcsnew -lvirsim -lvcsucli -lvfs -lsnpsmalloc -lerrorinf -lzerosoft_rt_stubs \
       -lsimprofile -luclinative -lpthread -ldl -lrt -lm -lstdc++  "
 cd ${CYDIR}/sims/vcs/ || { echo "Cannot enter the directory: ${CYDIR}/sims/vcs/"; exit 1; }
+make clean
 make -j$j ${debug} CONFIG=$CONFIG \
   USE_FST=$USE_FST \
   SBT_PROJECT=$SBT_PROJECT \

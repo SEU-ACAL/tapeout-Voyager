@@ -7,7 +7,7 @@
 
 extern bool verbose;
 extern bool done_reset;
-
+extern bool difftest_end;
 class VerilatedVcdFILE : public VerilatedVcdFile {
  public:
   VerilatedVcdFILE(FILE* file) : file(file) {}
